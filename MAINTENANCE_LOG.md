@@ -7,7 +7,17 @@
 - Added repository safety rules to avoid committing credentials, cookies, large media, generated backups, and temporary website snapshots.
 - Legal/compliance pages and form consent fields were prepared on the live WordPress site before GitHub binding.
 
+### Version 1.0
+
+- Stabilized the live Harmat22 frontend after the first full optimization pass.
+- Confirmed the apartment picker works across the homepage, property pages, search page, and normal content pages.
+- Moved the property disclaimer to the confirmed position under the final payment step on property detail pages.
+- Polished the main menu contact typography, homepage video fullscreen button behavior, contact form layout, and cookie UI positioning.
+- Fixed visible Hungarian text encoding issues in custom frontend snippets.
+- Ran a visible-text audit across 153 public pages and property pages with no remaining visible mojibake findings.
+
 ## Rollback Notes
 
 - Live WordPress backups are handled separately through the site's backup workflow.
 - GitHub should track clean maintenance notes, reusable scripts, and intentional frontend changes only.
+- Git tag `v1.0` marks the confirmed live-site state after the 2026-05-06 optimization pass.
