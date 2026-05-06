@@ -1,0 +1,45 @@
+# Sensitive login/session files
+wp-cookies*.txt
+*cookies*.txt
+*-headers.txt
+headers.txt
+*_headers.txt
+*nonce*.txt
+harmat-ssh-key
+ssh-askpass.cmd
+
+# Large local media and generated uploads
+*.mp4
+*.pdf
+*.png
+*.jpg
+*.jpeg
+video-upload-*/
+*.zip
+
+# Downloaded/temporary website snapshots
+*.html
+*.json
+*-payload.txt
+*.log
+*.mbtree
+chrome-*-profile*/
+_pydeps/
+__pycache__/
+
+# Generated working folders
+audit-gallery-images/
+fixed-floorplan-pdfs/
+fixed-page-floorplans/
+floorplan-crops/
+floorplan-inner/
+floorplan-inner-samples/
+fullpage-square/
+harmat-direct-replacer/
+harmat-floorplan-replacer/
+nested-plugin-zip/
+pdf-audit/
+rendered/
+
+# Local backups are kept on this machine, not in GitHub
+backups/
