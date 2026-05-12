@@ -1,180 +1,344 @@
 (function () {
   "use strict";
 
-  var SECTION_HINTS = [
-    "fedezze fel a környéket",
-    "a harmat lakópark környezete",
-    "környéket",
-  ];
+  var config = window.Harmat22InteractiveConfig || {};
+  var base = config.assetBase || "/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/";
+
+  function ready(fn) {
+    if (document.readyState !== "loading") {
+      fn();
+    } else {
+      document.addEventListener("DOMContentLoaded", fn);
+    }
+  }
 
   function normalize(value) {
     return (value || "").toLowerCase().replace(/\s+/g, " ").trim();
   }
 
-  function findMapSection() {
-    var sections = Array.from(document.querySelectorAll("section, .elementor-section, .vc_section, div"));
-    for (var i = 0; i < sections.length; i++) {
-      var text = normalize(sections[i].textContent);
-      var hit = SECTION_HINTS.some(function (hint) {
-        return text.indexOf(hint) !== -1;
-      });
-      if (hit && sections[i].querySelector("iframe, .leaflet-container, #map")) {
-        return sections[i];
+  function asset(file) {
+    return base + file;
+  }
+
+  function findTargetSection() {
+    var mapNode = document.querySelector('iframe[src*="maps"], iframe[src*="google.com"], .leaflet-container, #map, .cml-wrapper');
+    if (mapNode) {
+      var node = mapNode;
+      while (node && node !== document.body) {
+        var text = normalize(node.textContent);
+        if (
+          (node.matches && node.matches("section, .elementor-section, .e-con, .elementor-top-section")) &&
+          (text.indexOf("harmat lakópark környezete") !== -1 ||
+            text.indexOf("fedezze fel a környéket") !== -1 ||
+            text.indexOf("környék előnyei") !== -1)
+        ) {
+          return node;
+        }
+        node = node.parentElement;
+      }
+
+      return mapNode.closest("section, .elementor-section, .e-con") || mapNode.parentElement;
+    }
+
+    var candidates = Array.prototype.slice.call(
+      document.querySelectorAll("section, .elementor-section, .e-con, .elementor-top-section")
+    );
+    var best = null;
+    candidates.forEach(function (candidate) {
+      var text = normalize(candidate.textContent);
+      var hasMapHeading =
+        text.indexOf("fedezze fel a") !== -1 ||
+        text.indexOf("harmat lak") !== -1 && text.indexOf("korny") !== -1 ||
+        text.indexOf("körny") !== -1 && text.indexOf("előny") !== -1;
+      var hasMapContent =
+        text.indexOf("bev") !== -1 ||
+        text.indexOf("park") !== -1 ||
+        text.indexOf("google maps") !== -1;
+
+      if (hasMapHeading && hasMapContent) {
+        if (!best || candidate.textContent.length < best.textContent.length) {
+          best = candidate;
+        }
+      }
+    });
+
+    if (best) {
+      return best;
+    }
+
+    if (window.location.pathname.indexOf("/harmat-lakopark-kornyeke") !== -1) {
+      var pageSections = Array.prototype.slice.call(
+        document.querySelectorAll("section, .elementor-section, .e-con, .elementor-top-section")
+      );
+      for (var i = 0; i < pageSections.length; i++) {
+        if (normalize(pageSections[i].textContent).indexOf("fedezze fel a") !== -1) {
+          return pageSections[i];
+        }
       }
     }
+
     return null;
   }
 
-  function collectPoiLines(section) {
-    var allLines = normalize(section.textContent).split(/\n+/);
-    var cleaned = [];
-
-    for (var i = 0; i < allLines.length; i++) {
-      var line = allLines[i].trim();
-      if (!line || line.length < 3 || line.length > 80) {
-        continue;
-      }
-
-      if (
-        line.indexOf("harmat lakópark") !== -1 ||
-        line === "+ -" ||
-        line.indexOf("válassza ki") !== -1
-      ) {
-        continue;
-      }
-
-      if (/^\d+(\.\d+)?$/.test(line)) {
-        continue;
-      }
-
-      cleaned.push(line);
-    }
-
-    // Remove duplicates while preserving order.
-    return cleaned.filter(function (item, idx) {
-      return cleaned.indexOf(item) === idx;
-    }).slice(0, 30);
+  function markup() {
+    return [
+      '<section class="harmat-interactive" id="harmat-3d-tour">',
+      '  <div class="hi-wrap">',
+      '    <div class="hi-head">',
+      '      <div>',
+      '        <p class="hi-eyebrow">Interaktív bemutató</p>',
+      '        <h2 class="hi-title">Harmat Lakópark élményközpont</h2>',
+      '      </div>',
+      '      <p class="hi-lead">Tekintse meg a Harmat Lakópark látványterveit, környezetét és bemutatóanyagait egy áttekinthető, modern felületen.</p>',
+      '    </div>',
+      '    <div class="hi-console" aria-label="Harmat Lakópark interaktív bemutató">',
+      '      <div class="hi-screen">',
+      '        <div class="hi-panel active" data-panel="panorama">',
+      '          <div class="hi-pano-wrap">',
+      '            <img class="hi-fallback" src="' + asset("pano_pano_f.jpg") + '" alt="Harmat Lakópark panoráma előnézet">',
+      '            <div id="harmat-panorama" aria-label="Harmat Lakópark panorámás látványtér"></div>',
+      '          </div>',
+      '          <div class="hi-panel-caption"><strong>Panorámás látványtér</strong><span>Húzza el a képet, és nézze körbe a projekt térbeli bemutatóját.</span></div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="video">',
+      '          <div class="hi-video-grid">',
+      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset("video_swsp_xmsp.jpg") + '"><source src="' + asset("swsp_xmsp.mp4") + '" type="video/mp4"></video><div><strong>Projektbemutató</strong><span>A lakópark elhelyezkedése, épülettömege és környezeti kapcsolatai.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset("video_spjs.jpg") + '"><source src="' + asset("spjs.mp4") + '" type="video/mp4"></video><div><strong>Látványvideó</strong><span>Átfogó képet ad a tervezett lakókörnyezetről és a projekt hangulatáról.</span></div></article>',
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="plans">',
+      '          <div class="hi-split">',
+      '            <div class="hi-copy"><small>Projekt áttekintés</small><h3>Modern lakókörnyezet Kőbányán</h3><p>A Harmat Lakópark a X. kerületben, a Harmat utca 22. szám alatt kínál új építésű otthonokat átgondolt alaprajzokkal, zöld környezettel és kényelmes városi kapcsolatokkal.</p><div class="hi-stat-row"><span><b>124 lakás</b>első ütem</span><span><b>Harmat utca 22.</b>Budapest X. kerület</span><span><b>Zöld környezet</b>élhető városi ritmus</span></div></div>',
+      '            <button class="hi-feature-image" type="button" data-full="' + asset("xgt_8.jpg") + '"><img src="' + asset("xgt_8.jpg") + '" alt="Harmat Lakópark madártávlati látványterv"></button>',
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="gallery">',
+      '          <div class="hi-gallery-grid">',
+      galleryButton("xgt_0.jpg", "Áttekintő látvány"),
+      galleryButton("xgt_1.jpg", "Épülethomlokzat"),
+      galleryButton("xgt_4.jpg", "Lakókörnyezeti tér"),
+      galleryButton("xgt_8.jpg", "Madártávlati nézet"),
+      galleryButton("xgt_10.jpg", "Lakóépületi részlet"),
+      galleryButton("xgt_5.jpg", "Kert és közösségi tér"),
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="location">',
+      '          <div class="hi-split">',
+      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset("video_swsp_xmsp.jpg") + '"><img src="' + asset("video_swsp_xmsp.jpg") + '" alt="Harmat Lakópark környezeti áttekintő"><span class="hi-map-pin" style="left:58%;top:44%;">Harmat utca 22.</span><span class="hi-map-pin gold" style="left:39%;top:58%;">Bevásárlás</span><span class="hi-map-pin" style="left:70%;top:34%;">Közlekedés</span><span class="hi-map-pin green" style="left:48%;top:72%;">Zöldterület</span><span class="hi-map-pin" style="left:25%;top:42%;">Szolgáltatások</span></button>',
+      '            <div class="hi-copy"><small>Elhelyezkedés</small><h3>Otthon, ahol a város és a természet találkozik</h3><p>A környék mindennapi élethez szükséges szolgáltatásokat, zöldterületeket és jó városi kapcsolatokat kínál. A bemutató segít gyorsan átlátni a lakópark környezetét.</p><ul><li>Budapest X. kerület, Harmat utca 22.</li><li>Közeli bevásárlási, oktatási és egészségügyi lehetőségek</li><li>Könnyen értelmezhető projekt- és környezetbemutató</li></ul></div>',
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="notice">',
+      '          <div class="hi-notice"><small>Tájékoztató</small><h3>Fontos információk</h3><p>A látványtervek, videók és bemutatóanyagok tájékoztató jellegűek. Az árak, műszaki tartalom, alapterületek, átadási határidők és felszereltség minden esetben a hivatalos dokumentáció és a szerződés szerint irányadók.</p><div class="hi-notice-grid"><span>A látványtervek illusztrációk</span><span>Az adatok tájékoztató jellegűek</span><span>A szerződés az irányadó</span></div></div>',
+      '        </div>',
+      '      </div>',
+      '      <div class="hi-dock">',
+      '        <div class="hi-tabs" aria-label="Harmat Lakópark bemutató menü">',
+      tabButton("panorama", "Panoráma", "360 nézet", true),
+      tabButton("video", "Videók", "Bemutató", false),
+      tabButton("plans", "Projekt", "Áttekintés", false),
+      tabButton("gallery", "Galéria", "Látványtervek", false),
+      tabButton("location", "Környezet", "Lokáció", false),
+      tabButton("notice", "Tájékoztató", "Fontos", false),
+      '        </div>',
+      '        <div class="hi-actions"><button type="button" data-hi-rotate>Szünet</button><button type="button" data-hi-reset>Alaphelyzet</button><button type="button" data-hi-full>Teljes képernyő</button></div>',
+      '      </div>',
+      '    </div>',
+      '    <p class="hi-note">Megjegyzés: a bemutatóanyagok tájékoztató jellegűek, a végleges tartalom a szerződés és a hivatalos dokumentáció szerint irányadó.</p>',
+      '  </div>',
+      '</section>',
+      '<div class="hi-lightbox" aria-hidden="true"><button type="button" aria-label="Bezárás">×</button><img alt=""></div>'
+    ].join("");
   }
 
-  function classifyPoi(name) {
-    var n = normalize(name);
-    if (/mall|ikea|lidl|market|központ|bevásárl/i.test(n)) return "shopping";
-    if (/kórház|orvos|egészség|rendelő/i.test(n)) return "health";
-    if (/óvoda|iskola|bölcsőde|nursery/i.test(n)) return "education";
-    if (/vasút|busz|keleti|kispest|közlekedés/i.test(n)) return "transport";
-    if (/park|kert|liget|természet/i.test(n)) return "nature";
-    if (/vendéglő|grill|café|etterem|étterem/i.test(n)) return "food";
-    return "other";
+  function galleryButton(file, label) {
+    return '<button type="button" data-full="' + asset(file) + '"><img src="' + asset(file) + '" alt="' + label + '"><span>' + label + "</span></button>";
   }
 
-  function labelForCategory(key) {
-    var labels = {
-      all: "Összes",
-      transport: "Közlekedés",
-      shopping: "Bevásárlás",
-      health: "Egészségügy",
-      education: "Oktatás",
-      nature: "Természet",
-      food: "Éttermek",
-      other: "Egyéb"
-    };
-    return labels[key] || "Egyéb";
+  function tabButton(target, label, sub, active) {
+    return '<button class="' + (active ? "active" : "") + '" type="button" data-target="' + target + '">' + label + "<span>" + sub + "</span></button>";
   }
 
-  function mockTravelMeta(index) {
-    var km = (0.8 + (index % 9) * 0.4).toFixed(1);
-    var mins = 4 + (index % 9) * 2;
-    return km + " km · kb. " + mins + " perc";
-  }
+  function initializeModule(root) {
+    var viewerEl = document.getElementById("harmat-panorama");
+    var fallback = root.querySelector(".hi-fallback");
+    var autoRotate = true;
+    var startPitch = -27;
+    var startYaw = 0;
+    var startHfov = 92;
 
-  function buildUI(section, pois) {
-    if (!pois.length || section.classList.contains("h22-map-enhanced")) {
-      return;
-    }
-
-    section.classList.add("h22-map-enhanced");
-
-    var mapNode = section.querySelector("iframe, .leaflet-container, #map");
-    if (!mapNode) {
-      return;
-    }
-
-    var mapWrapper = document.createElement("div");
-    mapWrapper.className = "h22-map-canvas";
-    mapNode.parentNode.insertBefore(mapWrapper, mapNode);
-    mapWrapper.appendChild(mapNode);
-
-    var shell = document.createElement("div");
-    shell.className = "h22-map-shell";
-
-    var controls = document.createElement("aside");
-    controls.className = "h22-map-controls";
-    controls.innerHTML =
-      '<h3 class="h22-map-controls-title">Közeli helyek, egyszerűbben</h3>' +
-      '<div class="h22-map-chip-row"></div>' +
-      '<ul class="h22-map-list"></ul>';
-
-    var list = controls.querySelector(".h22-map-list");
-    var chips = controls.querySelector(".h22-map-chip-row");
-
-    var model = pois.map(function (name, idx) {
-      return {
-        name: name,
-        category: classifyPoi(name),
-        meta: mockTravelMeta(idx),
-      };
-    });
-
-    function renderList(category) {
-      list.innerHTML = "";
-      model
-        .filter(function (item) {
-          return category === "all" || item.category === category;
-        })
-        .forEach(function (item) {
-          var li = document.createElement("li");
-          li.className = "h22-map-item";
-          li.innerHTML =
-            '<p class="h22-map-item-name">' + item.name + "</p>" +
-            '<p class="h22-map-item-meta">' + item.meta + "</p>";
-          list.appendChild(li);
+    if (window.pannellum && viewerEl) {
+      try {
+        window.harmatViewer = pannellum.viewer("harmat-panorama", {
+          type: "cubemap",
+          cubeMap: [
+            asset("pano_pano_f.jpg"),
+            asset("pano_pano_r.jpg"),
+            asset("pano_pano_b.jpg"),
+            asset("pano_pano_l.jpg"),
+            asset("pano_pano_u.jpg"),
+            asset("pano_pano_d.jpg")
+          ],
+          autoLoad: true,
+          showControls: false,
+          showFullscreenCtrl: false,
+          autoRotate: -1,
+          autoRotateInactivityDelay: 2600,
+          compass: false,
+          hfov: startHfov,
+          pitch: startPitch,
+          yaw: startYaw,
+          minHfov: 44,
+          maxHfov: 112
         });
+        if (fallback) {
+          fallback.style.display = "none";
+        }
+      } catch (error) {
+        if (fallback) {
+          fallback.style.display = "block";
+        }
+      }
     }
 
-    function setActiveChip(target) {
-      Array.from(chips.querySelectorAll(".h22-map-chip")).forEach(function (chip) {
-        chip.classList.remove("is-active");
+    var tabs = Array.prototype.slice.call(root.querySelectorAll(".hi-tabs button[data-target]"));
+    var panels = Array.prototype.slice.call(root.querySelectorAll(".hi-panel[data-panel]"));
+    root.querySelectorAll(".hi-video-card video").forEach(function (video) {
+      video.defaultPlaybackRate = 0.25;
+      video.playbackRate = 0.25;
+      video.addEventListener("loadedmetadata", function () {
+        video.defaultPlaybackRate = 0.25;
+        video.playbackRate = 0.25;
       });
-      target.classList.add("is-active");
-    }
-
-    var categories = ["all", "transport", "shopping", "health", "education", "nature", "food", "other"];
-    categories.forEach(function (category, idx) {
-      var button = document.createElement("button");
-      button.type = "button";
-      button.className = "h22-map-chip" + (idx === 0 ? " is-active" : "");
-      button.textContent = labelForCategory(category);
-      button.addEventListener("click", function () {
-        setActiveChip(button);
-        renderList(category);
+      video.addEventListener("play", function () {
+        video.playbackRate = 0.25;
       });
-      chips.appendChild(button);
+      video.addEventListener("ratechange", function () {
+        if (Math.abs(video.playbackRate - 0.25) > 0.01) {
+          video.playbackRate = 0.25;
+        }
+      });
     });
 
-    renderList("all");
+    function showPanel(name) {
+      panels.forEach(function (panel) {
+        panel.classList.toggle("active", panel.dataset.panel === name);
+      });
+      tabs.forEach(function (tab) {
+        tab.classList.toggle("active", tab.dataset.target === name);
+      });
+      root.querySelectorAll("video").forEach(function (video) {
+        if (name !== "video") {
+          video.pause();
+        }
+      });
+      if (window.harmatViewer && name === "panorama") {
+        setTimeout(function () {
+          window.harmatViewer.resize();
+        }, 80);
+      }
+    }
 
-    shell.appendChild(controls);
-    shell.appendChild(mapWrapper);
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        showPanel(tab.dataset.target);
+      });
+    });
 
-    mapWrapper.parentNode.insertBefore(shell, mapWrapper);
+    var resetBtn = root.querySelector("[data-hi-reset]");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        showPanel("panorama");
+        if (window.harmatViewer) {
+          window.harmatViewer.lookAt(startPitch, startYaw, startHfov, 900);
+        }
+      });
+    }
+
+    var rotateBtn = root.querySelector("[data-hi-rotate]");
+    if (rotateBtn) {
+      rotateBtn.addEventListener("click", function () {
+        if (!window.harmatViewer) {
+          return;
+        }
+        showPanel("panorama");
+        autoRotate = !autoRotate;
+        if (autoRotate) {
+          window.harmatViewer.startAutoRotate(-1);
+          rotateBtn.textContent = "Szünet";
+        } else {
+          window.harmatViewer.stopAutoRotate();
+          rotateBtn.textContent = "Forgatás";
+        }
+      });
+    }
+
+    var fullBtn = root.querySelector("[data-hi-full]");
+    if (fullBtn) {
+      fullBtn.addEventListener("click", function () {
+        var el = root.querySelector(".hi-console");
+        if (el && el.requestFullscreen) {
+          el.requestFullscreen();
+        }
+      });
+    }
+
+    document.addEventListener("fullscreenchange", function () {
+      if (window.harmatViewer) {
+        setTimeout(function () {
+          window.harmatViewer.resize();
+        }, 120);
+      }
+    });
+
+    var lightbox = document.querySelector(".hi-lightbox");
+    var lightImg = lightbox ? lightbox.querySelector("img") : null;
+    root.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-full]");
+      if (!btn || !root.contains(btn) || !lightbox || !lightImg) {
+        return;
+      }
+      lightImg.src = btn.dataset.full;
+      var img = btn.querySelector("img");
+      lightImg.alt = img ? img.alt : "";
+      lightbox.classList.add("open");
+      event.preventDefault();
+    });
+
+    if (lightbox) {
+      lightbox.addEventListener("click", function (event) {
+        if (event.target === lightbox || event.target.tagName === "BUTTON") {
+          lightbox.classList.remove("open");
+          if (lightImg) {
+            lightImg.removeAttribute("src");
+          }
+        }
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          lightbox.classList.remove("open");
+          if (lightImg) {
+            lightImg.removeAttribute("src");
+          }
+        }
+      });
+    }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
-    var section = findMapSection();
-    if (!section) {
+  ready(function () {
+    if (document.querySelector(".harmat-interactive")) {
+      initializeModule(document.querySelector(".harmat-interactive"));
       return;
     }
-    var pois = collectPoiLines(section);
-    buildUI(section, pois);
+
+    var target = findTargetSection();
+    if (!target) {
+      return;
+    }
+
+    var replacement = document.createElement("div");
+    replacement.innerHTML = markup();
+    target.replaceWith(replacement);
+    initializeModule(replacement.querySelector(".harmat-interactive"));
   });
 })();
