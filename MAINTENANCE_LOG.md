@@ -1,5 +1,15 @@
 # Maintenance Log
 
+## 2026-05-12
+
+### Version 2.1
+
+- Synced the live Harmat22 interactive map module back to GitHub.
+- Removed the floating text markers from the homepage location overview image so the aerial image displays cleanly.
+- Kept the short project overview video in slow playback and restored the longer showcase video to normal playback speed.
+- Confirmed the live homepage has no `.hi-map-pin` labels in the generated location image and that video rates resolve to `0.25x` for `swsp_xmsp.mp4` and `1x` for `spjs.mp4`.
+- Preserved live rollback backups on the server before changing the production map script.
+
 ## 2026-05-06
 
 - Created a local Git history for harmat22.hu maintenance work.

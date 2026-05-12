@@ -124,7 +124,7 @@
       '        </div>',
       '        <div class="hi-panel" data-panel="location">',
       '          <div class="hi-split">',
-      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset("video_swsp_xmsp.jpg") + '"><img src="' + asset("video_swsp_xmsp.jpg") + '" alt="Harmat Lakópark környezeti áttekintő"><span class="hi-map-pin" style="left:58%;top:44%;">Harmat utca 22.</span><span class="hi-map-pin gold" style="left:39%;top:58%;">Bevásárlás</span><span class="hi-map-pin" style="left:70%;top:34%;">Közlekedés</span><span class="hi-map-pin green" style="left:48%;top:72%;">Zöldterület</span><span class="hi-map-pin" style="left:25%;top:42%;">Szolgáltatások</span></button>',
+      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset("video_swsp_xmsp.jpg") + '"><img src="' + asset("video_swsp_xmsp.jpg") + '" alt="Harmat Lakópark környezeti áttekintő"></button>',
       '            <div class="hi-copy"><small>Elhelyezkedés</small><h3>Otthon, ahol a város és a természet találkozik</h3><p>A környék mindennapi élethez szükséges szolgáltatásokat, zöldterületeket és jó városi kapcsolatokat kínál. A bemutató segít gyorsan átlátni a lakópark környezetét.</p><ul><li>Budapest X. kerület, Harmat utca 22.</li><li>Közeli bevásárlási, oktatási és egészségügyi lehetőségek</li><li>Könnyen értelmezhető projekt- és környezetbemutató</li></ul></div>',
       '          </div>',
       '        </div>',
@@ -204,20 +204,24 @@
     var tabs = Array.prototype.slice.call(root.querySelectorAll(".hi-tabs button[data-target]"));
     var panels = Array.prototype.slice.call(root.querySelectorAll(".hi-panel[data-panel]"));
     root.querySelectorAll(".hi-video-card video").forEach(function (video) {
-      video.defaultPlaybackRate = 0.25;
-      video.playbackRate = 0.25;
-      video.addEventListener("loadedmetadata", function () {
-        video.defaultPlaybackRate = 0.25;
-        video.playbackRate = 0.25;
-      });
-      video.addEventListener("play", function () {
-        video.playbackRate = 0.25;
-      });
-      video.addEventListener("ratechange", function () {
-        if (Math.abs(video.playbackRate - 0.25) > 0.01) {
-          video.playbackRate = 0.25;
+      function getVideoRate() {
+        var source = video.querySelector("source");
+        var src = ((video.currentSrc || video.getAttribute("src") || "") + " " + (source ? source.getAttribute("src") : "")).toLowerCase();
+        return src.indexOf("spjs.mp4") !== -1 ? 1 : 0.25;
+      }
+
+      function applyVideoRate() {
+        var rate = getVideoRate();
+        video.defaultPlaybackRate = rate;
+        if (Math.abs(video.playbackRate - rate) > 0.01) {
+          video.playbackRate = rate;
         }
-      });
+      }
+
+      applyVideoRate();
+      video.addEventListener("loadedmetadata", applyVideoRate);
+      video.addEventListener("play", applyVideoRate);
+      video.addEventListener("ratechange", applyVideoRate);
     });
 
     function showPanel(name) {

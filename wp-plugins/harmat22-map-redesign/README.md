@@ -1,6 +1,6 @@
 # Harmat22 Interactive Presentation Module
 
-Version 2.0 replaces the old neighborhood map presentation with an interactive Harmat22 project viewer.
+Version 2.1 keeps the interactive Harmat22 project viewer and adds the latest live-site polish from 2026-05-12.
 
 ## What It Includes
 
@@ -8,6 +8,8 @@ Version 2.0 replaces the old neighborhood map presentation with an interactive H
 - Hungarian front-end copy for the Harmat Lakopark presentation.
 - Project videos, visual gallery, location overview, and legal notice panel.
 - Local site assets under `assets/harmat-3d/`, so the module does not depend on `nogakft.hu`.
+- Project videos use separate playback speeds: the short project overview remains slow, while the longer showcase video plays at normal speed.
+- The location overview image is shown cleanly without floating text labels over the buildings.
 
 ## WordPress Location
 
