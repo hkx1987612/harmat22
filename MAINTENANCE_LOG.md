@@ -1,5 +1,16 @@
 # Maintenance Log
 
+## 2026-05-13
+
+### Version 2.2
+
+- Added a hidden homepage SEO H1 without changing the visible frontend layout.
+- Redirected `/kapcsolat/` to the real contact page `/elerhetosegeink/`.
+- Repaired placeholder legal links in public footer output.
+- Cleaned remaining public legacy text from `Harmatliget` to `Harmat 22`.
+- Replaced obsolete public phone/email references with current sales contact details.
+- Verified the checked public pages do not expose old test contact strings.
+
 ## 2026-05-12
 
 ### Version 2.1
