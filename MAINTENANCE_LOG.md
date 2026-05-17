@@ -1,5 +1,14 @@
 # Maintenance Log
 
+## 2026-05-17
+
+### Version 2.4
+
+- Synced the current Harmat Sales Manager plugin into the repository under `wp-plugins/harmat-sales-manager/`.
+- Documented the separate private portals for sales, brokers, and customers.
+- Added customer-center management improvements for account delivery, customer materials, payment tracking, broker commissions, and customer-visible document handling.
+- Preserved public frontend behavior while keeping sales/customer operations inside private portal pages.
+
 ## 2026-05-13
 
 ### Version 2.2
