@@ -3228,6 +3228,120 @@ function harmat_perf_ai_customer_assistant() {
 }
 add_action('wp_footer', 'harmat_perf_ai_customer_assistant', 130);
 
+function harmat_perf_lakaskereso_search_patch() {
+    if (is_admin() || !is_page('lakaskereso')) {
+        return;
+    }
+    ?>
+<style id="harmat-lakaskereso-search-patch-style">
+  .hm-lakas-card.hm-smart-hidden {
+    display: none !important;
+  }
+</style>
+<script id="harmat-lakaskereso-search-patch">
+(function () {
+  function normalizeText(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  function normalizeCode(value) {
+    return normalizeText(value).replace(/[^a-z0-9]/g, "");
+  }
+  function queryMatches(card, query) {
+    if (!query) return true;
+
+    var queryText = normalizeText(query);
+    var queryCode = normalizeCode(query);
+    var cardCode = normalizeCode(card.dataset.query || card.innerText || "");
+    var building = normalizeText(card.dataset.building || "");
+    var floor = normalizeText(card.dataset.floor || "");
+    var rooms = normalizeText(card.dataset.rooms || "");
+    var roomMatch = queryText.match(/^([1-5])(?:\s*(szoba|szobas|room|rooms))?$/);
+
+    if (roomMatch) {
+      return rooms === roomMatch[1];
+    }
+    if (/^(fsz|fs|foldszint|foldszinti)$/.test(queryText)) {
+      return floor === "fsz" || floor === "foldszint";
+    }
+    if (/^a[1-4]$/.test(queryText)) {
+      return building === queryText;
+    }
+    return !!queryCode && cardCode.indexOf(queryCode) !== -1;
+  }
+  function selectedValue(toolbar, name) {
+    var field = toolbar.querySelector('[data-filter="' + name + '"]');
+    return field ? String(field.value || "") : "";
+  }
+  function applySmartSearch() {
+    var toolbar = document.querySelector(".hm-lakas-toolbar");
+    var input = toolbar ? toolbar.querySelector('[data-filter="query"]') : null;
+    var cards = Array.prototype.slice.call(document.querySelectorAll(".hm-lakas-card"));
+    if (!toolbar || !input || !cards.length) return;
+
+    input.setAttribute("placeholder", "pl. A1-F-L1, 3 szoba, Fsz");
+
+    var query = input.value || "";
+    var building = selectedValue(toolbar, "building");
+    var floor = selectedValue(toolbar, "floor");
+    var rooms = selectedValue(toolbar, "rooms");
+    var activeStatus = toolbar.querySelector("button.is-active[data-status]");
+    var status = activeStatus ? activeStatus.getAttribute("data-status") : "all";
+    var visibleCount = 0;
+
+    cards.forEach(function (card) {
+      var visible =
+        (status === "all" || !status || card.dataset.status === status) &&
+        (!building || card.dataset.building === building) &&
+        (!floor || card.dataset.floor === floor) &&
+        (!rooms || card.dataset.rooms === rooms) &&
+        queryMatches(card, query);
+
+      card.classList.remove("is-hidden");
+      card.classList.toggle("hm-smart-hidden", !visible);
+      if (visible) visibleCount += 1;
+    });
+
+    var count = document.querySelector(".hm-lakas-resultbar [data-count]");
+    if (count) {
+      count.textContent = String(visibleCount);
+    }
+  }
+  function scheduleSmartSearch() {
+    window.setTimeout(applySmartSearch, 0);
+    window.setTimeout(applySmartSearch, 80);
+  }
+  document.addEventListener("input", function (event) {
+    if (event.target && event.target.closest && event.target.closest(".hm-lakas-toolbar")) {
+      scheduleSmartSearch();
+    }
+  }, true);
+  document.addEventListener("change", function (event) {
+    if (event.target && event.target.closest && event.target.closest(".hm-lakas-toolbar")) {
+      scheduleSmartSearch();
+    }
+  }, true);
+  document.addEventListener("click", function (event) {
+    if (event.target && event.target.closest && event.target.closest(".hm-lakas-toolbar")) {
+      scheduleSmartSearch();
+    }
+  }, true);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleSmartSearch);
+  } else {
+    scheduleSmartSearch();
+  }
+  window.addEventListener("load", scheduleSmartSearch);
+})();
+</script>
+    <?php
+}
+add_action('wp_footer', 'harmat_perf_lakaskereso_search_patch', 150);
+
 
 function harmat_perf_redirect_duplicate_listing_pages() {
     if (is_admin() || wp_doing_ajax()) {

@@ -6394,7 +6394,7 @@ final class Harmat_Sales_Manager {
                     return "<button type=\\"button\\" data-status=\\"" + item[0] + "\\">" + item[1] + "</button>";
                 }).join("") + "</div>" +
                     "<div class=\\"harmat-filter-fields\\">" +
-                    "<label class=\\"harmat-filter-field\\">Lak\\u00e1s sz\\u00e1ma<input type=\\"search\\" data-filter=\\"query\\" placeholder=\\"pl. A1-F-L1\\"></label>" +
+                    "<label class=\\"harmat-filter-field\\">Lak\\u00e1s sz\\u00e1ma<input type=\\"search\\" data-filter=\\"query\\" placeholder=\\"pl. A1-F-L1, 3 szoba, Fsz\\"></label>" +
                     "<label class=\\"harmat-filter-field\\">\\u00c9p\\u00fclet<select data-filter=\\"building\\">" + options(buildings, "Mind") + "</select></label>" +
                     "<label class=\\"harmat-filter-field\\">Emelet<select data-filter=\\"floor\\">" + options(floors, "Mind") + "</select></label>" +
                     "<label class=\\"harmat-filter-field\\">Szoba<select data-filter=\\"rooms\\">" + options(rooms, "Mind") + "</select></label>" +
@@ -6409,6 +6409,39 @@ final class Harmat_Sales_Manager {
                 var countNode = panel.querySelector(".harmat-filter-count");
                 var listingWrap = host.closest(".elementor-widget-loop-grid") || host.parentElement;
                 var paginationNodes = listingWrap ? Array.prototype.slice.call(listingWrap.querySelectorAll(".elementor-pagination, .e-load-more-anchor, .page-numbers")) : [];
+                function normalizeFilterText(value) {
+                    return String(value || "")
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\\u0300-\\u036f]/g, "")
+                        .replace(/\\s+/g, " ")
+                        .trim();
+                }
+                function normalizeApartmentCode(value) {
+                    return normalizeFilterText(value).replace(/[^a-z0-9]/g, "");
+                }
+                function queryMatches(card) {
+                    if (!state.query) return true;
+                    var queryText = normalizeFilterText(state.query);
+                    var queryCode = normalizeApartmentCode(state.query);
+                    var titleText = normalizeFilterText(card.dataset.harmatTitle || "");
+                    var titleCode = normalizeApartmentCode(card.dataset.harmatTitle || "");
+                    var buildingText = normalizeFilterText(card.dataset.harmatBuilding || "");
+                    var floorText = normalizeFilterText(card.dataset.harmatFloor || "");
+                    var roomsText = normalizeFilterText(card.dataset.harmatRooms || "");
+                    var roomMatch = queryText.match(/^([1-5])(?:\\s*(szoba|szobas|room|rooms))?$/);
+
+                    if (roomMatch) {
+                        return roomsText === roomMatch[1];
+                    }
+                    if (/^(fsz|fs|foldszint|foldszinti)$/.test(queryText)) {
+                        return floorText === "fsz" || floorText === "foldszint";
+                    }
+                    if (/^a[1-4]$/.test(queryText)) {
+                        return buildingText === queryText;
+                    }
+                    return (queryCode && titleCode.indexOf(queryCode) !== -1) || titleText.indexOf(queryText) !== -1;
+                }
                 function applyFilter() {
                     panel.querySelectorAll("button[data-status]").forEach(function(button){
                         button.classList.toggle("is-active", button.getAttribute("data-status") === state.status);
@@ -6418,7 +6451,7 @@ final class Harmat_Sales_Manager {
                     cards.forEach(function(card){
                         var visible =
                             (state.status === "all" || card.dataset.harmatStatus === state.status) &&
-                            (!state.query || (card.dataset.harmatTitle || "").indexOf(state.query) !== -1) &&
+                            queryMatches(card) &&
                             (!state.building || card.dataset.harmatBuilding === state.building) &&
                             (!state.floor || card.dataset.harmatFloor === state.floor) &&
                             (!state.rooms || card.dataset.harmatRooms === state.rooms);
