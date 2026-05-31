@@ -284,7 +284,7 @@ function harmat_perf_home_hero_cta() {
     .harmat-home-hero-cta {
       left: 50%;
       right: auto;
-      bottom: clamp(78px, 13vh, 118px);
+      bottom: clamp(150px, 20vh, 178px);
       transform: translateX(-50%);
       width: min(88vw, 360px);
       display: grid;
