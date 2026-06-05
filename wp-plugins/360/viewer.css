@@ -1,0 +1,249 @@
+#buildingViewer {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.lakaspark-app-container {
+    width: 100%;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    color: #4E4E4E;
+}
+
+.lakaspark-filter-bar {
+    display: flex; align-items: center; padding: 15px 25px;
+    border-bottom: 1px solid #eaeaea; flex-wrap: wrap; gap: 15px;
+}
+.filter-label { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+.filter-divider { width: 1px; height: 30px; background: #eee; margin: 0 10px; }
+
+.floor-buttons { display: flex; gap: 8px; }
+.floor-btn {
+    background: #f5f5f5; border: 1px solid #e0e0e0; padding: 6px 12px;
+    border-radius: 4px; font-size: 14px; color: #4E4E4E; cursor: pointer; transition: 0.2s;
+}
+.floor-btn:hover { background: #FAC587; color: #fff; border-color: #FAC587; }
+.floor-btn.active { background: #987033; color: #fff; border-color: #987033; }
+
+.modern-select select { padding: 6px 12px; border: 1px solid #e0e0e0; border-radius: 4px; color: #4E4E4E; outline: none; cursor: pointer;}
+.filter-results-info { margin-left: auto; font-size: 14px; display: flex; align-items: center; gap: 15px;}
+#resultCount { font-weight: bold; color: #987033; font-size: 16px;}
+
+.list-btn-modern {
+    background: #f5f5f5; border: 1px solid #e0e0e0; padding: 6px 12px;
+    border-radius: 4px; color: #4E4E4E; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+    height: 33px; box-sizing: border-box;
+}
+.list-btn-modern:hover { background: #FAC587; color: #fff; border-color: #FAC587; }
+.list-btn-modern svg { width: 18px; height: 18px; }
+
+.lakaspark-main-layout { display: flex; position: relative; background: #fff; overflow: hidden; }
+.lakaspark-viewer-section { width: 65%; aspect-ratio: 16/9; position: relative; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.lakaspark-list-section { 
+    width: 35%; height: 100%; position: absolute; right: 0; top: 0; bottom: 0; 
+    background: #fafafa; border-left: 1px solid #eaeaea; overflow-y: auto; padding: 20px; box-sizing: border-box;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5; scroll-behavior: smooth;
+}
+
+/* LISTA BECSUKOTT ÁLLAPOT */
+.lakaspark-main-layout.list-closed .lakaspark-viewer-section { width: 100%; }
+.lakaspark-main-layout.list-closed .lakaspark-list-section { transform: translateX(100%); }
+/* Itt a trükk: bezárva nem kap külön színt, hogy harmonizáljon, a nyíl pedig balra (180deg) fordul */
+.lakaspark-main-layout.list-closed #listToggleBtn { 
+    right: 0; /* Ez hiányzott! Ettől fog a jobb szélre csúszni */
+    background: #fff; 
+    border-color: #eaeaea; 
+    color: #4E4E4E; 
+}
+.lakaspark-main-layout.list-closed #listToggleBtn svg { transform: rotate(180deg); }
+
+/* TOGGLE GOMB */
+/* TOGGLE GOMB - Vékonyított verzió */
+.list-toggle-btn {
+    position: absolute; right: 35%; top: 50%; transform: translateY(-50%); z-index: 20;
+    width: 12px; /* Keskeny gomb */
+    height: 50px; background: #fff; border: 1px solid #eaeaea; border-right: none;
+    border-radius: 4px 0 0 4px !important; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #4E4E4E; box-shadow: -2px 0 5px rgba(0,0,0,0.05); transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s, color 0.2s;
+    padding: 0; /* padding levétele, hogy elférjen az ikon */
+}
+.list-toggle-btn:hover { background: #FAC587; color: #fff; border-color: #FAC587; }
+/* Kisebb ikon, hogy elférjen a keskeny gombon */
+.list-toggle-btn svg { width: 12px; height: 12px; transition: transform 0.4s; margin-left: -2px; }
+
+/* LAZY LOADER */
+.lakaspark-loader {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease-out;
+}
+.loader-content { text-align: center; width: 300px; }
+.loader-text { font-size: 16px; font-weight: bold; color: #987033; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase; }
+.loader-bar-container { width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+.loader-bar-fill { height: 100%; width: 0%; background: #987033; transition: width 0.2s ease-out; }
+.loader-percent { display: none; }
+.loading-blur { filter: blur(10px); }
+
+/* VIEWER ALAPOK */
+.viewer-container { width: 100%; height: 100%; position: relative; overflow: hidden; cursor: grab; }
+.viewer-container:active { cursor: grabbing; }
+.viewer-image { position: absolute; width: 100%; height: 100%; object-fit: cover; pointer-events: none; transition: filter 0.5s; }
+.viewer-svg { position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+
+/* HITBOX SZÍNEK (Zöld, Piros, Szürke) */
+/* Védőháló: Alapból legyen átlátszó, hogy sose legyen fekete, ha egy státusz véletlen eltér */
+.hitbox-polygon { 
+    pointer-events: all; transition: 0.2s; cursor: pointer; 
+    fill: rgba(255,255,255,0); 
+    stroke: rgba(255,255,255,0.1); 
+    stroke-width: 1; 
+}
+.hitbox-polygon.hidden { opacity: 0.1 !important; pointer-events: none; }
+
+/* Szabad (Available): Zöld */
+.hitbox-polygon.status-available { fill: rgba(0, 255, 0, 0); stroke: rgba(137, 255, 137, 0.4); stroke-width: 1.5; }
+.hitbox-polygon.status-available:hover, 
+.hitbox-polygon.status-available.hover-active, 
+.hitbox-polygon.status-available.active { 
+    fill: rgba(39, 185, 34, 0.3); stroke: rgba(137, 255, 137, 0.8); stroke-width: 2.5;
+}
+
+/* Egyeztetés alatt (Reserved): Piros */
+.hitbox-polygon.status-reserved { fill: rgba(231, 76, 60, 0.25); stroke: #e74c3c; stroke-width: 1.5; }
+.hitbox-polygon.status-reserved:hover,
+.hitbox-polygon.status-reserved.hover-active,
+.hitbox-polygon.status-reserved.active { 
+    fill: rgba(231, 76, 60, 0.4); stroke-width: 2.5; 
+}
+
+/* Eladva (Sold): Szürke és letiltott */
+.hitbox-polygon.status-sold { fill: rgba(150, 150, 150, 0.4); stroke: #999; pointer-events: none; cursor: default; }
+
+.viewer-tooltip {
+    position: absolute; background: rgba(78, 78, 78, 0.9); color: white; padding: 6px 12px;
+    border-radius: 4px; font-size: 13px; font-weight: bold; pointer-events: none; z-index: 30; 
+    opacity: 0; transition: opacity 0.1s; 
+    transform: translate(-50%, -100%); /* Ezt módosítottuk -150%-ról */
+}
+
+/* FORGATÓ GOMBOK */
+.rotation-controls {
+    position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%);
+    display: flex; justify-content: space-between; padding: 0 20px; z-index: 15; pointer-events: none;
+}
+.rotate-btn {
+    pointer-events: all; width: 40px; height: 40px; 
+    background: rgba(255,255,255,0.8);
+    border: none; border-radius: 50%; color: #4E4E4E; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: 0.2s;
+}
+.rotate-btn svg { width: 22px; height: 22px; }
+.rotate-btn:hover { background: #987033; color: #fff; transform: scale(1.1); }
+
+/* ÁTLÁTSZÓ "FÓKUSZÁLT" IRÁNYTŰ */
+.compass-overlay {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; z-index: 15; pointer-events: none;
+    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
+}
+.compass-ticks, .compass-labels {
+    position: absolute; width: 90%; left: 5%; height: 100%;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 0%, rgba(0,0,0,0.8) 10%, transparent 35%);
+    mask-image: radial-gradient(circle at 50% 50%, black 0%, rgba(0,0,0,0.8) 10%, transparent 35%);
+    transition: -webkit-mask-image 0.1s, mask-image 0.1s;
+}
+.compass-ticks {
+    bottom: 25px; height: 10px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.7) 0px, rgba(255,255,255,0.7) 2px, transparent 2px, transparent calc(100% / 71));
+}
+.compass-labels span {
+    position: absolute; bottom: 40px; transform: translateX(-50%); font-size: 12px; color: #fff; font-weight: bold; letter-spacing: 1px;
+}
+.compass-modern-slider {
+    position: absolute; bottom: 20px; left: 5%; width: 90%; height: 20px;
+    -webkit-appearance: none; background: transparent; outline: none; pointer-events: all; z-index: 20;
+}
+.compass-modern-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 3px; height: 25px; background: #FAC587; cursor: pointer; box-shadow: 0 0 8px #FAC587;
+}
+
+/* LAKÁSKÁRTYÁK */
+.apt-card {
+    display: flex; gap: 15px; background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 15px; margin-bottom: 15px; transition: 0.2s; cursor: pointer;
+}
+.apt-card:hover, .apt-card.hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-color: #FAC587; }
+.apt-card.active { border-color: #987033; box-shadow: 0 5px 20px rgba(152, 112, 51, 0.15); }
+
+/* Kártya Státusz Színek */
+.apt-card.status-reserved { background: #fffcfc; border-color: #ffcdd2; }
+.apt-card.status-sold { background: #f0f0f0; border-color: #e0e0e0; pointer-events: none; opacity: 0.6; }
+
+.apt-card-img {
+    width: 130px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; background: #f9f9f9; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; border: 1px solid #f0f0f0;
+}
+.apt-card-content { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.apt-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.apt-card h3 { margin: 0; font-size: 15px; color: #4E4E4E; font-weight: bold; }
+.apt-price { font-size: 16px; font-weight: bold; color: #987033; }
+
+.apt-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; color: #888; margin-bottom: 12px;}
+.meta-item { display: flex; align-items: center; gap: 5px; }
+
+.apt-btn-modern {
+    background: #987033; color: #fff; text-align: center; padding: 8px; border-radius: 4px; font-size: 12px; text-transform: uppercase; font-weight: bold; text-decoration: none; transition: 0.2s;
+}
+.apt-btn-modern:hover { background: #FAC587; color: #4E4E4E;}
+.apt-card.status-sold .apt-btn-modern, .apt-card.status-reserved .apt-btn-modern { background: #ccc; color: #fff; cursor: not-allowed; pointer-events: none;}
+
+/* --- TOGGLE OFF ÁLLAPOT CSS OVERRIDES --- */
+.lakaspark-app-container[data-toggle="off"] .lakaspark-viewer-section { 
+    width: 100% !important; 
+}
+.lakaspark-app-container[data-toggle="off"] .lakaspark-list-section,
+.lakaspark-app-container[data-toggle="off"] #listToggleBtn { 
+    display: none !important; 
+}
+
+
+/* --- VISSZA GOMB STÍLUSA --- */
+.back-btn-modern {
+    position: absolute; top: 20px; left: 20px; z-index: 25;
+    background: rgba(255,255,255,0.9); border: 1px solid #eaeaea; padding: 8px 15px;
+    border-radius: 4px; color: #4E4E4E; font-size: 13px; font-weight: bold; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.back-btn-modern:hover { 
+    background: #987033; color: #fff; border-color: #987033; 
+}
+.back-btn-modern svg { 
+    width: 16px; height: 16px; 
+}
+
+
+/* --- STATIKUS HITBOX (Építési ütem) STÍLUSA --- */
+/* Szürke hover, nem kattintható nyíl (default kurzor) */
+.hitbox-polygon.status-static { 
+    fill: rgba(100, 100, 100, 0); 
+    stroke: rgba(150, 150, 150, 0.4); 
+    stroke-width: 1.5; 
+    cursor: default; 
+}
+.hitbox-polygon.status-static:hover, 
+.hitbox-polygon.status-static.hover-active { 
+    fill: rgba(150, 150, 150, 0.4); 
+    stroke: rgba(150, 150, 150, 0.8); 
+    stroke-width: 2.5; 
+}
+/* --- TOGGLE OFF ÁLLAPOT CSS OVERRIDES --- */
+.lakaspark-app-container[data-toggle="off"] .lakaspark-viewer-section { 
+    width: 100% !important; 
+}
+.lakaspark-app-container[data-toggle="off"] .lakaspark-list-section,
+.lakaspark-app-container[data-toggle="off"] #listToggleBtn { 
+    display: none !important; 
+}

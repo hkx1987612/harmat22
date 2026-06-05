@@ -23,11 +23,16 @@ video-upload-*/
 *-payload.txt
 *.log
 *.mbtree
+*.bak-*
+live_sales_manager_repo.php
+sitemap_index.xml
 chrome-*-profile*/
 _pydeps/
 __pycache__/
 
 # Generated working folders
+work/
+tmp_room_images/
 audit-gallery-images/
 fixed-floorplan-pdfs/
 fixed-page-floorplans/

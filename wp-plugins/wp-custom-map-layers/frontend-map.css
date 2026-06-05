@@ -1,0 +1,313 @@
+/* Fő konténer */
+.cml-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1400px;
+    margin: 40px auto; /* Tettünk rá egy kis felső margót, hogy a kilógó panelnek legyen helye */
+    background: transparent; /* A hátteret levettük, hogy csak a térképnek legyen */
+    font-family: inherit;
+    display: flex;
+    flex-direction: row;
+    /* Az overflow: hidden INNEN LEKERÜLT, hogy a doboz kilóghasson! */
+}
+
+/* Térkép vászon (bal oldalt tölti ki) */
+.cml-canvas {
+    flex: 1;
+    position: relative;
+    /* min-height: 500px; <-- EZT KIVETTÜK, ez okozta a mobilos szétesést! */
+    background: #eef3f5;
+    overflow: hidden; 
+    border-radius: 8px; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.05);
+    line-height: 0; /* ÚJ: Megakadályozza, hogy az img tag alatt maradjon egy 4px-es "fantom" üres hely */
+    font-size: 0; /* ÚJ: Szintén az inline-block képek okozta üres terek ellen */
+}
+/* --- PAN & ZOOM STÍLUSOK --- */
+
+.cml-canvas {
+    touch-action: none; /* KRITIKUS: Megakadályozza a mobil böngésző alap görgetését a térkép felett */
+    user-select: none;
+    cursor: grab;
+}
+.cml-canvas:active {
+    cursor: grabbing;
+}
+
+.cml-transform-layer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-origin: 0 0; /* A bal felső sarokból számoljuk a matekot */
+    transition: transform 0.1s ease-out; /* Sima, de gyors átmenet a hardveres gyorsításhoz */
+    will-change: transform;
+}
+
+/* Lebegő Zoom Gombok a térkép sarkában */
+.cml-zoom-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+}
+
+.cml-z-btn {
+    width: 36px;
+    height: 36px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1a2a30;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.cml-z-btn:hover {
+    background: #f0f0f1;
+    color: #c6821a;
+}
+.cml-base-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Útvonal (Route) Réteg - Javított pozicionálás */
+.cml-route-layer {
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    pointer-events: none; /* Fontos: Ne fogja meg a kattintásokat a markerek elől! */
+    z-index: 2; /* Az alaptérkép (1) felett, de a markerek (3) alatt */
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+.cml-route-layer.is-visible { 
+    opacity: 1; 
+}
+
+/* Lakópark Overlay - Zoom-független (Fix méretű) megjelenés */
+.cml-overlay-wrapper {
+    position: absolute;
+    z-index: 9999 !important; 
+    opacity: 0;
+    pointer-events: none;
+    /* A varázslat: visszaskálázza magát a zoomolás arányában */
+    transform: scale(var(--map-inv-scale, 1));
+    transform-origin: center center; /* Középpontból méretezzen */
+    /* FONTOS: Csak az opacity-t animáljuk, a transformot levettük, 
+       hogy a zoomolás villámgyors és "remegésmentes" legyen! */
+    transition: opacity 0.4s ease-in-out; 
+}
+
+.cml-overlay-wrapper.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.cml-overlay-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Lágy, rugós animáció */
+}
+
+/* Grow effect & Árnyék Hover-re */
+.cml-overlay-wrapper:hover .cml-overlay-img {
+    transform: scale(1.04);
+    filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));
+}
+
+.cml-overlay-wrapper:hover .cml-tooltip { 
+    opacity: 1; 
+    visibility: visible; 
+    transform: translateX(-50%) translateY(0); 
+}
+
+/* Kiemelt Overlay Kategória Gomb a listában */
+.cml-cat-overlay.is-active {
+    color: #1a2a30; /* Sötétebb, elegáns szín a főépületnek */
+    font-weight: 700;
+}
+.cml-cat-overlay.is-active .cml-cat-bullet {
+    background: #1a2a30;
+}
+
+/* Útvonal (Route) Réteg - Tökéletes illeszkedés az alaptérképhez */
+.cml-route-layer {
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 100%;    /* Szigorúan a vászon szélességéhez igazodik */
+    height: auto;   /* Arányosan méretezi a magasságot, pont mint az alaptérkép */
+    max-width: 100%; /* Biztonsági fék a kilógás ellen */
+    pointer-events: none; /* Ne akadályozza a markerek kattintását */
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+/* Az is-visible osztályt a JS adja hozzá induláskor és kattintáskor */
+.cml-route-layer.is-visible { 
+    opacity: 1; 
+}
+/* Hotspotok és Markerek */
+.cml-marker-layer {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 3; pointer-events: none;
+}
+/* Amikor a marker látható, a sima scale(1) helyett a CSS változót használja */
+.cml-marker-layer.is-visible .cml-marker {
+    opacity: 1; 
+    transform: translate(-50%, -50%) scale(var(--map-inv-scale, 1)); 
+    pointer-events: auto;
+}
+
+.cml-marker {
+    position: absolute;
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+    cursor: pointer;
+    z-index: 3; /* Alap z-index */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+}
+.cml-marker-circle {
+    width: 100%; height: 100%;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+.cml-marker:hover .cml-marker-circle { transform: scale(1.15); }
+.cml-marker-circle img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; }
+
+/* Elegáns Névjegy / Tooltip */
+.cml-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    /* Alapállapotban is megkapja az inverz skálázást */
+    transform: translateX(-50%) translateY(10px) scale(var(--map-inv-scale, 1));
+    transform-origin: bottom center; /* Fontos, hogy alulról méretezzen vissza */
+    background: #1a2a30; 
+    color: #fff;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0; visibility: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    pointer-events: none;
+}
+
+/* Hover esetén a translateY(0) is a CSS változóval működik */
+.cml-marker:hover .cml-tooltip,
+.cml-overlay-wrapper:hover .cml-tooltip { 
+    opacity: 1; 
+    visibility: visible; 
+    transform: translateX(-50%) translateY(0) scale(var(--map-inv-scale, 1)); 
+}
+
+/* LEBEGŐ UI PANEL (Jobbra fel tolva, kompaktabb mérettel) */
+.cml-ui-panel {
+    position: absolute;
+    right: 2%; /* Teljesen jobbra toljuk, de hagyunk egy pici margót */
+    top: -25px; /* Felfelé toljuk, hogy kilógjon a térkép tetején */
+    width: 360px; /* Picit keskenyebb lett */
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px 30px; /* Jelentősen csökkentett belső margók (50/40-ről 30/30-ra) */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    z-index: 10;
+    border-radius: 6px; /* Egy kis elegáns kerekítés */
+}
+
+.cml-title {
+    font-size: 24px; /* Kicsit kisebb, hogy ne foglaljon sok helyet */
+    line-height: 1.1;
+    color: #1a2a30;
+    margin: 0 0 10px 0; /* Kisebb sorköz alatta */
+    font-family: 'Cinzel', serif; /* Opcionális talpas betűtípus */
+}
+
+.cml-subtitle {
+    font-size: 13px; /* Kicsit kisebb */
+    color: #555;
+    line-height: 1.4;
+    margin: 0 0 20px 0; /* Kisebb sorköz alatta */
+}
+
+/* Kategória Rács (Két oszlop, kompaktabb) */
+.cml-cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 15px; /* Sűrűbb rács (kevesebb üres hely a sorok között) */
+}
+
+.cml-cat-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px; /* Picit kisebb betű a kategóriáknak */
+    color: #555;
+    transition: color 0.2s;
+}
+
+.cml-cat-bullet {
+    width: 6px;
+    height: 6px;
+    background: #ccc;
+    border-radius: 50%;
+    margin-right: 8px; /* Közelebb a szöveghez */
+    transition: all 0.2s;
+}
+
+/* 1. Az aktív állapot (Kattintás után ez marad rajta minden eszközön) */
+.cml-cat-item.is-active {
+    color: #c6821a;
+    font-weight: 600;
+}
+.cml-cat-item.is-active .cml-cat-bullet {
+    background: #c6821a;
+    transform: scale(1.5);
+}
+
+/* 2. Hover effektus (SZIGORÚAN CSAK egérrel rendelkező asztali gépekre) */
+@media (hover: hover) {
+    .cml-cat-item:hover {
+        color: #c6821a;
+        font-weight: 600;
+    }
+    .cml-cat-item:hover .cml-cat-bullet {
+        background: #c6821a;
+        transform: scale(1.5);
+    }
+}
+
+/* MOBIL NÉZET: A doboz lekerül a térkép alá */
+@media (max-width: 900px) {
+    .cml-wrapper { flex-direction: column; margin-top: 0; }
+    .cml-canvas { border-radius: 8px 8px 0 0; }
+    .cml-ui-panel {
+        position: relative;
+        right: auto; top: auto; transform: none;
+        width: 100%;
+        padding: 30px 20px;
+        box-shadow: none;
+        border-radius: 0 0 8px 8px;
+        border-top: 3px solid #c6821a;
+    }
+}

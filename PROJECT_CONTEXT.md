@@ -17,7 +17,9 @@ The website should feel like a real premium residential project site, not a temp
 - Developer / investor shown on site: Cooperation Power Kft.
 - Main contact: ertekesites@harmat22.hu
 - Main phone: +36-30-641-03-58
+- Sales launch / opening date: 2026-06-12
 - Expected first-phase handover: 2028 Q2
+- Current sales note: gardens attached to ground-floor apartments are included as a gift; exact garden size, use details, and contractual wording must be confirmed by sales for the selected apartment.
 
 ## Audience
 
@@ -57,6 +59,8 @@ The site should emphasize:
 - Sales portal: `/sales/`
 - Agent portal: `/agent/`
 - Client portal: `/client/`
+- Lawyer legal-document portal: `/lawyer/`
+- Sales-side legal-document view: `/sales/?view=legal`
 - WordPress backend login must remain separate from all of these.
 
 ## Approved Project Numbers
@@ -125,8 +129,22 @@ The sales system should centralize:
 - commissions
 - client account generation
 - client documents/attachments
+- lawyer document workflow for reserved/contract apartments
 
 CRM code rule: generated from date plus serial number, and stays with the customer.
+
+## Lawyer Document Direction
+
+The lawyer document portal should stay private and apartment-centered:
+
+- lawyers first choose an apartment from the protected `/lawyer/` homepage
+- reserved/contract/sold apartments should show sales status, buyer name, contact data, amount, deposit, payment status, and contract status when sales data exists
+- sales managers can review the same legal file workspace from `/sales/?view=legal`
+- each apartment can have a legal case status, required-document checklist, missing-item reminder, deadline, and internal legal note
+- legal case number should be the CRM identifier from the sales system; if a sales deal has no explicit CRM field, display a stable CRM-style code from deal date plus deal id
+- the lawyer portal frontend should be Hungarian only and must not show Chinese/English placeholders or mojibake
+- uploaded lawyer files must not be public media URLs and must require logged-in legal-document permission to download
+- do not expose buyer identity data, deal amounts, or legal files on public pages
 
 ## Agent Direction
 
