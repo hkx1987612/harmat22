@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.0
+ * Version: 1.1.1
  */
 
 if (!defined('ABSPATH')) {
@@ -37,11 +37,11 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.0');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.1');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
-    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.0', true);
+    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.1', true);
     wp_enqueue_script('harmat-lakas-redesign');
     wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
 }, 90);
@@ -56,7 +56,7 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v3';
+    return 'harmat_lakas_redesign_markup_v4';
 }
 
 function harmat_lakas_redesign_clear_cache() {
@@ -110,6 +110,29 @@ function harmat_lakas_redesign_sqm_money($item, $hide = false) {
         return 'Érdeklődjön árainkról';
     }
     return number_format_i18n($sqm_price, 0) . ' Ft / m²';
+}
+
+function harmat_lakas_redesign_public_sqm_range($items) {
+    $values = array();
+    foreach ($items as $item) {
+        $sqm_price = harmat_lakas_redesign_public_sqm_price($item);
+        if ($sqm_price > 0) {
+            $values[] = $sqm_price;
+        }
+    }
+
+    if (!$values) {
+        return array('min' => 0, 'max' => 0, 'step' => 50000);
+    }
+
+    $step = 50000;
+    $min = (int) floor(min($values) / $step) * $step;
+    $max = (int) ceil(max($values) / $step) * $step;
+    if ($max <= $min) {
+        $max = $min + $step;
+    }
+
+    return array('min' => $min, 'max' => $max, 'step' => $step);
 }
 
 function harmat_lakas_redesign_image($item, $index) {
@@ -306,6 +329,7 @@ function harmat_lakas_redesign_render() {
     $buildings = harmat_lakas_redesign_unique($items, 'building');
     $floors = harmat_lakas_redesign_unique($items, 'floor');
     $rooms = harmat_lakas_redesign_unique($items, 'rooms');
+    $sqm_range = harmat_lakas_redesign_public_sqm_range($items);
 
     ob_start();
     ?>
@@ -320,7 +344,7 @@ function harmat_lakas_redesign_render() {
             </div>
         </div>
 
-        <div class="hm-lakas-toolbar" data-hm-filter>
+        <div class="hm-lakas-toolbar" data-hm-filter data-sqm-active="0">
             <div class="hm-lakas-tabs" role="group" aria-label="Státusz">
                 <button type="button" class="is-active" data-status="all">Mind</button>
                 <button type="button" data-status="current">Elérhető</button>
@@ -358,14 +382,23 @@ function harmat_lakas_redesign_render() {
                     <?php endforeach; ?>
                 </select>
             </label>
-            <label>
-                <span>m² ár min.</span>
-                <input type="text" inputmode="numeric" data-filter="sqmMin" placeholder="pl. 1200000">
-            </label>
-            <label>
-                <span>m² ár max.</span>
-                <input type="text" inputmode="numeric" data-filter="sqmMax" placeholder="pl. 1800000">
-            </label>
+            <div class="hm-lakas-range-field" data-sqm-range>
+                <span>m² ár tartomány</span>
+                <div class="hm-lakas-range-row">
+                    <div class="hm-lakas-range-meta">
+                        <strong>Legalacsonyabb</strong>
+                        <em data-sqm-min-label>Mind</em>
+                    </div>
+                    <input type="range" data-filter="sqmMin" min="<?php echo esc_attr($sqm_range['min']); ?>" max="<?php echo esc_attr($sqm_range['max']); ?>" step="<?php echo esc_attr($sqm_range['step']); ?>" value="<?php echo esc_attr($sqm_range['min']); ?>" data-default="<?php echo esc_attr($sqm_range['min']); ?>" aria-label="m² ár alsó határ">
+                </div>
+                <div class="hm-lakas-range-row">
+                    <div class="hm-lakas-range-meta">
+                        <strong>Legmagasabb</strong>
+                        <em data-sqm-max-label>Mind</em>
+                    </div>
+                    <input type="range" data-filter="sqmMax" min="<?php echo esc_attr($sqm_range['min']); ?>" max="<?php echo esc_attr($sqm_range['max']); ?>" step="<?php echo esc_attr($sqm_range['step']); ?>" value="<?php echo esc_attr($sqm_range['max']); ?>" data-default="<?php echo esc_attr($sqm_range['max']); ?>" aria-label="m² ár felső határ">
+                </div>
+            </div>
             <label>
                 <span>Sorrend</span>
                 <select data-filter="sort">
@@ -468,6 +501,18 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-toolbar label{display:grid;gap:7px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
     .hm-lakas-toolbar input,.hm-lakas-toolbar select{width:100%;height:46px;border:1px solid rgba(168,118,45,.35);background:#fff;color:#253137;padding:0 13px;font-size:14px;outline:none}
     .hm-lakas-toolbar input:focus,.hm-lakas-toolbar select:focus{border-color:#a8762d;box-shadow:0 0 0 3px rgba(168,118,45,.12)}
+    .hm-lakas-range-field{grid-column:span 2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .hm-lakas-range-field>span{grid-column:1/-1}
+    .hm-lakas-range-row{display:grid;gap:8px;border:1px solid rgba(168,118,45,.35);background:#fff;padding:11px 13px 12px}
+    .hm-lakas-range-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:20px;color:#253137;letter-spacing:0;text-transform:none}
+    .hm-lakas-range-meta strong{font-size:13px;font-weight:900}
+    .hm-lakas-range-meta em{font-style:normal;font-size:13px;font-weight:900;color:#a8762d;white-space:nowrap}
+    .hm-lakas-range-row input[type=range]{width:100%;height:24px;margin:0;padding:0;border:0;background:transparent;box-shadow:none;accent-color:#a8762d;cursor:pointer;-webkit-appearance:none;appearance:none}
+    .hm-lakas-range-row input[type=range]:focus{box-shadow:none}
+    .hm-lakas-range-row input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:999px;background:#ead8b8}
+    .hm-lakas-range-row input[type=range]::-moz-range-track{height:4px;border-radius:999px;background:#ead8b8}
+    .hm-lakas-range-row input[type=range]::-webkit-slider-thumb{width:20px;height:20px;margin-top:-8px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer;-webkit-appearance:none;appearance:none}
+    .hm-lakas-range-row input[type=range]::-moz-range-thumb{width:20px;height:20px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer}
     .hm-lakas-reset{height:46px;background:#4f4c49;color:#d5aa6f;border-color:#4f4c49}
     .hm-lakas-resultbar{display:flex;align-items:center;gap:8px;margin:0 0 20px;color:#687078;font-size:14px}
     .hm-lakas-resultbar strong{min-width:44px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#a8762d;color:#fff}
@@ -498,8 +543,8 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-actions .hm-lakas-outline{background:#fff;border:1px solid #a8762d;color:#a8762d}
     .hm-lakas-empty{display:none;margin:28px 0 0;padding:24px;border:1px solid rgba(168,118,45,.2);background:#fff;text-align:center;color:#687078}
     .hm-lakas-empty.is-visible{display:block}
-    @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-stats{justify-content:flex-start}}
-    @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
+    @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-range-field{grid-column:1/-1}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-stats{justify-content:flex-start}}
+    @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
 
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .property_loop,
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .elementor-section-wrap,
@@ -647,9 +692,52 @@ function harmat_lakas_redesign_js() {
       var empty=page.querySelector("[data-empty]");
       var grid=page.querySelector(".hm-lakas-grid");
       cards.forEach(function(card,index){card.dataset.originalOrder=String(index);});
-      var state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sort:""};
+      var state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sqmActive:false,sort:""};
       function numberValue(value){
         return parseInt(String(value||"").replace(/[^0-9]/g,""),10)||0;
+      }
+      function money(value){
+        return new Intl.NumberFormat("hu-HU").format(numberValue(value))+" Ft";
+      }
+      function rangeField(name){
+        return filters.querySelector("[data-filter="+name+"]");
+      }
+      function syncRangeLabels(){
+        var minLabel=filters.querySelector("[data-sqm-min-label]");
+        var maxLabel=filters.querySelector("[data-sqm-max-label]");
+        if(minLabel) minLabel.textContent=state.sqmActive?money(state.sqmMin):"Mind";
+        if(maxLabel) maxLabel.textContent=state.sqmActive?money(state.sqmMax):"Mind";
+        filters.dataset.sqmActive=state.sqmActive?"1":"0";
+      }
+      function resetRange(){
+        var minField=rangeField("sqmMin");
+        var maxField=rangeField("sqmMax");
+        if(minField) minField.value=minField.dataset.default||minField.min||"";
+        if(maxField) maxField.value=maxField.dataset.default||maxField.max||"";
+        state.sqmMin=minField?minField.value:"";
+        state.sqmMax=maxField?maxField.value:"";
+        state.sqmActive=false;
+        syncRangeLabels();
+      }
+      function syncRangeState(changedName){
+        var minField=rangeField("sqmMin");
+        var maxField=rangeField("sqmMax");
+        if(!minField||!maxField) return;
+        var minValue=numberValue(minField.value);
+        var maxValue=numberValue(maxField.value);
+        if(minValue>maxValue){
+          if(changedName==="sqmMin"){
+            maxValue=minValue;
+            maxField.value=String(maxValue);
+          }else{
+            minValue=maxValue;
+            minField.value=String(minValue);
+          }
+        }
+        state.sqmMin=String(minValue);
+        state.sqmMax=String(maxValue);
+        state.sqmActive=true;
+        syncRangeLabels();
       }
       function cardSqm(card){
         return numberValue(card.dataset.sqmPrice);
@@ -681,7 +769,7 @@ function harmat_lakas_redesign_js() {
         cards.forEach(function(card){
           var sqm=cardSqm(card);
           var priceOk=true;
-          if(minSqm||maxSqm){
+          if(state.sqmActive&&(minSqm||maxSqm)){
             priceOk=isPriceKnown(card)&&(!minSqm||sqm>=minSqm)&&(!maxSqm||sqm<=maxSqm);
           }
           var ok=(state.status==="all"||card.dataset.status===state.status)&&
@@ -702,8 +790,12 @@ function harmat_lakas_redesign_js() {
         var status=e.target.closest("[data-status]");
         if(status){state.status=status.dataset.status||"all";apply();return;}
         if(e.target.closest("[data-reset]")){
-          state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sort:""};
-          filters.querySelectorAll("[data-filter]").forEach(function(field){field.value="";});
+          state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sqmActive:false,sort:""};
+          filters.querySelectorAll("[data-filter]").forEach(function(field){
+            if(field.type==="range") return;
+            field.value="";
+          });
+          resetRange();
           apply();
         }
       });
@@ -711,15 +803,26 @@ function harmat_lakas_redesign_js() {
         var field=e.target.closest("[data-filter]");
         if(!field) return;
         var value=(field.value||"").trim();
+        if(field.dataset.filter==="sqmMin"||field.dataset.filter==="sqmMax"){
+          syncRangeState(field.dataset.filter);
+          apply();
+          return;
+        }
         state[field.dataset.filter]=field.dataset.filter==="query"?value.toLowerCase():value;
         apply();
       });
       filters.addEventListener("change",function(e){
         var field=e.target.closest("[data-filter]");
         if(!field) return;
+        if(field.dataset.filter==="sqmMin"||field.dataset.filter==="sqmMax"){
+          syncRangeState(field.dataset.filter);
+          apply();
+          return;
+        }
         state[field.dataset.filter]=field.value;
         apply();
       });
+      resetRange();
       apply();
     })();
     ';

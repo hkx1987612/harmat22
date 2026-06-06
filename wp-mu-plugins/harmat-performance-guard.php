@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.13
+ * Version: 1.3.14
  */
 
 if (!defined('ABSPATH')) {
@@ -5818,6 +5818,7 @@ function harmat_perf_lakaskereso_search_patch() {
     var rooms = selectedValue(toolbar, "rooms");
     var minSqm = numberValue(selectedValue(toolbar, "sqmMin"));
     var maxSqm = numberValue(selectedValue(toolbar, "sqmMax"));
+    var sqmActive = toolbar.dataset.sqmActive === "1";
     var sort = selectedValue(toolbar, "sort");
     var activeStatus = toolbar.querySelector("button.is-active[data-status]");
     var status = activeStatus ? activeStatus.getAttribute("data-status") : "all";
@@ -5826,7 +5827,7 @@ function harmat_perf_lakaskereso_search_patch() {
     cards.forEach(function (card) {
       var sqm = cardSqm(card);
       var priceOk = true;
-      if (minSqm || maxSqm) {
+      if (sqmActive && (minSqm || maxSqm)) {
         priceOk = isPriceKnown(card) && (!minSqm || sqm >= minSqm) && (!maxSqm || sqm <= maxSqm);
       }
       var visible =
