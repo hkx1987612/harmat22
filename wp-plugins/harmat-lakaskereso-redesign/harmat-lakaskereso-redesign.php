@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 if (!defined('ABSPATH')) {
@@ -37,11 +37,11 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.0.1');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.0');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
-    wp_register_script('harmat-lakas-redesign', false, array(), '1.0.1', true);
+    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.0', true);
     wp_enqueue_script('harmat-lakas-redesign');
     wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
 }, 90);
@@ -56,7 +56,7 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v2';
+    return 'harmat_lakas_redesign_markup_v3';
 }
 
 function harmat_lakas_redesign_clear_cache() {
@@ -87,6 +87,29 @@ function harmat_lakas_redesign_money($value, $hide = false) {
         return 'Ár egyeztetés alapján';
     }
     return number_format_i18n($number, 0) . ' Ft';
+}
+
+function harmat_lakas_redesign_public_sqm_price($item) {
+    if (!empty($item['hidePrice'])) {
+        return 0;
+    }
+
+    $sqm_price = isset($item['sqmPrice']) ? (int) $item['sqmPrice'] : 0;
+    if ($sqm_price > 0) {
+        return $sqm_price;
+    }
+
+    $price = isset($item['price']) ? (int) $item['price'] : 0;
+    $area = isset($item['salesArea']) ? (float) $item['salesArea'] : 0.0;
+    return ($price > 0 && $area > 0) ? (int) round($price / $area) : 0;
+}
+
+function harmat_lakas_redesign_sqm_money($item, $hide = false) {
+    $sqm_price = $hide ? 0 : harmat_lakas_redesign_public_sqm_price($item);
+    if (!$sqm_price) {
+        return 'Érdeklődjön árainkról';
+    }
+    return number_format_i18n($sqm_price, 0) . ' Ft / m²';
 }
 
 function harmat_lakas_redesign_image($item, $index) {
@@ -133,6 +156,8 @@ function harmat_lakas_redesign_card_markup($item, $index = 0) {
     $terrace = $item['terrace'] ?? 0;
     $hide_price = !empty($item['hidePrice']);
     $price = harmat_lakas_redesign_money($item['price'] ?? 0, $hide_price);
+    $sqm_price = harmat_lakas_redesign_public_sqm_price($item);
+    $sqm_price_label = harmat_lakas_redesign_sqm_money($item, $hide_price);
     $url = !empty($item['url']) ? $item['url'] : '#';
 
     ob_start();
@@ -143,7 +168,10 @@ function harmat_lakas_redesign_card_markup($item, $index = 0) {
         data-query="<?php echo esc_attr(strtolower($title)); ?>"
         data-building="<?php echo esc_attr($building); ?>"
         data-floor="<?php echo esc_attr($floor); ?>"
-        data-rooms="<?php echo esc_attr($rooms_value); ?>">
+        data-rooms="<?php echo esc_attr($rooms_value); ?>"
+        data-price-hidden="<?php echo esc_attr($hide_price ? '1' : '0'); ?>"
+        data-price="<?php echo esc_attr($hide_price ? '' : (int) ($item['price'] ?? 0)); ?>"
+        data-sqm-price="<?php echo esc_attr($sqm_price ?: ''); ?>">
         <a class="hm-lakas-media" href="<?php echo esc_url($url); ?>">
             <img src="<?php echo esc_url(harmat_lakas_redesign_image($item, $index)); ?>" alt="<?php echo esc_attr($title ?: 'Harmat Lakópark lakás'); ?>" loading="lazy">
             <span class="hm-lakas-badge"><?php echo esc_html($title); ?></span>
@@ -153,6 +181,7 @@ function harmat_lakas_redesign_card_markup($item, $index = 0) {
             <div class="hm-lakas-price">
                 <small>Árinformáció</small>
                 <strong><?php echo esc_html($price); ?></strong>
+                <span><?php echo esc_html($sqm_price_label); ?></span>
             </div>
             <div class="hm-lakas-facts">
                 <div><small>Épület</small><strong><?php echo esc_html($building ?: '-'); ?></strong></div>
@@ -329,6 +358,22 @@ function harmat_lakas_redesign_render() {
                     <?php endforeach; ?>
                 </select>
             </label>
+            <label>
+                <span>m² ár min.</span>
+                <input type="text" inputmode="numeric" data-filter="sqmMin" placeholder="pl. 1200000">
+            </label>
+            <label>
+                <span>m² ár max.</span>
+                <input type="text" inputmode="numeric" data-filter="sqmMax" placeholder="pl. 1800000">
+            </label>
+            <label>
+                <span>Sorrend</span>
+                <select data-filter="sort">
+                    <option value="">Alapértelmezett</option>
+                    <option value="sqm-asc">m² ár: alacsony → magas</option>
+                    <option value="sqm-desc">m² ár: magas → alacsony</option>
+                </select>
+            </label>
             <button type="button" class="hm-lakas-reset" data-reset>Alaphelyzet</button>
         </div>
 
@@ -349,6 +394,8 @@ function harmat_lakas_redesign_render() {
                 $terrace = $item['terrace'] ?? 0;
                 $hide_price = !empty($item['hidePrice']);
                 $price = harmat_lakas_redesign_money($item['price'] ?? 0, $hide_price);
+                $sqm_price = harmat_lakas_redesign_public_sqm_price($item);
+                $sqm_price_label = harmat_lakas_redesign_sqm_money($item, $hide_price);
                 $url = !empty($item['url']) ? $item['url'] : '#';
                 ?>
                 <article class="hm-lakas-card hm-status-<?php echo esc_attr($status); ?>"
@@ -357,7 +404,10 @@ function harmat_lakas_redesign_render() {
                     data-query="<?php echo esc_attr(strtolower($title)); ?>"
                     data-building="<?php echo esc_attr($building); ?>"
                     data-floor="<?php echo esc_attr($floor); ?>"
-                    data-rooms="<?php echo esc_attr($rooms_value); ?>">
+                    data-rooms="<?php echo esc_attr($rooms_value); ?>"
+                    data-price-hidden="<?php echo esc_attr($hide_price ? '1' : '0'); ?>"
+                    data-price="<?php echo esc_attr($hide_price ? '' : (int) ($item['price'] ?? 0)); ?>"
+                    data-sqm-price="<?php echo esc_attr($sqm_price ?: ''); ?>">
                     <a class="hm-lakas-media" href="<?php echo esc_url($url); ?>">
                         <img src="<?php echo esc_url(harmat_lakas_redesign_image($item, $index)); ?>" alt="<?php echo esc_attr($title ?: 'Harmat Lakópark lakás'); ?>" loading="lazy">
                         <span class="hm-lakas-badge"><?php echo esc_html($title); ?></span>
@@ -367,6 +417,7 @@ function harmat_lakas_redesign_render() {
                         <div class="hm-lakas-price">
                             <small>Árinformáció</small>
                             <strong><?php echo esc_html($price); ?></strong>
+                            <span><?php echo esc_html($sqm_price_label); ?></span>
                         </div>
                         <div class="hm-lakas-facts">
                             <div><small>Épület</small><strong><?php echo esc_html($building ?: '-'); ?></strong></div>
@@ -406,7 +457,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
     .hm-lakas-stats span{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border:1px solid rgba(168,118,45,.22);border-radius:999px;background:#fff;color:#687078;font-size:12px;font-weight:700}
     .hm-lakas-stats strong{color:#253137;font-size:16px}
-    .hm-lakas-toolbar{display:grid;grid-template-columns:1.15fr repeat(4,minmax(130px,.72fr)) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
+    .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(190px,1.15fr) repeat(6,minmax(118px,.72fr)) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
     .hm-lakas-tabs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
     .hm-lakas-tabs button,.hm-lakas-reset{min-height:38px;padding:0 18px;border:1px solid rgba(168,118,45,.34);background:#fff;color:#8c621f;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
     .hm-lakas-tabs button{border-radius:999px}
@@ -436,6 +487,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-price{margin-bottom:14px;padding:13px 14px;border-left:3px solid #a8762d;background:#fff8ed}
     .hm-lakas-price small,.hm-lakas-facts small{display:block;margin-bottom:5px;color:#a8762d;font-family:"Marcellus SC",Georgia,serif;font-size:11px;line-height:1.1;text-transform:uppercase}
     .hm-lakas-price strong{display:block;color:#253137;font-size:18px;line-height:1.25}
+    .hm-lakas-price span{display:block;margin-top:5px;color:#687078;font-size:12px;font-weight:800;line-height:1.25}
     .hm-lakas-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(168,118,45,.16);border-radius:6px;overflow:hidden}
     .hm-lakas-facts div{min-width:0;padding:12px;border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13);background:#fffdf8}
     .hm-lakas-facts div:nth-child(3n){border-right:0}
@@ -593,18 +645,55 @@ function harmat_lakas_redesign_js() {
       var filters=page.querySelector("[data-hm-filter]");
       var count=page.querySelector("[data-count]");
       var empty=page.querySelector("[data-empty]");
-      var state={status:"all",query:"",building:"",floor:"",rooms:""};
+      var grid=page.querySelector(".hm-lakas-grid");
+      cards.forEach(function(card,index){card.dataset.originalOrder=String(index);});
+      var state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sort:""};
+      function numberValue(value){
+        return parseInt(String(value||"").replace(/[^0-9]/g,""),10)||0;
+      }
+      function cardSqm(card){
+        return numberValue(card.dataset.sqmPrice);
+      }
+      function isPriceKnown(card){
+        return card.dataset.priceHidden!=="1"&&cardSqm(card)>0;
+      }
+      function sortCards(){
+        if(!grid) return;
+        var sorted=cards.slice();
+        sorted.sort(function(a,b){
+          if(state.sort==="sqm-asc"||state.sort==="sqm-desc"){
+            var ak=isPriceKnown(a);
+            var bk=isPriceKnown(b);
+            if(ak!==bk) return ak?-1:1;
+            if(ak&&bk){
+              var delta=cardSqm(a)-cardSqm(b);
+              if(delta!==0) return state.sort==="sqm-asc"?delta:-delta;
+            }
+          }
+          return numberValue(a.dataset.originalOrder)-numberValue(b.dataset.originalOrder);
+        });
+        sorted.forEach(function(card){grid.appendChild(card);});
+      }
       function apply(){
         var visible=0;
+        var minSqm=numberValue(state.sqmMin);
+        var maxSqm=numberValue(state.sqmMax);
         cards.forEach(function(card){
+          var sqm=cardSqm(card);
+          var priceOk=true;
+          if(minSqm||maxSqm){
+            priceOk=isPriceKnown(card)&&(!minSqm||sqm>=minSqm)&&(!maxSqm||sqm<=maxSqm);
+          }
           var ok=(state.status==="all"||card.dataset.status===state.status)&&
             (!state.query||(card.dataset.query||"").indexOf(state.query)!==-1)&&
             (!state.building||card.dataset.building===state.building)&&
             (!state.floor||card.dataset.floor===state.floor)&&
-            (!state.rooms||card.dataset.rooms===state.rooms);
+            (!state.rooms||card.dataset.rooms===state.rooms)&&
+            priceOk;
           card.classList.toggle("is-hidden",!ok);
           if(ok) visible++;
         });
+        sortCards();
         if(count) count.textContent=visible;
         if(empty) empty.classList.toggle("is-visible",visible===0);
         filters.querySelectorAll("[data-status]").forEach(function(btn){btn.classList.toggle("is-active",btn.dataset.status===state.status);});
@@ -613,7 +702,7 @@ function harmat_lakas_redesign_js() {
         var status=e.target.closest("[data-status]");
         if(status){state.status=status.dataset.status||"all";apply();return;}
         if(e.target.closest("[data-reset]")){
-          state={status:"all",query:"",building:"",floor:"",rooms:""};
+          state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sort:""};
           filters.querySelectorAll("[data-filter]").forEach(function(field){field.value="";});
           apply();
         }
@@ -621,8 +710,8 @@ function harmat_lakas_redesign_js() {
       filters.addEventListener("input",function(e){
         var field=e.target.closest("[data-filter]");
         if(!field) return;
-        state[field.dataset.filter]=(field.value||"").trim().toLowerCase();
-        if(field.dataset.filter!=="query") state[field.dataset.filter]=field.value;
+        var value=(field.value||"").trim();
+        state[field.dataset.filter]=field.dataset.filter==="query"?value.toLowerCase():value;
         apply();
       });
       filters.addEventListener("change",function(e){

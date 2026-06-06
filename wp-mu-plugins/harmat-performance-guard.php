@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.12
+ * Version: 1.3.13
  */
 
 if (!defined('ABSPATH')) {
@@ -5747,6 +5747,37 @@ function harmat_perf_lakaskereso_search_patch() {
   function normalizeCode(value) {
     return normalizeText(value).replace(/[^a-z0-9]/g, "");
   }
+  function numberValue(value) {
+    return parseInt(String(value || "").replace(/[^0-9]/g, ""), 10) || 0;
+  }
+  function cardSqm(card) {
+    return numberValue(card.dataset.sqmPrice);
+  }
+  function isPriceKnown(card) {
+    return card.dataset.priceHidden !== "1" && cardSqm(card) > 0;
+  }
+  function sortCards(cards, sort) {
+    if (!cards.length) return;
+    var grid = cards[0].parentElement;
+    if (!grid) return;
+    cards.forEach(function (card, index) {
+      if (!card.dataset.originalOrder) card.dataset.originalOrder = String(index);
+    });
+    cards.slice().sort(function (a, b) {
+      if (sort === "sqm-asc" || sort === "sqm-desc") {
+        var ak = isPriceKnown(a);
+        var bk = isPriceKnown(b);
+        if (ak !== bk) return ak ? -1 : 1;
+        if (ak && bk) {
+          var delta = cardSqm(a) - cardSqm(b);
+          if (delta !== 0) return sort === "sqm-asc" ? delta : -delta;
+        }
+      }
+      return numberValue(a.dataset.originalOrder) - numberValue(b.dataset.originalOrder);
+    }).forEach(function (card) {
+      grid.appendChild(card);
+    });
+  }
   function queryMatches(card, query) {
     if (!query) return true;
 
@@ -5785,22 +5816,32 @@ function harmat_perf_lakaskereso_search_patch() {
     var building = selectedValue(toolbar, "building");
     var floor = selectedValue(toolbar, "floor");
     var rooms = selectedValue(toolbar, "rooms");
+    var minSqm = numberValue(selectedValue(toolbar, "sqmMin"));
+    var maxSqm = numberValue(selectedValue(toolbar, "sqmMax"));
+    var sort = selectedValue(toolbar, "sort");
     var activeStatus = toolbar.querySelector("button.is-active[data-status]");
     var status = activeStatus ? activeStatus.getAttribute("data-status") : "all";
     var visibleCount = 0;
 
     cards.forEach(function (card) {
+      var sqm = cardSqm(card);
+      var priceOk = true;
+      if (minSqm || maxSqm) {
+        priceOk = isPriceKnown(card) && (!minSqm || sqm >= minSqm) && (!maxSqm || sqm <= maxSqm);
+      }
       var visible =
         (status === "all" || !status || card.dataset.status === status) &&
         (!building || card.dataset.building === building) &&
         (!floor || card.dataset.floor === floor) &&
         (!rooms || card.dataset.rooms === rooms) &&
-        queryMatches(card, query);
+        queryMatches(card, query) &&
+        priceOk;
 
       card.classList.remove("is-hidden");
       card.classList.toggle("hm-smart-hidden", !visible);
       if (visible) visibleCount += 1;
     });
+    sortCards(cards, sort);
 
     var count = document.querySelector(".hm-lakas-resultbar [data-count]");
     if (count) {
