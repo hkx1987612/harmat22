@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.21
+ * Version: 1.6.22
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.21';
+    const VERSION = '1.6.22';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -4909,7 +4909,33 @@ final class Harmat_Sales_Manager {
             echo '</ol>';
         }
         echo '</div>';
+
+        $this->render_sales_traffic_seven_day_table($stats['daily'] ?? array(), $can_manage);
         echo '</section>';
+    }
+
+    private function render_sales_traffic_seven_day_table($days, $can_manage) {
+        echo '<div class="harmat-sales-traffic-days">';
+        echo '<h3>近7天访问明细</h3>';
+        if (!$days) {
+            echo '<p>暂无近7天访问记录。</p>';
+            echo '</div>';
+            return;
+        }
+
+        echo '<div class="harmat-sales-traffic-day-table"><table><thead><tr><th>日期</th><th>访客</th><th>浏览</th><th>询价</th></tr></thead><tbody>';
+        foreach ($days as $day) {
+            $date = (string) ($day['date'] ?? '');
+            $inquiries = $can_manage && $date !== '' ? $this->count_offer_inquiries_on_date($date) : null;
+            echo '<tr>';
+            echo '<td><strong>' . esc_html((string) ($day['label'] ?? $date)) . '</strong><small>' . esc_html($date) . '</small></td>';
+            echo '<td>' . esc_html((string) ((int) ($day['visitors'] ?? 0))) . '</td>';
+            echo '<td>' . esc_html((string) ((int) ($day['pageviews'] ?? 0))) . '</td>';
+            echo '<td>' . esc_html($inquiries === null ? '-' : (string) $inquiries) . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table></div>';
+        echo '</div>';
     }
 
     private function sales_visit_dashboard_stats() {
@@ -4921,9 +4947,18 @@ final class Harmat_Sales_Manager {
         $today = current_time('Y-m-d');
         $today_data = isset($stats[$today]) && is_array($stats[$today]) ? $stats[$today] : array();
         $seven_day_pageviews = 0;
+        $daily = array();
         for ($i = 0; $i < 7; $i++) {
             $date = date('Y-m-d', strtotime('-' . $i . ' days', strtotime($today)));
-            $seven_day_pageviews += (int) ($stats[$date]['pageviews'] ?? 0);
+            $day_data = isset($stats[$date]) && is_array($stats[$date]) ? $stats[$date] : array();
+            $pageviews = (int) ($day_data['pageviews'] ?? 0);
+            $seven_day_pageviews += $pageviews;
+            array_unshift($daily, array(
+                'date' => $date,
+                'label' => $this->sales_traffic_day_label($date, $today),
+                'visitors' => isset($day_data['visitors']) && is_array($day_data['visitors']) ? count($day_data['visitors']) : 0,
+                'pageviews' => $pageviews,
+            ));
         }
 
         $top_pages = array();
@@ -4944,7 +4979,18 @@ final class Harmat_Sales_Manager {
             'today_pageviews' => (int) ($today_data['pageviews'] ?? 0),
             'seven_day_pageviews' => $seven_day_pageviews,
             'top_pages' => $top_pages,
+            'daily' => $daily,
         );
+    }
+
+    private function sales_traffic_day_label($date, $today) {
+        if ($date === $today) {
+            return '今天';
+        }
+        if ($date === date('Y-m-d', strtotime('-1 day', strtotime($today)))) {
+            return '昨天';
+        }
+        return date('m-d', strtotime($date));
     }
 
     private function render_sales_portal_dashboard() {
@@ -9642,6 +9688,7 @@ JS;
         .harmat-sales-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin:0 0 18px}.harmat-sales-kpis article{padding:18px;border-radius:18px;background:#fff;border:1px solid #ead8b8;box-shadow:0 12px 30px rgba(70,54,28,.06)}.harmat-sales-kpis small{display:block;color:#a5742c;font-weight:900;letter-spacing:.08em}.harmat-sales-kpis strong{display:block;margin-top:8px;color:#253137;font-size:34px;line-height:1}.harmat-sales-kpis strong a{color:#a8762d;text-decoration:none}.harmat-sales-kpis-compact{grid-template-columns:repeat(5,minmax(0,1fr))}
         .harmat-sales-traffic-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:center;margin:0 0 18px;padding:10px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 10px 28px rgba(70,54,28,.05)}.harmat-sales-traffic-strip span{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:8px 12px;border-radius:12px;background:#fffaf3;border:1px solid rgba(234,216,184,.82)}.harmat-sales-traffic-strip small{color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-strip strong{color:#253137;font-size:22px;line-height:1}.harmat-sales-traffic-strip a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border-radius:12px;background:#a8762d;color:#fff;font-weight:900;text-decoration:none;white-space:nowrap}
         .harmat-sales-traffic-panel{margin-bottom:18px}.harmat-sales-traffic-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-traffic-grid article{padding:15px 16px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-grid small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-grid strong{display:block;margin-top:6px;color:#253137;font-size:28px;line-height:1}.harmat-sales-traffic-grid span{display:block;margin-top:6px;color:#687178;font-size:12px;font-weight:800}.harmat-sales-traffic-pages{padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-pages h3{margin:0 0 10px;color:#9a6b27;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-pages p{margin:0;color:#687178}.harmat-sales-traffic-pages ol{display:grid;gap:8px;margin:0;padding:0;list-style:none}.harmat-sales-traffic-pages li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(234,216,184,.72)}.harmat-sales-traffic-pages a{color:#253137;font-weight:900;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.harmat-sales-traffic-pages span{color:#a8762d;font-size:13px;font-weight:900;white-space:nowrap}.harmat-sales-traffic-pages small{grid-column:1/-1;color:#8a9299;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .harmat-sales-traffic-days{margin-top:14px;padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-days h3{margin:0 0 10px;color:#9a6b27;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-days p{margin:0;color:#687178}.harmat-sales-traffic-day-table{overflow:auto;border:1px solid rgba(234,216,184,.86);border-radius:12px;background:#fff}.harmat-sales-traffic-day-table table{width:100%;min-width:520px;border-collapse:collapse}.harmat-sales-traffic-day-table th{padding:10px 12px;background:#fbf4e7;color:#9a6b27;font-size:12px;text-align:left;text-transform:uppercase}.harmat-sales-traffic-day-table td{padding:11px 12px;border-top:1px solid #ead8b8;color:#253137;font-size:15px;font-weight:900}.harmat-sales-traffic-day-table td strong{display:block;color:#253137}.harmat-sales-traffic-day-table td small{display:block;margin-top:3px;color:#8a9299;font-size:12px;font-weight:700}
         .harmat-sales-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.harmat-sales-deal-workspace{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}.harmat-sales-panel{padding:22px;border-radius:22px;background:#fff;border:1px solid #ead8b8;box-shadow:0 18px 45px rgba(70,54,28,.08);margin-bottom:18px}.harmat-sales-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}.harmat-sales-panel h2{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.harmat-sales-panel p{margin:5px 0 0;color:#6f7780}.harmat-sales-panel-head a{color:#a8762d;font-weight:900;text-decoration:none}
         .harmat-sales-followup-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.harmat-sales-followup-summary a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border-radius:12px;border:1px solid #ead8b8;background:#fff;text-decoration:none}.harmat-sales-followup-summary small{color:#687178;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-followup-summary strong{color:#253137;font-size:24px}.harmat-sales-followup-overdue{border-color:#f5b5af!important;background:#fff1f0!important}.harmat-sales-followup-today{border-color:#ead8a1!important;background:#fff8df!important}.harmat-sales-followup-upcoming{border-color:#b9d8ee!important;background:#edf6ff!important}.harmat-sales-followup-none{background:#f7f7f7!important}.harmat-sales-deal-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;margin:0 0 16px}.harmat-sales-deal-card{display:grid;gap:12px;padding:16px;border:1px solid #ead8b8;border-left:4px solid #a8762d;border-radius:12px;background:#fffaf3}.harmat-sales-deal-card header,.harmat-sales-deal-card footer{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.harmat-sales-deal-card h3{margin:4px 0;color:#253137;font-size:18px;line-height:1.25}.harmat-sales-deal-card small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.harmat-sales-deal-card header span,.harmat-sales-deal-card-property span,.harmat-sales-deal-card footer span{color:#687178;font-size:13px;overflow-wrap:anywhere}.harmat-sales-deal-card-property{display:grid;gap:4px}.harmat-sales-deal-card-property a,.harmat-sales-deal-card-property strong{color:#253137;font-size:16px;font-weight:900;text-decoration:none}.harmat-sales-deal-card-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.harmat-sales-deal-card-metrics span,.harmat-sales-deal-card-next{display:grid;gap:5px;padding:10px;border:1px solid #ead8b8;border-radius:10px;background:#fff}.harmat-sales-deal-card-metrics strong,.harmat-sales-deal-card-next strong{color:#253137;font-size:14px;overflow-wrap:anywhere}.harmat-sales-deal-card-metrics em{color:#687178;font-size:12px;font-style:normal}.harmat-sales-deal-card footer a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;margin-left:6px;padding:0 12px;border-radius:9px;background:#a8762d;color:#fff;font-size:12px;font-weight:900;text-decoration:none}.harmat-sales-detail-table{margin-top:8px}.harmat-sales-detail-table summary{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border:1px solid #a8762d;border-radius:10px;color:#a8762d;background:#fff;font-weight:900;cursor:pointer}.harmat-sales-detail-table .harmat-sales-table-wrap{margin-top:10px}.harmat-sales-task-pill{display:inline-flex;width:max-content;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900}.harmat-sales-task-none,.harmat-sales-task-future,.harmat-sales-task-done{background:#eceff1;color:#687178}
         .harmat-sales-table-wrap{overflow:auto;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-table{width:100%;min-width:960px;border-collapse:collapse}.harmat-sales-table th{padding:12px 14px;background:#fbf4e7;color:#9a6b27;font-size:12px;letter-spacing:.08em;text-align:left;text-transform:uppercase;white-space:nowrap}.harmat-sales-table td{padding:13px 14px;border-top:1px solid #ead8b8;color:#253137;vertical-align:top}.harmat-sales-table td strong{display:block;font-size:15px}.harmat-sales-table td span{display:block}.harmat-sales-table td small{display:block;margin-top:4px;color:#8a9299;overflow-wrap:anywhere}.harmat-sales-table a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-table input,.harmat-sales-table select{width:100%;min-width:120px;min-height:36px;padding:7px 9px;border:1px solid #e3cfad;border-radius:9px;background:#fff;color:#253137;font:inherit}.harmat-sales-plan-table{min-width:1180px}.harmat-sales-plan-table input[data-harmat-plan-percent]{min-width:86px}.harmat-sales-payment-summary{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;margin:12px 0 14px}.harmat-sales-payment-summary article{padding:12px;border:1px solid #ead8b8;border-radius:12px;background:#fffaf3}.harmat-sales-payment-summary small{display:block;margin-bottom:5px;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-payment-summary strong{display:block;color:#253137;font-size:16px;font-weight:900;overflow-wrap:anywhere}.harmat-sales-payment-summary.is-balanced [data-harmat-summary-status-card]{border-color:#b7dec6;background:#eef8f1}.harmat-sales-payment-summary.is-balanced [data-harmat-summary-status-card] strong{color:#1f7a4d}.harmat-sales-payment-summary.is-warning [data-harmat-summary-status-card]{border-color:#f5b5af;background:#fff1f0}.harmat-sales-payment-summary.is-warning [data-harmat-summary-status-card] strong{color:#b42318}
