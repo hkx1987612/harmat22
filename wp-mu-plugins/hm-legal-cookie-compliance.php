@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Legal Pages and Cookie Consent
  * Description: Adds Hungarian legal page content and a consent-based cookie banner.
- * Version: 2026.06.05
+ * Version: 2026.06.06
  */
 
 defined('ABSPATH') || exit;
@@ -434,7 +434,8 @@ add_filter('wp_resource_hints', function ($urls, $relation_type) {
     }
 
     return array_values(array_filter($urls, function ($url) {
-        return stripos((string) $url, 'googletagmanager.com') === false;
+        $hint = is_array($url) ? implode(' ', array_filter($url, 'is_scalar')) : (string) $url;
+        return stripos($hint, 'googletagmanager.com') === false;
     }));
 }, 100, 2);
 

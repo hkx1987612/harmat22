@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.15
+ * Version: 1.3.16
  */
 
 if (!defined('ABSPATH')) {
@@ -102,7 +102,7 @@ function harmat_perf_cleanup_public_source_html($html) {
         array('Harmat Lakópark', 'Harmat Lakópark', 'Harmat Lakópark értékesítés'),
         $html
     );
-    $html = str_replace('0 - 50 m²', '50 m² alatt', $html);
+    $html = str_replace('0 - 50 m²', '50&nbsp;m² alatt', $html);
 
     foreach (harmat_perf_legacy_page_ids() as $page_id) {
         $html = preg_replace(

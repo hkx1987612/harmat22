@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.06
+ * Version: 2026.06.06.1
  */
 
 defined('ABSPATH') || exit;
@@ -19,10 +19,57 @@ function hm_migrated_request_path() {
     return trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
 }
 
+function hm_migrated_virtual_selector_static_html() {
+    if (hm_migrated_request_path() !== 'virtualis-lakasvalaszto') {
+        return '';
+    }
+
+    $links = array(
+        'A1 épület lakásai' => home_url('/virtualis-lakasvalaszto-a1-epulet/'),
+        'A2 épület lakásai' => home_url('/virtualis-lakasvalaszto-a2-epulet/'),
+        'A3 épület lakásai' => home_url('/virtualis-lakasvalaszto-a3-epulet/'),
+        'A4 épület lakásai' => home_url('/virtualis-lakasvalaszto-a4-epulet/'),
+        'Lakáskereső megnyitása' => home_url('/lakaskereso/'),
+    );
+
+    $html_out = '<section class="harmat-virtual-static-intro" aria-label="Virtuális lakásválasztó összefoglaló">';
+    $html_out .= '<span>Virtuális lakásválasztó</span>';
+    $html_out .= '<h2>Válasszon épületet az első ütem lakásai közül</h2>';
+    $html_out .= '<p>Az I. ütemben 124 lakás érhető el A1, A2, A3 és A4 épületekben. Az online lakáskereső és a virtuális lakásválasztó segíti az épület, emelet, szobaszám és alapterület szerinti választást.</p>';
+    $html_out .= '<nav aria-label="Épületek">';
+    foreach ($links as $label => $url) {
+        $html_out .= '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
+    }
+    $html_out .= '<a href="#opal-contactform-popup">Árajánlatot kérek</a>';
+    $html_out .= '</nav></section>';
+
+    return $html_out;
+}
+
+function hm_migrated_insert_after_page_title($html, $insert_html) {
+    if (!is_string($html) || $html === '' || !is_string($insert_html) || $insert_html === '') {
+        return $html;
+    }
+
+    if (strpos($html, '<section class="harmat-virtual-static-intro') !== false && strpos($insert_html, 'harmat-virtual-static-intro') !== false) {
+        return $html;
+    }
+
+    $needle = '<div class="site-content-contain">';
+    $pos = strpos($html, $needle);
+    if ($pos === false) {
+        return $insert_html . $html;
+    }
+
+    return substr($html, 0, $pos) . $insert_html . substr($html, $pos);
+}
+
 function hm_migrated_public_html_cleanup($html) {
     if (!is_string($html) || $html === '') {
         return $html;
     }
+
+    $original_html = $html;
 
     $replacements = array(
         'Harmatliget lakópark' => 'Harmat Lakópark',
@@ -31,6 +78,10 @@ function hm_migrated_public_html_cleanup($html) {
         'Harmat 22 Lakópark' => 'Harmat Lakópark',
         'Harmat 22 lakópark' => 'Harmat Lakópark',
         'Harmat 22 értékesítés' => 'Harmat Lakópark értékesítés',
+        'Harmat 22' => 'Harmat Lakópark',
+        'Harmat lakópark' => 'Harmat Lakópark',
+        'Harmat lakópark címe' => 'Harmat Lakópark címe',
+        'Harmat lakópark környéke' => 'Harmat Lakópark környéke',
         'Gipsz Jakab' => 'Harmat Lakópark értékesítés',
         '012-888-2222' => '+36-30-641-03-58',
         '012 888 2222' => '+36-30-641-03-58',
@@ -38,19 +89,60 @@ function hm_migrated_public_html_cleanup($html) {
         'mailto:agent.name@example.com' => 'mailto:ertekesites@harmat22.hu',
         'modumkft@gmail.com' => 'ertekesites@harmat22.hu',
         'mailto:modumkft@gmail.com' => 'mailto:ertekesites@harmat22.hu',
+        '50 m² alatt' => '50&nbsp;m² alatt',
+        '50 - 100 m²' => '50&nbsp;-&nbsp;100&nbsp;m²',
         'Marketing Consent' => '',
     );
 
     $html = strtr($html, $replacements);
+    $sqm = html_entity_decode('&sup2;', ENT_QUOTES, 'UTF-8');
+    $html = str_replace('50 m' . $sqm . ' alatt', '50&nbsp;m' . $sqm . ' alatt', $html);
+    $html = str_replace('50 - 100 m' . $sqm, '50&nbsp;-&nbsp;100&nbsp;m' . $sqm, $html);
+    $html = preg_replace('~(<option\s+value=(["\'])0-50\2[^>]*>)50\s+m(?:²|&sup2;)\s+alatt(</option>)~i', '${1}50&nbsp;m² alatt$3', $html);
+    $html = preg_replace('~(<option\s+value=(["\'])50-100\2[^>]*>)50\s*-\s*100\s+m(?:²|&sup2;)(</option>)~i', '${1}50&nbsp;-&nbsp;100&nbsp;m²$3', $html);
+    if (!is_string($html)) {
+        return $original_html;
+    }
     $html = str_ireplace('Harmat 22 Lakópark', 'Harmat Lakópark', $html);
 
     $html = preg_replace(
-        '~\s*<a\b[^>]*href=(["\'])[^"\']*/marketing-hozzajarulas/?\1[^>]*>\s*</a>~iu',
+        '~\s*<a\b[^>]*href=(["\'])[^"\']*/marketing-hozzajarulas/?\1[^>]*>\s*</a>~i',
         '',
         $html
     );
+    if (!is_string($html)) {
+        return $original_html;
+    }
 
-    return is_string($html) ? $html : '';
+    if (is_singular('property')) {
+        $html = str_replace('Terasz/Erkély', 'Terasz / erkély', $html);
+        $html = preg_replace('~<h2>\s*([0-9]+)\.([0-9]{1,2})\s*m(?:²|2|&sup2;)\s*</h2>~i', '<h2>$1,$2 m²</h2>', $html);
+        if (!is_string($html)) {
+            return $original_html;
+        }
+        $html = preg_replace('~<h2>\s*([0-9]+),([0-9]{1,2})\s*m(?:²|2|&sup2;)\s*</h2>~i', '<h2>$1,$2 m²</h2>', $html);
+        if (!is_string($html)) {
+            return $original_html;
+        }
+        $html = preg_replace(
+            '~<div\b(?=[^>]*\belementor-widget-text-editor\b)[^>]*>\s*<h6>\s*Kert\s*</h6>\s*<h2>\s*0\s*m(?:²|2|&sup2;)\s*</h2>\s*</div>~i',
+            '',
+            $html
+        );
+        if (!is_string($html)) {
+            return $original_html;
+        }
+    }
+
+    if (hm_migrated_request_path() === 'virtualis-lakasvalaszto') {
+        $html = hm_migrated_insert_after_page_title($html, hm_migrated_virtual_selector_static_html());
+    }
+
+    if (strlen(trim($original_html)) >= 1000 && (!is_string($html) || strlen(trim($html)) < 1000)) {
+        return $original_html;
+    }
+
+    return is_string($html) ? $html : $original_html;
 }
 
 add_action('template_redirect', function () {
@@ -61,6 +153,10 @@ add_action('template_redirect', function () {
     $path = hm_migrated_request_path();
     if ($path === 'kapcsolat') {
         wp_safe_redirect(home_url('/elerhetosegeink/'), 301);
+        exit;
+    }
+    if ($path === 'a-lakopark' || $path === 'blog') {
+        wp_safe_redirect(home_url('/harmat-lakopark/'), 301);
         exit;
     }
     if ($path === 'apartment') {
@@ -156,7 +252,47 @@ add_filter('wpseo_twitter_image', function ($image) {
     return $data && !empty($data['og_image']) ? $data['og_image'] : $image;
 }, 20);
 
+add_filter('wpseo_robots', function ($robots) {
+    if (in_array(hm_migrated_request_path(), array('blog', 'a-lakopark'), true)) {
+        return 'noindex,follow';
+    }
+
+    return $robots;
+}, 30);
+
+add_filter('wpseo_sitemap_entry', function ($url, $type, $object) {
+    if (!is_array($url) || empty($url['loc'])) {
+        return $url;
+    }
+
+    $path = trim((string) wp_parse_url($url['loc'], PHP_URL_PATH), '/');
+    if (in_array($path, array('blog', 'a-lakopark', 'marketing-hozzajarulas'), true)) {
+        return false;
+    }
+
+    if (is_object($object) && isset($object->ID) && in_array((int) $object->ID, array(174, 10513, 10539, 6219), true)) {
+        return false;
+    }
+
+    return $url;
+}, 20, 3);
+
 add_action('wp_head', function () {
+    if (hm_migrated_request_path() === 'virtualis-lakasvalaszto') {
+        ?>
+<style id="harmat-virtual-static-intro-css">
+.harmat-virtual-static-intro{max-width:1180px;margin:28px auto 30px;padding:24px;border:1px solid rgba(152,112,51,.2);background:#fffaf1;font-family:Montserrat,Arial,sans-serif;box-shadow:0 18px 44px rgba(40,34,24,.07)}
+.harmat-virtual-static-intro span{display:block;margin-bottom:8px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.harmat-virtual-static-intro h2{margin:0 0 10px;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(28px,3.2vw,42px);line-height:1.1}
+.harmat-virtual-static-intro p{max-width:850px;margin:0 0 18px;color:#50585d;font-size:15px;line-height:1.65}
+.harmat-virtual-static-intro nav{display:flex;flex-wrap:wrap;gap:10px}
+.harmat-virtual-static-intro a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border:1px solid rgba(152,112,51,.35);background:#fff;color:#987033!important;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+.harmat-virtual-static-intro a:last-child{background:#987033;color:#fff!important}
+@media(max-width:640px){.harmat-virtual-static-intro{margin:18px 14px 24px;padding:18px}.harmat-virtual-static-intro a{flex:1 1 100%}}
+</style>
+        <?php
+    }
+
     if (!is_front_page()) {
         return;
     }
