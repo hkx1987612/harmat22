@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.14
+ * Version: 1.3.15
  */
 
 if (!defined('ABSPATH')) {
@@ -75,7 +75,60 @@ add_filter('widget_text', 'harmat_perf_replace_placeholder_contact_name', 100);
 
 function harmat_perf_cleanup_visible_html($html) {
     $html = harmat_perf_fix_visible_mojibake($html);
-    return harmat_perf_replace_placeholder_contact_name($html);
+    $html = harmat_perf_replace_placeholder_contact_name($html);
+    return harmat_perf_cleanup_public_source_html($html);
+}
+
+function harmat_perf_legacy_page_ids() {
+    return array(174, 10513, 10539, 6219, 8533, 8538, 8543, 8548, 8553);
+}
+
+function harmat_perf_public_page_list_excludes($excluded) {
+    if (is_admin()) {
+        return $excluded;
+    }
+
+    return array_values(array_unique(array_merge((array) $excluded, harmat_perf_legacy_page_ids())));
+}
+add_filter('wp_list_pages_excludes', 'harmat_perf_public_page_list_excludes', 20);
+
+function harmat_perf_cleanup_public_source_html($html) {
+    if (!is_string($html) || $html === '') {
+        return $html;
+    }
+
+    $html = str_replace(
+        array('Harmat 22 Lakópark', 'Harmat 22 lakópark', 'Harmat 22 értékesítés'),
+        array('Harmat Lakópark', 'Harmat Lakópark', 'Harmat Lakópark értékesítés'),
+        $html
+    );
+    $html = str_replace('0 - 50 m²', '50 m² alatt', $html);
+
+    foreach (harmat_perf_legacy_page_ids() as $page_id) {
+        $html = preg_replace(
+            '~<li\b[^>]*class=(["\'])[^"\']*\bpage-item-' . (int) $page_id . '\b[^"\']*\1[^>]*>[\s\S]*?</li>~i',
+            '',
+            $html
+        );
+    }
+
+    $html = preg_replace(
+        '~\s*(?:&middot;|·)\s*<a\b[^>]*href=(["\'])[^"\']*/marketing-hozzajarulas/?\1[^>]*>\s*Marketing hozzájárulás\s*</a>~iu',
+        '',
+        $html
+    );
+
+    if (is_front_page()) {
+        foreach (array('8388', '124', '92') as $value) {
+            $html = preg_replace(
+                '~(<span\b(?=[^>]*\belementor-counter-number\b)(?=[^>]*\bdata-to-value=(["\'])' . $value . '\2)[^>]*>)\s*0\s*(</span>)~i',
+                '${1}' . $value . '${3}',
+                $html
+            );
+        }
+    }
+
+    return $html;
 }
 
 function harmat_perf_home_menu_opening_hours() {
