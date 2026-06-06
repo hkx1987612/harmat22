@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Local Assistant
  * Plugin URI: https://harmat22.hu
  * Description: Local knowledge-base assistant for Harmat Lakópark apartment questions, prices, FAQ, and sales handoff.
- * Version: 0.1.9
+ * Version: 0.2.1
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -47,7 +47,7 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.1.9';
+    const VERSION = '0.2.1';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
     const CONTACT_PHONE = '+36-30-641-03-58';
@@ -461,27 +461,45 @@ final class Harmat_Local_Assistant {
         $normalized = $this->normalize($message);
         $apartments = $this->apartments();
         $profile = $this->extract_buyer_profile($message, $normalized);
+        $filters = $this->extract_filters($message, $normalized);
+        $filters['profile'] = $profile;
 
         $code = $this->extract_apartment_code($message);
+        $intent = $this->classify_intent($message, $normalized, $filters, $profile, $code);
         if ($code) {
             $apartment = $this->find_apartment($code, $apartments);
             if ($apartment) {
                 return $this->response($this->apartment_answer($apartment, $lang, $profile), array($this->card($apartment, $profile)), $lang);
             }
+            return $this->response($this->unknown_apartment_answer($code, $lang), array(), $lang);
         }
 
-        $filters = $this->extract_filters($message, $normalized);
-        $filters['profile'] = $profile;
-        $ground_floor_search = $filters['ground_floor'] && $this->has_any($normalized, array('ajanl', 'keres', 'lakas', 'lakast', 'recommend', 'available', 'melyik', '预算', '推荐', '房源', '有哪些'));
-        if ($filters['has_search'] && ($filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['cheap'] || $ground_floor_search)) {
+        $profile_driven_search = !$filters['has_search'] && $this->profile_requests_recommendation($profile, $normalized);
+        if ($profile_driven_search) {
+            $filters['has_search'] = true;
+        }
+        $ground_floor_search = $filters['ground_floor'] && $this->has_any($normalized, array('ajanl', 'keres', 'lakas', 'lakast', 'recommend', 'available', 'apartment', 'flat', 'melyik', '预算', '推荐', '房源', '有哪些'));
+
+        if ($this->should_answer_faq_before_search($intent, $filters, $profile_driven_search, $ground_floor_search)) {
+            $faq = $this->faq_answer($normalized, $lang, $intent);
+            if ($faq !== null) {
+                return $this->response($faq, array(), $lang);
+            }
+        }
+
+        if ($filters['has_search'] && ($filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['area_min'] || $filters['area_max'] || $filters['cheap'] || $ground_floor_search || $profile_driven_search)) {
             $matches = $this->search_apartments($apartments, $filters);
             if ($matches) {
                 return $this->response($this->recommendation_answer($matches, $filters, $lang), $this->cards_for_matches($matches, $profile), $lang);
             }
+            $near_matches = $this->near_match_apartments($apartments, $filters);
+            if ($near_matches) {
+                return $this->response($this->near_match_answer($near_matches, $filters, $lang), $this->cards_for_matches($near_matches, $profile), $lang);
+            }
             return $this->response($this->text('no_match', $lang), array(), $lang);
         }
 
-        $faq = $this->faq_answer($normalized, $lang);
+        $faq = $this->faq_answer($normalized, $lang, $intent);
         if ($faq !== null) {
             return $this->response($faq, array(), $lang);
         }
@@ -547,7 +565,7 @@ final class Harmat_Local_Assistant {
     }
 
     private function extract_apartment_code($message) {
-        if (!preg_match('/\b(A[1-4])[\s_-]*(F|FSZ|[1-4])[\s_-]*(L[1-8])\b/iu', $message, $match)) {
+        if (!preg_match('/\b(A\d{1,2})[\s_-]*(F|FSZ|\d{1,2})[\s_-]*(L\d{1,2})\b/iu', $message, $match)) {
             return null;
         }
 
@@ -569,7 +587,148 @@ final class Harmat_Local_Assistant {
         return null;
     }
 
-    private function faq_answer($text, $lang) {
+    private function unknown_apartment_answer($code, $lang) {
+        return $this->by_lang($lang,
+            sprintf('A megadott lakáskódot nem találtam az aktuális adatbázisban: %s. Kérjük, ellenőrizze a kódot, például A1-F-L1 formában. Ha bizonytalan, írja meg a kívánt szobaszámot, árkeretet vagy emeletet, és ajánlok elérhető lakásokat.', $code),
+            sprintf('我在当前房源库里没有找到这个房号：%s。请确认房号格式，例如 A1-F-L1。如果你不确定房号，可以告诉我房间数、预算或楼层偏好，我帮你筛选。', $code),
+            sprintf('I could not find this apartment code in the current database: %s. Please check the code format, for example A1-F-L1. If you are not sure, share room count, budget or floor preference and I can suggest available units.', $code)
+        );
+    }
+
+    private function classify_intent($message, $normalized, $filters, $profile, $code) {
+        $scores = array(
+            'apartment_code' => $code ? 20 : 0,
+            'recommendation' => 0,
+            'apartment_search' => 0,
+            'price' => 0,
+            'availability' => 0,
+            'floorplan' => 0,
+            'appointment' => 0,
+            'payment' => 0,
+            'loan' => 0,
+            'subsidy' => 0,
+            'discount' => 0,
+            'legal' => 0,
+            'surroundings' => 0,
+            'pet' => 0,
+            'garden' => 0,
+            'opening' => 0,
+            'handover' => 0,
+            'project_count' => 0,
+            'parking' => 0,
+            'technical' => 0,
+            'developer' => 0,
+            'process' => 0,
+            'help' => 0,
+            'location' => 0,
+        );
+
+        if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['cheap']) || !empty($filters['ground_floor'])) {
+            $scores['apartment_search'] += 4;
+        }
+        if (!empty($filters['has_search'])) {
+            $scores['apartment_search'] += 2;
+        }
+        if (!empty(array_filter($profile)) && $this->profile_requests_recommendation($profile, $normalized)) {
+            $scores['recommendation'] += 5;
+        }
+
+        $this->add_intent_score($scores, 'recommendation', $normalized, array('ajanl', 'melyik', 'melyiket', 'valasszam', 'shortlist', 'recommend', 'which', 'suitable', 'good for', '推荐', '哪套', '哪些', '适合', '帮我选', '怎么选'), 6);
+        $this->add_intent_score($scores, 'price', $normalized, array('ar', 'ara', 'arak', 'mennyibe', 'price', 'prices', 'amount', 'cost', 'huf', 'ft', '多少钱', '价格', '价钱', '金额', '总价', '单价', '预算'), 5);
+        $this->add_intent_score($scores, 'availability', $normalized, array('elerheto', 'elerhetoseg', 'foglalhato', 'szabad', 'available', 'availability', 'reserve', 'reservation', 'status', 'sold', '可售', '还有吗', '能预订', '预订', '保留', '状态', '卖掉', '已售'), 5);
+        $this->add_intent_score($scores, 'floorplan', $normalized, array('alaprajz', 'floorplan', 'floor plan', 'layout', 'pdf', 'virtualis', 'lakasvalaszto', '户型图', '平面图', '虚拟选房', '房源详情'), 5);
+        $this->add_intent_score($scores, 'appointment', $normalized, array('idopont', 'megtekintes', 'ajanlatkeres', 'ajanlat', 'contact', 'appointment', 'visit', 'viewing', 'quote', 'offer', '预约', '看房', '联系', '报价', '询价'), 6);
+        $this->add_intent_score($scores, 'payment', $normalized, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'payment', 'pay', 'installment', 'schedule', '付款', '付款方式', '怎么付款', '分期', '全款', '首付', '50-50'), 5);
+        $this->add_intent_score($scores, 'loan', $normalized, array('hitel', 'bank', 'loan', 'mortgage', '贷款', '按揭', '银行贷款'), 7);
+        $this->add_intent_score($scores, 'subsidy', $normalized, array('csok', 'tamogatas', 'subsidy', '补贴', '政府补贴', '家庭补贴'), 7);
+        $this->add_intent_score($scores, 'discount', $normalized, array('engedmeny', 'kedvezmeny', 'akcio', 'alku', 'discount', 'promotion', 'negotiate', '优惠', '折扣', '砍价', '讲价', '便宜点', '特价'), 8);
+        $this->add_intent_score($scores, 'legal', $normalized, array('szerzodes', 'ugyved', 'ado', 'illetek', 'foldhivatal', 'contract', 'lawyer', 'legal', 'tax', 'duty', 'permit', 'residence permit', 'vat', '合同', '律师', '法律', '税费', '过户', '许可', '居留', '印花税'), 8);
+        $this->add_intent_score($scores, 'surroundings', $normalized, array('kornyek', 'kozelben', 'ohegy', 'iskola', 'egyetem', 'bevasarlas', 'kozlekedes', 'onkormanyzat', 'nearby', 'surrounding', 'school', 'university', 'mall', 'shopping', 'transport', 'district office', '周边', '附近', '学校', '小学', '中学', '大学', '商场', '购物', '交通', '区政府'), 5);
+        $this->add_intent_score($scores, 'pet', $normalized, array('kutyafuttato', 'kutya', 'kisallat', 'allatbarat', 'dog park', 'pet park', 'pets', 'dog', '宠物公园', '宠物', '狗公园', '遛狗'), 6);
+        $this->add_intent_score($scores, 'garden', $normalized, array('foldszinti kert', 'kert ajandek', 'garden', 'ground floor garden', 'gift garden', 'included garden', '底楼花园', '底层花园', '花园赠送', '赠送花园', '送花园'), 5);
+        $this->add_intent_score($scores, 'opening', $normalized, array('ertekesites indul', 'nyito', 'nyitas', 'sales launch', 'launch date', 'opening date', '开盘', '开售', '发售'), 5);
+        $this->add_intent_score($scores, 'handover', $normalized, array('atadas', 'hatarido', 'handover', 'delivery', '交付', '交房'), 5);
+        $this->add_intent_score($scores, 'project_count', $normalized, array('hany lakas', 'osszesen', 'darab', 'how many', '多少套', '几套', '总共'), 5);
+        $this->add_intent_score($scores, 'parking', $normalized, array('parkolo', 'garazs', 'tarolo', 'parking', 'storage', '车位', '停车', '储藏'), 5);
+        $this->add_intent_score($scores, 'technical', $normalized, array('hoszivattyu', 'futes', 'hutes', 'energia', 'zoldfelulet', 'uj epites', 'heating', 'cooling', 'heat pump', 'energy', 'green ratio', 'new build', '采暖', '制冷', '热泵', '新房', '绿化', '绿地', '配置'), 5);
+        $this->add_intent_score($scores, 'developer', $normalized, array('fejleszto', 'beruhazo', 'investor company', 'developer', 'company', '开发商', '投资方', '公司'), 5);
+        $this->add_intent_score($scores, 'process', $normalized, array('vasarlas menete', 'vasarlasi folyamat', 'hogyan tudok vasarolni', 'buying process', 'purchase process', 'how to buy', 'next step', '买房流程', '购买流程', '怎么买', '下一步', '购买步骤', '流程'), 5);
+        $this->add_intent_score($scores, 'help', $normalized, array('mit tudsz', 'miben segitesz', 'segitseg', 'help', 'what can you do', 'assistant', '你能做什么', '你会什么', '怎么使用', '客服'), 5);
+        $this->add_intent_score($scores, 'location', $normalized, array('hol', 'talalhato', 'cim', 'address', 'where', '位置', '地址'), 5);
+
+        arsort($scores);
+        $intent = (string) key($scores);
+        return ((int) current($scores)) > 0 ? $intent : 'unknown';
+    }
+
+    private function add_intent_score(&$scores, $intent, $text, $needles, $points) {
+        if ($this->has_any($text, $needles)) {
+            $scores[$intent] += (int) $points;
+        }
+    }
+
+    private function should_answer_faq_before_search($intent, $filters, $profile_driven_search, $ground_floor_search) {
+        if (in_array($intent, array('recommendation', 'apartment_search', 'price', 'availability', 'floorplan'), true)) {
+            return false;
+        }
+        if ($profile_driven_search || $ground_floor_search) {
+            return false;
+        }
+        if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['cheap'])) {
+            return false;
+        }
+        return in_array($intent, array('appointment', 'payment', 'loan', 'subsidy', 'discount', 'legal', 'surroundings', 'pet', 'garden', 'opening', 'handover', 'project_count', 'parking', 'technical', 'developer', 'process', 'help', 'location'), true);
+    }
+
+    private function faq_answer_by_intent($intent, $lang) {
+        switch ($intent) {
+            case 'discount':
+                return $this->by_lang($lang,
+                    'Kedvezményt, alkut vagy akciós árat az asszisztens nem ígérhet. Ha egy konkrét lakás érdekli, meg tudom adni a tájékoztató árat és a státuszt, majd az értékesítés tudja megerősíteni, hogy az adott lakásnál van-e aktuális egyedi feltétel.',
+                    '优惠、折扣或议价不能由 AI 承诺。如果你有具体房号，我可以先查当前参考价和状态；是否有个别优惠或特别条件，需要销售团队按具体房源确认。',
+                    'The assistant cannot promise discounts, negotiation terms or promotional prices. If you share a specific apartment code, I can show the indicative price and status; sales must confirm any individual condition for that unit.'
+                );
+            case 'legal':
+                return $this->by_lang($lang,
+                    'Szerződéses, adózási, illeték-, földhivatali vagy jogi kérdésben csak általános tájékoztatást adhatok. Pontos választ az értékesítés és az ügyvéd tud adni a kiválasztott lakás, vevői helyzet és szerződéses dokumentumok alapján.',
+                    '合同、税费、过户、律师、许可或法律问题，我只能做一般说明，不能给正式法律意见。准确答案需要销售团队和律师根据具体房号、买方身份和合同文件确认。',
+                    'For contract, tax, duty, land-registry, permit or legal questions, I can only provide general guidance. Sales and the lawyer must confirm the exact answer based on the selected unit, buyer situation and contract documents.'
+                );
+            case 'loan':
+                return $this->by_lang($lang,
+                    'Új építésű lakásnál banki finanszírozás is szóba jöhet, de a hitelképesség, önerő, kamat és banki feltételek egyediek. Az asszisztens nem ígérhet hiteljóváhagyást; pontos választ az értékesítési csapat és a bank tud adni.',
+                    '新房通常可以考虑银行贷款，但贷款资格、首付比例、利率和银行条件因人而异。AI 不能承诺贷款获批、首付比例或具体利率，准确方案需要销售团队和银行确认。',
+                    'Bank financing may be possible for new-build apartments, but eligibility, down payment, interest rate and bank terms are individual. The assistant cannot promise loan approval; details should be confirmed with sales and the bank.'
+                );
+            case 'subsidy':
+                return $this->by_lang($lang,
+                    'A CSOK és egyéb támogatások jogosultsága személyes helyzettől, jogszabályoktól és banki feltételektől függ. Ebben nem szeretnék pontatlan ígéretet tenni; az értékesítés segíthet a pontos egyeztetés elindításában.',
+                    'CSOK 或其他补贴取决于个人条件、法规和银行要求，AI 不应承诺能否使用。建议联系销售团队，由他们协助进一步确认。',
+                    'CSOK or other subsidies depend on personal eligibility, regulations and bank terms. I should not make promises; the sales team can help start the proper verification.'
+                );
+            case 'payment':
+                return $this->by_lang($lang,
+                    'A fizetési lehetőségeket az értékesítési csapat erősíti meg a kiválasztott lakás és vevői helyzet alapján. Egyeztethető irány lehet teljes fizetés, 50%-50% ütemezés vagy részletfizetési ütemezés; a végleges dátumokat és arányokat a szerződés rögzíti.',
+                    '付款方式需要销售团队根据具体房号和客户情况确认。通常可沟通方向包括全款、50%-50% 付款或分期付款；最终付款日期和比例以正式合同为准。',
+                    'Payment options must be confirmed by sales for the selected apartment and buyer situation. Possible directions include full payment, 50%-50% payment or a staged schedule; final dates and percentages are contractual.'
+                );
+            case 'appointment':
+                return $this->by_lang($lang,
+                    'Szívesen segítünk ajánlatot vagy időpontot kérni. A gyors egyeztetéshez érdemes megadni: név, telefon vagy e-mail, kiválasztott lakáskód, szobaszám, árkeret és kívánt időpont. Elérhetőség: ertekesites@harmat22.hu, +36-30-641-03-58.',
+                    '可以预约看房或索取报价。为了销售更快回复，建议留下：姓名、电话或邮箱、目标房号、房间数、预算和方便的时间。联系方式：ertekesites@harmat22.hu，+36-30-641-03-58。',
+                    'We can help start an offer request or viewing appointment. For a faster reply, please provide: name, phone or email, target apartment code, room count, budget and preferred time. Contact: ertekesites@harmat22.hu, +36-30-641-03-58.'
+                );
+        }
+
+        return null;
+    }
+
+    private function faq_answer($text, $lang, $intent = null) {
+        $priority = $this->faq_answer_by_intent($intent, $lang);
+        if ($priority !== null) {
+            return $priority;
+        }
+
         if ($this->has_any($text, array('nyitvatart', 'nyitva', 'hetfo', 'pentek', 'szombat', 'vasarnap', 'hetveg', 'opening hour', 'opening hours', 'weekend', 'open on', 'hours', '营业', '营业时间', '开门', '周末', '上班时间'))) {
             return $this->by_lang($lang,
                 'Az értékesítési iroda hétfőtől péntekig 09:00-17:00 között érhető el. Szombaton és vasárnap zárva tart. Időpont egyeztetéshez írjon az ertekesites@harmat22.hu címre vagy hívja a +36-30-641-03-58 számot.',
@@ -773,6 +932,8 @@ final class Harmat_Local_Assistant {
             'rooms' => null,
             'budget' => null,
             'area' => null,
+            'area_min' => null,
+            'area_max' => null,
             'cheap' => false,
             'ground_floor' => false,
             'profile' => array(),
@@ -803,7 +964,13 @@ final class Harmat_Local_Assistant {
             $filters['rooms'] = 5;
         }
 
-        if (preg_match('/(\d{2,3}(?:[,.]\d+)?)\s*(?:m2|m²|nm|négyzet|平方米|平米|平)/iu', $message, $match)) {
+        if (preg_match('/(\d{2,3}(?:[,.]\d+)?)\s*(?:m2|m²|nm|négyzet|平方米|平米|平)\s*(?:felett|folott|fölött|nagyobb|legalabb|legalább|min(?:imum)?|from|above|over|以上|起|至少|不低于)/iu', $message, $match) ||
+            preg_match('/(?:felett|folott|fölött|nagyobb|legalabb|legalább|min(?:imum)?|from|above|over|以上|起|至少|不低于)\s*(\d{2,3}(?:[,.]\d+)?)\s*(?:m2|m²|nm|négyzet|平方米|平米|平)/iu', $message, $match)) {
+            $filters['area_min'] = (float) str_replace(',', '.', $match[1]);
+        } elseif (preg_match('/(\d{2,3}(?:[,.]\d+)?)\s*(?:m2|m²|nm|négyzet|平方米|平米|平)\s*(?:alatt|kisebb|legfeljebb|max(?:imum)?|under|below|less than|以下|以内|不超过)/iu', $message, $match) ||
+            preg_match('/(?:alatt|kisebb|legfeljebb|max(?:imum)?|under|below|less than|以下|以内|不超过)\s*(\d{2,3}(?:[,.]\d+)?)\s*(?:m2|m²|nm|négyzet|平方米|平米|平)/iu', $message, $match)) {
+            $filters['area_max'] = (float) str_replace(',', '.', $match[1]);
+        } elseif (preg_match('/(\d{2,3}(?:[,.]\d+)?)\s*(?:m2|m²|nm|négyzet|平方米|平米|平)/iu', $message, $match)) {
             $filters['area'] = (float) str_replace(',', '.', $match[1]);
         }
 
@@ -818,7 +985,7 @@ final class Harmat_Local_Assistant {
         $filters['cheap'] = $this->has_any($normalized, array('olcso', 'legolcsobb', 'cheap', 'cheapest', '便宜', '最低', '低价'));
         $filters['ground_floor'] = $this->has_any($normalized, array('foldszint', 'fsz', 'garden', 'ground floor', 'ground-floor', '底楼', '底层', '花园'));
 
-        $filters['has_search'] = $filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['cheap'] || $filters['ground_floor'] ||
+        $filters['has_search'] = $filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['area_min'] || $filters['area_max'] || $filters['cheap'] || $filters['ground_floor'] ||
             $this->has_any($normalized, array('ajanl', 'keres', 'lakast', 'lakas', 'recommend', 'available', 'budget', 'buy', '预算', '推荐', '买房', '房源'));
 
         return $filters;
@@ -835,6 +1002,47 @@ final class Harmat_Local_Assistant {
         );
     }
 
+    private function profile_requests_recommendation($profile, $normalized) {
+        if (empty(array_filter($profile))) {
+            return false;
+        }
+
+        return $this->has_any($normalized, array(
+            'ajanl',
+            'melyik',
+            'melyiket',
+            'keres',
+            'lakast',
+            'lakas',
+            'opcio',
+            'befektetes',
+            'csalad',
+            'sajat',
+            'recommend',
+            'which',
+            'option',
+            'good for',
+            'suitable',
+            'investment',
+            'family',
+            'own use',
+            'garden',
+            'ground floor',
+            'ground-floor',
+            'kert',
+            'foldszint',
+            '推荐',
+            '哪套',
+            '哪些',
+            '适合',
+            '投资',
+            '自住',
+            '家庭',
+            '宠物',
+            '花园',
+        ));
+    }
+
     private function search_apartments($apartments, $filters) {
         $matches = array();
         foreach ($apartments as $apartment) {
@@ -842,6 +1050,12 @@ final class Harmat_Local_Assistant {
                 continue;
             }
             if ($filters['budget'] && (int) ($apartment['price_huf'] ?? 0) > (int) $filters['budget']) {
+                continue;
+            }
+            if (!empty($filters['area_min']) && (float) ($apartment['sales_area_m2'] ?? 0) < (float) $filters['area_min']) {
+                continue;
+            }
+            if (!empty($filters['area_max']) && (float) ($apartment['sales_area_m2'] ?? 0) > (float) $filters['area_max']) {
                 continue;
             }
             if (!empty($filters['ground_floor']) && (string) ($apartment['floor'] ?? '') !== 'Fsz') {
@@ -868,6 +1082,13 @@ final class Harmat_Local_Assistant {
                     return $da <=> $db;
                 }
             }
+            if (!empty($filters['area_min'])) {
+                $da = abs((float) $a['sales_area_m2'] - (float) $filters['area_min']);
+                $db = abs((float) $b['sales_area_m2'] - (float) $filters['area_min']);
+                if ($da !== $db) {
+                    return $da <=> $db;
+                }
+            }
 
             if ($filters['budget']) {
                 $da = abs((int) $filters['budget'] - (int) ($a['price_huf'] ?? 0));
@@ -881,6 +1102,81 @@ final class Harmat_Local_Assistant {
         });
 
         return array_slice($matches, 0, 8);
+    }
+
+    private function near_match_apartments($apartments, $filters) {
+        $relaxed = $filters;
+        $relaxed['budget'] = null;
+
+        $matches = $this->search_apartments($apartments, $relaxed);
+        if (!$matches && (!empty($relaxed['area_min']) || !empty($relaxed['area_max']))) {
+            $relaxed['area_min'] = null;
+            $relaxed['area_max'] = null;
+            $matches = $this->search_apartments($apartments, $relaxed);
+        }
+        if (!$matches && !empty($relaxed['ground_floor'])) {
+            $relaxed['ground_floor'] = false;
+            $matches = $this->search_apartments($apartments, $relaxed);
+        }
+
+        return array_slice($matches, 0, 4);
+    }
+
+    private function near_match_answer($matches, $filters, $lang) {
+        $top = array_slice($matches, 0, 3);
+        $lines = array();
+        foreach ($top as $item) {
+            $lines[] = $this->recommendation_line($item, $lang, $filters['profile'] ?? array());
+        }
+
+        $intro = $this->by_lang($lang,
+            'A megadott feltételekre pontos találatot most nem találtam, de ezek állnak a legközelebb a kereséshez:',
+            '按你给的条件暂时没有完全匹配的房源，但下面这几套最接近你的需求：',
+            'I could not find an exact match for the conditions, but these units are the closest options:'
+        );
+
+        $hint = $this->near_match_hint($filters, $lang);
+        $next = $this->by_lang($lang,
+            'Ha megad egy kicsit tágabb árkeretet, emeletet vagy minimum alapterületet, tovább tudom szűkíteni a listát.',
+            '如果你可以补充预算上限、楼层偏好或最低面积，我可以继续帮你缩小范围。',
+            'If you share a wider budget range, floor preference or minimum size, I can narrow the list further.'
+        );
+
+        return $intro . ($hint ? "\n" . $hint : '') . "\n\n" . implode("\n", $lines) . "\n\n" . $next;
+    }
+
+    private function near_match_hint($filters, $lang) {
+        $hints = array();
+        if (!empty($filters['budget'])) {
+            $hints[] = $this->by_lang($lang,
+                'A költségkeret valószínűleg túl szűk az adott szobaszámhoz vagy mérethez.',
+                '你的预算可能对这个房间数或面积要求来说偏紧。',
+                'The budget may be tight for the requested room count or size.'
+            );
+        }
+        if (!empty($filters['ground_floor'])) {
+            $hints[] = $this->by_lang($lang,
+                'A földszinti vagy kertes lakásokból kevesebb van, ezért érdemes gyorsan egyeztetni.',
+                '底楼或带花园的房源数量比较少，适合尽快确认。',
+                'Ground-floor or garden units are more limited, so it is worth checking quickly.'
+            );
+        }
+        if (!empty($filters['area_min']) || !empty($filters['area_max'])) {
+            $hints[] = $this->by_lang($lang,
+                'Az alapterületre megadott határ is szűkíti a találatokat.',
+                '面积上下限也会明显缩小可选范围。',
+                'The area limit also narrows the available matches.'
+            );
+        }
+        if (!empty($filters['rooms'])) {
+            $hints[] = $this->by_lang($lang,
+                sprintf('A keresésben megtartottam a %d szobás igényt.', (int) $filters['rooms']),
+                sprintf('我保留了你要 %d 房的条件。', (int) $filters['rooms']),
+                sprintf('I kept the %d-room requirement in the search.', (int) $filters['rooms'])
+            );
+        }
+
+        return implode("\n", array_slice($hints, 0, 2));
     }
 
     private function buyer_match_score($item, $profile) {
@@ -920,9 +1216,27 @@ final class Harmat_Local_Assistant {
 
     private function selection_guidance_answer($lang) {
         return $this->by_lang($lang,
-            'Szívesen ajánlok lakást, de pontosabb lesz, ha előbb 3-4 szempontot megad: saját lakhatás vagy befektetés, hány szoba, körülbelüli árkeret, kívánt alapterület vagy emelet, illetve kell-e parkoló/tároló. Példa: "2 szobás lakás 70 millió Ft körül" vagy "3 szobás saját lakhatásra".',
-            '可以，我先按购房逻辑帮你缩小范围。请尽量告诉我 3-4 个条件：自住还是投资、几房、预算、希望面积或楼层、是否需要车位/储藏室。比如可以直接问：“7000 万福林左右两房推荐”或“自住三房有哪些”。',
-            'I can recommend units more accurately if you share 3-4 points first: own-use or investment, room count, approximate budget, preferred size or floor, and whether parking/storage is needed. For example: "2-room flat around 70 million Ft" or "3-room for own use".'
+            "Szívesen segítek szűkíteni a választékot. A legjobb ajánláshoz elég 3-4 adat:
+1. saját lakhatás vagy befektetés
+2. hány szoba
+3. körülbelüli árkeret
+4. fontos-e földszint/kert, emelet, parkoló vagy tároló
+
+Példa: \"2 szobás lakás 70 millió Ft körül\" vagy \"3 szobás saját lakhatásra, parkolóval\".",
+            "可以，我先像销售顾问一样帮你缩小范围。为了推荐得准，请告诉我 3-4 个条件：
+1. 自住还是投资
+2. 几房
+3. 大概预算
+4. 是否需要底楼花园、指定楼层、车位或储藏室
+
+例如可以问：\"7000万福林左右两房推荐\" 或 \"自住三房，最好带车位\"。",
+            "I can help narrow the options like a sales advisor. For a useful recommendation, please share 3-4 points:
+1. own use or investment
+2. room count
+3. approximate budget
+4. whether ground floor/garden, floor, parking or storage matters
+
+Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\"."
         );
     }
 
@@ -1354,9 +1668,27 @@ final class Harmat_Local_Assistant {
                 'en' => 'I could not find a matching apartment for these filters. Try another budget, room count or size.',
             ),
             'fallback' => array(
-                'hu' => 'Ebben tudok segíteni: lakáskeresés szobaszám, árkeret vagy alapterület alapján; konkrét lakás ára, például A1-F-L1; vásárlási folyamat, alaprajz, átadás, környék, parkoló, tároló, fizetés és időpontkérés.',
-                'zh' => '我可以帮你查：按预算/房间数/面积推荐房源；查询具体房号价格，比如 A1-F-L1；也可以回答买房流程、户型图、交付时间、周边、车位、储藏室、付款方式和预约问题。',
-                'en' => 'I can help with apartment search by room count, budget or size; specific apartment prices such as A1-F-L1; buying process, floor plans, handover, surroundings, parking, storage, payment and appointments.',
+                'hu' => "Pontosan szívesen segítek, csak egy kicsit több irány kell. Kérdezhet például így:
+- \"A1-F-L1 ára és alaprajza\"
+- \"2 szobás lakás 70 millió Ft körül\"
+- \"Melyik jó befektetésre?\"
+- \"Hogyan tudok időpontot kérni?\"
+
+Ha lakást keres, írja meg a szobaszámot, árkeretet és hogy saját használatra vagy befektetésre nézi.",
+                'zh' => "我可以帮你查，但需要更具体一点。你可以这样问：
+- \"A1-F-L1 的价格和户型图\"
+- \"7000万福林左右两房推荐\"
+- \"哪几套适合投资？\"
+- \"怎么预约看房？\"
+
+如果你要选房，请告诉我房间数、预算、自住还是投资。",
+                'en' => "I can help, but I need a little more direction. You can ask for example:
+- \"A1-F-L1 price and floor plan\"
+- \"2-room around 70 million Ft\"
+- \"Which units are good for investment?\"
+- \"How can I book a viewing?\"
+
+If you are looking for a unit, share room count, budget and whether it is for own use or investment.",
             ),
         );
 
@@ -1365,14 +1697,13 @@ final class Harmat_Local_Assistant {
 
     private function default_suggestions($lang) {
         if ($lang === 'zh') {
-            return array('买房流程是什么？', '7000万两房推荐', '适合投资吗？', '怎么预约看房？');
+            return array('7000万两房推荐', 'A1-F-L1 价格', '适合投资的房源', '怎么预约看房？');
         }
         if ($lang === 'en') {
-            return array('Buying process?', '2-room around 70M Ft', 'Good for investment?', 'Book a viewing');
+            return array('2-room around 70M Ft', 'A1-F-L1 price', 'Investment options', 'Book a viewing');
         }
-        return array('Vásárlás menete?', '2 szobás 70 millió Ft körül', 'Befektetésre jó?', 'Időpontot kérek');
+        return array('2 szobás 70 millió Ft körül', 'A1-F-L1 ára', 'Befektetésre jó lakások', 'Időpontot kérek');
     }
 }
 
 $GLOBALS['harmat_local_assistant'] = new Harmat_Local_Assistant();
-
