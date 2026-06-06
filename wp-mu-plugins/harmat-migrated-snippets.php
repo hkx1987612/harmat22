@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.07.3
+ * Version: 2026.06.07.4
  */
 
 defined('ABSPATH') || exit;
@@ -297,7 +297,7 @@ function hm_migrated_project_page_html() {
 
     $html = '<main id="main" class="site-main harmat-project-modern" role="main">';
     $html .= '<article id="post-1777" class="post-1777 page type-page status-publish hentry"><div class="entry-content">';
-    $html .= '<section class="harmat-project-hero"><div class="harmat-project-hero-text"><span>Budapest X. kerület</span><h1>Harmat Lakópark</h1><p>Modern új építésű otthonok a Harmat utca 22. alatt, zöldebb lakókörnyezettel, átgondolt alaprajzokkal és átlátható értékesítési adatokkal.</p><div class="harmat-project-actions"><a href="' . esc_url(home_url('/lakaskereso/')) . '">Lakáskereső</a><a href="' . esc_url(home_url('/virtualis-lakasvalaszto/')) . '">Virtuális lakásválasztó</a><a href="' . esc_url(home_url('/elerhetosegeink/')) . '">Kapcsolat</a></div></div><figure class="harmat-project-hero-image"><img src="' . esc_url($hero_image) . '" alt="Harmat Lakópark madártávlati látványterv" loading="eager" decoding="async" fetchpriority="high"><figcaption>Harmat Lakópark - első ütem</figcaption></figure></section>';
+    $html .= '<section class="harmat-project-hero"><div class="harmat-project-hero-text"><span>Budapest X. kerület</span><div class="harmat-project-opening"><strong>2026. június 12.</strong><b>Alapkőletételi ünnepség és hivatalos értékesítési nyitás</b><small>Az első ütem lakásairól ettől a naptól részletes tájékoztatás és ajánlatkérés érhető el.</small></div><h1>Harmat Lakópark</h1><p>Modern új építésű otthonok a Harmat utca 22. alatt, zöldebb lakókörnyezettel, átgondolt alaprajzokkal és átlátható értékesítési adatokkal.</p><div class="harmat-project-actions"><a href="' . esc_url(home_url('/lakaskereso/')) . '">Lakáskereső</a><a href="' . esc_url(home_url('/virtualis-lakasvalaszto/')) . '">Virtuális lakásválasztó</a><a href="' . esc_url(home_url('/elerhetosegeink/')) . '">Kapcsolat</a></div></div><figure class="harmat-project-hero-image"><img src="' . esc_url($hero_image) . '" alt="Harmat Lakópark madártávlati látványterv" loading="eager" decoding="async" fetchpriority="high"><figcaption>Harmat Lakópark - első ütem</figcaption></figure></section>';
     $html .= '<section class="harmat-project-stats" aria-label="Projekt adatok">';
     foreach ($stats as $stat) {
         $html .= '<div><strong>' . esc_html($stat[0]) . '</strong><span>' . esc_html($stat[1]) . '</span></div>';
@@ -314,7 +314,7 @@ function hm_migrated_project_page_html() {
         $html .= '<article><h3>' . esc_html($feature[0]) . '</h3><p>' . esc_html($feature[1]) . '</p></article>';
     }
     $html .= '</section>';
-    $html .= '<section class="harmat-project-note"><h2>Fontos értékesítési információk</h2><p>A projekt nyitása 2026. június 12. A földszinti lakásokhoz kapcsolódó kertek ajándékként kerülnek feltüntetésre; a végleges műszaki és szerződéses feltételeket minden esetben az értékesítési csapat erősíti meg.</p></section>';
+    $html .= '<section class="harmat-project-note"><h2>Fontos értékesítési információk</h2><p>Az alapkőletételi ünnepség és a hivatalos értékesítési nyitás 2026. június 12-én lesz. A földszinti lakásokhoz kapcsolódó kertek ajándékként kerülnek feltüntetésre; a végleges műszaki és szerződéses feltételeket minden esetben az értékesítési csapat erősíti meg.</p></section>';
     $html .= '</div></article></main>';
 
     return $html;
@@ -701,6 +701,10 @@ add_action('wp_head', function () {
 .harmat-project-modern .entry-content{max-width:1180px;margin:0 auto;padding:34px 24px 58px;font-family:Montserrat,Arial,sans-serif;color:#263135}
 .harmat-project-hero{padding:54px 0 34px;border-bottom:1px solid rgba(152,112,51,.18);display:grid;grid-template-columns:minmax(0,.88fr) minmax(420px,1.12fr);gap:34px;align-items:center}
 .harmat-project-hero span,.harmat-project-copy span{display:block;margin-bottom:10px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.harmat-project-opening{display:grid;gap:5px;max-width:560px;margin:0 0 20px;padding:14px 16px;border-left:4px solid #987033;background:#fff7e8;box-shadow:0 12px 30px rgba(38,49,53,.07)}
+.harmat-project-opening strong{color:#987033;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.harmat-project-opening b{color:#263135;font-size:17px;font-weight:900;line-height:1.32}
+.harmat-project-opening small{color:#5d666c;font-size:13px;font-weight:600;line-height:1.55}
 .harmat-project-hero h1{margin:0 0 16px;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(44px,7vw,86px);line-height:.95}
 .harmat-project-hero p{max-width:760px;margin:0;color:#50585d;font-size:18px;line-height:1.7}
 .harmat-project-hero-image{position:relative;margin:0;aspect-ratio:16/10;overflow:hidden;border-radius:6px;background:#f4ead8;box-shadow:0 22px 54px rgba(38,49,53,.12)}
