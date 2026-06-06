@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.4
+ * Version: 1.1.6
  */
 
 if (!defined('ABSPATH')) {
@@ -37,11 +37,11 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.4');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.6');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
-    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.4', true);
+    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.6', true);
     wp_enqueue_script('harmat-lakas-redesign');
     wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
 }, 90);
@@ -56,7 +56,7 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v7';
+    return 'harmat_lakas_redesign_markup_v9';
 }
 
 function harmat_lakas_redesign_clear_cache() {
@@ -504,10 +504,10 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-related-head{margin-bottom:28px}
     .hm-lakas-related-head h2{margin:0;color:#253137;font-family:"Marcellus SC",Georgia,serif;font-size:36px;font-weight:400;line-height:1.15;text-transform:uppercase}
     .hm-lakas-related-head .icon_before{display:block;margin-bottom:10px;color:#a8762d;font-size:16px}
-    .hm-lakas-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px 32px;align-items:end;margin-bottom:26px;padding:30px 34px;border:1px solid rgba(168,118,45,.2);background:linear-gradient(135deg,#fffaf1,#f6ead8)}
-    .hm-lakas-hero p{grid-column:1/-1;margin:0;color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
-    .hm-lakas-hero h1{margin:0;color:#253137;font-family:"Marcellus SC",Georgia,serif;font-size:58px;font-weight:400;line-height:1;letter-spacing:.04em;text-transform:uppercase}
-    .hm-lakas-stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+    .hm-lakas-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 32px;align-items:center;margin-bottom:22px;padding:24px 30px;border:1px solid rgba(168,118,45,.2);background:linear-gradient(135deg,#fffaf1,#f6ead8)}
+    .hm-lakas-hero p{grid-column:1;grid-row:1;margin:0;color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
+    .hm-lakas-hero h1{grid-column:1;grid-row:2;margin:0;padding:0!important;color:#253137;font-family:"Marcellus SC",Georgia,serif;font-size:50px;font-weight:400;line-height:.98;letter-spacing:.04em;text-transform:uppercase}
+    .hm-lakas-stats{grid-column:2;grid-row:1/3;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-self:center}
     .hm-lakas-stats span{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border:1px solid rgba(168,118,45,.22);border-radius:999px;background:#fff;color:#687078;font-size:12px;font-weight:700}
     .hm-lakas-stats strong{color:#253137;font-size:16px}
     .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(470px,2.35fr) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
@@ -566,7 +566,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-actions .hm-lakas-outline{background:#fff;border:1px solid #a8762d;color:#a8762d}
     .hm-lakas-empty{display:none;margin:28px 0 0;padding:24px;border:1px solid rgba(168,118,45,.2);background:#fff;text-align:center;color:#687078}
     .hm-lakas-empty.is-visible{display:block}
-    @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-range-field{grid-column:1/-1}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-stats{justify-content:flex-start}}
+    @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-range-field{grid-column:1/-1}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-hero p,.hm-lakas-hero h1,.hm-lakas-stats{grid-column:1;grid-row:auto}.hm-lakas-stats{justify-content:flex-start}}
     @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
 
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .property_loop,
