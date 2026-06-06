@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loaderText = document.getElementById('loaderText');
     
     const loadingTexts = [
-        "Otthonok betöltése...", 
+        "Az interaktív lakásválasztó betöltése folyamatban...",
         "Épületek előkészítése...", 
         "Lakásválasztó indítása...", 
         "Harmat Lakópark"

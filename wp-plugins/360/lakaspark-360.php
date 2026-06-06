@@ -2,7 +2,7 @@
 /*
 Plugin Name: Lakópark 360 Viewer
 Description: Interaktív 360-as lakásválasztó modul JSON hitboxokkal.
-Version: 1.7
+Version: 1.8
 Author: 21stCenturyWebsites
 */
 
@@ -230,7 +230,7 @@ function render_lakaspark_360_viewer($atts) {
 
                     <div id="lakasparkLoader" class="lakaspark-loader">
                         <div class="loader-content">
-                            <div class="loader-text" id="loaderText">Betöltés...</div>
+                            <div class="loader-text" id="loaderText">Az interaktív lakásválasztó betöltése folyamatban...</div>
                             <div class="loader-bar-container">
                                 <div class="loader-bar-fill" id="loaderBarFill"></div>
                             </div>

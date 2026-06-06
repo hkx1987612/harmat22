@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.07.1
+ * Version: 2026.06.07.3
  */
 
 defined('ABSPATH') || exit;
@@ -259,6 +259,28 @@ function hm_migrated_clean_footer_html() {
 }
 
 function hm_migrated_project_page_html() {
+    $hero_image = content_url('/uploads/2026/02/Harmat22_latvany-3-1536x864.jpg');
+    $gallery = array(
+        array(
+            'url' => content_url('/uploads/2026/02/Harmat22_latvany-4-400x225.jpg'),
+            'title' => 'Építészeti karakter',
+            'text' => 'Letisztult tömegformálás és világos, kortárs lakóparki hangulat.',
+            'alt' => 'Harmat Lakópark építészeti látványterv',
+        ),
+        array(
+            'url' => content_url('/uploads/2026/02/Harmat22_latvany-8-400x225.jpg'),
+            'title' => 'Zöld lakókörnyezet',
+            'text' => 'Külső terek és zöldfelületek, amelyek a mindennapi komfortot erősítik.',
+            'alt' => 'Harmat Lakópark zöld lakókörnyezeti látványterv',
+        ),
+        array(
+            'url' => content_url('/uploads/2026/02/Harmat22_latvany-10-400x225.jpg'),
+            'title' => 'Otthonos belső terek',
+            'text' => 'Átgondolt alaprajzok, jól használható nappali zónák és családbarát méretek.',
+            'alt' => 'Harmat Lakópark belső tér látványterv',
+        ),
+    );
+
     $stats = array(
         array('398', 'tervezett lakás'),
         array('124', 'lakás az első ütemben'),
@@ -275,13 +297,18 @@ function hm_migrated_project_page_html() {
 
     $html = '<main id="main" class="site-main harmat-project-modern" role="main">';
     $html .= '<article id="post-1777" class="post-1777 page type-page status-publish hentry"><div class="entry-content">';
-    $html .= '<section class="harmat-project-hero"><span>Budapest X. kerület</span><h1>Harmat Lakópark</h1><p>Modern új építésű otthonok a Harmat utca 22. alatt, zöldebb lakókörnyezettel, átgondolt alaprajzokkal és átlátható értékesítési adatokkal.</p><div class="harmat-project-actions"><a href="' . esc_url(home_url('/lakaskereso/')) . '">Lakáskereső</a><a href="' . esc_url(home_url('/virtualis-lakasvalaszto/')) . '">Virtuális lakásválasztó</a><a href="' . esc_url(home_url('/elerhetosegeink/')) . '">Kapcsolat</a></div></section>';
+    $html .= '<section class="harmat-project-hero"><div class="harmat-project-hero-text"><span>Budapest X. kerület</span><h1>Harmat Lakópark</h1><p>Modern új építésű otthonok a Harmat utca 22. alatt, zöldebb lakókörnyezettel, átgondolt alaprajzokkal és átlátható értékesítési adatokkal.</p><div class="harmat-project-actions"><a href="' . esc_url(home_url('/lakaskereso/')) . '">Lakáskereső</a><a href="' . esc_url(home_url('/virtualis-lakasvalaszto/')) . '">Virtuális lakásválasztó</a><a href="' . esc_url(home_url('/elerhetosegeink/')) . '">Kapcsolat</a></div></div><figure class="harmat-project-hero-image"><img src="' . esc_url($hero_image) . '" alt="Harmat Lakópark madártávlati látványterv" loading="eager" decoding="async" fetchpriority="high"><figcaption>Harmat Lakópark - első ütem</figcaption></figure></section>';
     $html .= '<section class="harmat-project-stats" aria-label="Projekt adatok">';
     foreach ($stats as $stat) {
         $html .= '<div><strong>' . esc_html($stat[0]) . '</strong><span>' . esc_html($stat[1]) . '</span></div>';
     }
     $html .= '</section>';
     $html .= '<section class="harmat-project-copy"><div><span>Otthon a Harmat utcában</span><h2>Nyugodt lakóparki környezet, városi kapcsolatokkal</h2></div><p>A Harmat Lakópark több ütemben megvalósuló lakóprojekt. Az első ütem 124 lakással indul, a teljes fejlesztés tervezetten 398 lakást foglal magában. A cél egy letisztult, könnyen fenntartható, jól használható otthonokat kínáló lakópark Budapest X. kerületében.</p></section>';
+    $html .= '<section class="harmat-project-gallery" aria-label="Projekt képek">';
+    foreach ($gallery as $item) {
+        $html .= '<article><img src="' . esc_url($item['url']) . '" alt="' . esc_attr($item['alt']) . '" loading="lazy" decoding="async"><div><h3>' . esc_html($item['title']) . '</h3><p>' . esc_html($item['text']) . '</p></div></article>';
+    }
+    $html .= '</section>';
     $html .= '<section class="harmat-project-features" aria-label="Projekt jellemzők">';
     foreach ($features as $feature) {
         $html .= '<article><h3>' . esc_html($feature[0]) . '</h3><p>' . esc_html($feature[1]) . '</p></article>';
@@ -328,6 +355,31 @@ function hm_migrated_replace_clean_footer($html) {
     }
 
     return substr($html, 0, $body_pos) . $footer . substr($html, $body_pos);
+}
+
+function hm_migrated_remove_legacy_canvas_menu($html) {
+    if (!is_string($html) || $html === '') {
+        return $html;
+    }
+
+    $next = preg_replace('~<nav\b(?=[^>]*\bid=(["\'])opal-canvas-menu\1)[\s\S]*?</nav>~i', '', $html, 1);
+    return is_string($next) ? $next : $html;
+}
+
+function hm_migrated_normalize_area_formatting($html) {
+    if (!is_string($html) || $html === '') {
+        return $html;
+    }
+
+    $next = preg_replace_callback(
+        '~(?<![A-Za-z0-9])([0-9]{1,3})[\.,]([0-9]{1,2})\s*m(?:2|²|&sup2;)(?![A-Za-z0-9])~iu',
+        function ($match) {
+            return $match[1] . ',' . str_pad($match[2], 2, '0') . ' m²';
+        },
+        $html
+    );
+
+    return is_string($next) ? $next : $html;
 }
 
 function hm_migrated_find_balanced_div_end($html, $start) {
@@ -449,6 +501,7 @@ function hm_migrated_public_html_cleanup($html) {
     if (!is_string($html)) {
         return $original_html;
     }
+    $html = hm_migrated_normalize_area_formatting($html);
 
     $html = preg_replace(
         '~\s*<a\b[^>]*href=(["\'])[^"\']*/marketing-hozzajarulas/?\1[^>]*>\s*</a>~i',
@@ -490,6 +543,7 @@ function hm_migrated_public_html_cleanup($html) {
 
     $html = hm_migrated_move_hidden_forms_to_footer($html);
     $html = hm_migrated_replace_clean_footer($html);
+    $html = hm_migrated_remove_legacy_canvas_menu($html);
 
     if (strlen(trim($original_html)) >= 1000 && (!is_string($html) || strlen(trim($html)) < 1000)) {
         return $original_html;
@@ -645,10 +699,13 @@ add_action('wp_head', function () {
 .harmat-clean-footer-bottom{border-top:1px solid rgba(152,112,51,.16);padding:14px 24px 18px;text-align:center;color:#687078;font-size:12px;line-height:1.6}
 .harmat-project-modern{background:#fff}
 .harmat-project-modern .entry-content{max-width:1180px;margin:0 auto;padding:34px 24px 58px;font-family:Montserrat,Arial,sans-serif;color:#263135}
-.harmat-project-hero{padding:54px 0 34px;border-bottom:1px solid rgba(152,112,51,.18)}
+.harmat-project-hero{padding:54px 0 34px;border-bottom:1px solid rgba(152,112,51,.18);display:grid;grid-template-columns:minmax(0,.88fr) minmax(420px,1.12fr);gap:34px;align-items:center}
 .harmat-project-hero span,.harmat-project-copy span{display:block;margin-bottom:10px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
 .harmat-project-hero h1{margin:0 0 16px;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(44px,7vw,86px);line-height:.95}
 .harmat-project-hero p{max-width:760px;margin:0;color:#50585d;font-size:18px;line-height:1.7}
+.harmat-project-hero-image{position:relative;margin:0;aspect-ratio:16/10;overflow:hidden;border-radius:6px;background:#f4ead8;box-shadow:0 22px 54px rgba(38,49,53,.12)}
+.harmat-project-hero-image img{display:block;width:100%;height:100%;object-fit:cover}
+.harmat-project-hero-image figcaption{position:absolute;left:16px;bottom:14px;margin:0;padding:7px 10px;background:rgba(255,250,241,.92);color:#987033;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 .harmat-project-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
 .harmat-project-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #987033;background:#fff;color:#987033!important;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
 .harmat-project-actions a:first-child{background:#987033;color:#fff!important}
@@ -659,13 +716,19 @@ add_action('wp_head', function () {
 .harmat-project-copy{display:grid;grid-template-columns:minmax(240px,.85fr) 1.15fr;gap:40px;align-items:start;margin:34px 0}
 .harmat-project-copy h2,.harmat-project-note h2{margin:0;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(30px,4vw,48px);line-height:1.08}
 .harmat-project-copy p,.harmat-project-note p{margin:0;color:#50585d;font-size:15px;line-height:1.8}
+.harmat-project-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:30px 0}
+.harmat-project-gallery article{overflow:hidden;border:1px solid rgba(152,112,51,.2);border-radius:6px;background:#fffaf1}
+.harmat-project-gallery img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.harmat-project-gallery div{padding:18px}
+.harmat-project-gallery h3{margin:0 0 8px;color:#263135;font-size:17px;font-weight:900}
+.harmat-project-gallery p{margin:0;color:#50585d;font-size:13px;line-height:1.65}
 .harmat-project-features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:28px 0}
 .harmat-project-features article{border:1px solid rgba(152,112,51,.2);background:#fffaf1;padding:20px}
 .harmat-project-features h3{margin:0 0 10px;color:#263135;font-size:17px;font-weight:900}
 .harmat-project-features p{margin:0;color:#50585d;font-size:13px;line-height:1.65}
 .harmat-project-note{margin-top:30px;padding:24px;border-left:4px solid #987033;background:#fff7e8;display:grid;grid-template-columns:minmax(220px,.7fr) 1.3fr;gap:28px;align-items:start}
-@media(max-width:900px){.harmat-clean-footer-inner,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-project-stats,.harmat-project-features{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-project-modern .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-features{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}}
+@media(max-width:900px){.harmat-clean-footer-inner,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
+@media(max-width:560px){.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-project-modern .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
 </style>
         <?php
     }
