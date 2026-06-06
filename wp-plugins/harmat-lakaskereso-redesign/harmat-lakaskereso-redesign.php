@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.1
+ * Version: 1.1.4
  */
 
 if (!defined('ABSPATH')) {
@@ -37,11 +37,11 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.1');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.4');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
-    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.1', true);
+    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.4', true);
     wp_enqueue_script('harmat-lakas-redesign');
     wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
 }, 90);
@@ -56,7 +56,7 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v4';
+    return 'harmat_lakas_redesign_markup_v7';
 }
 
 function harmat_lakas_redesign_clear_cache() {
@@ -164,6 +164,30 @@ function harmat_lakas_redesign_unique($items, $key) {
         }
     }
     $values = array_keys($values);
+    if ($key === 'floor') {
+        usort($values, function ($a, $b) {
+            $rank = function ($value) {
+                $value = trim((string) $value);
+                if (strcasecmp($value, 'Fsz') === 0) {
+                    return -1;
+                }
+                if (is_numeric($value)) {
+                    return (int) $value;
+                }
+                return 1000;
+            };
+
+            $rank_a = $rank($a);
+            $rank_b = $rank($b);
+            if ($rank_a === $rank_b) {
+                return strcasecmp((string) $a, (string) $b);
+            }
+
+            return $rank_a <=> $rank_b;
+        });
+        return array_values($values);
+    }
+
     natcasesort($values);
     return array_values($values);
 }
@@ -309,6 +333,15 @@ function harmat_lakas_redesign_render_related() {
 }
 
 function harmat_lakas_redesign_render() {
+    if (!headers_sent()) {
+        if (!defined('DONOTCACHEPAGE')) {
+            define('DONOTCACHEPAGE', true);
+        }
+        nocache_headers();
+        header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+    }
+
     $cached_markup = get_transient(harmat_lakas_redesign_cache_key());
     if (is_string($cached_markup) && $cached_markup !== '') {
         return $cached_markup;
@@ -384,29 +417,16 @@ function harmat_lakas_redesign_render() {
             </label>
             <div class="hm-lakas-range-field" data-sqm-range>
                 <span>m² ár tartomány</span>
-                <div class="hm-lakas-range-row">
-                    <div class="hm-lakas-range-meta">
-                        <strong>Legalacsonyabb</strong>
-                        <em data-sqm-min-label>Mind</em>
+                <div class="hm-lakas-range-box">
+                    <strong data-sqm-summary>Mind</strong>
+                    <div class="hm-lakas-range-slider" data-range-slider>
+                        <span class="hm-lakas-range-track"></span>
+                        <span class="hm-lakas-range-fill" data-range-fill></span>
+                        <input type="range" data-filter="sqmMin" min="<?php echo esc_attr($sqm_range['min']); ?>" max="<?php echo esc_attr($sqm_range['max']); ?>" step="<?php echo esc_attr($sqm_range['step']); ?>" value="<?php echo esc_attr($sqm_range['min']); ?>" data-default="<?php echo esc_attr($sqm_range['min']); ?>" aria-label="m² ár alsó határ">
+                        <input type="range" data-filter="sqmMax" min="<?php echo esc_attr($sqm_range['min']); ?>" max="<?php echo esc_attr($sqm_range['max']); ?>" step="<?php echo esc_attr($sqm_range['step']); ?>" value="<?php echo esc_attr($sqm_range['max']); ?>" data-default="<?php echo esc_attr($sqm_range['max']); ?>" aria-label="m² ár felső határ">
                     </div>
-                    <input type="range" data-filter="sqmMin" min="<?php echo esc_attr($sqm_range['min']); ?>" max="<?php echo esc_attr($sqm_range['max']); ?>" step="<?php echo esc_attr($sqm_range['step']); ?>" value="<?php echo esc_attr($sqm_range['min']); ?>" data-default="<?php echo esc_attr($sqm_range['min']); ?>" aria-label="m² ár alsó határ">
-                </div>
-                <div class="hm-lakas-range-row">
-                    <div class="hm-lakas-range-meta">
-                        <strong>Legmagasabb</strong>
-                        <em data-sqm-max-label>Mind</em>
-                    </div>
-                    <input type="range" data-filter="sqmMax" min="<?php echo esc_attr($sqm_range['min']); ?>" max="<?php echo esc_attr($sqm_range['max']); ?>" step="<?php echo esc_attr($sqm_range['step']); ?>" value="<?php echo esc_attr($sqm_range['max']); ?>" data-default="<?php echo esc_attr($sqm_range['max']); ?>" aria-label="m² ár felső határ">
                 </div>
             </div>
-            <label>
-                <span>Sorrend</span>
-                <select data-filter="sort">
-                    <option value="">Alapértelmezett</option>
-                    <option value="sqm-asc">m² ár: alacsony → magas</option>
-                    <option value="sqm-desc">m² ár: magas → alacsony</option>
-                </select>
-            </label>
             <button type="button" class="hm-lakas-reset" data-reset>Alaphelyzet</button>
         </div>
 
@@ -490,7 +510,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-stats{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
     .hm-lakas-stats span{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border:1px solid rgba(168,118,45,.22);border-radius:999px;background:#fff;color:#687078;font-size:12px;font-weight:700}
     .hm-lakas-stats strong{color:#253137;font-size:16px}
-    .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(190px,1.15fr) repeat(6,minmax(118px,.72fr)) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
+    .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(470px,2.35fr) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
     .hm-lakas-tabs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
     .hm-lakas-tabs button,.hm-lakas-reset{min-height:38px;padding:0 18px;border:1px solid rgba(168,118,45,.34);background:#fff;color:#8c621f;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
     .hm-lakas-tabs button{border-radius:999px}
@@ -501,18 +521,21 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-toolbar label{display:grid;gap:7px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
     .hm-lakas-toolbar input,.hm-lakas-toolbar select{width:100%;height:46px;border:1px solid rgba(168,118,45,.35);background:#fff;color:#253137;padding:0 13px;font-size:14px;outline:none}
     .hm-lakas-toolbar input:focus,.hm-lakas-toolbar select:focus{border-color:#a8762d;box-shadow:0 0 0 3px rgba(168,118,45,.12)}
-    .hm-lakas-range-field{grid-column:span 2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-    .hm-lakas-range-field>span{grid-column:1/-1}
-    .hm-lakas-range-row{display:grid;gap:8px;border:1px solid rgba(168,118,45,.35);background:#fff;padding:11px 13px 12px}
-    .hm-lakas-range-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:20px;color:#253137;letter-spacing:0;text-transform:none}
-    .hm-lakas-range-meta strong{font-size:13px;font-weight:900}
-    .hm-lakas-range-meta em{font-style:normal;font-size:13px;font-weight:900;color:#a8762d;white-space:nowrap}
-    .hm-lakas-range-row input[type=range]{width:100%;height:24px;margin:0;padding:0;border:0;background:transparent;box-shadow:none;accent-color:#a8762d;cursor:pointer;-webkit-appearance:none;appearance:none}
-    .hm-lakas-range-row input[type=range]:focus{box-shadow:none}
-    .hm-lakas-range-row input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:999px;background:#ead8b8}
-    .hm-lakas-range-row input[type=range]::-moz-range-track{height:4px;border-radius:999px;background:#ead8b8}
-    .hm-lakas-range-row input[type=range]::-webkit-slider-thumb{width:20px;height:20px;margin-top:-8px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer;-webkit-appearance:none;appearance:none}
-    .hm-lakas-range-row input[type=range]::-moz-range-thumb{width:20px;height:20px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer}
+    .hm-lakas-range-field{display:grid;gap:7px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .hm-lakas-range-box{height:46px;display:grid;grid-template-rows:18px 1fr;gap:3px;border:1px solid rgba(168,118,45,.35);background:#fff;padding:5px 13px 7px}
+    .hm-lakas-range-box strong{display:block;min-width:0;color:#253137;font-size:12px;font-weight:900;letter-spacing:0;line-height:18px;text-align:center;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hm-lakas-range-slider{position:relative;height:18px}
+    .hm-lakas-range-track,.hm-lakas-range-fill{position:absolute;left:0;right:0;top:50%;height:4px;border-radius:999px;transform:translateY(-50%)}
+    .hm-lakas-range-track{background:#ead8b8}
+    .hm-lakas-range-fill{background:#a8762d}
+    .hm-lakas-range-slider input[type=range]{position:absolute;left:0;top:0;width:100%;height:18px;margin:0;padding:0;border:0;background:transparent;box-shadow:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+    .hm-lakas-range-slider input[type=range]:focus{box-shadow:none}
+    .hm-lakas-range-slider input[type=range][data-filter="sqmMin"]{z-index:3}
+    .hm-lakas-range-slider input[type=range][data-filter="sqmMax"]{z-index:4}
+    .hm-lakas-range-slider input[type=range]::-webkit-slider-runnable-track{height:4px;background:transparent}
+    .hm-lakas-range-slider input[type=range]::-moz-range-track{height:4px;background:transparent}
+    .hm-lakas-range-slider input[type=range]::-webkit-slider-thumb{width:18px;height:18px;margin-top:-7px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer;pointer-events:auto;-webkit-appearance:none;appearance:none}
+    .hm-lakas-range-slider input[type=range]::-moz-range-thumb{width:18px;height:18px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer;pointer-events:auto}
     .hm-lakas-reset{height:46px;background:#4f4c49;color:#d5aa6f;border-color:#4f4c49}
     .hm-lakas-resultbar{display:flex;align-items:center;gap:8px;margin:0 0 20px;color:#687078;font-size:14px}
     .hm-lakas-resultbar strong{min-width:44px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#a8762d;color:#fff}
@@ -697,17 +720,29 @@ function harmat_lakas_redesign_js() {
         return parseInt(String(value||"").replace(/[^0-9]/g,""),10)||0;
       }
       function money(value){
-        return new Intl.NumberFormat("hu-HU").format(numberValue(value))+" Ft";
+        return new Intl.NumberFormat("hu-HU").format(numberValue(value));
       }
       function rangeField(name){
         return filters.querySelector("[data-filter="+name+"]");
       }
+      function syncRangeFill(){
+        var minField=rangeField("sqmMin");
+        var maxField=rangeField("sqmMax");
+        var fill=filters.querySelector("[data-range-fill]");
+        if(!minField||!maxField||!fill) return;
+        var low=numberValue(minField.min);
+        var high=numberValue(minField.max);
+        var span=Math.max(high-low,1);
+        var minValue=numberValue(minField.value);
+        var maxValue=numberValue(maxField.value);
+        fill.style.left=Math.max(0,Math.min(100,((minValue-low)/span)*100))+"%";
+        fill.style.right=Math.max(0,Math.min(100,(100-((maxValue-low)/span)*100)))+"%";
+      }
       function syncRangeLabels(){
-        var minLabel=filters.querySelector("[data-sqm-min-label]");
-        var maxLabel=filters.querySelector("[data-sqm-max-label]");
-        if(minLabel) minLabel.textContent=state.sqmActive?money(state.sqmMin):"Mind";
-        if(maxLabel) maxLabel.textContent=state.sqmActive?money(state.sqmMax):"Mind";
+        var summary=filters.querySelector("[data-sqm-summary]");
+        if(summary) summary.textContent=state.sqmActive?(money(state.sqmMin)+" - "+money(state.sqmMax)+" Ft/m²"):"Mind";
         filters.dataset.sqmActive=state.sqmActive?"1":"0";
+        syncRangeFill();
       }
       function resetRange(){
         var minField=rangeField("sqmMin");

@@ -1,16 +1,27 @@
 <?php
 /**
  * Plugin Name: Harmat Homepage No Cache
- * Description: Temporarily prevents browser/page cache from holding stale homepage HTML after emergency rollback.
- * Version: 1.0.0
+ * Description: Prevents browser/page cache from holding stale public search and homepage HTML.
+ * Version: 1.0.1
  */
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
+function harmat_homepage_nocache_is_target() {
+    if (is_admin() || wp_doing_ajax()) {
+        return false;
+    }
+
+    $path = isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '';
+    $path = trim((string) parse_url($path, PHP_URL_PATH), '/');
+
+    return is_front_page() || is_page('lakaskereso') || $path === 'lakaskereso';
+}
+
 function harmat_homepage_nocache_headers() {
-    if (is_admin() || wp_doing_ajax() || !is_front_page()) {
+    if (!harmat_homepage_nocache_is_target()) {
         return;
     }
 
@@ -26,7 +37,7 @@ add_action('send_headers', 'harmat_homepage_nocache_headers', 999999);
 add_action('template_redirect', 'harmat_homepage_nocache_headers', 0);
 
 function harmat_homepage_nocache_wp_headers($headers) {
-    if (is_admin() || wp_doing_ajax() || !is_front_page()) {
+    if (!harmat_homepage_nocache_is_target()) {
         return $headers;
     }
 
