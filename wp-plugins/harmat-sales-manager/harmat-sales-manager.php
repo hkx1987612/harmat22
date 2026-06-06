@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.19
+ * Version: 1.6.20
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.19';
+    const VERSION = '1.6.20';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -25,6 +25,8 @@ final class Harmat_Sales_Manager {
     const LEAD_PROTECTION_DAYS = 30;
     const SALES_REMINDER_HOOK = 'harmat_sales_daily_task_reminder';
     const SALES_REMINDER_EMAIL = 'ertekesites@harmat22.hu';
+    const VISIT_STATS_OPTION = 'harmat_sales_visit_stats';
+    const VISIT_REST_NAMESPACE = 'harmat-sales-manager/v1';
     private $use_private_customer_material_upload_dir = false;
 
     public function __construct() {
@@ -36,6 +38,7 @@ final class Harmat_Sales_Manager {
         add_action('init', array($this, 'schedule_daily_task_reminder'));
         add_action('init', array($this, 'handle_portal_auth_actions'));
         add_action('init', array($this, 'handle_actions'));
+        add_action('rest_api_init', array($this, 'register_visit_tracking_route'));
         add_action(self::SALES_REMINDER_HOOK, array($this, 'send_daily_task_reminder_email'));
         add_action('send_headers', array($this, 'send_portal_nocache_headers'), 0);
         add_filter('query_vars', array($this, 'register_query_vars'));
@@ -51,6 +54,7 @@ final class Harmat_Sales_Manager {
         add_action('template_redirect', array($this, 'redirect_room_filter_pages'), 0);
         add_action('template_redirect', array($this, 'remove_lakaskereso_legacy_filters'), 1);
         add_action('wp_enqueue_scripts', array($this, 'frontend_assets'), 30);
+        add_action('wp_footer', array($this, 'render_public_visit_tracker'), 90);
         add_action('wp_head', array($this, 'frontend_structured_data'), 30);
         add_filter('wpcf7_posted_data', array($this, 'prefill_cf7_property_data'));
     }
@@ -77,6 +81,169 @@ final class Harmat_Sales_Manager {
         if ($this->is_portal_request_path()) {
             nocache_headers();
         }
+    }
+
+    public function register_visit_tracking_route() {
+        register_rest_route(self::VISIT_REST_NAMESPACE, '/visit', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'track_public_visit'),
+            'permission_callback' => '__return_true',
+            'args' => array(
+                'path' => array(
+                    'required' => true,
+                    'type' => 'string',
+                ),
+                'title' => array(
+                    'required' => false,
+                    'type' => 'string',
+                ),
+            ),
+        ));
+    }
+
+    public function render_public_visit_tracker() {
+        if (is_admin() || wp_doing_ajax() || is_user_logged_in() || $this->is_portal_request_path()) {
+            return;
+        }
+
+        $endpoint = esc_url_raw(rest_url(self::VISIT_REST_NAMESPACE . '/visit'));
+        ?>
+        <script id="harmat-sales-visit-tracker" type="application/javascript" data-cfasync="false" data-no-optimize="1" data-noptimize="1">
+        (function(){
+            var endpoint = <?php echo wp_json_encode($endpoint); ?>;
+            if (!endpoint || navigator.doNotTrack === "1" || window.doNotTrack === "1") return;
+            function readConsent(){
+                var found = document.cookie.split("; ").find(function(row){ return row.indexOf("harmat_cookie_consent_v1=") === 0; });
+                if (!found) return null;
+                try { return JSON.parse(decodeURIComponent(found.split("=").slice(1).join("="))); } catch(e){ return null; }
+            }
+            var consent = readConsent();
+            if (!consent || !consent.analytics) return;
+            var payload = JSON.stringify({
+                path: window.location.pathname || "/",
+                title: document.title || ""
+            });
+            try {
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(endpoint, new Blob([payload], { type: "application/json" }));
+                    return;
+                }
+                fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: payload,
+                    keepalive: true,
+                    credentials: "omit"
+                });
+            } catch(e) {}
+        })();
+        </script>
+        <?php
+    }
+
+    public function track_public_visit(WP_REST_Request $request) {
+        $path = $this->normalize_visit_path((string) $request->get_param('path'));
+        if ($path === '' || !$this->is_trackable_public_path($path) || $this->is_probable_bot_request()) {
+            return rest_ensure_response(array('ok' => true, 'tracked' => false));
+        }
+
+        $date = current_time('Y-m-d');
+        $title = sanitize_text_field((string) $request->get_param('title'));
+        $title = mb_substr($title, 0, 90, 'UTF-8');
+        $visitor = $this->daily_visit_hash($date);
+
+        $stats = get_option(self::VISIT_STATS_OPTION, array());
+        if (!is_array($stats)) {
+            $stats = array();
+        }
+        if (!isset($stats[$date]) || !is_array($stats[$date])) {
+            $stats[$date] = array(
+                'pageviews' => 0,
+                'visitors' => array(),
+                'pages' => array(),
+            );
+        }
+
+        $stats[$date]['pageviews'] = (int) ($stats[$date]['pageviews'] ?? 0) + 1;
+        if ($visitor !== '') {
+            $stats[$date]['visitors'][$visitor] = 1;
+        }
+        if (!isset($stats[$date]['pages'][$path]) || !is_array($stats[$date]['pages'][$path])) {
+            $stats[$date]['pages'][$path] = array('views' => 0, 'title' => '');
+        }
+        $stats[$date]['pages'][$path]['views'] = (int) ($stats[$date]['pages'][$path]['views'] ?? 0) + 1;
+        if ($title !== '') {
+            $stats[$date]['pages'][$path]['title'] = $title;
+        }
+
+        $stats = $this->trim_visit_stats($stats);
+        update_option(self::VISIT_STATS_OPTION, $stats, false);
+
+        return rest_ensure_response(array('ok' => true, 'tracked' => true));
+    }
+
+    private function normalize_visit_path($path) {
+        $path = (string) parse_url($path, PHP_URL_PATH);
+        $path = '/' . ltrim($path, '/');
+        $path = preg_replace('~/+~', '/', $path);
+        return $path ?: '/';
+    }
+
+    private function is_trackable_public_path($path) {
+        $path = trim((string) $path, '/');
+        if ($path === '') {
+            return true;
+        }
+        foreach (array('sales', 'agent', 'client', 'customer', 'ugyfel', 'sales-admin', 'wp-admin', 'wp-login.php', 'wp-json') as $private_prefix) {
+            if ($path === $private_prefix || strpos($path, $private_prefix . '/') === 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private function is_probable_bot_request() {
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower((string) wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+        if ($ua === '') {
+            return true;
+        }
+        foreach (array('bot', 'crawl', 'spider', 'slurp', 'facebookexternalhit', 'whatsapp', 'telegrambot', 'preview', 'pingdom', 'uptimerobot') as $needle) {
+            if (strpos($ua, $needle) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function daily_visit_hash($date) {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) wp_unslash($_SERVER['REMOTE_ADDR']) : '';
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? substr((string) wp_unslash($_SERVER['HTTP_USER_AGENT']), 0, 180) : '';
+        if ($ip === '' && $ua === '') {
+            return '';
+        }
+        return hash_hmac('sha256', $date . '|' . $ip . '|' . $ua, wp_salt('auth'));
+    }
+
+    private function trim_visit_stats($stats) {
+        krsort($stats);
+        $stats = array_slice($stats, 0, 30, true);
+        foreach ($stats as $date => $day) {
+            if (!is_array($day)) {
+                unset($stats[$date]);
+                continue;
+            }
+            if (!empty($day['visitors']) && is_array($day['visitors']) && count($day['visitors']) > 5000) {
+                $day['visitors'] = array_slice($day['visitors'], -5000, null, true);
+            }
+            if (!empty($day['pages']) && is_array($day['pages'])) {
+                uasort($day['pages'], function($a, $b) {
+                    return ((int) ($b['views'] ?? 0)) <=> ((int) ($a['views'] ?? 0));
+                });
+                $day['pages'] = array_slice($day['pages'], 0, 80, true);
+            }
+            $stats[$date] = $day;
+        }
+        return $stats;
     }
 
     private static function next_reminder_timestamp($hour = 8) {
@@ -4700,6 +4867,71 @@ final class Harmat_Sales_Manager {
         wp_mail($recipients, $subject, implode("\n", $body));
     }
 
+    private function render_sales_traffic_summary($can_manage) {
+        $stats = $this->sales_visit_dashboard_stats();
+        $today_inquiries = $can_manage ? $this->count_offer_inquiries_on_date(current_time('Y-m-d')) : null;
+
+        echo '<section class="harmat-sales-panel harmat-sales-traffic-panel">';
+        echo '<div class="harmat-sales-panel-head"><div><h2>网站访问概览</h2><p>从同意统计 cookie 的公开页面访问中记录，数据从上线后开始累计。</p></div><a href="' . esc_url(home_url('/')) . '" target="_blank" rel="noopener">打开网站</a></div>';
+        echo '<div class="harmat-sales-traffic-grid">';
+        echo '<article><small>今日访客</small><strong>' . esc_html((string) $stats['today_visitors']) . '</strong><span>匿名去重</span></article>';
+        echo '<article><small>今日浏览</small><strong>' . esc_html((string) $stats['today_pageviews']) . '</strong><span>页面浏览量</span></article>';
+        echo '<article><small>近7天浏览</small><strong>' . esc_html((string) $stats['seven_day_pageviews']) . '</strong><span>公开页面</span></article>';
+        echo '<article><small>今日询价</small><strong>' . esc_html($today_inquiries === null ? '-' : (string) $today_inquiries) . '</strong><span>' . esc_html($can_manage ? '公开表单提交' : '主管可见') . '</span></article>';
+        echo '</div>';
+
+        echo '<div class="harmat-sales-traffic-pages">';
+        echo '<h3>今日热门页面</h3>';
+        if (empty($stats['top_pages'])) {
+            echo '<p>暂无访问记录。部署后，客人同意统计 cookie 并浏览公开页面时会开始显示。</p>';
+        } else {
+            echo '<ol>';
+            foreach ($stats['top_pages'] as $page) {
+                $path = (string) ($page['path'] ?? '/');
+                $title = trim((string) ($page['title'] ?? ''));
+                echo '<li><a href="' . esc_url(home_url($path)) . '" target="_blank" rel="noopener">' . esc_html($title !== '' ? $title : $path) . '</a><span>' . esc_html((string) ((int) ($page['views'] ?? 0))) . ' 次</span><small>' . esc_html($path) . '</small></li>';
+            }
+            echo '</ol>';
+        }
+        echo '</div>';
+        echo '</section>';
+    }
+
+    private function sales_visit_dashboard_stats() {
+        $stats = get_option(self::VISIT_STATS_OPTION, array());
+        if (!is_array($stats)) {
+            $stats = array();
+        }
+
+        $today = current_time('Y-m-d');
+        $today_data = isset($stats[$today]) && is_array($stats[$today]) ? $stats[$today] : array();
+        $seven_day_pageviews = 0;
+        for ($i = 0; $i < 7; $i++) {
+            $date = date('Y-m-d', strtotime('-' . $i . ' days', strtotime($today)));
+            $seven_day_pageviews += (int) ($stats[$date]['pageviews'] ?? 0);
+        }
+
+        $top_pages = array();
+        $pages = isset($today_data['pages']) && is_array($today_data['pages']) ? $today_data['pages'] : array();
+        uasort($pages, function($a, $b) {
+            return ((int) ($b['views'] ?? 0)) <=> ((int) ($a['views'] ?? 0));
+        });
+        foreach (array_slice($pages, 0, 6, true) as $path => $page) {
+            $top_pages[] = array(
+                'path' => (string) $path,
+                'title' => (string) ($page['title'] ?? ''),
+                'views' => (int) ($page['views'] ?? 0),
+            );
+        }
+
+        return array(
+            'today_visitors' => isset($today_data['visitors']) && is_array($today_data['visitors']) ? count($today_data['visitors']) : 0,
+            'today_pageviews' => (int) ($today_data['pageviews'] ?? 0),
+            'seven_day_pageviews' => $seven_day_pageviews,
+            'top_pages' => $top_pages,
+        );
+    }
+
     private function render_sales_portal_dashboard() {
         $properties = $this->get_properties();
         $leads = $this->visible_leads($this->get_leads());
@@ -4721,6 +4953,8 @@ final class Harmat_Sales_Manager {
         echo '<article><small>客户跟进</small><strong>' . count($leads) . '</strong></article>';
         echo '<article><small>在售房源</small><strong>' . (int) $property_counts['current'] . '</strong></article>';
         echo '</section>';
+
+        $this->render_sales_traffic_summary($can_manage);
 
         echo '<section class="harmat-sales-split">';
         echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>待办提醒</h2><p>今天和近期需要处理的销售事项。</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'tasks'))) . '">查看全部</a></div>';
@@ -7190,6 +7424,23 @@ final class Harmat_Sales_Manager {
         return (int) $query->found_posts;
     }
 
+    private function count_offer_inquiries_on_date($date) {
+        $query = new WP_Query(array(
+            'post_type' => 'harmat_offer_lead',
+            'post_status' => array('private', 'publish', 'draft'),
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'date_query' => array(
+                array(
+                    'after' => $date . ' 00:00:00',
+                    'before' => $date . ' 23:59:59',
+                    'inclusive' => true,
+                ),
+            ),
+        ));
+        return (int) $query->found_posts;
+    }
+
     private function offer_inquiry_data($post_id) {
         $posted = get_post_meta($post_id, '_harmat_offer_posted', true);
         if (!is_array($posted)) {
@@ -9374,6 +9625,7 @@ JS;
         .harmat-sales-permission-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}.harmat-sales-permission-strip article{padding:14px 16px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 10px 24px rgba(70,54,28,.05)}.harmat-sales-permission-strip small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.harmat-sales-permission-strip strong{display:block;margin-top:5px;color:#253137;font-size:17px}.harmat-sales-permission-strip span{display:block;margin-top:5px;color:#687178;font-size:13px;line-height:1.45}
         .harmat-sales-notice{margin:0 0 16px;padding:14px 16px;border-radius:14px;font-weight:800}.harmat-sales-notice span{display:block;margin-top:8px}.harmat-sales-notice code{display:inline-block;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.72);font-size:15px}.harmat-sales-notice-success{background:#eef8f1;color:#1f7a4d;border:1px solid #cce9d5}.harmat-sales-notice-error{background:#fff1f0;color:#b42318;border:1px solid #ffd1cc}
         .harmat-sales-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin:0 0 18px}.harmat-sales-kpis article{padding:18px;border-radius:18px;background:#fff;border:1px solid #ead8b8;box-shadow:0 12px 30px rgba(70,54,28,.06)}.harmat-sales-kpis small{display:block;color:#a5742c;font-weight:900;letter-spacing:.08em}.harmat-sales-kpis strong{display:block;margin-top:8px;color:#253137;font-size:34px;line-height:1}.harmat-sales-kpis strong a{color:#a8762d;text-decoration:none}.harmat-sales-kpis-compact{grid-template-columns:repeat(5,minmax(0,1fr))}
+        .harmat-sales-traffic-panel{margin-bottom:18px}.harmat-sales-traffic-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-traffic-grid article{padding:15px 16px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-grid small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-grid strong{display:block;margin-top:6px;color:#253137;font-size:28px;line-height:1}.harmat-sales-traffic-grid span{display:block;margin-top:6px;color:#687178;font-size:12px;font-weight:800}.harmat-sales-traffic-pages{padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-pages h3{margin:0 0 10px;color:#9a6b27;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-pages p{margin:0;color:#687178}.harmat-sales-traffic-pages ol{display:grid;gap:8px;margin:0;padding:0;list-style:none}.harmat-sales-traffic-pages li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(234,216,184,.72)}.harmat-sales-traffic-pages a{color:#253137;font-weight:900;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.harmat-sales-traffic-pages span{color:#a8762d;font-size:13px;font-weight:900;white-space:nowrap}.harmat-sales-traffic-pages small{grid-column:1/-1;color:#8a9299;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .harmat-sales-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.harmat-sales-deal-workspace{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px}.harmat-sales-panel{padding:22px;border-radius:22px;background:#fff;border:1px solid #ead8b8;box-shadow:0 18px 45px rgba(70,54,28,.08);margin-bottom:18px}.harmat-sales-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:16px}.harmat-sales-panel h2{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.harmat-sales-panel p{margin:5px 0 0;color:#6f7780}.harmat-sales-panel-head a{color:#a8762d;font-weight:900;text-decoration:none}
         .harmat-sales-followup-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.harmat-sales-followup-summary a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:12px 14px;border-radius:12px;border:1px solid #ead8b8;background:#fff;text-decoration:none}.harmat-sales-followup-summary small{color:#687178;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-followup-summary strong{color:#253137;font-size:24px}.harmat-sales-followup-overdue{border-color:#f5b5af!important;background:#fff1f0!important}.harmat-sales-followup-today{border-color:#ead8a1!important;background:#fff8df!important}.harmat-sales-followup-upcoming{border-color:#b9d8ee!important;background:#edf6ff!important}.harmat-sales-followup-none{background:#f7f7f7!important}.harmat-sales-deal-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;margin:0 0 16px}.harmat-sales-deal-card{display:grid;gap:12px;padding:16px;border:1px solid #ead8b8;border-left:4px solid #a8762d;border-radius:12px;background:#fffaf3}.harmat-sales-deal-card header,.harmat-sales-deal-card footer{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.harmat-sales-deal-card h3{margin:4px 0;color:#253137;font-size:18px;line-height:1.25}.harmat-sales-deal-card small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.harmat-sales-deal-card header span,.harmat-sales-deal-card-property span,.harmat-sales-deal-card footer span{color:#687178;font-size:13px;overflow-wrap:anywhere}.harmat-sales-deal-card-property{display:grid;gap:4px}.harmat-sales-deal-card-property a,.harmat-sales-deal-card-property strong{color:#253137;font-size:16px;font-weight:900;text-decoration:none}.harmat-sales-deal-card-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.harmat-sales-deal-card-metrics span,.harmat-sales-deal-card-next{display:grid;gap:5px;padding:10px;border:1px solid #ead8b8;border-radius:10px;background:#fff}.harmat-sales-deal-card-metrics strong,.harmat-sales-deal-card-next strong{color:#253137;font-size:14px;overflow-wrap:anywhere}.harmat-sales-deal-card-metrics em{color:#687178;font-size:12px;font-style:normal}.harmat-sales-deal-card footer a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;margin-left:6px;padding:0 12px;border-radius:9px;background:#a8762d;color:#fff;font-size:12px;font-weight:900;text-decoration:none}.harmat-sales-detail-table{margin-top:8px}.harmat-sales-detail-table summary{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border:1px solid #a8762d;border-radius:10px;color:#a8762d;background:#fff;font-weight:900;cursor:pointer}.harmat-sales-detail-table .harmat-sales-table-wrap{margin-top:10px}.harmat-sales-task-pill{display:inline-flex;width:max-content;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900}.harmat-sales-task-none,.harmat-sales-task-future,.harmat-sales-task-done{background:#eceff1;color:#687178}
         .harmat-sales-table-wrap{overflow:auto;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-table{width:100%;min-width:960px;border-collapse:collapse}.harmat-sales-table th{padding:12px 14px;background:#fbf4e7;color:#9a6b27;font-size:12px;letter-spacing:.08em;text-align:left;text-transform:uppercase;white-space:nowrap}.harmat-sales-table td{padding:13px 14px;border-top:1px solid #ead8b8;color:#253137;vertical-align:top}.harmat-sales-table td strong{display:block;font-size:15px}.harmat-sales-table td span{display:block}.harmat-sales-table td small{display:block;margin-top:4px;color:#8a9299;overflow-wrap:anywhere}.harmat-sales-table a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-table input,.harmat-sales-table select{width:100%;min-width:120px;min-height:36px;padding:7px 9px;border:1px solid #e3cfad;border-radius:9px;background:#fff;color:#253137;font:inherit}.harmat-sales-plan-table{min-width:1180px}.harmat-sales-plan-table input[data-harmat-plan-percent]{min-width:86px}.harmat-sales-payment-summary{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;margin:12px 0 14px}.harmat-sales-payment-summary article{padding:12px;border:1px solid #ead8b8;border-radius:12px;background:#fffaf3}.harmat-sales-payment-summary small{display:block;margin-bottom:5px;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-payment-summary strong{display:block;color:#253137;font-size:16px;font-weight:900;overflow-wrap:anywhere}.harmat-sales-payment-summary.is-balanced [data-harmat-summary-status-card]{border-color:#b7dec6;background:#eef8f1}.harmat-sales-payment-summary.is-balanced [data-harmat-summary-status-card] strong{color:#1f7a4d}.harmat-sales-payment-summary.is-warning [data-harmat-summary-status-card]{border-color:#f5b5af;background:#fff1f0}.harmat-sales-payment-summary.is-warning [data-harmat-summary-status-card] strong{color:#b42318}
@@ -9383,7 +9635,7 @@ JS;
         .harmat-sales-search{display:flex;gap:8px;align-items:center}.harmat-sales-search input{min-width:260px}.harmat-sales-rule-list,.harmat-sales-stage-list{display:grid;gap:12px}.harmat-sales-rule-list span,.harmat-sales-stage-list span{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-rule-list strong,.harmat-sales-stage-list strong{color:#9a6b27}.harmat-sales-rule-list b,.harmat-sales-stage-list b{color:#253137;font-size:20px}.harmat-sales-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.harmat-sales-link-grid a{display:grid;gap:7px;padding:15px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;text-decoration:none}.harmat-sales-link-grid strong{color:#253137}.harmat-sales-link-grid code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a8762d;background:#fff;padding:6px 8px;border-radius:8px}.harmat-sales-link-grid span{color:#6f7780;font-size:13px}
         .harmat-sales-customer-table{min-width:1640px}.harmat-sales-head-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.harmat-sales-customer-profile-grid{align-items:start}.harmat-sales-customer-detail{display:grid;gap:14px}.harmat-sales-customer-detail section{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-detail h3,.harmat-sales-customer-ledger h3{margin:0 0 12px;color:#a8762d;font-size:14px;letter-spacing:.08em}.harmat-sales-customer-detail dl,.harmat-sales-customer-ledger dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-sales-customer-detail div,.harmat-sales-customer-ledger div{padding:10px;border-radius:10px;background:#fff}.harmat-sales-customer-detail dt,.harmat-sales-customer-ledger dt{color:#6f7780;font-size:12px;font-weight:900}.harmat-sales-customer-detail dd,.harmat-sales-customer-ledger dd{margin:5px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-sales-customer-flow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-customer-flow article{display:grid;gap:7px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-flow small{color:#a8762d;font-weight:900;letter-spacing:.06em}.harmat-sales-customer-flow strong{color:#253137;font-size:20px;overflow-wrap:anywhere}.harmat-sales-customer-flow .harmat-sales-pill{margin-top:2px}.harmat-sales-customer-ledger{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-form{margin-bottom:16px}.harmat-sales-material-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-list strong{color:#253137}.harmat-sales-material-list small{color:#6f7780}.harmat-sales-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-material-list a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-material-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:2px}.harmat-sales-material-actions form{margin:0}.harmat-sales-material-actions button{min-height:34px;padding:0 10px;border:1px solid #d92d20;border-radius:9px;background:#fff;color:#b42318;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.harmat-sales-detail-wide{grid-column:1/-1}
         .harmat-sales-actions{min-width:150px}.harmat-sales-actions form{display:inline-block;margin:0 6px 6px 0}.harmat-sales-actions a,.harmat-sales-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 10px;border:1px solid #a8762d;border-radius:8px;background:#fff;color:#a8762d;font:inherit;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.harmat-sales-actions button{border-color:#d92d20;color:#b42318}.harmat-sales-empty{padding:24px;border:1px dashed #d4bea0;border-radius:16px;color:#6f7780;background:#fffaf3}
-        @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip{grid-template-columns:1fr}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}}
+        @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip,.harmat-sales-traffic-grid{grid-template-columns:1fr}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}}
         ';
     }
 
