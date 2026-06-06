@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.23
+ * Version: 1.6.24
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.23';
+    const VERSION = '1.6.24';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -10450,6 +10450,12 @@ JS;
             }
             function applySingle() {
                 var item = currentSingleItem();
+                if (document.querySelector(".harmat-property-hero")) {
+                    document.querySelectorAll(".harmat-front-single-title-panel").forEach(function(panel){
+                        panel.remove();
+                    });
+                    return;
+                }
                 if (!item || document.querySelector(".harmat-front-single-title-panel")) return;
                 var headings = Array.prototype.slice.call(document.querySelectorAll("body.single-property .site-content .elementor[data-elementor-type=\\"wp-post\\"] .elementor-heading-title, body.single-property .site-content .elementor[data-elementor-type=\\"wp-post\\"] h1, body.single-property .site-content .elementor[data-elementor-type=\\"wp-post\\"] h2"));
                 var title = headings.find(function(node){ return (node.textContent || "").trim() === item.title; });

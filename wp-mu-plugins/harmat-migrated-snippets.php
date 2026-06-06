@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.06.1
+ * Version: 2026.06.06.7
  */
 
 defined('ABSPATH') || exit;
@@ -17,6 +17,158 @@ function hm_migrated_is_public_request() {
 
 function hm_migrated_request_path() {
     return trim((string) wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+}
+
+function hm_migrated_format_huf($value) {
+    $number = (int) preg_replace('/[^\d]/', '', (string) $value);
+    if ($number <= 0) {
+        return '';
+    }
+
+    return number_format($number, 0, ' ', ' ') . ' Ft';
+}
+
+function hm_migrated_format_square_meter($value) {
+    $number = (float) str_replace(',', '.', (string) $value);
+    if ($number <= 0) {
+        return '';
+    }
+
+    return number_format($number, 2, ',', ' ') . ' m²';
+}
+
+function hm_migrated_property_floor_label($title, $floor) {
+    $floor = trim((string) $floor);
+    if ($floor === '' || stripos((string) $title, '-F-') !== false || strcasecmp($floor, 'F') === 0 || strcasecmp($floor, 'FSZ') === 0) {
+        return 'Fsz';
+    }
+
+    return is_numeric($floor) ? ((int) $floor . '.') : $floor;
+}
+
+function hm_migrated_property_status_label($post_id) {
+    $status = get_post_meta($post_id, 'property_status', true);
+    if ($status === 'sold') {
+        return array('Eladva', 'sold');
+    }
+
+    if (get_post_meta($post_id, 'property_under_offer', true)) {
+        return array('Foglalva', 'reserved');
+    }
+
+    return array('Elérhető', 'current');
+}
+
+function hm_migrated_extract_property_pdf_url($html) {
+    if (!is_string($html) || $html === '') {
+        return '';
+    }
+
+    if (!preg_match_all('/href=["\']([^"\']+\.pdf(?:\?[^"\']*)?)["\']/i', $html, $matches)) {
+        return '';
+    }
+
+    foreach ($matches[1] as $url) {
+        if (preg_match('/(floorplan|alaprajz)/i', $url)) {
+            return html_entity_decode($url, ENT_QUOTES, 'UTF-8');
+        }
+    }
+
+    return html_entity_decode($matches[1][0], ENT_QUOTES, 'UTF-8');
+}
+
+function hm_migrated_property_hero_html($floorplan_override = '') {
+    if (!is_singular('property')) {
+        return '';
+    }
+
+    $post_id = get_queried_object_id();
+    if (!$post_id) {
+        return '';
+    }
+
+    $title = get_post_meta($post_id, 'property_heading', true);
+    if ($title === '') {
+        $title = get_the_title($post_id);
+    }
+
+    $building = get_post_meta($post_id, 'property_address_street', true);
+    $floor_raw = get_post_meta($post_id, 'property_address_street_number', true);
+    $floor = hm_migrated_property_floor_label($title, $floor_raw);
+    $is_ground_floor = $floor === 'Fsz' || stripos((string) $title, '-F-') !== false;
+    $rooms = get_post_meta($post_id, 'property_rooms', true);
+    $area = (float) get_post_meta($post_id, 'property_building_area', true);
+    $outdoor = (float) get_post_meta($post_id, 'property_land_area', true);
+    $sale_area = $area + ($is_ground_floor ? 0 : ($outdoor * 0.5));
+    $sale_area = $sale_area > 0 ? floor($sale_area * 100) / 100 : 0;
+    $price = (int) get_post_meta($post_id, 'property_price', true);
+    $price_hidden = get_post_meta($post_id, '_harmat_hide_front_price', true) === 'yes' || get_post_meta($post_id, 'property_price_display', true) === 'no';
+    $floorplan_url = $floorplan_override !== '' ? $floorplan_override : get_post_meta($post_id, 'property_floorplan', true);
+    list($status_label, $status_key) = hm_migrated_property_status_label($post_id);
+    $unit_price = (!$price_hidden && $price > 0 && $sale_area > 0) ? round($price / $sale_area) : 0;
+    $outdoor_label = $is_ground_floor ? 'Kert / terasz' : 'Terasz / erkély';
+
+    $facts = array(
+        array('Státusz', $status_label, 'status'),
+        array('Teljes ár', (!$price_hidden && $price > 0) ? hm_migrated_format_huf($price) : 'Ár egyeztetés alapján', 'highlight'),
+        array('Eladási terület', $sale_area > 0 ? hm_migrated_format_square_meter($sale_area) : '', ''),
+        array('Négyzetméterár', $unit_price > 0 ? hm_migrated_format_huf($unit_price) . ' / m²' : 'Értékesítési egyeztetés alapján', ''),
+        array('Épület', $building, ''),
+        array('Emelet', $floor, ''),
+        array('Szoba', $rooms ? $rooms . ' szoba' : '', ''),
+        array('Alapterület', $area > 0 ? hm_migrated_format_square_meter($area) : '', ''),
+        array($outdoor_label, $outdoor > 0 ? hm_migrated_format_square_meter($outdoor) : '', ''),
+    );
+
+    $html = '<section class="harmat-property-hero harmat-property-hero-' . esc_attr($status_key) . '" aria-label="Lakás összefoglaló">';
+    $html .= '<div class="harmat-property-hero-head">';
+    $html .= '<span>Harmat Lakópark</span><h1>' . esc_html($title) . '</h1>';
+    $html .= '</div><dl class="harmat-property-hero-grid">';
+    foreach ($facts as $fact) {
+        if ($fact[1] === '') {
+            continue;
+        }
+        $html .= '<div class="' . esc_attr($fact[2]) . '"><dt>' . esc_html($fact[0]) . '</dt><dd>' . esc_html($fact[1]) . '</dd></div>';
+    }
+    $html .= '</dl><div class="harmat-property-hero-actions">';
+    $html .= '<a class="primary" href="#opal-contactform-popup">Ajánlatot kérek</a>';
+    if ($floorplan_url) {
+        $html .= '<a href="' . esc_url($floorplan_url) . '" target="_blank" rel="noopener">Alaprajz letöltése</a>';
+    }
+    $html .= '<a href="' . esc_url(home_url('/lakaskereso/')) . '">Vissza a lakáskeresőhöz</a>';
+    $html .= '</div>';
+    if ($is_ground_floor && $outdoor > 0) {
+        $html .= '<p class="harmat-property-hero-note">A földszinti kert ajándék.</p>';
+    }
+    $html .= '</section>';
+
+    return $html;
+}
+
+function hm_migrated_replace_property_header($html) {
+    if (!is_singular('property') || !is_string($html) || $html === '') {
+        return $html;
+    }
+
+    $original_html = $html;
+    $card = hm_migrated_property_hero_html(hm_migrated_extract_property_pdf_url($html));
+    if ($card === '') {
+        return $html;
+    }
+
+    $title_start = strpos($html, '<div id="page-title-bar"');
+    $content_start = $title_start === false ? false : strpos($html, '<div class="site-content-contain">', $title_start);
+    if ($title_start !== false && $content_start !== false) {
+        $html = substr($html, 0, $title_start) . substr($html, $content_start);
+    }
+
+    $old_start = strpos($html, '<div class="elementor-element elementor-element-6e26d68');
+    $floorplan_start = $old_start === false ? false : strpos($html, '<div class="elementor-element elementor-element-03069d8', $old_start);
+    if ($old_start !== false && $floorplan_start !== false) {
+        return substr($html, 0, $old_start) . $card . substr($html, $floorplan_start);
+    }
+
+    return $original_html;
 }
 
 function hm_migrated_virtual_selector_static_html() {
@@ -132,6 +284,7 @@ function hm_migrated_public_html_cleanup($html) {
         if (!is_string($html)) {
             return $original_html;
         }
+        $html = hm_migrated_replace_property_header($html);
     }
 
     if (hm_migrated_request_path() === 'virtualis-lakasvalaszto') {
@@ -278,6 +431,33 @@ add_filter('wpseo_sitemap_entry', function ($url, $type, $object) {
 }, 20, 3);
 
 add_action('wp_head', function () {
+    if (is_singular('property')) {
+        ?>
+<style id="harmat-property-hero-css">
+.harmat-property-hero{max-width:1180px;margin:24px auto 30px;padding:22px 26px;border:1px solid rgba(152,112,51,.22);border-radius:6px;background:#fffaf1;box-shadow:0 18px 44px rgba(40,34,24,.08);font-family:Montserrat,Arial,sans-serif;color:#263135}
+.single-property #page-title-bar,.single-property .elementor-element-6e26d68,.single-property .harmat-front-single-title-panel{display:none!important}
+.harmat-property-hero-head{margin-bottom:16px}
+.harmat-property-hero-head span{display:block;margin-bottom:8px;color:#987033;font-size:12px;font-weight:900;text-transform:uppercase}
+.harmat-property-hero-head h1{margin:0!important;padding:0!important;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(36px,4vw,54px);line-height:.95;text-transform:uppercase}
+.harmat-property-hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0;border-top:1px solid rgba(152,112,51,.18);border-left:1px solid rgba(152,112,51,.18)}
+.harmat-property-hero-grid div{min-height:72px;padding:13px 16px;border-right:1px solid rgba(152,112,51,.18);border-bottom:1px solid rgba(152,112,51,.18);background:rgba(255,255,255,.64)}
+.harmat-property-hero-grid div.highlight{background:#fff}
+.harmat-property-hero-grid div.status dd{color:#17875b;text-transform:uppercase}
+.harmat-property-hero-reserved .harmat-property-hero-grid div.status dd{color:#b77a24}
+.harmat-property-hero-sold .harmat-property-hero-grid div.status dd{color:#6f7882}
+.harmat-property-hero-grid dt{margin:0 0 7px;color:#987033;font-size:11px;font-weight:900;text-transform:uppercase}
+.harmat-property-hero-grid dd{margin:0;color:#263135;font-size:16px;font-weight:900;line-height:1.22}
+.harmat-property-hero-grid div.highlight dd{font-size:20px}
+.harmat-property-hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.harmat-property-hero-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #987033;background:#fff;color:#987033!important;font-size:12px;font-weight:900;text-transform:uppercase}
+.harmat-property-hero-actions a.primary{background:#987033;color:#fff!important}
+.harmat-property-hero-note{margin:12px 0 0;color:#626a70;font-size:13px;font-weight:700;line-height:1.5}
+@media(max-width:900px){.harmat-property-hero{margin:20px 18px 28px;padding:20px}.harmat-property-hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-property-hero-actions a{flex:1 1 calc(50% - 10px)}}
+@media(max-width:520px){.harmat-property-hero{margin:16px 14px 24px;padding:18px}.harmat-property-hero-grid{grid-template-columns:1fr}.harmat-property-hero-grid div{min-height:auto}.harmat-property-hero-actions a{flex-basis:100%}.harmat-property-hero-head h1{font-size:34px}}
+</style>
+        <?php
+    }
+
     if (hm_migrated_request_path() === 'virtualis-lakasvalaszto') {
         ?>
 <style id="harmat-virtual-static-intro-css">
@@ -457,6 +637,7 @@ add_action('wp_footer', function () {
 
   function addPropertyStatus() {
     if (!document.body.classList.contains('single-property')) return;
+    if (document.querySelector('.harmat-property-hero')) return;
     if (document.querySelector('.harmat-property-status-note')) return;
     var anchor = document.querySelector('.property-title, h1, .entry-title') || document.querySelector('.site-main');
     if (!anchor || !anchor.parentNode) return;
@@ -464,6 +645,27 @@ add_action('wp_footer', function () {
     note.className = 'harmat-property-status-note';
     note.textContent = 'Státusz: Elérhető';
     anchor.parentNode.insertBefore(note, anchor.nextSibling);
+  }
+
+  function removeLegacyPropertyTopRows() {
+    if (!document.body.classList.contains('single-property')) return;
+    if (!document.querySelector('.harmat-property-hero')) return;
+
+    Array.prototype.forEach.call(document.querySelectorAll('#page-title-bar, .elementor-element-6e26d68'), function (el) {
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('body.single-property .harmat-front-single-title-panel, body.single-property .e-con, body.single-property .elementor-section, body.single-property .elementor-element, body.single-property [class*="summary"], body.single-property [class*="property"]'), function (el) {
+      var hero = document.querySelector('.harmat-property-hero');
+      if (!el || !hero || el === hero || el.contains(hero)) return;
+      var txt = cleanText(el.textContent);
+      var lower = txt.toLowerCase();
+      var isLegacySummary = lower.indexOf('lakás ' + 'szám') !== -1 && lower.indexOf('teljes ' + 'ár') !== -1 && lower.indexOf('négyzet' + 'méterár') !== -1;
+      var isNewHeroGrid = el.classList && el.classList.contains('harmat-property-hero-grid') && lower.indexOf('státusz') !== -1;
+      if ((el.classList && el.classList.contains('harmat-front-single-title-panel')) || (isLegacySummary && !isNewHeroGrid)) {
+        el.parentNode.removeChild(el);
+      }
+    });
   }
 
   function normalizeListingData() {
@@ -498,8 +700,11 @@ add_action('wp_footer', function () {
     fixOsszesText();
     clarifyHomeStats();
     addPropertyDisclaimer();
+    removeLegacyPropertyTopRows();
     addPropertyStatus();
     normalizeListingData();
+    window.setTimeout(removeLegacyPropertyTopRows, 300);
+    window.setTimeout(removeLegacyPropertyTopRows, 1200);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
