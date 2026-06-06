@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.24
+ * Version: 1.6.25
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.24';
+    const VERSION = '1.6.25';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -464,7 +464,7 @@ final class Harmat_Sales_Manager {
 
             status_header(403);
             nocache_headers();
-            echo '<!doctype html><html><head><meta charset="' . esc_attr(get_bloginfo('charset')) . '"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harmat Sales</title></head><body style="font-family:Arial,sans-serif;background:#fbf5e8;margin:0;padding:40px;color:#253137;"><div style="max-width:720px;margin:auto;background:#fff;padding:28px;border-radius:18px;border:1px solid #ead9bc;"><h1>Hozzáférés szükséges</h1><p>Ez az oldal csak Harmat Lakópark értékesítési vezetői fiókkal érhető el.</p><p><a href="' . esc_url(wp_logout_url(home_url('/sales/'))) . '">Kilépés</a></p></div></body></html>';
+            echo '<!doctype html><html><head><meta charset="' . esc_attr(get_bloginfo('charset')) . '"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Harmat Sales</title></head><body style="font-family:Arial,sans-serif;background:#fbf5e8;margin:0;padding:40px;color:#253137;"><div style="max-width:720px;margin:auto;background:#fff;padding:28px;border-radius:18px;border:1px solid #ead9bc;"><h1>Hozzáférés szükséges</h1><p>Ez az oldal csak a Harmat Lakópark értékesítési csapatának fiókjával érhető el.</p><p><a href="' . esc_url(wp_logout_url(home_url('/sales/'))) . '">Kilépés</a></p></div></body></html>';
             exit;
         }
 
@@ -3458,7 +3458,7 @@ final class Harmat_Sales_Manager {
                 '从客户首次登记时间开始计算，过期后保护状态会自动显示为已过期。' => 'Az első rögzítéstől számítódik; lejárat után a védelmi státusz automatikusan lejártként jelenik meg.',
                 '经纪人权限' => 'Közvetítői jogosultság',
                 '只看自己的客户' => 'Csak saját ügyfelek',
-                '普通经纪人只维护自己登记的客户；销售管理账号可以查看全部客户。' => 'A közvetítő csak saját ügyfeleit kezeli; az értékesítési vezető minden ügyfelet láthat.',
+                '普通经纪人只维护自己登记的客户；销售管理账号可以查看全部客户。' => 'A közvetítő csak saját ügyfeleit kezeli; a Harmat Lakópark értékesítés minden ügyfelet láthat.',
                 '房源数据' => 'Lakásadatok',
                 '统一来自销售库存' => 'Egységes értékesítési készletből',
                 '房源状态、价格和前端显示由销售管理工作台统一维护，避免多个口径。' => 'A lakásstátuszokat, árakat és publikus megjelenést az értékesítés kezeli, így nincs többféle adatforrás.',
@@ -4099,7 +4099,7 @@ final class Harmat_Sales_Manager {
             '已上传' => 'Feltöltve',
             '已确认' => 'Jóváhagyva',
             '不需要' => 'Nem szükséges',
-            '销售管理' => 'Értékesítési vezető',
+            '销售管理' => 'Értékesítési csapat',
             '销售' => 'Értékesítő',
             '经纪人查看' => 'Közvetítő',
             '请先填写成交金额' => 'Kérjük, először adja meg az ügylet összegét',

@@ -28,7 +28,7 @@
         var text = normalize(node.textContent);
         if (
           (node.matches && node.matches("section, .elementor-section, .e-con, .elementor-top-section")) &&
-          (text.indexOf("harmat lakópark környezete") !== -1 ||
+          (text.indexOf("lakópark környezete") !== -1 ||
             text.indexOf("fedezze fel a környéket") !== -1 ||
             text.indexOf("környék előnyei") !== -1)
         ) {

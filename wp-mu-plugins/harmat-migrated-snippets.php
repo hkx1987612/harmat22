@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.06.7
+ * Version: 2026.06.07.1
  */
 
 defined('ABSPATH') || exit;
@@ -110,9 +110,9 @@ function hm_migrated_property_hero_html($floorplan_override = '') {
 
     $facts = array(
         array('Státusz', $status_label, 'status'),
-        array('Teljes ár', (!$price_hidden && $price > 0) ? hm_migrated_format_huf($price) : 'Ár egyeztetés alapján', 'highlight'),
+        array('Árinformáció', (!$price_hidden && $price > 0) ? hm_migrated_format_huf($price) : 'Ár egyeztetés alapján', 'highlight'),
         array('Eladási terület', $sale_area > 0 ? hm_migrated_format_square_meter($sale_area) : '', ''),
-        array('Négyzetméterár', $unit_price > 0 ? hm_migrated_format_huf($unit_price) . ' / m²' : 'Értékesítési egyeztetés alapján', ''),
+        array('Egységár', $unit_price > 0 ? hm_migrated_format_huf($unit_price) . ' / m²' : 'Értékesítési egyeztetés alapján', ''),
         array('Épület', $building, ''),
         array('Emelet', $floor, ''),
         array('Szoba', $rooms ? $rooms . ' szoba' : '', ''),
@@ -216,6 +216,193 @@ function hm_migrated_insert_after_page_title($html, $insert_html) {
     return substr($html, 0, $pos) . $insert_html . substr($html, $pos);
 }
 
+function hm_migrated_clean_footer_html() {
+    $columns = array(
+        'Projekt' => array(
+            'Főoldal' => home_url('/'),
+            'Harmat Lakópark' => home_url('/harmat-lakopark/'),
+            'Környékünk' => home_url('/harmat-lakopark-kornyeke/'),
+            'Galéria' => home_url('/galeria/'),
+        ),
+        'Lakások' => array(
+            'Lakáskereső' => home_url('/lakaskereso/'),
+            'Virtuális lakásválasztó' => home_url('/virtualis-lakasvalaszto/'),
+            'Első ütem' => home_url('/virtualis-lakasvalaszto-elso-utem/'),
+            'Összes alaprajz' => home_url('/osszes-alaprajz/'),
+        ),
+    );
+
+    $html = '<footer id="colophon" class="site-footer harmat-clean-footer" role="contentinfo">';
+    $html .= '<div class="harmat-clean-footer-inner">';
+    foreach ($columns as $title => $links) {
+        $html .= '<section><h2>' . esc_html($title) . '</h2><nav aria-label="' . esc_attr($title) . '">';
+        foreach ($links as $label => $url) {
+            $html .= '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
+        }
+        $html .= '</nav></section>';
+    }
+
+    $html .= '<section><h2>Jogi / Kapcsolat</h2>';
+    $html .= '<p><strong>Harmat Lakópark címe</strong><br>1105 Budapest, Harmat utca 22.</p>';
+    $html .= '<p><strong>E-mail</strong><br><a href="mailto:ertekesites@harmat22.hu">ertekesites@harmat22.hu</a></p>';
+    $html .= '<p><strong>Telefon</strong><br><a href="tel:+36306410358">+36-30-641-03-58</a></p>';
+    $html .= '<nav aria-label="Jogi dokumentumok">';
+    foreach (hm_migrated_legal_links() as $label => $url) {
+        $html .= '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
+    }
+    $html .= '</nav></section>';
+    $html .= '</div>';
+    $html .= '<div class="harmat-clean-footer-bottom">© Cooperation Power Kft. Minden jog fenntartva. Az árak, alapterületek, látványtervek és műszaki tartalmak tájékoztató jellegűek.</div>';
+    $html .= '</footer>';
+
+    return $html;
+}
+
+function hm_migrated_project_page_html() {
+    $stats = array(
+        array('398', 'tervezett lakás'),
+        array('124', 'lakás az első ütemben'),
+        array('8388 m²', 'első ütem alapterülete'),
+        array('2028 Q2', 'várható átadás'),
+    );
+
+    $features = array(
+        array('Zöld környezet', 'A Harmat utca környéke csendesebb, lakóövezeti hangulatot ad, miközben a mindennapi szolgáltatások gyorsan elérhetők.'),
+        array('Átlátható lakásválaszték', 'Stúdiótól nagyobb családi otthonokig több méret és alaprajz érhető el, online lakáskeresővel és virtuális épületválasztóval.'),
+        array('Parkolás és tárolás', 'Az első ütemhez 124 mélygarázs parkoló és 92 tároló kapcsolódik, hogy a mindennapi használat kényelmesebb legyen.'),
+        array('Tiszta értékesítési folyamat', 'A lakások aktuális adatai, árai és elérhetőségei egy központi rendszerből frissülnek.'),
+    );
+
+    $html = '<main id="main" class="site-main harmat-project-modern" role="main">';
+    $html .= '<article id="post-1777" class="post-1777 page type-page status-publish hentry"><div class="entry-content">';
+    $html .= '<section class="harmat-project-hero"><span>Budapest X. kerület</span><h1>Harmat Lakópark</h1><p>Modern új építésű otthonok a Harmat utca 22. alatt, zöldebb lakókörnyezettel, átgondolt alaprajzokkal és átlátható értékesítési adatokkal.</p><div class="harmat-project-actions"><a href="' . esc_url(home_url('/lakaskereso/')) . '">Lakáskereső</a><a href="' . esc_url(home_url('/virtualis-lakasvalaszto/')) . '">Virtuális lakásválasztó</a><a href="' . esc_url(home_url('/elerhetosegeink/')) . '">Kapcsolat</a></div></section>';
+    $html .= '<section class="harmat-project-stats" aria-label="Projekt adatok">';
+    foreach ($stats as $stat) {
+        $html .= '<div><strong>' . esc_html($stat[0]) . '</strong><span>' . esc_html($stat[1]) . '</span></div>';
+    }
+    $html .= '</section>';
+    $html .= '<section class="harmat-project-copy"><div><span>Otthon a Harmat utcában</span><h2>Nyugodt lakóparki környezet, városi kapcsolatokkal</h2></div><p>A Harmat Lakópark több ütemben megvalósuló lakóprojekt. Az első ütem 124 lakással indul, a teljes fejlesztés tervezetten 398 lakást foglal magában. A cél egy letisztult, könnyen fenntartható, jól használható otthonokat kínáló lakópark Budapest X. kerületében.</p></section>';
+    $html .= '<section class="harmat-project-features" aria-label="Projekt jellemzők">';
+    foreach ($features as $feature) {
+        $html .= '<article><h3>' . esc_html($feature[0]) . '</h3><p>' . esc_html($feature[1]) . '</p></article>';
+    }
+    $html .= '</section>';
+    $html .= '<section class="harmat-project-note"><h2>Fontos értékesítési információk</h2><p>A projekt nyitása 2026. június 12. A földszinti lakásokhoz kapcsolódó kertek ajándékként kerülnek feltüntetésre; a végleges műszaki és szerződéses feltételeket minden esetben az értékesítési csapat erősíti meg.</p></section>';
+    $html .= '</div></article></main>';
+
+    return $html;
+}
+
+function hm_migrated_replace_project_page($html) {
+    if (hm_migrated_request_path() !== 'harmat-lakopark' || !is_string($html) || $html === '') {
+        return $html;
+    }
+
+    if (!preg_match('~<main\b[^>]*\bid=(["\'])main\1[^>]*>~i', $html, $match, PREG_OFFSET_CAPTURE)) {
+        return $html;
+    }
+
+    $start = $match[0][1];
+    $end = stripos($html, '</main>', $start);
+    if ($end === false) {
+        return $html;
+    }
+
+    return substr($html, 0, $start) . hm_migrated_project_page_html() . substr($html, $end + 7);
+}
+
+function hm_migrated_replace_clean_footer($html) {
+    if (!is_string($html) || $html === '') {
+        return $html;
+    }
+
+    $footer = hm_migrated_clean_footer_html();
+    $next = preg_replace('~<footer\b(?=[^>]*\bid=(["\'])colophon\1)[\s\S]*?</footer>~i', $footer, $html, 1, $count);
+    if (is_string($next) && $count > 0) {
+        return $next;
+    }
+
+    $body_pos = strripos($html, '</body>');
+    if ($body_pos === false) {
+        return $html . $footer;
+    }
+
+    return substr($html, 0, $body_pos) . $footer . substr($html, $body_pos);
+}
+
+function hm_migrated_find_balanced_div_end($html, $start) {
+    $depth = 0;
+    $offset = $start;
+    while (preg_match('~</?div\b[^>]*>~i', $html, $match, PREG_OFFSET_CAPTURE, $offset)) {
+        $tag = $match[0][0];
+        $pos = $match[0][1];
+        if (stripos($tag, '</div') === 0) {
+            $depth--;
+            if ($depth === 0) {
+                return $pos + strlen($tag);
+            }
+        } elseif (substr($tag, -2) !== '/>') {
+            $depth++;
+        }
+        $offset = $pos + strlen($tag);
+    }
+
+    return false;
+}
+
+function hm_migrated_move_hidden_forms_to_footer($html) {
+    if (!is_string($html) || $html === '') {
+        return $html;
+    }
+
+    $chunks = array();
+    $offset = 0;
+    $marker = '<!-- harmat-hidden-form-moved -->';
+    while (($pos = stripos($html, '<div', $offset)) !== false) {
+        $tag_end = strpos($html, '>', $pos);
+        if ($tag_end === false) {
+            break;
+        }
+
+        $tag = substr($html, $pos, $tag_end - $pos + 1);
+        $is_hidden_contact_form = stripos($tag, 'opal-contactform-popup') !== false
+            && stripos($tag, 'mfp-hide') !== false
+            && stripos($tag, 'contactform-content') !== false;
+        if (!$is_hidden_contact_form) {
+            $offset = $tag_end + 1;
+            continue;
+        }
+
+        $end = hm_migrated_find_balanced_div_end($html, $pos);
+        if ($end === false || $end <= $pos) {
+            $offset = $tag_end + 1;
+            continue;
+        }
+
+        $chunks[] = substr($html, $pos, $end - $pos);
+        $html = substr($html, 0, $pos) . $marker . substr($html, $end);
+        $offset = $pos + strlen($marker);
+    }
+
+    if (!$chunks) {
+        return $html;
+    }
+
+    $forms = "\n" . implode("\n", $chunks) . "\n";
+    $footer_pos = strripos($html, '</footer>');
+    if ($footer_pos !== false) {
+        $insert_pos = $footer_pos + 9;
+        return substr($html, 0, $insert_pos) . $forms . substr($html, $insert_pos);
+    }
+
+    $body_pos = strripos($html, '</body>');
+    if ($body_pos === false) {
+        return $html . $forms;
+    }
+
+    return substr($html, 0, $body_pos) . $forms . substr($html, $body_pos);
+}
+
 function hm_migrated_public_html_cleanup($html) {
     if (!is_string($html) || $html === '') {
         return $html;
@@ -231,6 +418,7 @@ function hm_migrated_public_html_cleanup($html) {
         'Harmat 22 lakópark' => 'Harmat Lakópark',
         'Harmat 22 értékesítés' => 'Harmat Lakópark értékesítés',
         'Harmat 22' => 'Harmat Lakópark',
+        'harmat lakópark' => 'Harmat Lakópark',
         'Harmat lakópark' => 'Harmat Lakópark',
         'Harmat lakópark címe' => 'Harmat Lakópark címe',
         'Harmat lakópark környéke' => 'Harmat Lakópark környéke',
@@ -256,6 +444,11 @@ function hm_migrated_public_html_cleanup($html) {
         return $original_html;
     }
     $html = str_ireplace('Harmat 22 Lakópark', 'Harmat Lakópark', $html);
+    $html = preg_replace('~\bÉrtékesítési vezető\b~u', 'Értékesítési csapat', $html);
+    $html = preg_replace('~\bértékesítési vezető\b~u', 'Harmat Lakópark értékesítés', $html);
+    if (!is_string($html)) {
+        return $original_html;
+    }
 
     $html = preg_replace(
         '~\s*<a\b[^>]*href=(["\'])[^"\']*/marketing-hozzajarulas/?\1[^>]*>\s*</a>~i',
@@ -290,6 +483,13 @@ function hm_migrated_public_html_cleanup($html) {
     if (hm_migrated_request_path() === 'virtualis-lakasvalaszto') {
         $html = hm_migrated_insert_after_page_title($html, hm_migrated_virtual_selector_static_html());
     }
+
+    if (hm_migrated_request_path() === 'harmat-lakopark') {
+        $html = hm_migrated_replace_project_page($html);
+    }
+
+    $html = hm_migrated_move_hidden_forms_to_footer($html);
+    $html = hm_migrated_replace_clean_footer($html);
 
     if (strlen(trim($original_html)) >= 1000 && (!is_string($html) || strlen(trim($html)) < 1000)) {
         return $original_html;
@@ -431,6 +631,45 @@ add_filter('wpseo_sitemap_entry', function ($url, $type, $object) {
 }, 20, 3);
 
 add_action('wp_head', function () {
+    if (hm_migrated_is_public_request()) {
+        ?>
+<style id="harmat-migrated-public-layout-css">
+.harmat-clean-footer{background:#fff7e8;border-top:1px solid rgba(152,112,51,.22);font-family:Montserrat,Arial,sans-serif;color:#263135}
+.harmat-clean-footer-inner{max-width:1180px;margin:0 auto;padding:34px 24px 24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:34px}
+.harmat-clean-footer h2{margin:0 0 14px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.harmat-clean-footer nav{display:grid;gap:8px}
+.harmat-clean-footer a{color:#263135!important;text-decoration:none;font-size:14px;font-weight:700;line-height:1.45}
+.harmat-clean-footer a:hover{color:#987033!important}
+.harmat-clean-footer p{margin:0 0 12px;color:#4f575d;font-size:13px;line-height:1.65}
+.harmat-clean-footer strong{color:#987033;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.harmat-clean-footer-bottom{border-top:1px solid rgba(152,112,51,.16);padding:14px 24px 18px;text-align:center;color:#687078;font-size:12px;line-height:1.6}
+.harmat-project-modern{background:#fff}
+.harmat-project-modern .entry-content{max-width:1180px;margin:0 auto;padding:34px 24px 58px;font-family:Montserrat,Arial,sans-serif;color:#263135}
+.harmat-project-hero{padding:54px 0 34px;border-bottom:1px solid rgba(152,112,51,.18)}
+.harmat-project-hero span,.harmat-project-copy span{display:block;margin-bottom:10px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.harmat-project-hero h1{margin:0 0 16px;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(44px,7vw,86px);line-height:.95}
+.harmat-project-hero p{max-width:760px;margin:0;color:#50585d;font-size:18px;line-height:1.7}
+.harmat-project-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.harmat-project-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border:1px solid #987033;background:#fff;color:#987033!important;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+.harmat-project-actions a:first-child{background:#987033;color:#fff!important}
+.harmat-project-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:26px 0;border-top:1px solid rgba(152,112,51,.2);border-left:1px solid rgba(152,112,51,.2)}
+.harmat-project-stats div{padding:18px 16px;border-right:1px solid rgba(152,112,51,.2);border-bottom:1px solid rgba(152,112,51,.2);background:#fffaf1}
+.harmat-project-stats strong{display:block;margin-bottom:6px;color:#263135;font-size:26px;font-weight:900;line-height:1}
+.harmat-project-stats span{color:#987033;font-size:12px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.harmat-project-copy{display:grid;grid-template-columns:minmax(240px,.85fr) 1.15fr;gap:40px;align-items:start;margin:34px 0}
+.harmat-project-copy h2,.harmat-project-note h2{margin:0;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(30px,4vw,48px);line-height:1.08}
+.harmat-project-copy p,.harmat-project-note p{margin:0;color:#50585d;font-size:15px;line-height:1.8}
+.harmat-project-features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:28px 0}
+.harmat-project-features article{border:1px solid rgba(152,112,51,.2);background:#fffaf1;padding:20px}
+.harmat-project-features h3{margin:0 0 10px;color:#263135;font-size:17px;font-weight:900}
+.harmat-project-features p{margin:0;color:#50585d;font-size:13px;line-height:1.65}
+.harmat-project-note{margin-top:30px;padding:24px;border-left:4px solid #987033;background:#fff7e8;display:grid;grid-template-columns:minmax(220px,.7fr) 1.3fr;gap:28px;align-items:start}
+@media(max-width:900px){.harmat-clean-footer-inner,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-project-stats,.harmat-project-features{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-project-modern .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-features{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}}
+</style>
+        <?php
+    }
+
     if (is_singular('property')) {
         ?>
 <style id="harmat-property-hero-css">
@@ -501,24 +740,13 @@ add_action('wp_footer', function () {
     if (!hm_migrated_is_public_request()) {
         return;
     }
-
-    $links = hm_migrated_legal_links();
     ?>
 <style id="harmat-migrated-public-cleanup-css">
-.harmat-legal-footer{background:#fff7e8;border-top:1px solid rgba(152,112,51,.22);padding:18px 22px;text-align:center;font-family:Montserrat,Arial,sans-serif}
-.harmat-legal-footer a{color:#7a5520!important;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin:0 10px 8px;display:inline-block}
-.harmat-legal-footer-note{color:#5f6367;font-size:12px;line-height:1.6;max-width:980px;margin:6px auto 0}
 .harmat-property-disclaimer{max-width:1180px;width:calc(100% - 48px);margin:52px auto 0;padding:16px 20px;background:rgba(255,247,232,.92);border-left:4px solid #987033;color:#4b5054;font-family:Montserrat,Arial,sans-serif;font-size:13px;line-height:1.7;text-align:left}
 .harmat-property-disclaimer strong{color:#7a5520;font-weight:800}
 .harmat-property-status-note{display:inline-flex;align-items:center;gap:8px;margin:10px 0 0;padding:7px 12px;border-radius:999px;background:#17875b;color:#fff;font:700 12px/1.2 Montserrat,Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase}
-@media(max-width:640px){.harmat-legal-footer a{display:block;margin:0 0 10px}.harmat-property-disclaimer{width:auto!important;margin:22px 16px 0;font-size:12px}}
+@media(max-width:640px){.harmat-property-disclaimer{width:auto!important;margin:22px 16px 0;font-size:12px}}
 </style>
-<div class="harmat-legal-footer" role="contentinfo">
-    <?php foreach ($links as $label => $url) : ?>
-        <a href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
-    <?php endforeach; ?>
-    <div class="harmat-legal-footer-note">Az árak, alapterületek, látványtervek és műszaki tartalmak tájékoztató jellegűek. A végleges feltételeket minden esetben a szerződés és mellékletei tartalmazzák.</div>
-</div>
 <script id="harmat-migrated-public-cleanup-js">
 (function () {
   function cleanText(value) {
@@ -537,6 +765,7 @@ add_action('wp_footer', function () {
       [/Harmatliget lakópark/gi, 'Harmat Lakópark'],
       [/Harmatliget/gi, 'Harmat Lakópark'],
       [/Harmat 22 Lakópark/gi, 'Harmat Lakópark'],
+      [/Harmat 22 értékesítés/gi, 'Harmat Lakópark értékesítés'],
       [/Gipsz\s*Jakab/gi, 'Harmat Lakópark értékesítés'],
       [/012[\s-]*888[\s-]*2222/g, '+36-30-641-03-58'],
       [/agent\.name@example\.com/gi, 'ertekesites@harmat22.hu'],
@@ -577,7 +806,8 @@ add_action('wp_footer', function () {
 
   function fixSalesContact() {
     setTextIfExact('Harmat Jakab', 'Harmat Lakópark értékesítés');
-    setTextIfExact('értékesítési vezető', 'Értékesítési csapat');
+    setTextIfExact('Értékesítési vezető', 'Értékesítési csapat');
+    setTextIfExact('értékesítési vezető', 'Harmat Lakópark értékesítés');
   }
 
   function fixBrokenLegalFooter() {

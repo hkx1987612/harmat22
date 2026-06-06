@@ -3,7 +3,7 @@
  * Plugin Name: Harmat jogi dokumentumok
  * Plugin URI: https://harmat22.hu
  * Description: Védett ügyvédi dokumentumtár a Harmat22 értékesítési ügyeihez és lakásaihoz kapcsolva.
- * Version: 0.1.2
+ * Version: 0.1.3
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Legal_Documents {
-    const VERSION = '0.1.2';
+    const VERSION = '0.1.3';
     const ROLE_LAWYER = 'harmat_lawyer';
     const CAP_VIEW = 'harmat_view_legal_documents';
     const CAP_UPLOAD = 'harmat_upload_legal_documents';
@@ -1615,7 +1615,7 @@ final class Harmat_Legal_Documents {
     private function render_documents_panel($context, $target) {
         $docs = $this->documents_for_target($target);
         $categories = $this->categories();
-        echo '<section class="hld-panel"><div class="hld-panel-head"><div><h2>A lakás dokumentumai</h2><p>Ezeket a fájlokat kizárólag jogosult értékesítési vezetők és ügyvédek tölthetik le.</p></div></div>';
+        echo '<section class="hld-panel"><div class="hld-panel-head"><div><h2>A lakás dokumentumai</h2><p>Ezeket a fájlokat kizárólag a jogosult Harmat Lakópark értékesítés és ügyvédek tölthetik le.</p></div></div>';
         if (!$docs) {
             echo '<div class="hld-empty">Ehhez a lakáshoz még nincs feltöltött jogi dokumentum.</div></section>';
             return;
