@@ -10794,10 +10794,9 @@ JS;
                         var href = trigger.getAttribute("href") || "";
                         var hash = popupHashFromLink(trigger);
                         var isLocalPopupLink = href.charAt(0) === "#" && hash.indexOf("#opal-contactform-popup") === 0;
-                        if (isLocalPopupLink) return;
                         var isPropertyPopupLink = !!slugFromHref(href) && hash.indexOf("#opal-contactform-popup") === 0;
                         var hasLocalPopup = !!findLocalPopupTrigger(trigger) || !!document.querySelector("[id^=\\"opal-contactform-popup\\"]");
-                        if ((isPropertyPopupLink || selected) && hasLocalPopup) {
+                        if ((isLocalPopupLink || isPropertyPopupLink || selected) && hasLocalPopup) {
                             event.preventDefault();
                             event.stopPropagation();
                             openLocalOfferPopup(selected, trigger);

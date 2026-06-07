@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.18
+ * Version: 1.3.19
  */
 
 if (!defined('ABSPATH')) {
@@ -1039,7 +1039,7 @@ function harmat_perf_offer_success_fallback() {
 
   function showResponse(form, message) {
     var box = responseBox(form);
-    box.textContent = message || 'A küldés nem sikerült. Kérjük, próbálja újra.';
+    box.textContent = message || 'A k\u00fcld\u00e9s nem siker\u00fclt. K\u00e9rj\u00fck, pr\u00f3b\u00e1lja \u00fajra.';
     box.style.display = 'block';
   }
 
@@ -1052,8 +1052,8 @@ function harmat_perf_offer_success_fallback() {
       }
       submit.disabled = true;
       submit.classList.add('harmat-submit-disabled');
-      if ('value' in submit) submit.value = 'Küldés...';
-      else submit.textContent = 'Küldés...';
+      if ('value' in submit) submit.value = 'K\u00fcld\u00e9s...';
+      else submit.textContent = 'K\u00fcld\u00e9s...';
       return;
     }
     submit.disabled = false;
@@ -1087,17 +1087,31 @@ function harmat_perf_offer_success_fallback() {
     }).catch(function () {
       form.dataset.harmatCf7Submitting = '';
       setSubmitting(form, false);
-      showResponse(form, 'A küldés nem sikerült. Kérjük, próbálja újra.');
+      showResponse(form, 'A k\u00fcld\u00e9s nem siker\u00fclt. K\u00e9rj\u00fck, pr\u00f3b\u00e1lja \u00fajra.');
     });
+  }
+
+  function handleOfferSubmit(form, event) {
+    if (!form || !offerIds[formId(form)]) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!looksReady(form)) {
+      showResponse(form, 'K\u00e9rj\u00fck, t\u00f6ltse ki a nevet, e-mail c\u00edmet, d\u00e1tumot, telefonsz\u00e1mot, \u00e9s fogadja el az adatkezel\u00e9si t\u00e1j\u00e9koztat\u00f3t.');
+      return true;
+    }
+    submitViaRest(form);
+    return true;
   }
 
   document.addEventListener('submit', function (event) {
     var form = event.target && event.target.closest ? event.target.closest('form.wpcf7-form') : null;
-    if (!looksReady(form)) return;
-    if (!isOfferEvent({ target: form })) return;
-    event.preventDefault();
-    event.stopPropagation();
-    submitViaRest(form);
+    handleOfferSubmit(form, event);
+  }, true);
+
+  document.addEventListener('click', function (event) {
+    var submit = event.target && event.target.closest ? event.target.closest('form.wpcf7-form [type="submit"]') : null;
+    var form = submit && submit.closest ? submit.closest('form.wpcf7-form') : null;
+    handleOfferSubmit(form, event);
   }, true);
 
   document.addEventListener('wpcf7mailsent', function (event) {
