@@ -137,6 +137,8 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 
 - Added the June 12 launch announcement to `/harmat-lakopark/` in `harmat-migrated-snippets` v2026.06.07.4: a top project-page notice now reads `2026. június 12.`, `Alapkőletételi ünnepség és hivatalos értékesítési nyitás`, and notes that first-phase apartment information and offer requests are available from that date. The lower sales-information note was aligned with the same wording. Verified PHP syntax, purged caches, and checked public source for the announcement plus no regression in the clean footer or old canvas menu removal. Live rollback backup: `/home/harmath2/codex-backups/project-opening-badge-20260607-005559`.
 
+- Added the June 12 launch announcement to the homepage in `harmat-migrated-snippets` v2026.06.07.6, then adjusted its spacing so it sits below the transparent header and removed the extra apartment-list CTA because the homepage already has a stronger CTA below. Verified public source, desktop screenshot, mobile screenshot, and cache-cleared output. Live rollback backup: `/home/harmath2/codex-backups/home-opening-notice-spacing-20260607-070038`.
+
 ## Do Not Assume
 
 - Do not assume public prices are visible or final.

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.07.4
+ * Version: 2026.06.07.6
  */
 
 defined('ABSPATH') || exit;
@@ -214,6 +214,35 @@ function hm_migrated_insert_after_page_title($html, $insert_html) {
     }
 
     return substr($html, 0, $pos) . $insert_html . substr($html, $pos);
+}
+
+function hm_migrated_home_opening_notice_html() {
+    $html = '<section class="harmat-home-opening-notice" aria-label="Értékesítési nyitás">';
+    $html .= '<div><strong>2026. június 12.</strong><span>Alapkőletételi ünnepség és hivatalos értékesítési nyitás</span></div>';
+    $html .= '</section>';
+
+    return $html;
+}
+
+function hm_migrated_insert_home_opening_notice($html) {
+    if (!is_front_page() || !is_string($html) || $html === '' || strpos($html, '<section class="harmat-home-opening-notice"') !== false) {
+        return $html;
+    }
+
+    $notice = hm_migrated_home_opening_notice_html();
+    $needle = '<div class="site-content-contain">';
+    $pos = strpos($html, $needle);
+    if ($pos !== false) {
+        return substr($html, 0, $pos) . $notice . substr($html, $pos);
+    }
+
+    $header_end = stripos($html, '</header>');
+    if ($header_end !== false) {
+        $insert_at = $header_end + 9;
+        return substr($html, 0, $insert_at) . $notice . substr($html, $insert_at);
+    }
+
+    return $notice . $html;
 }
 
 function hm_migrated_clean_footer_html() {
@@ -541,6 +570,10 @@ function hm_migrated_public_html_cleanup($html) {
         $html = hm_migrated_replace_project_page($html);
     }
 
+    if (is_front_page()) {
+        $html = hm_migrated_insert_home_opening_notice($html);
+    }
+
     $html = hm_migrated_move_hidden_forms_to_footer($html);
     $html = hm_migrated_replace_clean_footer($html);
     $html = hm_migrated_remove_legacy_canvas_menu($html);
@@ -697,6 +730,10 @@ add_action('wp_head', function () {
 .harmat-clean-footer p{margin:0 0 12px;color:#4f575d;font-size:13px;line-height:1.65}
 .harmat-clean-footer strong{color:#987033;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
 .harmat-clean-footer-bottom{border-top:1px solid rgba(152,112,51,.16);padding:14px 24px 18px;text-align:center;color:#687078;font-size:12px;line-height:1.6}
+.harmat-home-opening-notice{max-width:1180px;margin:96px auto 0;padding:13px 20px;border:1px solid rgba(152,112,51,.24);border-left:4px solid #987033;background:#fff7e8;display:block;position:relative;z-index:3;font-family:Montserrat,Arial,sans-serif;color:#263135;box-shadow:0 12px 30px rgba(38,49,53,.06)}
+.harmat-home-opening-notice div{display:flex;align-items:center;justify-content:center;gap:12px;min-width:0;text-align:center}
+.harmat-home-opening-notice strong{flex:0 0 auto;color:#987033;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.harmat-home-opening-notice span{color:#263135;font-size:13px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;line-height:1.35}
 .harmat-project-modern{background:#fff}
 .harmat-project-modern .entry-content{max-width:1180px;margin:0 auto;padding:34px 24px 58px;font-family:Montserrat,Arial,sans-serif;color:#263135}
 .harmat-project-hero{padding:54px 0 34px;border-bottom:1px solid rgba(152,112,51,.18);display:grid;grid-template-columns:minmax(0,.88fr) minmax(420px,1.12fr);gap:34px;align-items:center}
@@ -731,8 +768,8 @@ add_action('wp_head', function () {
 .harmat-project-features h3{margin:0 0 10px;color:#263135;font-size:17px;font-weight:900}
 .harmat-project-features p{margin:0;color:#50585d;font-size:13px;line-height:1.65}
 .harmat-project-note{margin-top:30px;padding:24px;border-left:4px solid #987033;background:#fff7e8;display:grid;grid-template-columns:minmax(220px,.7fr) 1.3fr;gap:28px;align-items:start}
-@media(max-width:900px){.harmat-clean-footer-inner,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
-@media(max-width:560px){.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-project-modern .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
+@media(max-width:900px){.harmat-home-opening-notice{margin:88px 18px 0}.harmat-clean-footer-inner,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
+@media(max-width:560px){.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-home-opening-notice{margin:82px 14px 0;padding:12px 14px}.harmat-home-opening-notice div{align-items:flex-start;flex-direction:column;gap:4px;text-align:left}.harmat-project-modern .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
 </style>
         <?php
     }
