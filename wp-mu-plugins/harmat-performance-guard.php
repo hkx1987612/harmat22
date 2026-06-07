@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.19
+ * Version: 1.3.20
  */
 
 if (!defined('ABSPATH')) {
@@ -961,6 +961,7 @@ function harmat_perf_offer_success_fallback() {
 (function () {
   var thankYouUrl = '<?php echo esc_js(home_url('/koszonjuk/')); ?>';
   var feedbackBase = '<?php echo esc_js(rest_url('contact-form-7/v1/contact-forms/')); ?>';
+  var fastOfferEndpoint = '<?php echo esc_js(rest_url('harmat-sales-manager/v1/offer')); ?>';
   var offerIds = { '1002': true, '8761': true };
   var redirected = false;
 
@@ -1064,11 +1065,14 @@ function harmat_perf_offer_success_fallback() {
     }
   }
 
-  function submitViaRest(form) {
+  function submitViaCf7(form) {
     var id = formId(form);
-    if (!id || form.dataset.harmatCf7Submitting === '1') return;
-    form.dataset.harmatCf7Submitting = '1';
-    setSubmitting(form, true);
+    if (!id) {
+      form.dataset.harmatCf7Submitting = '';
+      setSubmitting(form, false);
+      showResponse(form, 'A k\u00fcld\u00e9s nem siker\u00fclt. K\u00e9rj\u00fck, pr\u00f3b\u00e1lja \u00fajra.');
+      return;
+    }
 
     fetch(feedbackBase + encodeURIComponent(id) + '/feedback', {
       method: 'POST',
@@ -1088,6 +1092,42 @@ function harmat_perf_offer_success_fallback() {
       form.dataset.harmatCf7Submitting = '';
       setSubmitting(form, false);
       showResponse(form, 'A k\u00fcld\u00e9s nem siker\u00fclt. K\u00e9rj\u00fck, pr\u00f3b\u00e1lja \u00fajra.');
+    });
+  }
+
+  function submitViaRest(form) {
+    if (!form || form.dataset.harmatCf7Submitting === '1') return;
+    form.dataset.harmatCf7Submitting = '1';
+    setSubmitting(form, true);
+
+    var body = new FormData(form);
+    body.append('source_url', window.location.href);
+
+    fetch(fastOfferEndpoint, {
+      method: 'POST',
+      body: body,
+      credentials: 'same-origin'
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        return { ok: response.ok, status: response.status, data: data };
+      });
+    }).then(function (result) {
+      var data = result.data || {};
+      if (result.ok && data.success) {
+        form.dataset.harmatCf7Submitting = '';
+        setSubmitting(form, false);
+        redirectSoon();
+        return;
+      }
+      if (!result.ok && data.message && result.status < 500 && data.code !== 'rest_no_route') {
+        form.dataset.harmatCf7Submitting = '';
+        setSubmitting(form, false);
+        showResponse(form, data.message);
+        return;
+      }
+      submitViaCf7(form);
+    }).catch(function () {
+      submitViaCf7(form);
     });
   }
 

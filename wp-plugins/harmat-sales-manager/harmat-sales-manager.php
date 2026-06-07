@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.26
+ * Version: 1.6.27
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.26';
+    const VERSION = '1.6.27';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -24,6 +24,7 @@ final class Harmat_Sales_Manager {
     const ROLE_CUSTOMER = 'harmat_customer_owner';
     const LEAD_PROTECTION_DAYS = 30;
     const SALES_REMINDER_HOOK = 'harmat_sales_daily_task_reminder';
+    const SALES_OFFER_MAIL_HOOK = 'harmat_sales_public_offer_mail';
     const SALES_REMINDER_EMAIL = 'ertekesites@harmat22.hu';
     const VISIT_STATS_OPTION = 'harmat_sales_visit_stats';
     const VISIT_REST_NAMESPACE = 'harmat-sales-manager/v1';
@@ -40,6 +41,7 @@ final class Harmat_Sales_Manager {
         add_action('init', array($this, 'handle_actions'));
         add_action('rest_api_init', array($this, 'register_visit_tracking_route'));
         add_action(self::SALES_REMINDER_HOOK, array($this, 'send_daily_task_reminder_email'));
+        add_action(self::SALES_OFFER_MAIL_HOOK, array($this, 'send_public_offer_mail'), 10, 1);
         add_action('send_headers', array($this, 'send_portal_nocache_headers'), 0);
         add_filter('query_vars', array($this, 'register_query_vars'));
         add_action('template_redirect', array($this, 'handle_customer_material_download'), 0);
@@ -100,6 +102,12 @@ final class Harmat_Sales_Manager {
                     'type' => 'string',
                 ),
             ),
+        ));
+
+        register_rest_route(self::VISIT_REST_NAMESPACE, '/offer', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'submit_public_offer'),
+            'permission_callback' => '__return_true',
         ));
     }
 
@@ -182,6 +190,125 @@ final class Harmat_Sales_Manager {
         update_option(self::VISIT_STATS_OPTION, $stats, false);
 
         return rest_ensure_response(array('ok' => true, 'tracked' => true));
+    }
+
+    public function submit_public_offer(WP_REST_Request $request) {
+        if ($this->is_probable_bot_request()) {
+            return rest_ensure_response(array('success' => true, 'ignored' => true));
+        }
+
+        $posted = array();
+        foreach (array(
+            'your-name', 'your-email', 'your-phone', 'your-date', 'your-time', 'your-message',
+            'selected-building', 'selected-floor', 'selected-apartment', 'selected-area',
+            'selected-rooms', 'selected-price', 'selected-url', 'privacy-acceptance',
+            'marketing-consent', 'marketing-consent[]', '_wpcf7',
+        ) as $key) {
+            $posted[$key] = $request->get_param($key);
+        }
+
+        $name = $this->cf7_posted_text($posted, 'your-name');
+        $email = sanitize_email($this->cf7_posted_text($posted, 'your-email'));
+        $phone = $this->cf7_posted_text($posted, 'your-phone');
+        $date = $this->cf7_posted_text($posted, 'your-date');
+        $time = $this->cf7_posted_text($posted, 'your-time');
+        $message = $this->cf7_posted_textarea($posted, 'your-message');
+        $apartment = $this->cf7_posted_text($posted, 'selected-apartment');
+        $privacy = $this->cf7_posted_text($posted, 'privacy-acceptance');
+
+        if ($name === '' || !is_email($email) || $phone === '' || $date === '' || $privacy === '') {
+            return new WP_Error(
+                'harmat_offer_required',
+                'Kérjük, töltse ki a nevet, e-mail címet, dátumot, telefonszámot, és fogadja el az adatkezelési tájékoztatót.',
+                array('status' => 400)
+            );
+        }
+
+        if (!$this->public_offer_rate_allowed($email)) {
+            return new WP_Error(
+                'harmat_offer_rate_limited',
+                'Köszönjük. Kérjük, várjon néhány percet az újabb küldés előtt.',
+                array('status' => 429)
+            );
+        }
+
+        $property_id = $apartment ? $this->property_id_by_title($apartment) : 0;
+        $url = $this->cf7_posted_text($posted, 'selected-url');
+        if (!$property_id && $url) {
+            $property_id = url_to_postid($url);
+        }
+        if (!$apartment && $property_id && get_post_type($property_id) === 'property') {
+            $apartment = get_the_title($property_id);
+        }
+
+        $stored = array(
+            'your-name' => $name,
+            'your-email' => $email,
+            'your-phone' => $phone,
+            'your-date' => $date,
+            'your-time' => $time,
+            'your-message' => $message,
+            'selected-building' => $this->cf7_posted_text($posted, 'selected-building'),
+            'selected-floor' => $this->cf7_posted_text($posted, 'selected-floor'),
+            'selected-apartment' => $apartment,
+            'selected-area' => $this->cf7_posted_text($posted, 'selected-area'),
+            'selected-rooms' => $this->cf7_posted_text($posted, 'selected-rooms'),
+            'selected-price' => $this->cf7_posted_text($posted, 'selected-price'),
+            'selected-url' => $url,
+            'privacy-acceptance' => '1',
+            'marketing-consent' => $this->cf7_posted_text($posted, 'marketing-consent') ?: $this->cf7_posted_text($posted, 'marketing-consent[]'),
+            'source' => esc_url_raw($request->get_param('source_url') ?: wp_get_referer()),
+        );
+
+        $stored = $this->complete_offer_property_data($stored, $property_id);
+        if ($stored['your-message'] === '' && $stored['selected-apartment'] !== '') {
+            $stored['your-message'] = 'A ' . $stored['selected-apartment'] . ' lakás iránt érdeklődöm.';
+        }
+
+        $hash = $this->cf7_offer_submission_hash($stored);
+        $post_id = $this->existing_cf7_offer_inquiry_id($hash, $stored);
+
+        if (!$post_id) {
+            $post_id = wp_insert_post(array(
+                'post_type' => 'harmat_offer_lead',
+                'post_status' => 'private',
+                'post_title' => 'Magán: ' . $name . ' - ' . current_time('ymd-His'),
+                'post_content' => $stored['your-message'],
+            ), true);
+
+            if (is_wp_error($post_id) || !$post_id) {
+                return new WP_Error('harmat_offer_save_failed', 'A küldés nem sikerült. Kérjük, próbálja újra.', array('status' => 500));
+            }
+        }
+
+        $crm = get_post_meta($post_id, '_harmat_offer_crm_code', true);
+        if (!$crm) {
+            $crm = 'WEB-' . current_time('Ymd') . '-' . str_pad((string) $post_id, 5, '0', STR_PAD_LEFT);
+        }
+
+        update_post_meta($post_id, '_harmat_offer_posted', $stored);
+        update_post_meta($post_id, '_harmat_offer_email', $email);
+        update_post_meta($post_id, '_harmat_offer_phone', $phone);
+        update_post_meta($post_id, '_harmat_offer_apartment', $stored['selected-apartment']);
+        update_post_meta($post_id, '_harmat_offer_date', $date);
+        update_post_meta($post_id, '_harmat_offer_time', $time);
+        update_post_meta($post_id, '_harmat_offer_crm_code', $crm);
+        update_post_meta($post_id, '_harmat_offer_mail_status', 'queued');
+        update_post_meta($post_id, '_harmat_offer_mail_checked_at', current_time('mysql'));
+        update_post_meta($post_id, '_harmat_cf7_submission_hash', $hash);
+        update_post_meta($post_id, '_harmat_offer_cf7_form_id', absint($this->cf7_posted_text($posted, '_wpcf7')));
+
+        if (!wp_next_scheduled(self::SALES_OFFER_MAIL_HOOK, array((int) $post_id))) {
+            wp_schedule_single_event(time() + 1, self::SALES_OFFER_MAIL_HOOK, array((int) $post_id));
+            spawn_cron(time());
+        }
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'id' => (int) $post_id,
+            'crm' => $crm,
+            'message' => 'Köszönjük, megkaptuk érdeklődését.',
+        ));
     }
 
     private function normalize_visit_path($path) {
@@ -1425,6 +1552,132 @@ final class Harmat_Sales_Manager {
 
     public function capture_cf7_offer_inquiry_failed($contact_form) {
         $this->capture_cf7_offer_inquiry($contact_form, 'failed');
+    }
+
+    public function send_public_offer_mail($post_id) {
+        $post_id = absint($post_id);
+        if (!$post_id || get_post_type($post_id) !== 'harmat_offer_lead') {
+            return;
+        }
+
+        $data = $this->offer_inquiry_data($post_id);
+        $crm = get_post_meta($post_id, '_harmat_offer_crm_code', true);
+        $name = $data['name'];
+        $email = sanitize_email($data['email']);
+        $apartment = $data['apartment'];
+        $message = $data['message'];
+
+        $headers = array('Content-Type: text/html; charset=UTF-8');
+        if ($email) {
+            $headers[] = 'Reply-To: ' . $name . ' <' . $email . '>';
+        }
+
+        $sales_rows = array(
+            'CRM' => $crm,
+            'Ügyfél' => $name,
+            'E-mail' => $email,
+            'Telefon' => $data['phone'],
+            'Lakás' => $apartment,
+            'Alapterület' => $data['area'],
+            'Szoba' => $data['rooms'],
+            'Ár' => $data['price'],
+            'Időpont' => trim($data['date'] . ' ' . $data['time']),
+            'Link' => $data['property_url'],
+            'Üzenet' => nl2br(esc_html($message ?: '-')),
+        );
+
+        $sales_sent = wp_mail(
+            self::SALES_REMINDER_EMAIL,
+            'Harmat Lakópark - új ajánlatkérés: ' . ($apartment ?: 'lakás'),
+            $this->offer_mail_template('Új ajánlatkérés érkezett', $sales_rows, 'A kérés bekerült a Harmat sales rendszerbe.'),
+            $headers
+        );
+
+        $customer_sent = false;
+        if ($email) {
+            $customer_rows = array(
+                'Lakás' => $apartment,
+                'Alapterület' => $data['area'],
+                'Szoba' => $data['rooms'],
+                'Árinformáció' => $data['price'],
+                'Időpont' => trim($data['date'] . ' ' . $data['time']),
+                'Azonosító' => $crm,
+            );
+            $customer_sent = wp_mail(
+                $email,
+                'Harmat Lakópark - ajánlatkérés visszaigazolása',
+                $this->offer_mail_template('Köszönjük érdeklődését', $customer_rows, 'Értékesítési csapatunk hamarosan felveszi Önnel a kapcsolatot.'),
+                array('Content-Type: text/html; charset=UTF-8')
+            );
+        }
+
+        if ($sales_sent && $customer_sent) {
+            $status = 'sent';
+        } elseif ($sales_sent || $customer_sent) {
+            $status = 'partial';
+        } else {
+            $status = 'failed';
+        }
+
+        update_post_meta($post_id, '_harmat_offer_mail_status', $status);
+        update_post_meta($post_id, '_harmat_offer_mail_checked_at', current_time('mysql'));
+    }
+
+    private function complete_offer_property_data($stored, $property_id) {
+        if ($property_id && get_post_type($property_id) === 'property') {
+            if (empty($stored['selected-building'])) {
+                $stored['selected-building'] = get_post_meta($property_id, 'property_address_street', true);
+            }
+            if (empty($stored['selected-floor'])) {
+                $stored['selected-floor'] = get_post_meta($property_id, 'property_address_street_number', true);
+            }
+            if (empty($stored['selected-apartment'])) {
+                $stored['selected-apartment'] = get_the_title($property_id);
+            }
+            if (empty($stored['selected-area'])) {
+                $stored['selected-area'] = str_replace('.', ',', $this->format_area($this->get_sales_area($property_id))) . ' m²';
+            }
+            if (empty($stored['selected-rooms'])) {
+                $rooms = get_post_meta($property_id, 'property_rooms', true);
+                $bedrooms = get_post_meta($property_id, 'property_bedrooms', true);
+                $stored['selected-rooms'] = trim($rooms . ' szoba' . ($bedrooms ? ' / ' . $bedrooms . ' háló' : ''));
+            }
+            if (empty($stored['selected-price'])) {
+                $price = (int) get_post_meta($property_id, 'property_price', true);
+                $hide_price = get_post_meta($property_id, '_harmat_hide_front_price', true) === 'yes';
+                $stored['selected-price'] = (!$hide_price && $price) ? $this->format_money($price) . ' Ft' : 'Ár egyeztetés alapján';
+            }
+            if (empty($stored['selected-url'])) {
+                $stored['selected-url'] = get_permalink($property_id);
+            }
+        }
+
+        return $stored;
+    }
+
+    private function public_offer_rate_allowed($email) {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+        $key = 'harmat_offer_rate_' . md5($ip . '|' . strtolower((string) $email));
+        $count = (int) get_transient($key);
+        if ($count >= 12) {
+            return false;
+        }
+        set_transient($key, $count + 1, 10 * MINUTE_IN_SECONDS);
+        return true;
+    }
+
+    private function offer_mail_template($title, $rows, $lead) {
+        $html = '<div style="font-family:Arial,sans-serif;color:#253137;background:#fbf5e8;padding:24px">';
+        $html .= '<div style="max-width:680px;margin:auto;background:#fffaf3;border:1px solid #ead8b8;padding:24px">';
+        $html .= '<h1 style="font-family:Georgia,serif;font-weight:400;color:#253137;margin:0 0 10px">' . esc_html($title) . '</h1>';
+        $html .= '<p style="color:#65717a;margin:0 0 18px">' . esc_html($lead) . '</p>';
+        $html .= '<table style="width:100%;border-collapse:collapse">';
+        foreach ($rows as $label => $value) {
+            $value = (string) $value;
+            $html .= '<tr><td style="width:34%;padding:10px;border-top:1px solid #ead8b8;color:#a8762d;font-weight:bold">' . esc_html($label) . '</td><td style="padding:10px;border-top:1px solid #ead8b8">' . (strpos($value, '<br') !== false ? $value : esc_html($value)) . '</td></tr>';
+        }
+        $html .= '</table></div></div>';
+        return $html;
     }
 
     private function capture_cf7_offer_inquiry($contact_form, $mail_status = 'sent', $submission = null) {
