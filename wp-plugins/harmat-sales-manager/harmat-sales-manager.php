@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.25
+ * Version: 1.6.26
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.25';
+    const VERSION = '1.6.26';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -57,6 +57,8 @@ final class Harmat_Sales_Manager {
         add_action('wp_footer', array($this, 'render_public_visit_tracker'), 90);
         add_action('wp_head', array($this, 'frontend_structured_data'), 30);
         add_filter('wpcf7_posted_data', array($this, 'prefill_cf7_property_data'));
+        add_action('wpcf7_mail_sent', array($this, 'capture_cf7_offer_inquiry_sent'), 999, 1);
+        add_action('wpcf7_mail_failed', array($this, 'capture_cf7_offer_inquiry_failed'), 999, 1);
     }
 
     private function is_portal_request_path() {
@@ -1415,6 +1417,246 @@ final class Harmat_Sales_Manager {
         }
 
         return $posted_data;
+    }
+
+    public function capture_cf7_offer_inquiry_sent($contact_form) {
+        $this->capture_cf7_offer_inquiry($contact_form, 'sent');
+    }
+
+    public function capture_cf7_offer_inquiry_failed($contact_form) {
+        $this->capture_cf7_offer_inquiry($contact_form, 'failed');
+    }
+
+    private function capture_cf7_offer_inquiry($contact_form, $mail_status = 'sent', $submission = null) {
+        if (!$this->is_offer_cf7_submission($contact_form)) {
+            return;
+        }
+
+        $posted = $this->cf7_submission_posted_data($submission);
+        if (!$posted) {
+            return;
+        }
+
+        $name = $this->cf7_posted_text($posted, 'your-name');
+        $email = sanitize_email($this->cf7_posted_text($posted, 'your-email'));
+        $phone = $this->cf7_posted_text($posted, 'your-phone');
+        $apartment = $this->cf7_posted_text($posted, 'selected-apartment');
+        $date = $this->cf7_posted_text($posted, 'your-date');
+        $time = $this->cf7_posted_text($posted, 'your-time');
+        $message = $this->cf7_posted_textarea($posted, 'your-message');
+
+        if ($name === '' || !is_email($email) || $phone === '') {
+            return;
+        }
+
+        $property_id = $apartment ? $this->property_id_by_title($apartment) : 0;
+        if (!$property_id) {
+            $url = $this->cf7_posted_text($posted, 'selected-url');
+            $property_id = $url ? url_to_postid($url) : 0;
+        }
+        if (!$apartment && $property_id && get_post_type($property_id) === 'property') {
+            $apartment = get_the_title($property_id);
+        }
+
+        $stored = array(
+            'your-name' => $name,
+            'your-email' => $email,
+            'your-phone' => $phone,
+            'your-date' => $date,
+            'your-time' => $time,
+            'your-message' => $message,
+            'selected-building' => $this->cf7_posted_text($posted, 'selected-building'),
+            'selected-floor' => $this->cf7_posted_text($posted, 'selected-floor'),
+            'selected-apartment' => $apartment,
+            'selected-area' => $this->cf7_posted_text($posted, 'selected-area'),
+            'selected-rooms' => $this->cf7_posted_text($posted, 'selected-rooms'),
+            'selected-price' => $this->cf7_posted_text($posted, 'selected-price'),
+            'selected-url' => $this->cf7_posted_text($posted, 'selected-url'),
+            'privacy-acceptance' => $this->cf7_posted_text($posted, 'privacy-acceptance') ? '1' : '',
+            'marketing-consent' => $this->cf7_posted_text($posted, 'marketing-consent'),
+            'source' => esc_url_raw(wp_get_referer() ?: (isset($_SERVER['HTTP_REFERER']) ? wp_unslash($_SERVER['HTTP_REFERER']) : '')),
+        );
+
+        if (!$stored['selected-area'] && $property_id && get_post_type($property_id) === 'property') {
+            $stored['selected-area'] = $this->format_area($this->get_sales_area($property_id)) . ' m²';
+        }
+        if (!$stored['selected-rooms'] && $property_id && get_post_type($property_id) === 'property') {
+            $rooms = get_post_meta($property_id, 'property_rooms', true);
+            $stored['selected-rooms'] = $rooms ? $rooms . ' szoba' : '';
+        }
+        if (!$stored['selected-price'] && $property_id && get_post_type($property_id) === 'property') {
+            $price = (int) get_post_meta($property_id, 'property_price', true);
+            $hide_price = get_post_meta($property_id, '_harmat_hide_front_price', true) === 'yes';
+            $stored['selected-price'] = (!$hide_price && $price) ? $this->format_money($price) . ' Ft' : 'Ár egyeztetés alapján';
+        }
+        if (!$stored['selected-url'] && $property_id && get_post_type($property_id) === 'property') {
+            $stored['selected-url'] = get_permalink($property_id);
+        }
+        if ($stored['your-message'] === '' && $apartment) {
+            $stored['your-message'] = 'A ' . $apartment . ' lakás iránt érdeklődöm.';
+        }
+
+        $hash = $this->cf7_offer_submission_hash($stored);
+        $post_id = $this->existing_cf7_offer_inquiry_id($hash, $stored);
+
+        if (!$post_id) {
+            $post_id = wp_insert_post(array(
+                'post_type' => 'harmat_offer_lead',
+                'post_status' => 'private',
+                'post_title' => 'Magán: ' . $name . ' - ' . current_time('ymd-His'),
+                'post_content' => $stored['your-message'],
+            ), true);
+
+            if (is_wp_error($post_id) || !$post_id) {
+                return;
+            }
+        }
+
+        $crm = get_post_meta($post_id, '_harmat_offer_crm_code', true);
+        if (!$crm) {
+            $crm = 'WEB-' . current_time('Ymd') . '-' . str_pad((string) $post_id, 5, '0', STR_PAD_LEFT);
+        }
+        update_post_meta($post_id, '_harmat_offer_posted', $stored);
+        update_post_meta($post_id, '_harmat_offer_email', $email);
+        update_post_meta($post_id, '_harmat_offer_phone', $phone);
+        update_post_meta($post_id, '_harmat_offer_apartment', $apartment);
+        update_post_meta($post_id, '_harmat_offer_date', $date);
+        update_post_meta($post_id, '_harmat_offer_time', $time);
+        update_post_meta($post_id, '_harmat_offer_crm_code', $crm);
+        update_post_meta($post_id, '_harmat_offer_mail_status', $mail_status);
+        update_post_meta($post_id, '_harmat_offer_mail_checked_at', current_time('mysql'));
+        update_post_meta($post_id, '_harmat_cf7_submission_hash', $hash);
+        if ($contact_form && method_exists($contact_form, 'id')) {
+            update_post_meta($post_id, '_harmat_offer_cf7_form_id', (int) $contact_form->id());
+        }
+    }
+
+    private function is_offer_cf7_submission($contact_form) {
+        $id = ($contact_form && method_exists($contact_form, 'id')) ? (int) $contact_form->id() : 0;
+        if (in_array($id, array(1002, 8761), true)) {
+            return true;
+        }
+
+        $posted = $this->cf7_submission_posted_data(null);
+        return is_array($posted) && (isset($posted['selected-apartment']) || isset($posted['selected-url']));
+    }
+
+    private function cf7_submission_posted_data($submission = null) {
+        if (!$submission && class_exists('WPCF7_Submission')) {
+            $submission = WPCF7_Submission::get_instance();
+        }
+        if (!$submission || !method_exists($submission, 'get_posted_data')) {
+            return array();
+        }
+        $posted = $submission->get_posted_data();
+        return is_array($posted) ? $posted : array();
+    }
+
+    private function cf7_posted_text($posted, $key) {
+        if (!is_array($posted) || !array_key_exists($key, $posted)) {
+            return '';
+        }
+
+        $value = $posted[$key];
+        if (is_array($value)) {
+            $value = implode(', ', array_map('sanitize_text_field', array_map('strval', $value)));
+        }
+
+        return sanitize_text_field((string) $value);
+    }
+
+    private function cf7_posted_textarea($posted, $key) {
+        if (!is_array($posted) || !array_key_exists($key, $posted)) {
+            return '';
+        }
+
+        $value = $posted[$key];
+        if (is_array($value)) {
+            $value = implode("\n", array_map('strval', $value));
+        }
+
+        return sanitize_textarea_field((string) $value);
+    }
+
+    private function cf7_offer_submission_hash($stored) {
+        $hash_source = array(
+            'name' => $stored['your-name'] ?? '',
+            'email' => $stored['your-email'] ?? '',
+            'phone' => $stored['your-phone'] ?? '',
+            'apartment' => $stored['selected-apartment'] ?? '',
+            'date' => $stored['your-date'] ?? '',
+            'time' => $stored['your-time'] ?? '',
+            'message' => $stored['your-message'] ?? '',
+        );
+
+        return hash('sha256', wp_json_encode($hash_source));
+    }
+
+    private function existing_cf7_offer_inquiry_id($hash, $stored = array()) {
+        if ($hash) {
+            $existing = get_posts(array(
+                'post_type' => 'harmat_offer_lead',
+                'post_status' => array('private', 'publish', 'draft'),
+                'posts_per_page' => 1,
+                'fields' => 'ids',
+                'meta_key' => '_harmat_cf7_submission_hash',
+                'meta_value' => $hash,
+                'date_query' => array(
+                    array(
+                        'after' => '15 minutes ago',
+                        'inclusive' => true,
+                    ),
+                ),
+            ));
+
+            if ($existing) {
+                return (int) $existing[0];
+            }
+        }
+
+        $email = isset($stored['your-email']) ? sanitize_email($stored['your-email']) : '';
+        $apartment = isset($stored['selected-apartment']) ? sanitize_text_field($stored['selected-apartment']) : '';
+        if ($email === '' || $apartment === '') {
+            return 0;
+        }
+
+        $meta_query = array(
+            'relation' => 'AND',
+            array(
+                'key' => '_harmat_offer_email',
+                'value' => $email,
+                'compare' => '=',
+            ),
+            array(
+                'key' => '_harmat_offer_apartment',
+                'value' => $apartment,
+                'compare' => '=',
+            ),
+        );
+
+        if (!empty($stored['your-phone'])) {
+            $meta_query[] = array(
+                'key' => '_harmat_offer_phone',
+                'value' => sanitize_text_field($stored['your-phone']),
+                'compare' => '=',
+            );
+        }
+
+        $existing = get_posts(array(
+            'post_type' => 'harmat_offer_lead',
+            'post_status' => array('private', 'publish', 'draft'),
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'meta_query' => $meta_query,
+            'date_query' => array(
+                array(
+                    'after' => '15 minutes ago',
+                    'inclusive' => true,
+                ),
+            ),
+        ));
+
+        return $existing ? (int) $existing[0] : 0;
     }
 
     public function limit_private_roles() {

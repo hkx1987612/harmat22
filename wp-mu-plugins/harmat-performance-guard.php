@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.16
+ * Version: 1.3.18
  */
 
 if (!defined('ABSPATH')) {
@@ -299,6 +299,20 @@ function harmat_perf_dequeue_heavy_assets() {
 add_action('wp_enqueue_scripts', 'harmat_perf_dequeue_heavy_assets', 1001);
 add_action('wp_print_styles', 'harmat_perf_dequeue_heavy_assets', 1001);
 add_action('wp_print_scripts', 'harmat_perf_dequeue_heavy_assets', 1001);
+
+function harmat_perf_ensure_cf7_frontend_assets() {
+    if (is_admin() || wp_doing_ajax() || harmat_perf_is_private_portal_path()) {
+        return;
+    }
+
+    if (function_exists('wpcf7_enqueue_scripts')) {
+        wpcf7_enqueue_scripts();
+    }
+    if (function_exists('wpcf7_enqueue_styles')) {
+        wpcf7_enqueue_styles();
+    }
+}
+add_action('wp_enqueue_scripts', 'harmat_perf_ensure_cf7_frontend_assets', 25);
 
 function harmat_perf_register_legacy_map_placeholder() {
     if (is_admin()) {
@@ -946,9 +960,9 @@ function harmat_perf_offer_success_fallback() {
 <script id="harmat-offer-success-fallback">
 (function () {
   var thankYouUrl = '<?php echo esc_js(home_url('/koszonjuk/')); ?>';
+  var feedbackBase = '<?php echo esc_js(rest_url('contact-form-7/v1/contact-forms/')); ?>';
   var offerIds = { '1002': true, '8761': true };
   var redirected = false;
-  var fallbackTimer = null;
 
   function formId(form) {
     var input = form && form.querySelector ? form.querySelector('[name="_wpcf7"]') : null;
@@ -990,10 +1004,6 @@ function harmat_perf_offer_success_fallback() {
   }
 
   function cancelFallback(form) {
-    if (fallbackTimer) {
-      window.clearTimeout(fallbackTimer);
-      fallbackTimer = null;
-    }
     var submit = form && form.querySelector ? form.querySelector('[type="submit"]') : null;
     if (submit) {
       submit.disabled = false;
@@ -1011,20 +1021,83 @@ function harmat_perf_offer_success_fallback() {
   function redirectSoon() {
     if (redirected) return;
     redirected = true;
-    if (fallbackTimer) {
-      window.clearTimeout(fallbackTimer);
-      fallbackTimer = null;
-    }
     window.setTimeout(function () {
       window.location.href = thankYouUrl;
     }, 160);
   }
 
+  function responseBox(form) {
+    var box = form.querySelector('.wpcf7-response-output');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'wpcf7-response-output';
+      box.setAttribute('aria-hidden', 'false');
+      form.appendChild(box);
+    }
+    return box;
+  }
+
+  function showResponse(form, message) {
+    var box = responseBox(form);
+    box.textContent = message || 'A küldés nem sikerült. Kérjük, próbálja újra.';
+    box.style.display = 'block';
+  }
+
+  function setSubmitting(form, active) {
+    var submit = form && form.querySelector ? form.querySelector('[type="submit"]') : null;
+    if (!submit) return;
+    if (active) {
+      if (!submit.dataset.originalText) {
+        submit.dataset.originalText = ('value' in submit) ? submit.value : submit.textContent;
+      }
+      submit.disabled = true;
+      submit.classList.add('harmat-submit-disabled');
+      if ('value' in submit) submit.value = 'Küldés...';
+      else submit.textContent = 'Küldés...';
+      return;
+    }
+    submit.disabled = false;
+    submit.classList.remove('harmat-submit-disabled');
+    if (submit.dataset.originalText) {
+      if ('value' in submit) submit.value = submit.dataset.originalText;
+      else submit.textContent = submit.dataset.originalText;
+    }
+  }
+
+  function submitViaRest(form) {
+    var id = formId(form);
+    if (!id || form.dataset.harmatCf7Submitting === '1') return;
+    form.dataset.harmatCf7Submitting = '1';
+    setSubmitting(form, true);
+
+    fetch(feedbackBase + encodeURIComponent(id) + '/feedback', {
+      method: 'POST',
+      body: new FormData(form),
+      credentials: 'same-origin'
+    }).then(function (response) {
+      return response.json();
+    }).then(function (data) {
+      form.dataset.harmatCf7Submitting = '';
+      setSubmitting(form, false);
+      if (data && data.status === 'mail_sent') {
+        redirectSoon();
+        return;
+      }
+      showResponse(form, data && data.message ? data.message : '');
+    }).catch(function () {
+      form.dataset.harmatCf7Submitting = '';
+      setSubmitting(form, false);
+      showResponse(form, 'A küldés nem sikerült. Kérjük, próbálja újra.');
+    });
+  }
+
   document.addEventListener('submit', function (event) {
     var form = event.target && event.target.closest ? event.target.closest('form.wpcf7-form') : null;
     if (!looksReady(form)) return;
-    if (fallbackTimer) window.clearTimeout(fallbackTimer);
-    fallbackTimer = window.setTimeout(redirectSoon, 6500);
+    if (!isOfferEvent({ target: form })) return;
+    event.preventDefault();
+    event.stopPropagation();
+    submitViaRest(form);
   }, true);
 
   document.addEventListener('wpcf7mailsent', function (event) {
