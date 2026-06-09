@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Legal Pages and Cookie Consent
  * Description: Adds Hungarian legal page content and a consent-based cookie banner.
- * Version: 2026.06.09
+ * Version: 2026.06.09.1
  */
 
 defined('ABSPATH') || exit;
@@ -47,7 +47,7 @@ function hm_legal_company_20260514() {
 }
 
 function hm_legal_policy_version_20260601() {
-    return '2026-06-09-v1.5';
+    return '2026-06-09-v1.6';
 }
 
 function hm_legal_google_tag_id_20260601() {
@@ -285,7 +285,7 @@ function hm_legal_cookie_page_20260514() {
             <tr><td>wordpress_test_cookie, wordpress_logged_in_*, wordpress_sec_*</td><td>WordPress</td><td>Első fél</td><td>Szükséges</td><td>Adminisztrációs bejelentkezés, biztonság és munkamenet-kezelés</td><td>Munkamenet vagy bejelentkezés időtartama; nyilvános látogatóknál jellemzően nem aktív</td></tr>
             <tr><td>űrlap- és biztonsági munkamenet sütik</td><td>Harmat22.hu / biztonsági bővítmények</td><td>Első fél</td><td>Szükséges</td><td>Űrlapvédelem, visszaélés-megelőzés és a weboldal biztonságos működése</td><td>Munkamenet vagy rövid technikai megőrzés</td></tr>
         <tr><td>_ga, _ga_*, Google tag azonosítók</td><td>Google Analytics / Google Tag Manager</td><td>Google szolgáltatás, a weboldal domainjén tárolt azonosítókkal</td><td>Statisztikai</td><td>Látogatottsági statisztika és weboldalhasználat mérése</td><td>Legfeljebb 2 év; csak a statisztikai sütik elfogadása után töltődik be</td></tr>
-        <tr><td>AW-18191634808, Google Ads konverziós és kampánymérési azonosítók</td><td>Google Ads / Google Tag</td><td>Google szolgáltatás, harmadik fél azonosítóival</td><td>Marketing</td><td>Hirdetési kampányok és konverziók mérése</td><td>A Google beállításai szerint; csak marketing sütik elfogadása után töltődik be</td></tr>
+        <tr><td>AW-18191634808, Google Ads konverziós és kampánymérési azonosítók</td><td>Google Ads / Google Tag</td><td>Google szolgáltatás, harmadik fél azonosítóival</td><td>Marketing</td><td>Hirdetési kampányok és konverziók mérése</td><td>A Google beállításai szerint; Consent Mode alapértelmezett tiltással indul, hirdetési tárolás csak marketing sütik elfogadása után engedélyezett</td></tr>
         <tr><td>beágyazott térkép-, videó- vagy egyéb hirdetési azonosítók</td><td>Google, YouTube, Meta vagy más külső szolgáltató, ha az adott funkció aktív</td><td>Harmadik fél</td><td>Marketing / külső tartalom</td><td>Kampánymérés, remarketing, beágyazott videó vagy térképes tartalom működése</td><td>A szolgáltató beállításai szerint; csak megfelelő hozzájárulás vagy felhasználói művelet esetén</td></tr>
         </tbody>
     </table>
@@ -469,6 +469,18 @@ add_action('wp_head', function () {
             wait_for_update: 500
         });
     </script>
+    <?php $google_ads_tag_id = hm_legal_google_ads_tag_id_20260609(); ?>
+    <?php if ($google_ads_tag_id) : ?>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo esc_attr($google_ads_tag_id); ?>"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', '<?php echo esc_js($google_ads_tag_id); ?>');
+    </script>
+    <?php endif; ?>
     <style id="hm-cookie-consent-style">
         #hm-cookie-consent{position:fixed;left:24px;right:24px;bottom:24px;z-index:999999;display:none;justify-content:center;pointer-events:none}
         #hm-cookie-consent.is-visible{display:flex}
