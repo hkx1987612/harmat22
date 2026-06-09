@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.46
+ * Version: 1.6.47
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.46';
+    const VERSION = '1.6.47';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -29,6 +29,7 @@ final class Harmat_Sales_Manager {
     const SALES_REMINDER_EMAIL = 'ertekesites@harmat22.hu';
     const VISIT_STATS_OPTION = 'harmat_sales_visit_stats';
     const ACTIVITY_LOG_OPTION = 'harmat_sales_activity_log_v1';
+    const TRASH_OPTION = 'harmat_sales_trash_v1';
     const VISIT_REST_NAMESPACE = 'harmat-sales-manager/v1';
     private $use_private_customer_material_upload_dir = false;
 
@@ -2534,6 +2535,112 @@ final class Harmat_Sales_Manager {
         return in_array($this->normalize_deal_stage_key($deal['stage'] ?? ''), array('new', 'viewing', 'negotiation', 'lost'), true);
     }
 
+    private function get_sales_trash() {
+        $raw = get_option(self::TRASH_OPTION, array());
+        if (!is_array($raw)) {
+            return array();
+        }
+
+        $items = array();
+        foreach ($raw as $key => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $trash_id = sanitize_key((string) ($item['trash_id'] ?? $key));
+            $type = sanitize_key((string) ($item['type'] ?? ''));
+            $original_id = absint($item['original_id'] ?? 0);
+            $data = isset($item['data']) && is_array($item['data']) ? $item['data'] : array();
+            if (!$trash_id || !$original_id || !in_array($type, array('lead', 'deal'), true)) {
+                continue;
+            }
+
+            $items[$trash_id] = array(
+                'trash_id' => $trash_id,
+                'type' => $type,
+                'original_id' => $original_id,
+                'data' => $data,
+                'deleted_at' => sanitize_text_field((string) ($item['deleted_at'] ?? '')),
+                'deleted_by' => absint($item['deleted_by'] ?? 0),
+            );
+        }
+
+        uasort($items, function($a, $b) {
+            return strcmp((string) ($b['deleted_at'] ?? ''), (string) ($a['deleted_at'] ?? ''));
+        });
+
+        return $items;
+    }
+
+    private function save_sales_trash($items) {
+        update_option(self::TRASH_OPTION, $items, false);
+    }
+
+    private function add_sales_trash_item($type, $original_id, $data) {
+        $type = sanitize_key((string) $type);
+        $original_id = absint($original_id);
+        if (!$original_id || !is_array($data) || !in_array($type, array('lead', 'deal'), true)) {
+            return '';
+        }
+
+        $trash = $this->get_sales_trash();
+        $trash_id = $type . '_' . $original_id . '_' . current_time('YmdHis') . '_' . strtolower(wp_generate_password(4, false, false));
+        $trash[$trash_id] = array(
+            'trash_id' => $trash_id,
+            'type' => $type,
+            'original_id' => $original_id,
+            'data' => $data,
+            'deleted_at' => current_time('mysql'),
+            'deleted_by' => get_current_user_id(),
+        );
+        $this->save_sales_trash($trash);
+
+        return $trash_id;
+    }
+
+    private function can_view_sales_trash_item($item) {
+        if ($this->is_sales_manager_user()) {
+            return true;
+        }
+        if (!$this->is_sales_staff_user() || !is_array($item)) {
+            return false;
+        }
+
+        $data = isset($item['data']) && is_array($item['data']) ? $item['data'] : array();
+        $current_user_id = get_current_user_id();
+        return $current_user_id && (
+            (int) ($item['deleted_by'] ?? 0) === $current_user_id
+            || (int) ($data['assigned_sales_id'] ?? 0) === $current_user_id
+        );
+    }
+
+    private function can_restore_sales_trash_item($item) {
+        return $this->can_view_sales_trash_item($item);
+    }
+
+    private function can_purge_sales_trash_item($item) {
+        return $this->can_delete_sales_records() && is_array($item);
+    }
+
+    private function can_restore_inquiry_record($post_id) {
+        $post_id = absint($post_id);
+        if (!$post_id || get_post_type($post_id) !== 'harmat_offer_lead' || get_post_status($post_id) !== 'trash') {
+            return false;
+        }
+        if ($this->is_sales_manager_user()) {
+            return true;
+        }
+        if (!$this->is_sales_staff_user()) {
+            return false;
+        }
+
+        $current_user_id = get_current_user_id();
+        return $current_user_id && (
+            $this->offer_inquiry_assigned_sales_id($post_id) === $current_user_id
+            || (int) get_post_meta($post_id, '_harmat_deleted_by', true) === $current_user_id
+        );
+    }
+
     private function is_sales_staff_user() {
         if ($this->is_sales_manager_user()) {
             return false;
@@ -2782,6 +2889,14 @@ final class Harmat_Sales_Manager {
 
         if ($action === 'delete_deal') {
             $this->handle_deal_delete();
+        }
+
+        if ($action === 'restore_trash') {
+            $this->handle_sales_trash_restore();
+        }
+
+        if ($action === 'purge_trash') {
+            $this->handle_sales_trash_purge();
         }
     }
 
@@ -3326,6 +3441,7 @@ final class Harmat_Sales_Manager {
             wp_die('Nincs jogosultsag az ugyfel torlesehez.');
         }
 
+        $trash_id = $this->add_sales_trash_item('lead', $lead_id, $lead);
         unset($leads[$lead_id]);
         $this->save_leads($leads);
         $this->log_sales_activity(
@@ -3342,6 +3458,7 @@ final class Harmat_Sales_Manager {
                 'assigned_sales_id' => (int) ($lead['assigned_sales_id'] ?? 0),
                 'related_user_ids' => array((int) ($lead['broker_id'] ?? 0), (int) ($lead['assigned_sales_id'] ?? 0)),
                 'lead_id' => $lead_id,
+                'trash_id' => $trash_id,
             )
         );
         wp_safe_redirect($this->lead_return_url(array('lead_deleted' => '1')));
@@ -3359,6 +3476,8 @@ final class Harmat_Sales_Manager {
 
         $data = $this->offer_inquiry_data($post_id);
         $assigned_sales_id = $this->offer_inquiry_assigned_sales_id($post_id);
+        update_post_meta($post_id, '_harmat_deleted_by', get_current_user_id());
+        update_post_meta($post_id, '_harmat_deleted_at', current_time('mysql'));
         wp_trash_post($post_id);
         $this->log_sales_activity(
             'inquiry_delete',
@@ -4442,7 +4561,7 @@ final class Harmat_Sales_Manager {
 
         $property_id = absint($deal['property_id'] ?? 0);
         $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
-        $this->cleanup_deleted_deal_assets($deal);
+        $trash_id = $this->add_sales_trash_item('deal', $deal_id, $deal);
         unset($deals[$deal_id]);
         $this->save_deals($deals);
         $this->log_sales_activity(
@@ -4462,12 +4581,206 @@ final class Harmat_Sales_Manager {
                 'lead_id' => (int) ($deal['lead_id'] ?? 0),
                 'deal_id' => $deal_id,
                 'inquiry_id' => (int) ($deal['inquiry_id'] ?? 0),
+                'trash_id' => $trash_id,
             )
         );
         if ($property_id && $this->deal_stage_locks_property($stage)) {
             $this->refresh_property_status_after_deal_change($property_id, $deal_id, $deals);
         }
         wp_safe_redirect($this->deal_return_url(array('deal_deleted' => '1')));
+        exit;
+    }
+
+    private function handle_sales_trash_restore() {
+        $type = isset($_POST['trash_type']) ? sanitize_key(wp_unslash($_POST['trash_type'])) : '';
+
+        if ($type === 'inquiry') {
+            $post_id = isset($_POST['inquiry_id']) ? absint($_POST['inquiry_id']) : 0;
+            if (!$this->can_restore_inquiry_record($post_id)) {
+                wp_die('Nincs jogosultság a visszaállításhoz.');
+            }
+
+            $data = $this->offer_inquiry_data($post_id);
+            $assigned_sales_id = $this->offer_inquiry_assigned_sales_id($post_id);
+            wp_untrash_post($post_id);
+            delete_post_meta($post_id, '_harmat_deleted_by');
+            delete_post_meta($post_id, '_harmat_deleted_at');
+            $this->log_sales_activity(
+                'trash_restore',
+                'inquiry',
+                $post_id,
+                'Visszaállított érdeklődés: ' . ($data['name'] ?: ('#' . $post_id)),
+                array(
+                    'client_name' => $data['name'],
+                    'phone' => $data['phone'],
+                    'email' => $data['email'],
+                    'property_title' => $data['apartment'],
+                    'source_type' => 'website',
+                    'assigned_sales_id' => $assigned_sales_id,
+                    'related_user_ids' => array($assigned_sales_id),
+                    'inquiry_id' => $post_id,
+                )
+            );
+            wp_safe_redirect($this->sales_portal_url(array('view' => 'trash', 'trash_restored' => '1')));
+            exit;
+        }
+
+        $trash_id = isset($_POST['trash_id']) ? sanitize_key(wp_unslash($_POST['trash_id'])) : '';
+        $trash = $this->get_sales_trash();
+        if (!$trash_id || empty($trash[$trash_id])) {
+            wp_die('Hibás visszaállítási azonosító.');
+        }
+
+        $item = $trash[$trash_id];
+        if (!$this->can_restore_sales_trash_item($item)) {
+            wp_die('Nincs jogosultság a visszaállításhoz.');
+        }
+
+        $data = isset($item['data']) && is_array($item['data']) ? $item['data'] : array();
+        $original_id = absint($item['original_id'] ?? 0);
+        if (!$original_id || !$data) {
+            wp_die('Hiányos visszaállítási adat.');
+        }
+
+        if (($item['type'] ?? '') === 'lead') {
+            $leads = $this->get_leads();
+            if (isset($leads[$original_id])) {
+                wp_die('Ezzel az azonosítóval már létezik ügyfélrekord.');
+            }
+            $data['id'] = $original_id;
+            $data['updated_at'] = current_time('mysql');
+            $data['updated_by'] = get_current_user_id();
+            $leads[$original_id] = $data;
+            $this->save_leads($leads);
+            $this->log_sales_activity(
+                'trash_restore',
+                'lead',
+                $original_id,
+                'Visszaállított ügyfél: ' . ($data['client_name'] ?? ('#' . $original_id)),
+                array(
+                    'client_name' => $data['client_name'] ?? '',
+                    'phone' => $data['phone'] ?? '',
+                    'email' => $data['email'] ?? '',
+                    'property_title' => !empty($data['property_id']) ? get_the_title((int) $data['property_id']) : '',
+                    'source_type' => $this->lead_source_type($data),
+                    'assigned_sales_id' => (int) ($data['assigned_sales_id'] ?? 0),
+                    'related_user_ids' => array((int) ($data['broker_id'] ?? 0), (int) ($data['assigned_sales_id'] ?? 0)),
+                    'lead_id' => $original_id,
+                )
+            );
+        } elseif (($item['type'] ?? '') === 'deal') {
+            $deals = $this->get_deals();
+            if (isset($deals[$original_id])) {
+                wp_die('Ezzel az azonosítóval már létezik értékesítési ügylet.');
+            }
+            $data['id'] = $original_id;
+            $data['stage'] = $this->normalize_deal_stage_key($data['stage'] ?? '');
+            $data['updated_at'] = current_time('mysql');
+            $data['updated_by'] = get_current_user_id();
+            $deals[$original_id] = $data;
+            $this->save_deals($deals);
+            if (!empty($data['property_id']) && $this->deal_stage_locks_property($data['stage'] ?? '')) {
+                $this->sync_property_to_deal((int) $data['property_id'], $original_id, $data['stage'], $data['amount'] ?? '');
+            }
+            $this->log_sales_activity(
+                'trash_restore',
+                'deal',
+                $original_id,
+                'Visszaállított értékesítési ügylet: ' . ($data['client_name'] ?? ('#' . $original_id)),
+                array(
+                    'client_name' => $data['client_name'] ?? '',
+                    'phone' => $data['phone'] ?? '',
+                    'email' => $data['email'] ?? '',
+                    'property_title' => !empty($data['property_id']) ? get_the_title((int) $data['property_id']) : '',
+                    'crm_code' => $data['crm_code'] ?? '',
+                    'source_type' => $data['source_type'] ?? '',
+                    'assigned_sales_id' => (int) ($data['assigned_sales_id'] ?? 0),
+                    'related_user_ids' => array((int) ($data['broker_id'] ?? 0), (int) ($data['assigned_sales_id'] ?? 0)),
+                    'lead_id' => (int) ($data['lead_id'] ?? 0),
+                    'deal_id' => $original_id,
+                    'inquiry_id' => (int) ($data['inquiry_id'] ?? 0),
+                )
+            );
+        } else {
+            wp_die('Ismeretlen visszaállítási típus.');
+        }
+
+        unset($trash[$trash_id]);
+        $this->save_sales_trash($trash);
+        wp_safe_redirect($this->sales_portal_url(array('view' => 'trash', 'trash_restored' => '1')));
+        exit;
+    }
+
+    private function handle_sales_trash_purge() {
+        if (!$this->can_delete_sales_records()) {
+            wp_die('Nincs jogosultság a végleges törléshez.');
+        }
+
+        $type = isset($_POST['trash_type']) ? sanitize_key(wp_unslash($_POST['trash_type'])) : '';
+        if ($type === 'inquiry') {
+            $post_id = isset($_POST['inquiry_id']) ? absint($_POST['inquiry_id']) : 0;
+            if (!$post_id || get_post_type($post_id) !== 'harmat_offer_lead' || get_post_status($post_id) !== 'trash') {
+                wp_die('Hibás érdeklődés azonosító.');
+            }
+            $data = $this->offer_inquiry_data($post_id);
+            wp_delete_post($post_id, true);
+            $this->log_sales_activity(
+                'trash_purge',
+                'inquiry',
+                $post_id,
+                'Véglegesen törölt érdeklődés: ' . ($data['name'] ?: ('#' . $post_id)),
+                array(
+                    'client_name' => $data['name'],
+                    'phone' => $data['phone'],
+                    'email' => $data['email'],
+                    'property_title' => $data['apartment'],
+                    'source_type' => 'website',
+                    'inquiry_id' => $post_id,
+                )
+            );
+            wp_safe_redirect($this->sales_portal_url(array('view' => 'trash', 'trash_purged' => '1')));
+            exit;
+        }
+
+        $trash_id = isset($_POST['trash_id']) ? sanitize_key(wp_unslash($_POST['trash_id'])) : '';
+        $trash = $this->get_sales_trash();
+        if (!$trash_id || empty($trash[$trash_id])) {
+            wp_die('Hibás törlési azonosító.');
+        }
+
+        $item = $trash[$trash_id];
+        if (!$this->can_purge_sales_trash_item($item)) {
+            wp_die('Nincs jogosultság a végleges törléshez.');
+        }
+
+        $data = isset($item['data']) && is_array($item['data']) ? $item['data'] : array();
+        $original_id = absint($item['original_id'] ?? 0);
+        if (($item['type'] ?? '') === 'deal' && $data) {
+            $this->cleanup_deleted_deal_assets($data);
+        }
+
+        unset($trash[$trash_id]);
+        $this->save_sales_trash($trash);
+        $this->log_sales_activity(
+            'trash_purge',
+            (string) ($item['type'] ?? 'trash'),
+            $original_id,
+            'Véglegesen törölt rekord: ' . ($data['client_name'] ?? ('#' . $original_id)),
+            array(
+                'client_name' => $data['client_name'] ?? '',
+                'phone' => $data['phone'] ?? '',
+                'email' => $data['email'] ?? '',
+                'property_title' => !empty($data['property_id']) ? get_the_title((int) $data['property_id']) : '',
+                'crm_code' => $data['crm_code'] ?? '',
+                'source_type' => $data['source_type'] ?? ($this->lead_source_type($data) ?? ''),
+                'assigned_sales_id' => (int) ($data['assigned_sales_id'] ?? 0),
+                'related_user_ids' => array((int) ($data['broker_id'] ?? 0), (int) ($data['assigned_sales_id'] ?? 0)),
+                'lead_id' => ($item['type'] ?? '') === 'lead' ? $original_id : (int) ($data['lead_id'] ?? 0),
+                'deal_id' => ($item['type'] ?? '') === 'deal' ? $original_id : 0,
+                'inquiry_id' => (int) ($data['inquiry_id'] ?? 0),
+            )
+        );
+        wp_safe_redirect($this->sales_portal_url(array('view' => 'trash', 'trash_purged' => '1')));
         exit;
     }
 
@@ -6531,13 +6844,17 @@ final class Harmat_Sales_Manager {
         if (isset($_GET['lead_saved'])) {
             $notice = '客户跟进已保存。';
         } elseif (isset($_GET['lead_deleted'])) {
-            $notice = '客户跟进已删除。';
+            $notice = '客户跟进已移入回收站。';
         } elseif (isset($_GET['inquiry_deleted'])) {
-            $notice = '网站询价已删除。';
+            $notice = '网站询价已移入回收站。';
         } elseif (isset($_GET['deal_saved'])) {
             $notice = '销售跟单已保存。';
         } elseif (isset($_GET['deal_deleted'])) {
-            $notice = '销售跟单已删除。';
+            $notice = '销售跟单已移入回收站。';
+        } elseif (isset($_GET['trash_restored'])) {
+            $notice = '记录已恢复。';
+        } elseif (isset($_GET['trash_purged'])) {
+            $notice = '记录已永久删除。';
         } elseif (isset($_GET['updated'])) {
             $notice = '房源状态已更新。';
         } elseif (isset($_GET['lead_error'])) {
@@ -6592,6 +6909,8 @@ final class Harmat_Sales_Manager {
             $this->render_sales_portal_brokers();
         } elseif ($view === 'properties') {
             $this->render_sales_portal_properties();
+        } elseif ($view === 'trash') {
+            $this->render_sales_portal_trash();
         } elseif ($view === 'links') {
             $this->render_sales_portal_links();
         } else {
@@ -6612,6 +6931,7 @@ final class Harmat_Sales_Manager {
                 'clients' => '潜在客户',
                 'customers' => '成交客户',
                 'properties' => '房源库存',
+                'trash' => '回收站',
             );
         } else {
             $items = array(
@@ -6626,6 +6946,7 @@ final class Harmat_Sales_Manager {
                 'clients' => '客户跟进',
                 'brokers' => '经纪人/账号',
                 'properties' => '房源库存',
+                'trash' => '回收站',
                 'links' => '登录入口',
             );
         }
@@ -6659,10 +6980,10 @@ final class Harmat_Sales_Manager {
 
     private function sales_portal_allowed_views() {
         if ($this->is_sales_manager_user()) {
-            return array('dashboard', 'tasks', 'inquiries', 'activity', 'deals', 'commissions', 'payments', 'customers', 'clients', 'brokers', 'properties', 'links');
+            return array('dashboard', 'tasks', 'inquiries', 'activity', 'deals', 'commissions', 'payments', 'customers', 'clients', 'brokers', 'properties', 'trash', 'links');
         }
 
-        return array('dashboard', 'tasks', 'inquiries', 'deals', 'clients', 'customers', 'properties');
+        return array('dashboard', 'tasks', 'inquiries', 'deals', 'clients', 'customers', 'properties', 'trash');
     }
 
     private function render_sales_portal_account_notices() {
@@ -7672,6 +7993,8 @@ final class Harmat_Sales_Manager {
             'deal_update' => '保存跟单',
             'deal_assign' => '指派跟单',
             'deal_delete' => '删除跟单',
+            'trash_restore' => '恢复记录',
+            'trash_purge' => '永久删除',
             'customer_followup' => '维护成交客户',
         );
     }
@@ -10754,6 +11077,118 @@ final class Harmat_Sales_Manager {
         echo '</tr>';
     }
 
+    private function render_sales_portal_trash() {
+        $rows = array();
+        foreach ($this->get_sales_trash() as $item) {
+            if (!$this->can_view_sales_trash_item($item)) {
+                continue;
+            }
+            $data = isset($item['data']) && is_array($item['data']) ? $item['data'] : array();
+            $property_title = !empty($data['property_id']) ? get_the_title((int) $data['property_id']) : '';
+            $rows[] = array(
+                'type' => (string) ($item['type'] ?? ''),
+                'trash_id' => (string) ($item['trash_id'] ?? ''),
+                'original_id' => (int) ($item['original_id'] ?? 0),
+                'client' => $data['client_name'] ?? '',
+                'contact' => trim(($data['phone'] ?? '') . ' ' . ($data['email'] ?? '')),
+                'property' => $property_title,
+                'crm' => $data['crm_code'] ?? '',
+                'assigned_sales_id' => (int) ($data['assigned_sales_id'] ?? 0),
+                'deleted_at' => (string) ($item['deleted_at'] ?? ''),
+                'deleted_by' => (int) ($item['deleted_by'] ?? 0),
+                'sort' => strtotime((string) ($item['deleted_at'] ?? '')) ?: 0,
+                'can_restore' => $this->can_restore_sales_trash_item($item),
+                'can_purge' => $this->can_purge_sales_trash_item($item),
+            );
+        }
+
+        $trashed_inquiries = get_posts(array(
+            'post_type' => 'harmat_offer_lead',
+            'post_status' => 'trash',
+            'posts_per_page' => 160,
+            'orderby' => 'modified',
+            'order' => 'DESC',
+        ));
+        foreach ($trashed_inquiries as $post) {
+            $post_id = (int) $post->ID;
+            if (!$this->can_restore_inquiry_record($post_id) && !$this->is_sales_manager_user()) {
+                continue;
+            }
+            $data = $this->offer_inquiry_data($post_id);
+            $deleted_at = get_post_meta($post_id, '_harmat_deleted_at', true);
+            $deleted_by = (int) get_post_meta($post_id, '_harmat_deleted_by', true);
+            $rows[] = array(
+                'type' => 'inquiry',
+                'trash_id' => '',
+                'original_id' => $post_id,
+                'client' => $data['name'],
+                'contact' => trim(($data['phone'] ?: '') . ' ' . ($data['email'] ?: '')),
+                'property' => $data['apartment'],
+                'crm' => '',
+                'assigned_sales_id' => $this->offer_inquiry_assigned_sales_id($post_id),
+                'deleted_at' => $deleted_at ?: get_the_modified_date('Y-m-d H:i', $post_id),
+                'deleted_by' => $deleted_by,
+                'sort' => strtotime((string) ($deleted_at ?: get_post_modified_time('Y-m-d H:i:s', false, $post_id))) ?: 0,
+                'can_restore' => $this->can_restore_inquiry_record($post_id),
+                'can_purge' => $this->can_delete_sales_records(),
+            );
+        }
+
+        usort($rows, function($a, $b) {
+            return ((int) ($b['sort'] ?? 0)) <=> ((int) ($a['sort'] ?? 0));
+        });
+
+        echo '<section class="harmat-sales-panel">';
+        echo '<div class="harmat-sales-panel-head"><div><h2>删除回收站</h2><p>误删或重复记录会先进入这里。恢复后回到原业务列表；永久删除只建议在确认无用后由主管操作。</p></div><strong>' . esc_html((string) count($rows)) . '</strong></div>';
+        if (!$rows) {
+            echo '<div class="harmat-sales-empty">当前回收站为空。</div></section>';
+            return;
+        }
+
+        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-trash-table"><thead><tr><th>类型</th><th>记录</th><th>房源/CRM</th><th>负责人</th><th>删除时间</th><th>删除人</th><th>操作</th></tr></thead><tbody>';
+        foreach ($rows as $row) {
+            $deleted_user = !empty($row['deleted_by']) ? get_userdata((int) $row['deleted_by']) : null;
+            $type_labels = array('lead' => '客户跟进', 'deal' => '销售跟单', 'inquiry' => '网站询价');
+            echo '<tr>';
+            echo '<td><span class="harmat-sales-pill">' . esc_html($type_labels[$row['type']] ?? $row['type']) . '</span><small>#' . esc_html((string) $row['original_id']) . '</small></td>';
+            echo '<td><strong>' . esc_html($row['client'] ?: '未填写') . '</strong><small>' . esc_html($row['contact'] ?: '-') . '</small></td>';
+            echo '<td><strong>' . esc_html($row['property'] ?: '-') . '</strong><small>' . esc_html($row['crm'] ?: '-') . '</small></td>';
+            echo '<td>' . esc_html($this->assigned_sales_label((int) ($row['assigned_sales_id'] ?? 0))) . '</td>';
+            echo '<td>' . esc_html($this->format_lead_datetime($row['deleted_at'] ?? '')) . '</td>';
+            echo '<td>' . esc_html($deleted_user ? ($deleted_user->display_name ?: $deleted_user->user_login) : '-') . '</td>';
+            echo '<td class="harmat-sales-actions">';
+            if (!empty($row['can_restore'])) {
+                echo '<form method="post">';
+                wp_nonce_field('harmat_sales_action_restore_trash');
+                echo '<input type="hidden" name="harmat_sales_action" value="restore_trash">';
+                echo '<input type="hidden" name="trash_type" value="' . esc_attr($row['type']) . '">';
+                if ($row['type'] === 'inquiry') {
+                    echo '<input type="hidden" name="inquiry_id" value="' . esc_attr((int) $row['original_id']) . '">';
+                } else {
+                    echo '<input type="hidden" name="trash_id" value="' . esc_attr($row['trash_id']) . '">';
+                }
+                echo '<button type="submit">恢复</button>';
+                echo '</form>';
+            }
+            if (!empty($row['can_purge'])) {
+                echo '<form method="post">';
+                wp_nonce_field('harmat_sales_action_purge_trash');
+                echo '<input type="hidden" name="harmat_sales_action" value="purge_trash">';
+                echo '<input type="hidden" name="trash_type" value="' . esc_attr($row['type']) . '">';
+                if ($row['type'] === 'inquiry') {
+                    echo '<input type="hidden" name="inquiry_id" value="' . esc_attr((int) $row['original_id']) . '">';
+                } else {
+                    echo '<input type="hidden" name="trash_id" value="' . esc_attr($row['trash_id']) . '">';
+                }
+                echo '<button type="submit" onclick="return confirm(\'确定永久删除这条记录吗？此操作不可恢复。\')">永久删除</button>';
+                echo '</form>';
+            }
+            echo '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table></div></section>';
+    }
+
     private function get_offer_inquiry_posts($limit = 20, $search = '') {
         $args = array(
             'post_type' => 'harmat_offer_lead',
@@ -13497,7 +13932,7 @@ JS;
         .harmat-sales-deal-card footer div{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.harmat-sales-card-delete-form{margin:0}.harmat-sales-card-delete-form button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border:1px solid #d92d20;border-radius:9px;background:#fff;color:#b42318;font-size:12px;font-weight:900;cursor:pointer}.harmat-sales-danger-zone{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;padding:12px;border:1px solid #f1b4ae;border-radius:12px;background:#fff1f0}.harmat-sales-danger-zone strong{display:block;color:#b42318}.harmat-sales-danger-zone span{display:block;color:#687178;font-size:13px}.harmat-sales-danger-zone form{margin:0}.harmat-sales-danger-zone button{min-height:38px;padding:0 14px;border:1px solid #d92d20;border-radius:9px;background:#b42318;color:#fff;font-weight:900;cursor:pointer}
         .harmat-sales-task-filter{grid-template-columns:1.5fr minmax(150px,.7fr) minmax(180px,.8fr) auto;margin:0 0 14px}.harmat-sales-task-type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:0 0 14px}.harmat-sales-task-type-grid a{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:10px 13px;border:1px solid #ead8b8;border-radius:12px;background:#fffaf3;color:#253137;text-decoration:none}.harmat-sales-task-type-grid a.is-active{border-color:#a8762d;background:#a8762d;color:#fff}.harmat-sales-task-type-grid span{font-size:12px;font-weight:900;color:#9a6b27}.harmat-sales-task-type-grid a.is-active span,.harmat-sales-task-type-grid a.is-active strong{color:#fff}.harmat-sales-task-type-grid strong{color:#253137;font-size:22px}.harmat-sales-task-board{display:grid;gap:10px;margin:0 0 14px;padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-task-board h3{margin:0;color:#9a6b27;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-task-board p{margin:0;color:#687178}.harmat-sales-task-card{display:grid;grid-template-columns:minmax(130px,.42fr) minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid rgba(234,216,184,.9);border-left:4px solid #a8762d;border-radius:12px;background:#fff}.harmat-sales-task-card-overdue{border-left-color:#b42318}.harmat-sales-task-card-today{border-left-color:#8a5a18}.harmat-sales-task-card-upcoming{border-left-color:#145f94}.harmat-sales-task-card div,.harmat-sales-task-card section{display:grid;gap:5px}.harmat-sales-task-card strong{color:#253137;font-size:18px}.harmat-sales-task-card small{color:#8a9299;font-size:12px;font-weight:900}.harmat-sales-task-card h3{margin:0;color:#253137;font-size:16px}.harmat-sales-task-card p{margin:0;color:#687178;font-size:13px}.harmat-sales-task-card em{color:#9a6b27;font-size:12px;font-style:normal;font-weight:900}.harmat-sales-task-card a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 12px;border-radius:9px;background:#a8762d;color:#fff;font-size:12px;font-weight:900;text-decoration:none}
         .harmat-sales-table-wrap{overflow:auto;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-table{width:100%;min-width:960px;border-collapse:collapse}.harmat-sales-table th{padding:12px 14px;background:#fbf4e7;color:#9a6b27;font-size:12px;letter-spacing:.08em;text-align:left;text-transform:uppercase;white-space:nowrap}.harmat-sales-table td{padding:13px 14px;border-top:1px solid #ead8b8;color:#253137;vertical-align:top}.harmat-sales-table td strong{display:block;font-size:15px}.harmat-sales-table td span{display:block}.harmat-sales-table td small{display:block;margin-top:4px;color:#8a9299;overflow-wrap:anywhere}.harmat-sales-table a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-table input,.harmat-sales-table select{width:100%;min-width:120px;min-height:36px;padding:7px 9px;border:1px solid #e3cfad;border-radius:9px;background:#fff;color:#253137;font:inherit}.harmat-sales-plan-table{min-width:1180px}.harmat-sales-plan-table input[data-harmat-plan-percent]{min-width:86px}.harmat-sales-payment-summary{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px;margin:12px 0 14px}.harmat-sales-payment-summary article{padding:12px;border:1px solid #ead8b8;border-radius:12px;background:#fffaf3}.harmat-sales-payment-summary small{display:block;margin-bottom:5px;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-payment-summary strong{display:block;color:#253137;font-size:16px;font-weight:900;overflow-wrap:anywhere}.harmat-sales-payment-summary.is-balanced [data-harmat-summary-status-card]{border-color:#b7dec6;background:#eef8f1}.harmat-sales-payment-summary.is-balanced [data-harmat-summary-status-card] strong{color:#1f7a4d}.harmat-sales-payment-summary.is-warning [data-harmat-summary-status-card]{border-color:#f5b5af;background:#fff1f0}.harmat-sales-payment-summary.is-warning [data-harmat-summary-status-card] strong{color:#b42318}
-        .harmat-sales-inquiry-table{min-width:1260px}.harmat-sales-client-table{min-width:980px}.harmat-sales-client-table td:nth-child(1){min-width:180px}.harmat-sales-client-table td:nth-child(2){min-width:180px}.harmat-sales-client-table td:nth-child(3){min-width:210px}.harmat-sales-client-table td:nth-child(4){min-width:220px}.harmat-sales-client-table .harmat-sales-inline-form{margin-top:8px}.harmat-sales-deal-table{min-width:1420px}.harmat-sales-task-table{min-width:1050px}.harmat-sales-payment-table{min-width:1200px}.harmat-sales-commission-table{min-width:1280px}.harmat-sales-property-table{min-width:1420px}.harmat-sales-pill,.harmat-sales-protection,.harmat-sales-assignment-state{display:inline-flex!important;width:max-content;max-width:190px;padding:6px 10px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px;font-weight:900;line-height:1.25;white-space:normal}.harmat-sales-assignment-unassigned{background:#eceff1;color:#687178}.harmat-sales-assignment-assigned{background:#fff2cf;color:#8a5a18}.harmat-sales-assignment-converted{background:#eef8f1;color:#1f7a4d}.harmat-sales-property-reserved,.harmat-sales-deal-reserved,.harmat-sales-deal-contract,.harmat-sales-payment-partial,.harmat-sales-task-today,.harmat-sales-commission-scheduled,.harmat-sales-due-today,.harmat-sales-due-week{background:#fff2cf;color:#8a5a18}.harmat-sales-property-sold,.harmat-sales-deal-lost,.harmat-sales-payment-not_started,.harmat-sales-commission-pending,.harmat-sales-due-none{background:#eceff1;color:#687178}.harmat-sales-deal-contacted,.harmat-sales-deal-viewing,.harmat-sales-task-upcoming,.harmat-sales-due-month,.harmat-sales-due-future{background:#edf6ff;color:#145f94}.harmat-sales-deal-negotiation{background:#fff6e5;color:#8a5a18}.harmat-sales-deal-closed,.harmat-sales-payment-paid,.harmat-sales-commission-paid,.harmat-sales-due-paid{background:#eef8f1;color:#1f7a4d}.harmat-sales-payment-overdue,.harmat-sales-task-overdue,.harmat-sales-commission-withheld,.harmat-sales-due-overdue{background:#fff1f0;color:#b42318}.harmat-sales-protection-active{background:#fff2cf;color:#8a5a18}.harmat-sales-protection-expired{background:#eceff1;color:#687178}.harmat-sales-note-cell{max-width:300px;color:#5d6670;overflow-wrap:anywhere}
+        .harmat-sales-inquiry-table{min-width:1260px}.harmat-sales-client-table{min-width:980px}.harmat-sales-client-table td:nth-child(1){min-width:180px}.harmat-sales-client-table td:nth-child(2){min-width:180px}.harmat-sales-client-table td:nth-child(3){min-width:210px}.harmat-sales-client-table td:nth-child(4){min-width:220px}.harmat-sales-client-table .harmat-sales-inline-form{margin-top:8px}.harmat-sales-deal-table{min-width:1420px}.harmat-sales-task-table{min-width:1050px}.harmat-sales-payment-table{min-width:1200px}.harmat-sales-commission-table{min-width:1280px}.harmat-sales-property-table{min-width:1420px}.harmat-sales-trash-table{min-width:1050px}.harmat-sales-pill,.harmat-sales-protection,.harmat-sales-assignment-state{display:inline-flex!important;width:max-content;max-width:190px;padding:6px 10px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px;font-weight:900;line-height:1.25;white-space:normal}.harmat-sales-assignment-unassigned{background:#eceff1;color:#687178}.harmat-sales-assignment-assigned{background:#fff2cf;color:#8a5a18}.harmat-sales-assignment-converted{background:#eef8f1;color:#1f7a4d}.harmat-sales-property-reserved,.harmat-sales-deal-reserved,.harmat-sales-deal-contract,.harmat-sales-payment-partial,.harmat-sales-task-today,.harmat-sales-commission-scheduled,.harmat-sales-due-today,.harmat-sales-due-week{background:#fff2cf;color:#8a5a18}.harmat-sales-property-sold,.harmat-sales-deal-lost,.harmat-sales-payment-not_started,.harmat-sales-commission-pending,.harmat-sales-due-none{background:#eceff1;color:#687178}.harmat-sales-deal-contacted,.harmat-sales-deal-viewing,.harmat-sales-task-upcoming,.harmat-sales-due-month,.harmat-sales-due-future{background:#edf6ff;color:#145f94}.harmat-sales-deal-negotiation{background:#fff6e5;color:#8a5a18}.harmat-sales-deal-closed,.harmat-sales-payment-paid,.harmat-sales-commission-paid,.harmat-sales-due-paid{background:#eef8f1;color:#1f7a4d}.harmat-sales-payment-overdue,.harmat-sales-task-overdue,.harmat-sales-commission-withheld,.harmat-sales-due-overdue{background:#fff1f0;color:#b42318}.harmat-sales-protection-active{background:#fff2cf;color:#8a5a18}.harmat-sales-protection-expired{background:#eceff1;color:#687178}.harmat-sales-note-cell{max-width:300px;color:#5d6670;overflow-wrap:anywhere}
         .harmat-sales-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.harmat-sales-form label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.05em}.harmat-sales-form input,.harmat-sales-form select,.harmat-sales-form textarea,.harmat-sales-search input,.harmat-sales-search select{width:100%;min-height:42px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-source-broker,.harmat-sales-source-website{display:none}.harmat-sales-check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px;color:#253137;font-size:13px;letter-spacing:0}.harmat-sales-check input{width:auto;min-height:0}.harmat-sales-form-wide,.harmat-sales-form-actions{grid-column:1/-1}.harmat-sales-form-actions{display:flex;gap:12px;align-items:center}.harmat-sales-form button,.harmat-sales-search button,.harmat-sales-inline-form button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff;font-weight:900;letter-spacing:.08em;cursor:pointer}.harmat-sales-form-actions a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-disabled-button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#eceff1;color:#687178;font-weight:900;letter-spacing:.08em;cursor:not-allowed}
         .harmat-sales-readonly-input,.harmat-sales-form input[readonly]{background:#f1eee8!important;color:#5d6670}.harmat-sales-deal-editor{display:block;margin-bottom:0}.harmat-sales-deal-editor .harmat-sales-form{grid-template-columns:repeat(3,minmax(0,1fr))}.harmat-sales-deal-editor summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 12px 28px rgba(70,54,28,.06);cursor:pointer}.harmat-sales-deal-editor summary strong{color:#253137;font-size:16px}.harmat-sales-deal-editor summary span{color:#6f7780;font-size:13px}.harmat-sales-deal-editor[open] summary{margin-bottom:12px}.harmat-sales-deal-stage-panel .harmat-sales-stage-list{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.harmat-sales-filter-panel{padding-bottom:18px}.harmat-sales-filter-grid{display:grid;grid-template-columns:1.4fr repeat(6,minmax(130px,1fr)) auto;gap:10px;align-items:end}.harmat-sales-property-filter{grid-template-columns:1.4fr repeat(8,minmax(118px,1fr)) auto}.harmat-sales-customer-filter{grid-template-columns:1.4fr repeat(5,minmax(128px,1fr)) auto}.harmat-sales-filter-summary{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.harmat-sales-filter-summary span,.harmat-sales-filter-summary strong{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:999px;background:#fffaf3;border:1px solid #ead8b8;color:#253137;font-size:12px;font-weight:900}.harmat-sales-filter-summary span{color:#9a6b27;background:#fff}.harmat-sales-status-tabs,.harmat-agent-status-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.harmat-sales-status-tabs a,.harmat-agent-status-tabs a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:10px 14px;border:1px solid #ead8b8;border-radius:14px;background:#fffaf3;color:#253137;text-decoration:none}.harmat-sales-status-tabs span,.harmat-agent-status-tabs span{font-size:13px;font-weight:900;color:#9a6b27}.harmat-sales-status-tabs strong,.harmat-agent-status-tabs strong{font-size:22px;color:#253137}.harmat-sales-status-tabs a.is-active,.harmat-agent-status-tabs a.is-active{border-color:#a8762d;background:#a8762d;color:#fff}.harmat-sales-status-tabs a.is-active span,.harmat-sales-status-tabs a.is-active strong,.harmat-agent-status-tabs a.is-active span,.harmat-agent-status-tabs a.is-active strong{color:#fff}.harmat-sales-filter-grid label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900}.harmat-sales-filter-grid input,.harmat-sales-filter-grid select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-filter-actions{display:flex;gap:8px;align-items:center}.harmat-sales-filter-actions button,.harmat-sales-filter-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border-radius:10px;font-weight:900;text-decoration:none}.harmat-sales-filter-actions button{border:0;background:#a8762d;color:#fff;cursor:pointer}.harmat-sales-filter-actions a{border:1px solid #a8762d;color:#a8762d;background:#fff}.harmat-sales-plan-percent{display:block;margin-top:4px;color:#1f7a4d;font-size:12px;font-weight:900}.harmat-sales-payment-percent-note{margin:10px 0 0;color:#5d6670;font-size:13px;font-weight:800}
         .harmat-sales-search{display:flex;gap:8px;align-items:center}.harmat-sales-search input{min-width:260px}.harmat-sales-rule-list,.harmat-sales-stage-list{display:grid;gap:12px}.harmat-sales-rule-list span,.harmat-sales-stage-list span{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-rule-list strong,.harmat-sales-stage-list strong{color:#9a6b27}.harmat-sales-rule-list b,.harmat-sales-stage-list b{color:#253137;font-size:20px}.harmat-sales-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.harmat-sales-link-grid a{display:grid;gap:7px;padding:15px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;text-decoration:none}.harmat-sales-link-grid strong{color:#253137}.harmat-sales-link-grid code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a8762d;background:#fff;padding:6px 8px;border-radius:8px}.harmat-sales-link-grid span{color:#6f7780;font-size:13px}
