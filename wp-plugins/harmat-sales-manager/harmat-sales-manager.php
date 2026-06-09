@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.44
+ * Version: 1.6.45
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.44';
+    const VERSION = '1.6.45';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -41,6 +41,7 @@ final class Harmat_Sales_Manager {
         add_action('init', array($this, 'schedule_daily_task_reminder'));
         add_action('init', array($this, 'recover_stuck_public_offer_mails'), 25);
         add_action('init', array($this, 'handle_portal_auth_actions'));
+        add_action('init', array($this, 'handle_customer_portal_actions'));
         add_action('init', array($this, 'handle_actions'));
         add_action('rest_api_init', array($this, 'register_visit_tracking_route'));
         add_action(self::SALES_REMINDER_HOOK, array($this, 'send_daily_task_reminder_email'));
@@ -962,6 +963,146 @@ final class Harmat_Sales_Manager {
 
         wp_safe_redirect(add_query_arg('reset_notice', 'sent', $this->portal_url_with_lang($portal, $lang)));
         exit;
+    }
+
+    public function handle_customer_portal_actions() {
+        if (empty($_POST['harmat_customer_portal_action'])) {
+            return;
+        }
+
+        $action = sanitize_key(wp_unslash($_POST['harmat_customer_portal_action']));
+        if ($action !== 'submit_request') {
+            return;
+        }
+
+        $lang = isset($_POST['harmat_portal_lang']) ? sanitize_key(wp_unslash($_POST['harmat_portal_lang'])) : $this->current_portal_language('client');
+        if (!in_array($lang, array('hu', 'en', 'zh'), true)) {
+            $lang = 'hu';
+        }
+
+        $base_redirect = $this->portal_url_with_lang('client', $lang);
+        $error_redirect = add_query_arg('customer_request_error', '1', $base_redirect) . '#harmat-customer-aftercare';
+        if (!is_user_logged_in() || (!current_user_can(self::CAP_CUSTOMER) && !current_user_can(self::CAP_MANAGE))) {
+            wp_safe_redirect($error_redirect);
+            exit;
+        }
+
+        $nonce = isset($_POST['_wpnonce']) ? sanitize_text_field(wp_unslash($_POST['_wpnonce'])) : '';
+        if (!wp_verify_nonce($nonce, 'harmat_customer_request')) {
+            wp_safe_redirect($error_redirect);
+            exit;
+        }
+
+        $deal = $this->current_customer_deal();
+        $deal_id = (int) ($deal['id'] ?? 0);
+        if (!$deal_id) {
+            wp_safe_redirect($error_redirect);
+            exit;
+        }
+
+        $request_text = $this->customer_request_text($lang);
+        $categories = $request_text['categories'];
+        $preferences = $request_text['preferences'];
+        $category = isset($_POST['request_category']) ? sanitize_key(wp_unslash($_POST['request_category'])) : 'other';
+        if (!isset($categories[$category])) {
+            $category = 'other';
+        }
+        $preference = isset($_POST['request_contact_preference']) ? sanitize_key(wp_unslash($_POST['request_contact_preference'])) : 'any';
+        if (!isset($preferences[$preference])) {
+            $preference = 'any';
+        }
+
+        $subject = isset($_POST['request_subject']) ? sanitize_text_field(wp_unslash($_POST['request_subject'])) : '';
+        $message = isset($_POST['request_message']) ? sanitize_textarea_field(wp_unslash($_POST['request_message'])) : '';
+        if ($subject === '' || $message === '') {
+            wp_safe_redirect($error_redirect);
+            exit;
+        }
+
+        $deals = $this->get_deals();
+        if (empty($deals[$deal_id])) {
+            wp_safe_redirect($error_redirect);
+            exit;
+        }
+
+        $user = wp_get_current_user();
+        $now = current_time('mysql');
+        $request = array(
+            'id' => function_exists('wp_generate_uuid4') ? wp_generate_uuid4() : uniqid('customer_request_', true),
+            'created_at' => $now,
+            'updated_at' => $now,
+            'status' => 'new',
+            'category' => $category,
+            'subject' => $subject,
+            'message' => $message,
+            'contact_preference' => $preference,
+            'customer_user_id' => get_current_user_id(),
+            'customer_name' => $user ? ($user->display_name ?: $user->user_login) : '',
+        );
+
+        if (empty($deals[$deal_id]['customer_requests']) || !is_array($deals[$deal_id]['customer_requests'])) {
+            $deals[$deal_id]['customer_requests'] = array();
+        }
+        array_unshift($deals[$deal_id]['customer_requests'], $request);
+        $deals[$deal_id]['updated_at'] = $now;
+        $deals[$deal_id]['updated_by'] = get_current_user_id();
+        $this->save_deals($deals);
+
+        $saved_deal = $deals[$deal_id];
+        $this->send_customer_request_notification($saved_deal, $request, $lang);
+        $this->log_sales_activity(
+            'customer_request',
+            'customer',
+            $deal_id,
+            'Customer portal request: ' . $subject,
+            array(
+                'client_name' => $saved_deal['client_name'] ?? '',
+                'phone' => $saved_deal['phone'] ?? '',
+                'email' => $saved_deal['email'] ?? '',
+                'property_title' => !empty($saved_deal['property_id']) ? get_the_title((int) $saved_deal['property_id']) : '',
+                'crm_code' => $saved_deal['crm_code'] ?? '',
+                'source_type' => $saved_deal['source_type'] ?? '',
+                'assigned_sales_id' => (int) ($saved_deal['assigned_sales_id'] ?? 0),
+                'related_user_ids' => array((int) ($saved_deal['broker_id'] ?? 0), (int) ($saved_deal['assigned_sales_id'] ?? 0), (int) ($saved_deal['customer_user_id'] ?? 0)),
+                'lead_id' => (int) ($saved_deal['lead_id'] ?? 0),
+                'deal_id' => $deal_id,
+                'inquiry_id' => (int) ($saved_deal['inquiry_id'] ?? 0),
+            )
+        );
+
+        wp_safe_redirect(add_query_arg('customer_request_sent', '1', $base_redirect) . '#harmat-customer-aftercare');
+        exit;
+    }
+
+    private function send_customer_request_notification($deal, $request, $lang) {
+        $request_text = $this->customer_request_text($lang);
+        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $category = $request['category'] ?? 'other';
+        $preference = $request['contact_preference'] ?? 'any';
+        $profile_url = $this->sales_portal_url(array('view' => 'customers', 'customer_id' => (int) ($deal['id'] ?? 0)));
+        $subject = 'Harmat client request - ' . (($deal['crm_code'] ?? '') ?: ('deal #' . (int) ($deal['id'] ?? 0)));
+        $lines = array(
+            'New client portal request received.',
+            '',
+            'Client: ' . (string) ($deal['client_name'] ?? '-'),
+            'CRM: ' . (string) ($deal['crm_code'] ?? '-'),
+            'Apartment: ' . ($property_title ?: '-'),
+            'Phone: ' . (string) ($deal['phone'] ?? '-'),
+            'E-mail: ' . (string) ($deal['email'] ?? '-'),
+            '',
+            'Category: ' . (string) ($request_text['categories'][$category] ?? $category),
+            'Subject: ' . (string) ($request['subject'] ?? '-'),
+            'Contact preference: ' . (string) ($request_text['preferences'][$preference] ?? $preference),
+            'Submitted: ' . (string) ($request['created_at'] ?? '-'),
+            '',
+            'Message:',
+            (string) ($request['message'] ?? ''),
+            '',
+            'Sales customer profile:',
+            $profile_url,
+        );
+
+        return wp_mail(self::SALES_REMINDER_EMAIL, $subject, implode("\n", $lines), array('Content-Type: text/plain; charset=UTF-8'));
     }
 
     private function send_portal_password_reset($user, $portal, $lang) {
@@ -7484,6 +7625,9 @@ final class Harmat_Sales_Manager {
     }
 
     private function sales_activity_action_label($action) {
+        if ((string) $action === 'customer_request') {
+            return '客户提交事项';
+        }
         $options = $this->sales_activity_action_options();
         $action = (string) $action;
         return $options[$action] ?? ($action ?: '-');
@@ -8988,6 +9132,7 @@ final class Harmat_Sales_Manager {
         }
         $this->render_sales_customer_followup_box($deal);
         $this->render_sales_customer_materials($deal);
+        $this->render_sales_customer_requests($deal);
 
         echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact">';
         echo '<article><small>成交金额</small><strong>' . esc_html($amount ? $this->format_money($amount) : '-') . '</strong></article>';
@@ -9153,6 +9298,33 @@ final class Harmat_Sales_Manager {
                 echo '</div>';
                 echo '</article>';
             }
+        }
+        echo '</div></section>';
+    }
+
+    private function render_sales_customer_requests($deal) {
+        $lang = $this->current_portal_language('sales');
+        $request_text = $this->customer_request_text($lang);
+        $requests = $this->deal_customer_requests($deal);
+
+        echo '<section class="harmat-sales-panel harmat-sales-customer-request-box"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($request_text['history']) . '</h2><p>' . esc_html($request_text['intro']) . '</p></div></div>';
+        if (!$requests) {
+            echo '<div class="harmat-sales-empty">' . esc_html($request_text['empty']) . '</div></section>';
+            return;
+        }
+
+        echo '<div class="harmat-sales-request-list">';
+        foreach ($requests as $request) {
+            $status = sanitize_key($request['status'] ?? 'new');
+            $category = sanitize_key($request['category'] ?? 'other');
+            $preference = sanitize_key($request['contact_preference'] ?? 'any');
+            $customer = trim((string) ($request['customer_name'] ?? ''));
+            echo '<article class="harmat-sales-request-card harmat-sales-request-' . esc_attr($status) . '">';
+            echo '<header><span>' . esc_html($request_text['categories'][$category] ?? $category) . '</span><b>' . esc_html($request_text['statuses'][$status] ?? $status) . '</b></header>';
+            echo '<strong>' . esc_html($request['subject'] ?? '-') . '</strong>';
+            echo '<small>' . esc_html($this->format_lead_datetime($request['created_at'] ?? '')) . ' / ' . esc_html($request_text['preferences'][$preference] ?? $preference) . ($customer ? ' / ' . esc_html($customer) : '') . '</small>';
+            echo '<p>' . nl2br(esc_html($request['message'] ?? '')) . '</p>';
+            echo '</article>';
         }
         echo '</div></section>';
     }
@@ -9475,6 +9647,103 @@ final class Harmat_Sales_Manager {
         return $texts[$lang] ?? $texts['hu'];
     }
 
+    private function customer_request_text($lang) {
+        $texts = array(
+            'hu' => array(
+                'title' => 'Ügyintézési kérés',
+                'intro' => 'Küldjön rövid üzenetet az értékesítési csapatnak átadással, dokumentummal, fizetéssel vagy projektállapottal kapcsolatban.',
+                'category' => 'Téma',
+                'subject' => 'Tárgy',
+                'message' => 'Üzenet',
+                'preference' => 'Kapcsolattartás',
+                'submit' => 'Kérés elküldése',
+                'sent' => 'Köszönjük, a kérését továbbítottuk az értékesítési csapatnak.',
+                'error' => 'A kérés mentése sikertelen. Kérjük, ellenőrizze a mezőket.',
+                'history' => 'Korábbi kérések',
+                'empty' => 'Még nincs beküldött ügyintézési kérés.',
+                'categories' => array(
+                    'handover' => 'Átadás',
+                    'document' => 'Dokumentum',
+                    'payment' => 'Fizetés',
+                    'project' => 'Projektállapot',
+                    'other' => 'Egyéb',
+                ),
+                'statuses' => array(
+                    'new' => 'Új',
+                    'in_progress' => 'Folyamatban',
+                    'closed' => 'Lezárva',
+                ),
+                'preferences' => array(
+                    'email' => 'E-mail',
+                    'phone' => 'Telefon',
+                    'any' => 'Bármelyik',
+                ),
+            ),
+            'en' => array(
+                'title' => 'Service request',
+                'intro' => 'Send a short message to the sales team about handover, documents, payment or project progress.',
+                'category' => 'Topic',
+                'subject' => 'Subject',
+                'message' => 'Message',
+                'preference' => 'Contact preference',
+                'submit' => 'Send request',
+                'sent' => 'Thank you, your request has been forwarded to the sales team.',
+                'error' => 'The request could not be saved. Please check the fields.',
+                'history' => 'Previous requests',
+                'empty' => 'No service request has been submitted yet.',
+                'categories' => array(
+                    'handover' => 'Handover',
+                    'document' => 'Documents',
+                    'payment' => 'Payment',
+                    'project' => 'Project progress',
+                    'other' => 'Other',
+                ),
+                'statuses' => array(
+                    'new' => 'New',
+                    'in_progress' => 'In progress',
+                    'closed' => 'Closed',
+                ),
+                'preferences' => array(
+                    'email' => 'E-mail',
+                    'phone' => 'Phone',
+                    'any' => 'Either',
+                ),
+            ),
+            'zh' => array(
+                'title' => '售后事项提交',
+                'intro' => '请说明交付、合同文件、付款或项目进度相关问题，销售团队会跟进。',
+                'category' => '事项类型',
+                'subject' => '标题',
+                'message' => '具体说明',
+                'preference' => '联系偏好',
+                'submit' => '提交事项',
+                'sent' => '已提交给销售团队，我们会跟进处理。',
+                'error' => '提交失败，请检查标题和说明内容。',
+                'history' => '历史提交记录',
+                'empty' => '目前还没有提交过售后事项。',
+                'categories' => array(
+                    'handover' => '交付事项',
+                    'document' => '合同文件',
+                    'payment' => '付款问题',
+                    'project' => '项目进度',
+                    'other' => '其他',
+                ),
+                'statuses' => array(
+                    'new' => '新提交',
+                    'in_progress' => '处理中',
+                    'closed' => '已关闭',
+                ),
+                'preferences' => array(
+                    'email' => '邮件',
+                    'phone' => '电话',
+                    'any' => '都可以',
+                ),
+            ),
+        );
+
+        return $texts[$lang] ?? $texts['hu'];
+    }
+
     private function customer_portal_next_payment($deal, $text) {
         $items = $this->payment_plan_display_items($deal);
         $next = null;
@@ -9569,6 +9838,60 @@ final class Harmat_Sales_Manager {
         echo '</section>';
     }
 
+    private function render_customer_request_box($deal, $text, $lang) {
+        $request_text = $this->customer_request_text($lang);
+        $requests = $this->deal_customer_requests($deal);
+
+        if (isset($_GET['customer_request_sent'])) {
+            echo '<div class="harmat-customer-request-notice harmat-customer-request-success">' . esc_html($request_text['sent']) . '</div>';
+        } elseif (isset($_GET['customer_request_error'])) {
+            echo '<div class="harmat-customer-request-notice harmat-customer-request-error">' . esc_html($request_text['error']) . '</div>';
+        }
+
+        echo '<section class="harmat-customer-request-box" aria-label="' . esc_attr($request_text['title']) . '">';
+        echo '<h3 class="harmat-customer-subtitle">' . esc_html($request_text['title']) . '</h3>';
+        echo '<p>' . esc_html($request_text['intro']) . '</p>';
+        echo '<form method="post" class="harmat-customer-request-form">';
+        wp_nonce_field('harmat_customer_request');
+        echo '<input type="hidden" name="harmat_customer_portal_action" value="submit_request">';
+        echo '<input type="hidden" name="harmat_portal_lang" value="' . esc_attr($lang) . '">';
+        echo '<label>' . esc_html($request_text['category']) . '<select name="request_category">';
+        foreach ($request_text['categories'] as $value => $label) {
+            echo '<option value="' . esc_attr($value) . '">' . esc_html($label) . '</option>';
+        }
+        echo '</select></label>';
+        echo '<label>' . esc_html($request_text['preference']) . '<select name="request_contact_preference">';
+        foreach ($request_text['preferences'] as $value => $label) {
+            echo '<option value="' . esc_attr($value) . '">' . esc_html($label) . '</option>';
+        }
+        echo '</select></label>';
+        echo '<label class="harmat-customer-request-wide">' . esc_html($request_text['subject']) . '<input required name="request_subject" maxlength="120"></label>';
+        echo '<label class="harmat-customer-request-wide">' . esc_html($request_text['message']) . '<textarea required name="request_message" rows="4" maxlength="2000"></textarea></label>';
+        echo '<button type="submit">' . esc_html($request_text['submit']) . '</button>';
+        echo '</form>';
+
+        echo '<section class="harmat-customer-request-history" aria-label="' . esc_attr($request_text['history']) . '">';
+        echo '<h3 class="harmat-customer-subtitle">' . esc_html($request_text['history']) . '</h3>';
+        if (!$requests) {
+            echo '<p class="harmat-customer-request-empty">' . esc_html($request_text['empty']) . '</p>';
+        } else {
+            echo '<div class="harmat-customer-request-list">';
+            foreach ($requests as $request) {
+                $status = sanitize_key($request['status'] ?? 'new');
+                $category = sanitize_key($request['category'] ?? 'other');
+                $preference = sanitize_key($request['contact_preference'] ?? 'any');
+                echo '<article class="harmat-customer-request-item harmat-customer-request-' . esc_attr($status) . '">';
+                echo '<header><span>' . esc_html($request_text['categories'][$category] ?? $category) . '</span><b>' . esc_html($request_text['statuses'][$status] ?? $status) . '</b></header>';
+                echo '<strong>' . esc_html($request['subject'] ?? '-') . '</strong>';
+                echo '<small>' . esc_html($this->format_lead_datetime($request['created_at'] ?? '')) . ' / ' . esc_html($request_text['preferences'][$preference] ?? $preference) . '</small>';
+                echo '<p>' . nl2br(esc_html($request['message'] ?? '')) . '</p>';
+                echo '</article>';
+            }
+            echo '</div>';
+        }
+        echo '</section></section>';
+    }
+
     private function render_customer_portal($deal) {
         $user = wp_get_current_user();
         $lang = $this->current_portal_language('client');
@@ -9628,7 +9951,9 @@ final class Harmat_Sales_Manager {
         echo '<section class="harmat-customer-grid harmat-customer-service-grid">';
         echo '<div id="harmat-customer-aftercare" class="harmat-customer-panel"><h2>' . esc_html($text['handover']) . '</h2><dl>';
         echo '<div><dt>' . esc_html($text['handover']) . '</dt><dd>' . nl2br(esc_html($deal['handover_note'] ?: $text['handover_empty'])) . '</dd></div>';
-        echo '</dl></div>';
+        echo '</dl>';
+        $this->render_customer_request_box($deal, $text, $lang);
+        echo '</div>';
         echo '<div id="harmat-customer-progress" class="harmat-customer-panel"><h2>' . esc_html($text['progress_title']) . '</h2><p>' . esc_html($text['progress_intro']) . '</p><dl>';
         echo '<div><dt>' . esc_html($text['project_status']) . '</dt><dd>' . esc_html($text['progress_intro']) . '</dd></div>';
         echo '<div><dt>' . esc_html($text['sales_note']) . '</dt><dd>' . nl2br(esc_html($deal['note'] ?: '-')) . '</dd></div>';
@@ -10919,6 +11244,7 @@ final class Harmat_Sales_Manager {
                 'customer_account_created_at' => '',
                 'customer_account_sent_at' => '',
                 'customer_materials' => array(),
+                'customer_requests' => array(),
                 'created_at' => '',
                 'updated_at' => '',
                 'updated_by' => 0,
@@ -11911,6 +12237,53 @@ final class Harmat_Sales_Manager {
 
         usort($items, function($a, $b) {
             return strcmp((string) ($b['uploaded_at'] ?? ''), (string) ($a['uploaded_at'] ?? ''));
+        });
+
+        return $items;
+    }
+
+    private function deal_customer_requests($deal) {
+        $requests = isset($deal['customer_requests']) && is_array($deal['customer_requests']) ? $deal['customer_requests'] : array();
+        $items = array();
+        foreach ($requests as $request) {
+            if (!is_array($request)) {
+                continue;
+            }
+
+            $item = array_merge(array(
+                'id' => '',
+                'created_at' => '',
+                'updated_at' => '',
+                'status' => 'new',
+                'category' => 'other',
+                'subject' => '',
+                'message' => '',
+                'contact_preference' => 'any',
+                'customer_user_id' => 0,
+                'customer_name' => '',
+            ), $request);
+
+            $status = sanitize_key($item['status']);
+            if (!in_array($status, array('new', 'in_progress', 'closed'), true)) {
+                $status = 'new';
+            }
+            $category = sanitize_key($item['category']);
+            if (!in_array($category, array('handover', 'document', 'payment', 'project', 'other'), true)) {
+                $category = 'other';
+            }
+            $preference = sanitize_key($item['contact_preference']);
+            if (!in_array($preference, array('email', 'phone', 'any'), true)) {
+                $preference = 'any';
+            }
+
+            $item['status'] = $status;
+            $item['category'] = $category;
+            $item['contact_preference'] = $preference;
+            $items[] = $item;
+        }
+
+        usort($items, function($a, $b) {
+            return strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
         });
 
         return $items;
@@ -13060,7 +13433,7 @@ JS;
         .harmat-sales-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.harmat-sales-form label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.05em}.harmat-sales-form input,.harmat-sales-form select,.harmat-sales-form textarea,.harmat-sales-search input,.harmat-sales-search select{width:100%;min-height:42px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-source-broker,.harmat-sales-source-website{display:none}.harmat-sales-check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px;color:#253137;font-size:13px;letter-spacing:0}.harmat-sales-check input{width:auto;min-height:0}.harmat-sales-form-wide,.harmat-sales-form-actions{grid-column:1/-1}.harmat-sales-form-actions{display:flex;gap:12px;align-items:center}.harmat-sales-form button,.harmat-sales-search button,.harmat-sales-inline-form button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff;font-weight:900;letter-spacing:.08em;cursor:pointer}.harmat-sales-form-actions a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-disabled-button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#eceff1;color:#687178;font-weight:900;letter-spacing:.08em;cursor:not-allowed}
         .harmat-sales-readonly-input,.harmat-sales-form input[readonly]{background:#f1eee8!important;color:#5d6670}.harmat-sales-deal-editor{display:block;margin-bottom:0}.harmat-sales-deal-editor .harmat-sales-form{grid-template-columns:repeat(3,minmax(0,1fr))}.harmat-sales-deal-editor summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 12px 28px rgba(70,54,28,.06);cursor:pointer}.harmat-sales-deal-editor summary strong{color:#253137;font-size:16px}.harmat-sales-deal-editor summary span{color:#6f7780;font-size:13px}.harmat-sales-deal-editor[open] summary{margin-bottom:12px}.harmat-sales-deal-stage-panel .harmat-sales-stage-list{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.harmat-sales-filter-panel{padding-bottom:18px}.harmat-sales-filter-grid{display:grid;grid-template-columns:1.4fr repeat(6,minmax(130px,1fr)) auto;gap:10px;align-items:end}.harmat-sales-property-filter{grid-template-columns:1.4fr repeat(8,minmax(118px,1fr)) auto}.harmat-sales-customer-filter{grid-template-columns:1.4fr repeat(5,minmax(128px,1fr)) auto}.harmat-sales-filter-summary{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.harmat-sales-filter-summary span,.harmat-sales-filter-summary strong{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:999px;background:#fffaf3;border:1px solid #ead8b8;color:#253137;font-size:12px;font-weight:900}.harmat-sales-filter-summary span{color:#9a6b27;background:#fff}.harmat-sales-status-tabs,.harmat-agent-status-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.harmat-sales-status-tabs a,.harmat-agent-status-tabs a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:10px 14px;border:1px solid #ead8b8;border-radius:14px;background:#fffaf3;color:#253137;text-decoration:none}.harmat-sales-status-tabs span,.harmat-agent-status-tabs span{font-size:13px;font-weight:900;color:#9a6b27}.harmat-sales-status-tabs strong,.harmat-agent-status-tabs strong{font-size:22px;color:#253137}.harmat-sales-status-tabs a.is-active,.harmat-agent-status-tabs a.is-active{border-color:#a8762d;background:#a8762d;color:#fff}.harmat-sales-status-tabs a.is-active span,.harmat-sales-status-tabs a.is-active strong,.harmat-agent-status-tabs a.is-active span,.harmat-agent-status-tabs a.is-active strong{color:#fff}.harmat-sales-filter-grid label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900}.harmat-sales-filter-grid input,.harmat-sales-filter-grid select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-filter-actions{display:flex;gap:8px;align-items:center}.harmat-sales-filter-actions button,.harmat-sales-filter-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border-radius:10px;font-weight:900;text-decoration:none}.harmat-sales-filter-actions button{border:0;background:#a8762d;color:#fff;cursor:pointer}.harmat-sales-filter-actions a{border:1px solid #a8762d;color:#a8762d;background:#fff}.harmat-sales-plan-percent{display:block;margin-top:4px;color:#1f7a4d;font-size:12px;font-weight:900}.harmat-sales-payment-percent-note{margin:10px 0 0;color:#5d6670;font-size:13px;font-weight:800}
         .harmat-sales-search{display:flex;gap:8px;align-items:center}.harmat-sales-search input{min-width:260px}.harmat-sales-rule-list,.harmat-sales-stage-list{display:grid;gap:12px}.harmat-sales-rule-list span,.harmat-sales-stage-list span{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-rule-list strong,.harmat-sales-stage-list strong{color:#9a6b27}.harmat-sales-rule-list b,.harmat-sales-stage-list b{color:#253137;font-size:20px}.harmat-sales-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.harmat-sales-link-grid a{display:grid;gap:7px;padding:15px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;text-decoration:none}.harmat-sales-link-grid strong{color:#253137}.harmat-sales-link-grid code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a8762d;background:#fff;padding:6px 8px;border-radius:8px}.harmat-sales-link-grid span{color:#6f7780;font-size:13px}
-        .harmat-sales-customer-table{min-width:1800px}.harmat-sales-head-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.harmat-sales-customer-profile-grid{align-items:start}.harmat-sales-customer-detail{display:grid;gap:14px}.harmat-sales-customer-detail section{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-detail h3,.harmat-sales-customer-ledger h3{margin:0 0 12px;color:#a8762d;font-size:14px;letter-spacing:.08em}.harmat-sales-customer-detail dl,.harmat-sales-customer-ledger dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-sales-customer-detail div,.harmat-sales-customer-ledger div{padding:10px;border-radius:10px;background:#fff}.harmat-sales-customer-detail dt,.harmat-sales-customer-ledger dt{color:#6f7780;font-size:12px;font-weight:900}.harmat-sales-customer-detail dd,.harmat-sales-customer-ledger dd{margin:5px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-sales-customer-flow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-customer-flow article{display:grid;gap:7px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-flow small{color:#a8762d;font-weight:900;letter-spacing:.06em}.harmat-sales-customer-flow strong{color:#253137;font-size:20px;overflow-wrap:anywhere}.harmat-sales-customer-flow .harmat-sales-pill{margin-top:2px}.harmat-sales-customer-ledger{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-form{margin-bottom:16px}.harmat-sales-material-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-list strong{color:#253137}.harmat-sales-material-list small{color:#6f7780}.harmat-sales-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-material-list a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-material-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:2px}.harmat-sales-material-actions form{margin:0}.harmat-sales-material-actions button{min-height:34px;padding:0 10px;border:1px solid #d92d20;border-radius:9px;background:#fff;color:#b42318;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.harmat-sales-detail-wide{grid-column:1/-1}
+        .harmat-sales-customer-table{min-width:1800px}.harmat-sales-head-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.harmat-sales-customer-profile-grid{align-items:start}.harmat-sales-customer-detail{display:grid;gap:14px}.harmat-sales-customer-detail section{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-detail h3,.harmat-sales-customer-ledger h3{margin:0 0 12px;color:#a8762d;font-size:14px;letter-spacing:.08em}.harmat-sales-customer-detail dl,.harmat-sales-customer-ledger dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-sales-customer-detail div,.harmat-sales-customer-ledger div{padding:10px;border-radius:10px;background:#fff}.harmat-sales-customer-detail dt,.harmat-sales-customer-ledger dt{color:#6f7780;font-size:12px;font-weight:900}.harmat-sales-customer-detail dd,.harmat-sales-customer-ledger dd{margin:5px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-sales-customer-flow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-customer-flow article{display:grid;gap:7px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-flow small{color:#a8762d;font-weight:900;letter-spacing:.06em}.harmat-sales-customer-flow strong{color:#253137;font-size:20px;overflow-wrap:anywhere}.harmat-sales-customer-flow .harmat-sales-pill{margin-top:2px}.harmat-sales-customer-ledger{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-form{margin-bottom:16px}.harmat-sales-material-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-list strong{color:#253137}.harmat-sales-material-list small{color:#6f7780}.harmat-sales-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-material-list a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-material-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:2px}.harmat-sales-material-actions form{margin:0}.harmat-sales-material-actions button{min-height:34px;padding:0 10px;border:1px solid #d92d20;border-radius:9px;background:#fff;color:#b42318;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.harmat-sales-request-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-request-card{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;border-left:4px solid #a8762d}.harmat-sales-request-card header{display:flex;justify-content:space-between;gap:10px;align-items:center}.harmat-sales-request-card header span{color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-sales-request-card header b{padding:5px 9px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px}.harmat-sales-request-card strong{color:#253137;font-size:16px}.harmat-sales-request-card small{color:#6f7780;line-height:1.4}.harmat-sales-request-card p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-detail-wide{grid-column:1/-1}
         .harmat-sales-actions{min-width:150px}.harmat-sales-actions form{display:inline-block;margin:0 6px 6px 0}.harmat-sales-actions a,.harmat-sales-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 10px;border:1px solid #a8762d;border-radius:8px;background:#fff;color:#a8762d;font:inherit;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.harmat-sales-actions button{border-color:#d92d20;color:#b42318}.harmat-sales-inline-form{display:flex;gap:6px;align-items:center}.harmat-sales-inline-form select{min-width:150px;min-height:34px;padding:6px 8px;border:1px solid #e3cfad;border-radius:8px;background:#fffaf3;color:#253137}.harmat-sales-inline-form button{min-height:34px;padding:0 10px;border:1px solid #a8762d;border-radius:8px;background:#fff;color:#a8762d;font-weight:900;cursor:pointer}.harmat-sales-empty{padding:24px;border:1px dashed #d4bea0;border-radius:16px;color:#6f7780;background:#fffaf3}
         @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer,.harmat-sales-funnel-rules{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip,.harmat-sales-traffic-grid,.harmat-sales-traffic-strip,.harmat-sales-task-filter,.harmat-sales-task-card,.harmat-sales-funnel-grid{grid-template-columns:1fr}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}.harmat-sales-task-card a{width:100%}}
         ';
@@ -13099,8 +13472,8 @@ JS;
         .harmat-customer-user{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:999px;background:#fff;border:1px solid #ead8b8}.harmat-customer-user span{font-weight:900}.harmat-customer-user a{color:#a5742c;font-weight:900;text-decoration:none}.harmat-portal-mini-lang{display:flex;gap:6px;align-items:center}.harmat-portal-mini-lang a{display:inline-flex!important;align-items:center;justify-content:center;min-height:30px;padding:0 9px;border-radius:999px;border:1px solid #ead8b8;color:#a5742c!important;background:#fffaf3;text-decoration:none;font-size:12px;font-weight:900}.harmat-portal-mini-lang a.is-active{background:#a8762d;color:#fff!important;border-color:#a8762d}
         .harmat-customer-app-home{margin:0 0 18px;padding:20px;border:1px solid #ead8b8;border-radius:24px;background:#fff;box-shadow:0 18px 45px rgba(70,54,28,.08)}.harmat-customer-app-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.harmat-customer-app-head small{display:block;margin-bottom:6px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.harmat-customer-app-head h2{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:31px;font-weight:500;line-height:1.08}.harmat-customer-app-head p{max-width:690px;margin:8px 0 0;color:#687178;line-height:1.6}.harmat-customer-app-head>strong{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border-radius:999px;background:#253137;color:#fff;font-size:13px;white-space:nowrap}.harmat-customer-quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}.harmat-customer-quick-grid a{display:grid;gap:7px;align-content:start;min-height:112px;padding:13px;border:1px solid #ead8b8;border-radius:18px;background:#fffaf3;color:#253137;text-decoration:none}.harmat-customer-quick-grid b{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#253137;color:#fff;font-size:11px}.harmat-customer-quick-grid span{color:#253137;font-size:15px;font-weight:900;line-height:1.25}.harmat-customer-quick-grid small{color:#6f7780;font-size:12px;line-height:1.35}.harmat-customer-app-summary{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:10px}.harmat-customer-app-summary article{display:grid;gap:6px;padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fff}.harmat-customer-app-summary small{color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.08em}.harmat-customer-app-summary strong{color:#253137;font-size:19px;line-height:1.15;overflow-wrap:anywhere}.harmat-customer-app-summary em{color:#687178;font-size:12px;font-style:normal;line-height:1.4}.harmat-customer-progressbar{display:block;overflow:hidden;height:8px;border-radius:999px;background:#ede3d2}.harmat-customer-progressbar i{display:block;height:100%;border-radius:999px;background:#1f7a4d}
         .harmat-customer-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 18px}.harmat-customer-kpis article,.harmat-customer-panel{padding:20px;border-radius:20px;background:#fff;border:1px solid #ead8b8;box-shadow:0 14px 34px rgba(70,54,28,.06)}.harmat-customer-kpis small{display:block;color:#a5742c;font-weight:900;letter-spacing:.08em}.harmat-customer-kpis strong{display:block;margin-top:8px;color:#253137;font-size:24px;line-height:1.15;overflow-wrap:anywhere}
-        .harmat-customer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.harmat-customer-panel{margin-bottom:18px;scroll-margin-top:16px}.harmat-customer-panel h2{margin:0 0 14px;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.harmat-customer-panel p{margin:0 0 14px;color:#687178;line-height:1.65}.harmat-customer-panel dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-customer-panel div{padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-panel dt{color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-customer-panel dd{margin:6px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-customer-panel a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-customer-subtitle{margin:16px 0 10px;color:#a5742c;font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.harmat-customer-payment-plan{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;gap:10px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-payment-plan article{display:grid;gap:7px;padding:13px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-payment-plan small{color:#a5742c;font-size:11px;font-weight:900;letter-spacing:.06em}.harmat-customer-payment-plan strong{color:#253137;font-size:15px}.harmat-customer-payment-plan span{color:#5d6670;font-size:12px;line-height:1.35}.harmat-customer-plan-paid{background:#eef8f1!important;border-color:#cce9d5!important}.harmat-customer-plan-overdue{background:#fff1f0!important;border-color:#ffd1cc!important}.harmat-customer-material-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))!important;gap:12px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-material-list strong{color:#253137}.harmat-customer-material-list small{color:#6f7780}.harmat-customer-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-customer-material-list a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:10px;background:#a8762d;color:#fff;text-decoration:none}
-        @media(max-width:900px){.harmat-customer-shell{width:min(100% - 20px,720px);padding-top:14px}.harmat-customer-hero{display:grid;padding:22px 18px;border-radius:20px}.harmat-customer-hero h1{font-size:31px}.harmat-customer-user{border-radius:18px;flex-wrap:wrap}.harmat-customer-app-home{padding:16px;border-radius:20px}.harmat-customer-app-head{display:grid}.harmat-customer-app-head h2{font-size:27px}.harmat-customer-app-head>strong{justify-self:start}.harmat-customer-quick-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.harmat-customer-quick-grid a{min-height:92px;padding:9px 5px;text-align:center;justify-items:center}.harmat-customer-quick-grid b{width:28px;height:28px}.harmat-customer-quick-grid span{font-size:12px}.harmat-customer-quick-grid small{display:none}.harmat-customer-app-summary,.harmat-customer-kpis,.harmat-customer-grid,.harmat-customer-panel dl{grid-template-columns:1fr}.harmat-customer-panel{padding:16px}.harmat-customer-payment-plan{grid-template-columns:1fr!important}}
+        .harmat-customer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.harmat-customer-panel{margin-bottom:18px;scroll-margin-top:16px}.harmat-customer-panel h2{margin:0 0 14px;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.harmat-customer-panel p{margin:0 0 14px;color:#687178;line-height:1.65}.harmat-customer-panel dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-customer-panel div{padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-panel dt{color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-customer-panel dd{margin:6px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-customer-panel a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-customer-subtitle{margin:16px 0 10px;color:#a5742c;font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.harmat-customer-payment-plan{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;gap:10px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-payment-plan article{display:grid;gap:7px;padding:13px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-payment-plan small{color:#a5742c;font-size:11px;font-weight:900;letter-spacing:.06em}.harmat-customer-payment-plan strong{color:#253137;font-size:15px}.harmat-customer-payment-plan span{color:#5d6670;font-size:12px;line-height:1.35}.harmat-customer-plan-paid{background:#eef8f1!important;border-color:#cce9d5!important}.harmat-customer-plan-overdue{background:#fff1f0!important;border-color:#ffd1cc!important}.harmat-customer-request-notice{margin:14px 0 0!important;padding:12px 14px!important;border-radius:12px!important;font-weight:900!important}.harmat-customer-request-success{background:#eef8f1!important;border-color:#cce9d5!important;color:#1f7a4d!important}.harmat-customer-request-error{background:#fff1f0!important;border-color:#ffd1cc!important;color:#b42318!important}.harmat-customer-request-box{margin-top:14px}.harmat-customer-request-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0 16px}.harmat-customer-request-form label{display:grid;gap:6px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-customer-request-form input,.harmat-customer-request-form select,.harmat-customer-request-form textarea{width:100%;min-height:42px;padding:10px 11px;border:1px solid #ead8b8;border-radius:10px;background:#fff;color:#253137;font:inherit;font-size:14px}.harmat-customer-request-form textarea{min-height:112px;resize:vertical}.harmat-customer-request-wide{grid-column:1/-1}.harmat-customer-request-form button{grid-column:1/-1;min-height:44px;border:0;border-radius:12px;background:#a8762d;color:#fff;font-weight:900;cursor:pointer}.harmat-customer-request-list{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-request-item{display:grid;gap:8px;padding:13px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-request-item header{display:flex;justify-content:space-between;gap:10px}.harmat-customer-request-item header span{color:#a8762d;font-size:12px;font-weight:900}.harmat-customer-request-item header b{padding:5px 9px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px}.harmat-customer-request-item strong{color:#253137}.harmat-customer-request-item small{color:#6f7780}.harmat-customer-request-item p,.harmat-customer-request-empty{margin:0!important;color:#5d6670!important;line-height:1.55!important}.harmat-customer-material-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))!important;gap:12px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-material-list strong{color:#253137}.harmat-customer-material-list small{color:#6f7780}.harmat-customer-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-customer-material-list a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:10px;background:#a8762d;color:#fff;text-decoration:none}
+        @media(max-width:900px){.harmat-customer-shell{width:min(100% - 20px,720px);padding-top:14px}.harmat-customer-hero{display:grid;padding:22px 18px;border-radius:20px}.harmat-customer-hero h1{font-size:31px}.harmat-customer-user{border-radius:18px;flex-wrap:wrap}.harmat-customer-app-home{padding:16px;border-radius:20px}.harmat-customer-app-head{display:grid}.harmat-customer-app-head h2{font-size:27px}.harmat-customer-app-head>strong{justify-self:start}.harmat-customer-quick-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.harmat-customer-quick-grid a{min-height:92px;padding:9px 5px;text-align:center;justify-items:center}.harmat-customer-quick-grid b{width:28px;height:28px}.harmat-customer-quick-grid span{font-size:12px}.harmat-customer-quick-grid small{display:none}.harmat-customer-app-summary,.harmat-customer-kpis,.harmat-customer-grid,.harmat-customer-panel dl,.harmat-customer-request-form{grid-template-columns:1fr}.harmat-customer-panel{padding:16px}.harmat-customer-payment-plan{grid-template-columns:1fr!important}}
         ';
     }
 
