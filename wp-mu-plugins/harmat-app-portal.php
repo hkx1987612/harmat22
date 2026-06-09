@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat App Portal
  * Description: Lightweight mobile app entry for buyers, sales staff, and brokers.
- * Version: 0.1.2
+ * Version: 0.2.0
  */
 
 defined('ABSPATH') || exit;
@@ -59,6 +59,12 @@ function harmat_app_portal_manifest_20260609() {
                 'type' => 'image/png',
                 'purpose' => 'any maskable',
             ),
+            array(
+                'src' => harmat_app_portal_logo_20260609(512),
+                'sizes' => '512x512',
+                'type' => 'image/png',
+                'purpose' => 'any maskable',
+            ),
         ),
     );
 
@@ -71,7 +77,7 @@ function harmat_app_portal_service_worker_20260609() {
     nocache_headers();
     header('Content-Type: application/javascript; charset=utf-8');
     ?>
-const HARMAT_APP_CACHE = 'harmat-app-v3';
+const HARMAT_APP_CACHE = 'harmat-app-v4';
 const HARMAT_APP_URLS = [
   '/app/?wp_lang=hu_HU',
   '/app/?wp_lang=zh_CN'
@@ -125,12 +131,13 @@ function harmat_app_portal_text_20260609($lang) {
             'title' => 'Harmat App',
             'eyebrow' => 'Harmat Lakópark',
             'headline' => '统一入口',
-            'lead' => '买房者、销售团队和经纪人使用同一个入口，选择身份后进入对应工作台。',
+            'lead' => '买房者、销售团队和经纪人使用同一个移动入口，选择身份后进入对应工作台。',
             'language' => '语言',
             'hu_label' => '匈牙利语',
             'zh_label' => '中文',
             'home' => '返回网站',
             'install' => '可添加到手机桌面',
+            'install_cta' => '安装 App',
             'privacy' => '隐私政策',
             'visual_title' => 'Harmat utca 22.',
             'visual_subtitle' => '1105 布达佩斯',
@@ -141,10 +148,10 @@ function harmat_app_portal_text_20260609($lang) {
             'roles' => array(
                 array(
                     'key' => 'buyer',
-                    'mark' => '买',
+                    'mark' => '客',
                     'label' => '买房者',
                     'sub' => '客户中心',
-                    'body' => '查看房源、付款进度、合同文件和售后事项。',
+                    'body' => '查看房源资料、付款进度、合同文件和售后事项。',
                     'cta' => '进入买房者通道',
                     'path' => '/client/',
                 ),
@@ -181,6 +188,7 @@ function harmat_app_portal_text_20260609($lang) {
         'zh_label' => 'Kínai',
         'home' => 'Vissza a weboldalra',
         'install' => 'Hozzáadható a telefon kezdőképernyőjéhez',
+        'install_cta' => 'App telepítése',
         'privacy' => 'Adatvédelem',
         'visual_title' => 'Harmat utca 22.',
         'visual_subtitle' => '1105 Budapest',
@@ -293,7 +301,7 @@ function harmat_app_portal_render_20260609() {
         .harmat-app-lang a.is-active{background:#253137;color:#fff}
         .harmat-app-hero{max-width:780px}
         .harmat-app-eyebrow{margin:0 0 10px;color:#8a5a18;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
-        .harmat-app-hero h1{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:clamp(40px,7vw,82px);font-weight:500;line-height:.98}
+        .harmat-app-hero h1{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:clamp(40px,7vw,82px);font-weight:500;line-height:.98;letter-spacing:0}
         .harmat-app-hero p{max-width:620px;margin:18px 0 0;color:#526069;font-size:17px;line-height:1.65}
         .harmat-app-continue{display:flex;align-items:center;justify-content:space-between;gap:16px;width:min(100%,780px);padding:16px 18px;border:1px solid rgba(168,118,45,.28);border-radius:8px;background:#fff;box-shadow:0 14px 35px rgba(39,49,56,.08)}
         .harmat-app-continue small{display:block;margin-bottom:4px;color:#1f7a4d;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
@@ -304,12 +312,14 @@ function harmat_app_portal_render_20260609() {
         .harmat-app-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:12px;min-height:260px;padding:18px;border:1px solid rgba(138,90,24,.2);border-radius:8px;background:#fff;color:#253137;text-decoration:none;box-shadow:0 18px 45px rgba(39,49,56,.08);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
         .harmat-app-card:hover{transform:translateY(-2px);border-color:#a8762d;box-shadow:0 24px 55px rgba(39,49,56,.12)}
         .harmat-app-mark{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:#253137;color:#fff;font-weight:900;font-style:normal}
-        .harmat-app-card h2{margin:0;color:#17262c;font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:500;line-height:1.1;overflow-wrap:anywhere}
-        .harmat-app-card small{display:block;margin-top:5px;color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+        .harmat-app-card h2{margin:0;color:#17262c;font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:500;line-height:1.1;letter-spacing:0;overflow-wrap:anywhere}
+        .harmat-app-card small{display:block;margin-top:5px;color:#a8762d;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
         .harmat-app-card p{margin:0;color:#5f6970;font-size:14px;line-height:1.55}
         .harmat-app-card span:last-child{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 12px;border-radius:6px;background:#a8762d;color:#fff;font-size:13px;font-weight:900;text-align:center}
         .harmat-app-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:#687178;font-size:13px}
-        .harmat-app-foot a{color:#8a5a18;font-weight:900;text-decoration:none}
+        .harmat-app-foot a,.harmat-app-install{display:inline-flex;align-items:center;min-height:34px;color:#8a5a18;font-weight:900;text-decoration:none}
+        .harmat-app-install{border:1px solid rgba(138,90,24,.28);border-radius:999px;background:#fff;padding:0 12px;font:inherit;font-size:13px;cursor:pointer}
+        .harmat-app-install[hidden]{display:none}
         .harmat-app-visual{position:relative;min-height:100%;background:#253137;overflow:hidden}
         .harmat-app-visual img{width:100%;height:100%;object-fit:cover;filter:saturate(.94);opacity:.82}
         .harmat-app-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(37,49,55,.16),rgba(37,49,55,.58))}
@@ -385,6 +395,7 @@ function harmat_app_portal_render_20260609() {
             </section>
             <footer class="harmat-app-foot">
                 <span><?php echo esc_html($text['install']); ?></span>
+                <button class="harmat-app-install" type="button" hidden><?php echo esc_html($text['install_cta']); ?></button>
                 <a href="<?php echo esc_url(home_url('/adatvedelmi-tajekoztato/')); ?>"><?php echo esc_html($text['privacy']); ?></a>
                 <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($text['home']); ?></a>
             </footer>
@@ -399,9 +410,29 @@ function harmat_app_portal_render_20260609() {
     </main>
     <script>
         (function(){
+            var deferredInstallPrompt = null;
+            var installButton = document.querySelector('.harmat-app-install');
+
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', function(){
                     navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(function(){});
+                });
+            }
+
+            window.addEventListener('beforeinstallprompt', function(event) {
+                event.preventDefault();
+                deferredInstallPrompt = event;
+                if (installButton) installButton.hidden = false;
+            });
+
+            if (installButton) {
+                installButton.addEventListener('click', function() {
+                    if (!deferredInstallPrompt) return;
+                    deferredInstallPrompt.prompt();
+                    deferredInstallPrompt.userChoice.finally(function() {
+                        deferredInstallPrompt = null;
+                        installButton.hidden = true;
+                    });
                 });
             }
         })();
