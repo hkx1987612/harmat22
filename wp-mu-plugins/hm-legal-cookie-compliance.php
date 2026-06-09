@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Legal Pages and Cookie Consent
  * Description: Adds Hungarian legal page content and a consent-based cookie banner.
- * Version: 2026.06.06
+ * Version: 2026.06.09
  */
 
 defined('ABSPATH') || exit;
@@ -47,7 +47,7 @@ function hm_legal_company_20260514() {
 }
 
 function hm_legal_policy_version_20260601() {
-    return '2026-06-05-v1.4';
+    return '2026-06-09-v1.5';
 }
 
 function hm_legal_google_tag_id_20260601() {
@@ -62,6 +62,10 @@ function hm_legal_google_tag_id_20260601() {
     }
 
     return '';
+}
+
+function hm_legal_google_ads_tag_id_20260609() {
+    return 'AW-18191634808';
 }
 
 function hm_legal_pages_20260514() {
@@ -230,7 +234,7 @@ function hm_legal_privacy_20260514() {
             <tr><td>SMTP2GO és a weboldal levelezési rendszere</td><td>Értesítések, visszaigazolások és ügyfélkommunikáció továbbítása</td><td>Név, e-mail cím, üzenettartalom, kézbesítési állapot</td></tr>
             <tr><td>Értékesítési, CRM, ügyfél-, ügynöki és ügyvédi portálok</td><td>Érdeklődések, foglalások, szerződés-előkészítés és jogosultságkezelt dokumentumkezelés</td><td>Kapcsolattartási adatok, lakásazonosító, ügyállapot, szerződés-előkészítési adatok</td></tr>
             <tr><td>Jogi, számviteli és pénzügyi tanácsadók</td><td>Szerződés-előkészítés, jogi kötelezettségek és igénykezelés</td><td>Csak az adott ügy kezeléséhez szükséges adatok</td></tr>
-            <tr><td>Google Ireland Limited / Google Analytics, Google Tag Manager, Google Site Kit</td><td>Statisztika és kampánymérés, kizárólag megfelelő hozzájárulás alapján</td><td>Online azonosítók és használati adatok</td></tr>
+        <tr><td>Google Ireland Limited / Google Analytics, Google Ads, Google Tag Manager, Google Site Kit</td><td>Statisztika, kampánymérés és hirdetési konverziómérés, kizárólag megfelelő hozzájárulás alapján</td><td>Online azonosítók és használati adatok</td></tr>
             <tr><td>Meta Platforms Ireland Ltd. és egyéb hirdetési szolgáltatók, ha marketing kampány vagy pixel aktiválásra kerül</td><td>Remarketing, kampánymérés és közösségi média hirdetések, kizárólag külön hozzájárulás alapján</td><td>Online azonosítók és használati adatok</td></tr>
         </tbody>
     </table>
@@ -280,8 +284,9 @@ function hm_legal_cookie_page_20260514() {
             <tr><td>epl_wp_session</td><td>WordPress / ingatlanmodul</td><td>Első fél</td><td>Szükséges</td><td>Ingatlanos keresési és munkamenet-funkciók technikai támogatása</td><td>Jellemzően 12 óra</td></tr>
             <tr><td>wordpress_test_cookie, wordpress_logged_in_*, wordpress_sec_*</td><td>WordPress</td><td>Első fél</td><td>Szükséges</td><td>Adminisztrációs bejelentkezés, biztonság és munkamenet-kezelés</td><td>Munkamenet vagy bejelentkezés időtartama; nyilvános látogatóknál jellemzően nem aktív</td></tr>
             <tr><td>űrlap- és biztonsági munkamenet sütik</td><td>Harmat22.hu / biztonsági bővítmények</td><td>Első fél</td><td>Szükséges</td><td>Űrlapvédelem, visszaélés-megelőzés és a weboldal biztonságos működése</td><td>Munkamenet vagy rövid technikai megőrzés</td></tr>
-            <tr><td>_ga, _ga_*, Google tag azonosítók</td><td>Google Analytics / Google Tag Manager</td><td>Google szolgáltatás, a weboldal domainjén tárolt azonosítókkal</td><td>Statisztikai</td><td>Látogatottsági statisztika és weboldalhasználat mérése</td><td>Legfeljebb 2 év; csak a statisztikai sütik elfogadása után töltődik be</td></tr>
-            <tr><td>beágyazott térkép-, videó- vagy hirdetési azonosítók</td><td>Google, YouTube, Meta vagy más külső szolgáltató, ha az adott funkció aktív</td><td>Harmadik fél</td><td>Marketing / külső tartalom</td><td>Kampánymérés, remarketing, beágyazott videó vagy térképes tartalom működése</td><td>A szolgáltató beállításai szerint; csak megfelelő hozzájárulás vagy felhasználói művelet esetén</td></tr>
+        <tr><td>_ga, _ga_*, Google tag azonosítók</td><td>Google Analytics / Google Tag Manager</td><td>Google szolgáltatás, a weboldal domainjén tárolt azonosítókkal</td><td>Statisztikai</td><td>Látogatottsági statisztika és weboldalhasználat mérése</td><td>Legfeljebb 2 év; csak a statisztikai sütik elfogadása után töltődik be</td></tr>
+        <tr><td>AW-18191634808, Google Ads konverziós és kampánymérési azonosítók</td><td>Google Ads / Google Tag</td><td>Google szolgáltatás, harmadik fél azonosítóival</td><td>Marketing</td><td>Hirdetési kampányok és konverziók mérése</td><td>A Google beállításai szerint; csak marketing sütik elfogadása után töltődik be</td></tr>
+        <tr><td>beágyazott térkép-, videó- vagy egyéb hirdetési azonosítók</td><td>Google, YouTube, Meta vagy más külső szolgáltató, ha az adott funkció aktív</td><td>Harmadik fél</td><td>Marketing / külső tartalom</td><td>Kampánymérés, remarketing, beágyazott videó vagy térképes tartalom működése</td><td>A szolgáltató beállításai szerint; csak megfelelő hozzájárulás vagy felhasználói művelet esetén</td></tr>
         </tbody>
     </table>
     <p class="hm-note">A sütilista a 2026. június 5-i ellenőrzés szerinti főbb sütiket és szolgáltatásokat tartalmazza. A WordPress-bővítmények és külső beágyazások frissítésekor a lista változhat, ezért rendszeres ellenőrzés szükséges.</p>
@@ -346,7 +351,16 @@ function hm_legal_impressum_20260514() {
     <h2>Nyilvántartó hatóság</h2>
     <p><?php echo esc_html($c['authority']); ?></p>
     <h2>Tárhely és technikai üzemeltetés</h2>
-    <p>A weboldal működtetéséhez tárhelyszolgáltatót, weboldal-karbantartási szolgáltatót, e-mail kézbesítési és biztonsági szolgáltatásokat veszünk igénybe. Az aktuális adatfeldolgozói kör a szolgáltatások változásával módosulhat; adatvédelmi kérdés esetén tájékoztatást adunk.</p>
+    <p>A technikai szolgáltatói kör az adatkezelési tájékoztatóval összhangban az alábbi fő kategóriákat tartalmazza:</p>
+    <table>
+        <tbody>
+            <tr><th>Tárhelyszolgáltató</th><td>Tárhely.Eu Szolgáltató Kft. / tarhely.com szerverkörnyezet - weboldal, adatbázis, fájlok és technikai naplók tárhelyszolgáltatása.</td></tr>
+            <tr><th>E-mail kézbesítés</th><td>SMTP2GO és a weboldal levelezési rendszere - űrlapértesítések, visszaigazolások és ügyfélkommunikáció továbbítása.</td></tr>
+            <tr><th>Weboldal-karbantartás</th><td>Weboldal-fejlesztő és karbantartó szolgáltató, például Szabados Attila EV. / 21stcenturywebsites.hu - hibajavítás, biztonsági és működési támogatás.</td></tr>
+            <tr><th>Biztonság / CDN / gyorsítótár</th><td>WordPress biztonsági, gyorsítótár-, optimalizálási és esetleges CDN-szolgáltatások - a weboldal védelme, teljesítménye, naplózása és rendelkezésre állása érdekében.</td></tr>
+        </tbody>
+    </table>
+    <p>Az aktuális adatfeldolgozói kör a szolgáltatások változásával módosulhat; adatvédelmi kérdés esetén tájékoztatást adunk.</p>
     <h2>Kapcsolat</h2>
     <p>Általános és értékesítési megkeresések: <a href="mailto:<?php echo esc_attr($c['email']); ?>"><?php echo esc_html($c['email']); ?></a>, telefon: <?php echo esc_html($c['phone']); ?>.</p>
     <p>Adatvédelmi megkeresések: <a href="mailto:<?php echo esc_attr($c['privacy_email']); ?>"><?php echo esc_html($c['privacy_email']); ?></a>. Fogyasztói panaszok kezeléséről a <a href="<?php echo esc_url(home_url('/panaszkezeles/')); ?>">Panaszkezelési tájékoztató</a> ad részletes információt.</p>
@@ -509,8 +523,12 @@ add_action('wp_footer', function () {
             var saveBtn = box.querySelector('[data-hm-cookie-save]');
             var settingsToggle = box.querySelector('[data-hm-cookie-settings]');
             var policyVersion = <?php echo wp_json_encode(hm_legal_policy_version_20260601()); ?>;
-            var googleTagId = <?php echo wp_json_encode(hm_legal_google_tag_id_20260601()); ?>;
+            var googleTagIds = {
+                analytics: <?php echo wp_json_encode(hm_legal_google_tag_id_20260601()); ?>,
+                ads: <?php echo wp_json_encode(hm_legal_google_ads_tag_id_20260609()); ?>
+            };
             var googleTagLoaded = false;
+            var googleTagConfigured = {};
 
             function readConsent(){
                 var found = document.cookie.split('; ').find(function(row){ return row.indexOf(name + '=') === 0; });
@@ -520,21 +538,37 @@ add_action('wp_footer', function () {
             function isCurrentConsent(value){
                 return !!(value && value.policyVersion === policyVersion);
             }
+            function googleBootTagId(value){
+                if (!value) return '';
+                if (value.analytics && googleTagIds.analytics) return googleTagIds.analytics;
+                if (value.marketing && googleTagIds.ads) return googleTagIds.ads;
+                return '';
+            }
             function loadGoogleTag(value){
-                if (!value || !value.analytics || !googleTagId || googleTagLoaded) return;
-                googleTagLoaded = true;
+                var bootTagId = googleBootTagId(value);
+                if (!bootTagId) return;
                 window.dataLayer = window.dataLayer || [];
                 window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
                 var existing = document.querySelector('script[src*="googletagmanager.com/gtag/js"]');
-                if (!existing) {
+                if (!existing && !googleTagLoaded) {
                     var script = document.createElement('script');
                     script.async = true;
-                    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(googleTagId);
+                    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(bootTagId);
                     script.setAttribute('data-hm-google-tag', 'consent-loaded');
                     document.head.appendChild(script);
                 }
-                window.gtag('js', new Date());
-                window.gtag('config', googleTagId, { send_page_view: true });
+                if (!googleTagLoaded) {
+                    googleTagLoaded = true;
+                    window.gtag('js', new Date());
+                }
+                if (value.analytics && googleTagIds.analytics && !googleTagConfigured[googleTagIds.analytics]) {
+                    googleTagConfigured[googleTagIds.analytics] = true;
+                    window.gtag('config', googleTagIds.analytics, { send_page_view: true });
+                }
+                if (value.marketing && googleTagIds.ads && !googleTagConfigured[googleTagIds.ads]) {
+                    googleTagConfigured[googleTagIds.ads] = true;
+                    window.gtag('config', googleTagIds.ads);
+                }
             }
             function writeConsent(value){
                 value.necessary = true;
