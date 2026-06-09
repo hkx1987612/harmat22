@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.43
+ * Version: 1.6.44
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.43';
+    const VERSION = '1.6.44';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -9294,9 +9294,31 @@ final class Harmat_Sales_Manager {
                 'materials_title' => 'Ügyfélanyagok',
                 'materials_intro' => 'Itt találja az értékesítés által feltöltött dokumentumokat, visszaigazolásokat és projekt előrehaladási anyagokat.',
                 'materials_empty' => 'Jelenleg még nincs feltöltött dokumentum.',
+                'app_home_title' => 'Saját Harmat áttekintő',
+                'app_home_intro' => 'A legfontosabb ügyfélfeladatok egy mobil nézetben: lakás, fizetés, dokumentumok, ügyintézés és projektállapot.',
+                'quick_apartment' => 'Saját lakás',
+                'quick_payment' => 'Fizetési ütem',
+                'quick_documents' => 'Szerződés / fájlok',
+                'quick_aftercare' => 'Ügyintézés',
+                'quick_progress' => 'Projektállapot',
+                'payment_progress' => 'Fizetési előrehaladás',
+                'next_payment' => 'Következő fizetés',
+                'documents_count' => 'Elérhető dokumentum',
+                'payment_plan_title' => 'Fizetési csomópontok',
+                'payment_plan_empty' => 'A részletes fizetési ütemezés hamarosan megjelenik.',
+                'amount_label' => 'Összeg',
+                'due_label' => 'Határidő',
+                'project_status' => 'Aktuális projektstátusz',
                 'status' => 'Státusz',
                 'open_file' => 'Megnyitás / letöltés',
                 'file_missing' => 'Fájl nem elérhető',
+                'plan_statuses' => array(
+                    'pending' => 'Esedékes',
+                    'partial' => 'Részben fizetve',
+                    'paid' => 'Kifizetve',
+                    'overdue' => 'Lejárt',
+                    'not_started' => 'Még nem indult',
+                ),
                 'payment_statuses' => array(
                     'not_started' => 'Még nem indult',
                     'partial' => 'Részben fizetve',
@@ -9340,9 +9362,31 @@ final class Harmat_Sales_Manager {
                 'materials_title' => 'Client materials',
                 'materials_intro' => 'Documents, confirmations and project progress materials uploaded by the sales team are available here.',
                 'materials_empty' => 'There are no uploaded documents yet.',
+                'app_home_title' => 'My Harmat overview',
+                'app_home_intro' => 'The key client items in one mobile view: apartment, payment, documents, administration and project status.',
+                'quick_apartment' => 'My apartment',
+                'quick_payment' => 'Payment plan',
+                'quick_documents' => 'Contract / files',
+                'quick_aftercare' => 'Aftercare',
+                'quick_progress' => 'Project status',
+                'payment_progress' => 'Payment progress',
+                'next_payment' => 'Next payment',
+                'documents_count' => 'Available documents',
+                'payment_plan_title' => 'Payment milestones',
+                'payment_plan_empty' => 'The detailed payment schedule will appear here soon.',
+                'amount_label' => 'Amount',
+                'due_label' => 'Due date',
+                'project_status' => 'Current project status',
                 'status' => 'Status',
                 'open_file' => 'Open / download',
                 'file_missing' => 'File not available',
+                'plan_statuses' => array(
+                    'pending' => 'Pending',
+                    'partial' => 'Partially paid',
+                    'paid' => 'Paid',
+                    'overdue' => 'Overdue',
+                    'not_started' => 'Not started',
+                ),
                 'payment_statuses' => array(
                     'not_started' => 'Not started',
                     'partial' => 'Partially paid',
@@ -9386,9 +9430,31 @@ final class Harmat_Sales_Manager {
                 'materials_title' => '客户材料区',
                 'materials_intro' => '销售人员上传的文件、确认函和项目进展资料会显示在这里。',
                 'materials_empty' => '目前还没有上传的客户附件。',
+                'app_home_title' => '我的 Harmat 总览',
+                'app_home_intro' => '把买房者最常用的事项集中在手机首页：我的房子、付款节点、合同文件、售后事项和项目进度。',
+                'quick_apartment' => '我的房子',
+                'quick_payment' => '付款节点',
+                'quick_documents' => '合同文件',
+                'quick_aftercare' => '售后事项',
+                'quick_progress' => '项目进度',
+                'payment_progress' => '付款进度',
+                'next_payment' => '下一笔付款',
+                'documents_count' => '可查看文件',
+                'payment_plan_title' => '付款节点',
+                'payment_plan_empty' => '详细付款节点会在这里更新。',
+                'amount_label' => '金额',
+                'due_label' => '截止日',
+                'project_status' => '当前项目状态',
                 'status' => '状态',
                 'open_file' => '打开 / 下载',
                 'file_missing' => '文件不可用',
+                'plan_statuses' => array(
+                    'pending' => '待支付',
+                    'partial' => '部分已付',
+                    'paid' => '已支付',
+                    'overdue' => '已逾期',
+                    'not_started' => '未开始',
+                ),
                 'payment_statuses' => array(
                     'not_started' => '未开始收款',
                     'partial' => '部分已收',
@@ -9407,6 +9473,100 @@ final class Harmat_Sales_Manager {
         );
 
         return $texts[$lang] ?? $texts['hu'];
+    }
+
+    private function customer_portal_next_payment($deal, $text) {
+        $items = $this->payment_plan_display_items($deal);
+        $next = null;
+
+        foreach ($items as $item) {
+            $status = sanitize_key($item['status'] ?? '');
+            if ($status === 'paid') {
+                continue;
+            }
+            $due_date = (string) ($item['due_date'] ?? '');
+            $timestamp = $due_date ? strtotime($due_date) : PHP_INT_MAX;
+            if (!$next || $timestamp < (int) ($next['timestamp'] ?? PHP_INT_MAX)) {
+                $next = array(
+                    'timestamp' => $timestamp,
+                    'label' => (string) ($item['label'] ?? ''),
+                    'amount' => (int) preg_replace('/[^\d]/', '', (string) ($item['amount'] ?? '')),
+                    'due_date' => $due_date,
+                    'status' => $status,
+                );
+            }
+        }
+
+        if (!$next) {
+            $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $deal['payment_received'] ?? '', $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
+            return array(
+                'label' => $text['payment_statuses'][$payment_status] ?? '-',
+                'detail' => $text['balance'] . ': ' . $this->format_money($this->deal_payment_balance($deal)) . ' Ft',
+            );
+        }
+
+        $detail = array();
+        if (!empty($next['amount'])) {
+            $detail[] = $this->format_money($next['amount']) . ' Ft';
+        }
+        if (!empty($next['due_date'])) {
+            $detail[] = $next['due_date'];
+        }
+        if (!empty($next['status'])) {
+            $detail[] = $text['plan_statuses'][$next['status']] ?? $next['status'];
+        }
+
+        return array(
+            'label' => $next['label'] ?: $text['schedule'],
+            'detail' => $detail ? implode(' · ', $detail) : '-',
+        );
+    }
+
+    private function render_customer_app_home($deal, $text, $property_title, $payment_label, $contract_label, $payment_percent, $materials_count) {
+        $next_payment = $this->customer_portal_next_payment($deal, $text);
+        $cards = array(
+            array('index' => '01', 'href' => '#harmat-customer-apartment', 'label' => $text['quick_apartment'], 'meta' => $property_title ?: '-'),
+            array('index' => '02', 'href' => '#harmat-customer-payment', 'label' => $text['quick_payment'], 'meta' => $next_payment['label']),
+            array('index' => '03', 'href' => '#harmat-customer-documents', 'label' => $text['quick_documents'], 'meta' => $materials_count . ' ' . $text['documents_count']),
+            array('index' => '04', 'href' => '#harmat-customer-aftercare', 'label' => $text['quick_aftercare'], 'meta' => $text['handover']),
+            array('index' => '05', 'href' => '#harmat-customer-progress', 'label' => $text['quick_progress'], 'meta' => $text['project_status']),
+        );
+
+        echo '<section class="harmat-customer-app-home">';
+        echo '<div class="harmat-customer-app-head"><div><small>Harmat App</small><h2>' . esc_html($text['app_home_title']) . '</h2><p>' . esc_html($text['app_home_intro']) . '</p></div><strong>' . esc_html($property_title ?: '-') . '</strong></div>';
+        echo '<nav class="harmat-customer-quick-grid" aria-label="' . esc_attr($text['app_home_title']) . '">';
+        foreach ($cards as $card) {
+            echo '<a href="' . esc_url($card['href']) . '"><b>' . esc_html($card['index']) . '</b><span>' . esc_html($card['label']) . '</span><small>' . esc_html($card['meta']) . '</small></a>';
+        }
+        echo '</nav>';
+        echo '<div class="harmat-customer-app-summary">';
+        echo '<article><small>' . esc_html($text['payment_progress']) . '</small><strong>' . esc_html($payment_percent . '%') . '</strong><span class="harmat-customer-progressbar"><i style="width:' . esc_attr((string) $payment_percent) . '%"></i></span><em>' . esc_html($payment_label) . '</em></article>';
+        echo '<article><small>' . esc_html($text['next_payment']) . '</small><strong>' . esc_html($next_payment['label']) . '</strong><em>' . esc_html($next_payment['detail']) . '</em></article>';
+        echo '<article><small>' . esc_html($text['kpi_contract']) . '</small><strong>' . esc_html($contract_label) . '</strong><em>' . esc_html($materials_count . ' ' . $text['documents_count']) . '</em></article>';
+        echo '</div>';
+        echo '</section>';
+    }
+
+    private function render_customer_payment_plan($deal, $text) {
+        $items = $this->payment_plan_display_items($deal);
+        echo '<section class="harmat-customer-payment-plan" aria-label="' . esc_attr($text['payment_plan_title']) . '">';
+        if (!$items) {
+            echo '<article><strong>' . esc_html($text['payment_plan_empty']) . '</strong></article>';
+            echo '</section>';
+            return;
+        }
+
+        foreach ($items as $item) {
+            $status = sanitize_key($item['status'] ?? '');
+            $amount = (int) preg_replace('/[^\d]/', '', (string) ($item['amount'] ?? ''));
+            echo '<article class="harmat-customer-plan-' . esc_attr($status ?: 'not_started') . '">';
+            echo '<small>' . esc_html($text['status'] . ': ' . ($text['plan_statuses'][$status] ?? ($status ?: '-'))) . '</small>';
+            echo '<strong>' . esc_html((string) ($item['label'] ?? $text['schedule'])) . '</strong>';
+            echo '<span>' . esc_html($text['amount_label'] . ': ' . ($amount ? $this->format_money($amount) . ' Ft' : '-')) . '</span>';
+            echo '<span>' . esc_html($text['due_label'] . ': ' . ((string) ($item['due_date'] ?? '') ?: '-')) . '</span>';
+            echo '</article>';
+        }
+        echo '</section>';
     }
 
     private function render_customer_portal($deal) {
@@ -9433,6 +9593,12 @@ final class Harmat_Sales_Manager {
         $contract_status = $deal['contract_status'] ?? '';
         $payment_label = $text['payment_statuses'][$payment_status] ?? ($payment_statuses[$payment_status] ?? '-');
         $contract_label = $contract_status && isset($text['contract_statuses'][$contract_status]) ? $text['contract_statuses'][$contract_status] : ($contract_status && isset($contract_options[$contract_status]) ? $contract_options[$contract_status] : '-');
+        $deal_amount = (int) preg_replace('/[^\d]/', '', (string) ($deal['amount'] ?? ''));
+        $paid_amount = (int) preg_replace('/[^\d]/', '', (string) ($deal['payment_received'] ?? ''));
+        $payment_percent = $deal_amount > 0 ? max(0, min(100, (int) round(($paid_amount / $deal_amount) * 100))) : 0;
+        $materials_count = count($this->deal_customer_materials($deal, true));
+
+        $this->render_customer_app_home($deal, $text, $property_title, $payment_label, $contract_label, $payment_percent, $materials_count);
 
         echo '<section class="harmat-customer-kpis">';
         echo '<article><small>' . esc_html($text['kpi_apartment']) . '</small><strong>' . esc_html($property_title ?: '-') . '</strong></article>';
@@ -9442,25 +9608,32 @@ final class Harmat_Sales_Manager {
         echo '</section>';
 
         echo '<section class="harmat-customer-grid">';
-        echo '<div class="harmat-customer-panel"><h2>' . esc_html($text['apartment_details']) . '</h2><dl>';
+        echo '<div id="harmat-customer-apartment" class="harmat-customer-panel"><h2>' . esc_html($text['apartment_details']) . '</h2><dl>';
         echo '<div><dt>' . esc_html($text['kpi_apartment']) . '</dt><dd>' . ($property_url ? '<a href="' . esc_url($property_url) . '" target="_blank" rel="noopener">' . esc_html($property_title ?: '-') . '</a>' : esc_html($property_title ?: '-')) . '</dd></div>';
         echo '<div><dt>' . esc_html($text['buyer']) . '</dt><dd>' . esc_html($deal['client_name'] ?: '-') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['deposit']) . '</dt><dd>' . esc_html(!empty($deal['deposit']) ? $this->format_money($deal['deposit']) . ' Ft' : '-') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['date']) . '</dt><dd>' . esc_html($deal['closed_at'] ?: ($deal['expected_close'] ?: '-')) . '</dd></div>';
         echo '</dl></div>';
 
-        echo '<div class="harmat-customer-panel"><h2>' . esc_html($text['payment_contract']) . '</h2><dl>';
+        echo '<div id="harmat-customer-payment" class="harmat-customer-panel"><h2>' . esc_html($text['payment_contract']) . '</h2><dl>';
         echo '<div><dt>' . esc_html($text['paid']) . '</dt><dd>' . esc_html(!empty($deal['payment_received']) ? $this->format_money($deal['payment_received']) . ' Ft' : '0 Ft') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['balance']) . '</dt><dd>' . esc_html($this->format_money($this->deal_payment_balance($deal)) . ' Ft') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['due_date']) . '</dt><dd>' . esc_html($deal['payment_due_date'] ?: '-') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($deal['payment_schedule'] ?: '-')) . '</dd></div>';
-        echo '</dl></div>';
+        echo '</dl><h3 class="harmat-customer-subtitle">' . esc_html($text['payment_plan_title']) . '</h3>';
+        $this->render_customer_payment_plan($deal, $text);
+        echo '</div>';
         echo '</section>';
 
-        echo '<section class="harmat-customer-panel"><h2>' . esc_html($text['progress_title']) . '</h2><p>' . esc_html($text['progress_intro']) . '</p><dl>';
+        echo '<section class="harmat-customer-grid harmat-customer-service-grid">';
+        echo '<div id="harmat-customer-aftercare" class="harmat-customer-panel"><h2>' . esc_html($text['handover']) . '</h2><dl>';
         echo '<div><dt>' . esc_html($text['handover']) . '</dt><dd>' . nl2br(esc_html($deal['handover_note'] ?: $text['handover_empty'])) . '</dd></div>';
+        echo '</dl></div>';
+        echo '<div id="harmat-customer-progress" class="harmat-customer-panel"><h2>' . esc_html($text['progress_title']) . '</h2><p>' . esc_html($text['progress_intro']) . '</p><dl>';
+        echo '<div><dt>' . esc_html($text['project_status']) . '</dt><dd>' . esc_html($text['progress_intro']) . '</dd></div>';
         echo '<div><dt>' . esc_html($text['sales_note']) . '</dt><dd>' . nl2br(esc_html($deal['note'] ?: '-')) . '</dd></div>';
-        echo '</dl></section>';
+        echo '</dl></div>';
+        echo '</section>';
 
         $this->render_customer_materials($deal, $text);
         echo '</main></body></html>';
@@ -9469,7 +9642,7 @@ final class Harmat_Sales_Manager {
     private function render_customer_materials($deal, $text = null) {
         $text = $text ?: $this->customer_portal_text($this->current_portal_language('client'));
         $materials = $this->deal_customer_materials($deal, true);
-        echo '<section class="harmat-customer-panel harmat-customer-materials"><h2>' . esc_html($text['materials_title']) . '</h2><p>' . esc_html($text['materials_intro']) . '</p>';
+        echo '<section id="harmat-customer-documents" class="harmat-customer-panel harmat-customer-materials"><h2>' . esc_html($text['materials_title']) . '</h2><p>' . esc_html($text['materials_intro']) . '</p>';
         if (!$materials) {
             echo '<div><dt>' . esc_html($text['status']) . '</dt><dd>' . esc_html($text['materials_empty']) . '</dd></div>';
             echo '</section>';
@@ -12919,14 +13092,15 @@ JS;
 
     private function customer_portal_css() {
         return '
-        *{box-sizing:border-box}body.harmat-customer-body{margin:0;background:#fbf4e7;color:#253137;font-family:Montserrat,Arial,sans-serif}
+        *{box-sizing:border-box}html{scroll-behavior:smooth}body.harmat-customer-body{margin:0;background:#fbf4e7;color:#253137;font-family:Montserrat,Arial,sans-serif}
         .harmat-customer-shell{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:28px 0 44px}
         .harmat-customer-hero{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:18px;padding:28px 30px;border:1px solid #ead8b8;border-radius:22px;background:linear-gradient(135deg,#fffaf1,#fff);box-shadow:0 18px 45px rgba(70,54,28,.08)}
         .harmat-customer-eyebrow{margin:0 0 8px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.harmat-customer-hero h1{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:38px;font-weight:500}.harmat-customer-hero p{margin:8px 0 0;color:#687178}
         .harmat-customer-user{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:999px;background:#fff;border:1px solid #ead8b8}.harmat-customer-user span{font-weight:900}.harmat-customer-user a{color:#a5742c;font-weight:900;text-decoration:none}.harmat-portal-mini-lang{display:flex;gap:6px;align-items:center}.harmat-portal-mini-lang a{display:inline-flex!important;align-items:center;justify-content:center;min-height:30px;padding:0 9px;border-radius:999px;border:1px solid #ead8b8;color:#a5742c!important;background:#fffaf3;text-decoration:none;font-size:12px;font-weight:900}.harmat-portal-mini-lang a.is-active{background:#a8762d;color:#fff!important;border-color:#a8762d}
+        .harmat-customer-app-home{margin:0 0 18px;padding:20px;border:1px solid #ead8b8;border-radius:24px;background:#fff;box-shadow:0 18px 45px rgba(70,54,28,.08)}.harmat-customer-app-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:16px}.harmat-customer-app-head small{display:block;margin-bottom:6px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.harmat-customer-app-head h2{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:31px;font-weight:500;line-height:1.08}.harmat-customer-app-head p{max-width:690px;margin:8px 0 0;color:#687178;line-height:1.6}.harmat-customer-app-head>strong{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border-radius:999px;background:#253137;color:#fff;font-size:13px;white-space:nowrap}.harmat-customer-quick-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}.harmat-customer-quick-grid a{display:grid;gap:7px;align-content:start;min-height:112px;padding:13px;border:1px solid #ead8b8;border-radius:18px;background:#fffaf3;color:#253137;text-decoration:none}.harmat-customer-quick-grid b{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#253137;color:#fff;font-size:11px}.harmat-customer-quick-grid span{color:#253137;font-size:15px;font-weight:900;line-height:1.25}.harmat-customer-quick-grid small{color:#6f7780;font-size:12px;line-height:1.35}.harmat-customer-app-summary{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:10px}.harmat-customer-app-summary article{display:grid;gap:6px;padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fff}.harmat-customer-app-summary small{color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.08em}.harmat-customer-app-summary strong{color:#253137;font-size:19px;line-height:1.15;overflow-wrap:anywhere}.harmat-customer-app-summary em{color:#687178;font-size:12px;font-style:normal;line-height:1.4}.harmat-customer-progressbar{display:block;overflow:hidden;height:8px;border-radius:999px;background:#ede3d2}.harmat-customer-progressbar i{display:block;height:100%;border-radius:999px;background:#1f7a4d}
         .harmat-customer-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 18px}.harmat-customer-kpis article,.harmat-customer-panel{padding:20px;border-radius:20px;background:#fff;border:1px solid #ead8b8;box-shadow:0 14px 34px rgba(70,54,28,.06)}.harmat-customer-kpis small{display:block;color:#a5742c;font-weight:900;letter-spacing:.08em}.harmat-customer-kpis strong{display:block;margin-top:8px;color:#253137;font-size:24px;line-height:1.15;overflow-wrap:anywhere}
-        .harmat-customer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.harmat-customer-panel{margin-bottom:18px}.harmat-customer-panel h2{margin:0 0 14px;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.harmat-customer-panel p{margin:0 0 14px;color:#687178;line-height:1.65}.harmat-customer-panel dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-customer-panel div{padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-panel dt{color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-customer-panel dd{margin:6px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-customer-panel a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-customer-material-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))!important;gap:12px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-material-list strong{color:#253137}.harmat-customer-material-list small{color:#6f7780}.harmat-customer-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-customer-material-list a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:10px;background:#a8762d;color:#fff;text-decoration:none}
-        @media(max-width:900px){.harmat-customer-shell{width:min(100% - 20px,720px);padding-top:14px}.harmat-customer-hero{display:grid}.harmat-customer-hero h1{font-size:31px}.harmat-customer-kpis,.harmat-customer-grid,.harmat-customer-panel dl{grid-template-columns:1fr}.harmat-customer-panel{padding:16px}}
+        .harmat-customer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}.harmat-customer-panel{margin-bottom:18px;scroll-margin-top:16px}.harmat-customer-panel h2{margin:0 0 14px;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.harmat-customer-panel p{margin:0 0 14px;color:#687178;line-height:1.65}.harmat-customer-panel dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-customer-panel div{padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-panel dt{color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-customer-panel dd{margin:6px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-customer-panel a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-customer-subtitle{margin:16px 0 10px;color:#a5742c;font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.harmat-customer-payment-plan{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;gap:10px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-payment-plan article{display:grid;gap:7px;padding:13px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-payment-plan small{color:#a5742c;font-size:11px;font-weight:900;letter-spacing:.06em}.harmat-customer-payment-plan strong{color:#253137;font-size:15px}.harmat-customer-payment-plan span{color:#5d6670;font-size:12px;line-height:1.35}.harmat-customer-plan-paid{background:#eef8f1!important;border-color:#cce9d5!important}.harmat-customer-plan-overdue{background:#fff1f0!important;border-color:#ffd1cc!important}.harmat-customer-material-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))!important;gap:12px!important;padding:0!important;border:0!important;background:transparent!important}.harmat-customer-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-customer-material-list strong{color:#253137}.harmat-customer-material-list small{color:#6f7780}.harmat-customer-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-customer-material-list a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 12px;border-radius:10px;background:#a8762d;color:#fff;text-decoration:none}
+        @media(max-width:900px){.harmat-customer-shell{width:min(100% - 20px,720px);padding-top:14px}.harmat-customer-hero{display:grid;padding:22px 18px;border-radius:20px}.harmat-customer-hero h1{font-size:31px}.harmat-customer-user{border-radius:18px;flex-wrap:wrap}.harmat-customer-app-home{padding:16px;border-radius:20px}.harmat-customer-app-head{display:grid}.harmat-customer-app-head h2{font-size:27px}.harmat-customer-app-head>strong{justify-self:start}.harmat-customer-quick-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}.harmat-customer-quick-grid a{min-height:92px;padding:9px 5px;text-align:center;justify-items:center}.harmat-customer-quick-grid b{width:28px;height:28px}.harmat-customer-quick-grid span{font-size:12px}.harmat-customer-quick-grid small{display:none}.harmat-customer-app-summary,.harmat-customer-kpis,.harmat-customer-grid,.harmat-customer-panel dl{grid-template-columns:1fr}.harmat-customer-panel{padding:16px}.harmat-customer-payment-plan{grid-template-columns:1fr!important}}
         ';
     }
 
