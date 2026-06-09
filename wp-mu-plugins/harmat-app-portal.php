@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat App Portal
  * Description: Lightweight mobile app entry for buyers, sales staff, and brokers.
- * Version: 0.2.0
+ * Version: 0.3.0
  */
 
 defined('ABSPATH') || exit;
@@ -77,7 +77,7 @@ function harmat_app_portal_service_worker_20260609() {
     nocache_headers();
     header('Content-Type: application/javascript; charset=utf-8');
     ?>
-const HARMAT_APP_CACHE = 'harmat-app-v4';
+const HARMAT_APP_CACHE = 'harmat-app-v5';
 const HARMAT_APP_URLS = [
   '/app/?wp_lang=hu_HU',
   '/app/?wp_lang=zh_CN'
@@ -139,6 +139,8 @@ function harmat_app_portal_text_20260609($lang) {
             'install' => '可添加到手机桌面',
             'install_cta' => '安装 App',
             'privacy' => '隐私政策',
+            'shortcuts_title' => '常用操作',
+            'shortcuts_intro' => '选择身份后，也可以直接进入对应模块。',
             'visual_title' => 'Harmat utca 22.',
             'visual_subtitle' => '1105 布达佩斯',
             'continue_tag' => '已登录',
@@ -154,6 +156,12 @@ function harmat_app_portal_text_20260609($lang) {
                     'body' => '查看房源资料、付款进度、合同文件和售后事项。',
                     'cta' => '进入买房者通道',
                     'path' => '/client/',
+                    'modules' => array(
+                        array('label' => '房源资料', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
+                        array('label' => '付款节点', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
+                        array('label' => '合同文件', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
+                        array('label' => '售后事项', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
+                    ),
                 ),
                 array(
                     'key' => 'sales',
@@ -163,6 +171,12 @@ function harmat_app_portal_text_20260609($lang) {
                     'body' => '处理询价、跟单、成交客户、付款提醒和房源库存。',
                     'cta' => '进入销售通道',
                     'path' => '/sales/',
+                    'modules' => array(
+                        array('label' => '今日待办', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
+                        array('label' => '询价汇总', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
+                        array('label' => '成交客户', 'path' => '/sales/', 'query' => array('view' => 'customers')),
+                        array('label' => '房源库存', 'path' => '/sales/', 'query' => array('view' => 'properties')),
+                    ),
                 ),
                 array(
                     'key' => 'agent',
@@ -172,6 +186,12 @@ function harmat_app_portal_text_20260609($lang) {
                     'body' => '登记客户、维护跟进、查看在售房源和佣金记录。',
                     'cta' => '进入经纪人通道',
                     'path' => '/agent/',
+                    'modules' => array(
+                        array('label' => '客户登记', 'path' => '/agent/'),
+                        array('label' => '我的客户', 'path' => '/agent/', 'query' => array('view' => 'clients')),
+                        array('label' => '待跟进', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
+                        array('label' => '房源库存', 'path' => '/agent/', 'query' => array('view' => 'properties')),
+                    ),
                 ),
             ),
         );
@@ -190,6 +210,8 @@ function harmat_app_portal_text_20260609($lang) {
         'install' => 'Hozzáadható a telefon kezdőképernyőjéhez',
         'install_cta' => 'App telepítése',
         'privacy' => 'Adatvédelem',
+        'shortcuts_title' => 'Gyors műveletek',
+        'shortcuts_intro' => 'Válasszon szerepet, vagy nyissa meg közvetlenül a gyakori modulokat.',
         'visual_title' => 'Harmat utca 22.',
         'visual_subtitle' => '1105 Budapest',
         'continue_tag' => 'Bejelentkezve',
@@ -205,6 +227,12 @@ function harmat_app_portal_text_20260609($lang) {
                 'body' => 'Lakásadatok, fizetési ütemezés, szerződéses fájlok és ügyintézés.',
                 'cta' => 'Vevői belépés',
                 'path' => '/client/',
+                'modules' => array(
+                    array('label' => 'Lakásadatok', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
+                    array('label' => 'Fizetések', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
+                    array('label' => 'Dokumentumok', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
+                    array('label' => 'Ügyintézés', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
+                ),
             ),
             array(
                 'key' => 'sales',
@@ -214,6 +242,12 @@ function harmat_app_portal_text_20260609($lang) {
                 'body' => 'Érdeklődések, ügyek, lezárt ügyfelek, fizetések és lakáskészlet.',
                 'cta' => 'Értékesítési belépés',
                 'path' => '/sales/',
+                'modules' => array(
+                    array('label' => 'Teendők', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
+                    array('label' => 'Érdeklődések', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
+                    array('label' => 'Ügyfelek', 'path' => '/sales/', 'query' => array('view' => 'customers')),
+                    array('label' => 'Lakáskészlet', 'path' => '/sales/', 'query' => array('view' => 'properties')),
+                ),
             ),
             array(
                 'key' => 'agent',
@@ -223,9 +257,32 @@ function harmat_app_portal_text_20260609($lang) {
                 'body' => 'Ügyfélrögzítés, követés, elérhető lakások és jutalékrekordok.',
                 'cta' => 'Közvetítői belépés',
                 'path' => '/agent/',
+                'modules' => array(
+                    array('label' => 'Ügyfélrögzítés', 'path' => '/agent/'),
+                    array('label' => 'Ügyfelek', 'path' => '/agent/', 'query' => array('view' => 'clients')),
+                    array('label' => 'Teendők', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
+                    array('label' => 'Lakások', 'path' => '/agent/', 'query' => array('view' => 'properties')),
+                ),
             ),
         ),
     );
+}
+
+function harmat_app_portal_module_url_20260609($module, $locale) {
+    $path = isset($module['path']) ? (string) $module['path'] : '/app/';
+    $args = array('wp_lang' => $locale);
+    if (!empty($module['query']) && is_array($module['query'])) {
+        foreach ($module['query'] as $key => $value) {
+            $args[sanitize_key($key)] = sanitize_text_field((string) $value);
+        }
+    }
+
+    $url = add_query_arg($args, home_url($path));
+    if (!empty($module['anchor'])) {
+        $url .= '#' . rawurlencode(sanitize_title((string) $module['anchor']));
+    }
+
+    return $url;
 }
 
 function harmat_app_portal_current_workspace_20260609($text, $locale) {
@@ -316,6 +373,15 @@ function harmat_app_portal_render_20260609() {
         .harmat-app-card small{display:block;margin-top:5px;color:#a8762d;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
         .harmat-app-card p{margin:0;color:#5f6970;font-size:14px;line-height:1.55}
         .harmat-app-card span:last-child{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 12px;border-radius:6px;background:#a8762d;color:#fff;font-size:13px;font-weight:900;text-align:center}
+        .harmat-app-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+        .harmat-app-shortcuts-head{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:2px}
+        .harmat-app-shortcuts-head h2{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:0}
+        .harmat-app-shortcuts-head p{max-width:520px;margin:0;color:#687178;font-size:13px;line-height:1.5;text-align:right}
+        .harmat-app-shortcut-group{display:grid;gap:10px;padding:14px;border:1px solid rgba(138,90,24,.18);border-radius:8px;background:rgba(255,255,255,.72)}
+        .harmat-app-shortcut-group strong{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#253137;font-size:14px}
+        .harmat-app-shortcut-group strong i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:#253137;color:#fff;font-size:11px;font-style:normal}
+        .harmat-app-shortcut-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+        .harmat-app-shortcut-links a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 9px;border:1px solid rgba(168,118,45,.26);border-radius:6px;background:#fff;color:#8a5a18;font-size:12px;font-weight:900;text-align:center;text-decoration:none;line-height:1.2}
         .harmat-app-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:#687178;font-size:13px}
         .harmat-app-foot a,.harmat-app-install{display:inline-flex;align-items:center;min-height:34px;color:#8a5a18;font-weight:900;text-decoration:none}
         .harmat-app-install{border:1px solid rgba(138,90,24,.28);border-radius:999px;background:#fff;padding:0 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -336,6 +402,14 @@ function harmat_app_portal_render_20260609() {
             .harmat-app-card h2{font-size:clamp(13px,3.8vw,18px);line-height:1.08}
             .harmat-app-card small{font-size:9px;letter-spacing:.03em;line-height:1.25}
             .harmat-app-card p,.harmat-app-card span:last-child{display:none}
+            .harmat-app-shortcuts{grid-template-columns:1fr;gap:8px}
+            .harmat-app-shortcuts-head{display:grid;gap:4px;margin-top:0}
+            .harmat-app-shortcuts-head h2{font-size:24px}
+            .harmat-app-shortcuts-head p{text-align:left}
+            .harmat-app-shortcut-group{grid-template-columns:88px minmax(0,1fr);align-items:center;padding:10px}
+            .harmat-app-shortcut-group strong{display:grid;gap:4px;justify-items:start;font-size:13px}
+            .harmat-app-shortcut-links{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+            .harmat-app-shortcut-links a{min-height:34px;padding:0 4px;font-size:10px}
             .harmat-app-continue{display:grid;gap:12px;padding:14px}
             .harmat-app-continue strong{font-size:22px}
             .harmat-app-continue a{width:100%}
@@ -350,6 +424,8 @@ function harmat_app_portal_render_20260609() {
             .harmat-app-hero p{font-size:15px}
             .harmat-app-grid{gap:7px}
             .harmat-app-card{padding:11px 6px}
+            .harmat-app-shortcut-group{grid-template-columns:1fr}
+            .harmat-app-shortcut-links a{font-size:10px}
         }
     </style>
 </head>
@@ -391,6 +467,22 @@ function harmat_app_portal_render_20260609() {
                         <p><?php echo esc_html($role['body']); ?></p>
                         <span><?php echo esc_html($role['cta']); ?></span>
                     </a>
+                <?php endforeach; ?>
+            </section>
+            <section class="harmat-app-shortcuts" aria-label="<?php echo esc_attr($text['shortcuts_title']); ?>">
+                <div class="harmat-app-shortcuts-head">
+                    <h2><?php echo esc_html($text['shortcuts_title']); ?></h2>
+                    <p><?php echo esc_html($text['shortcuts_intro']); ?></p>
+                </div>
+                <?php foreach ($text['roles'] as $role) : ?>
+                    <article class="harmat-app-shortcut-group">
+                        <strong><i aria-hidden="true"><?php echo esc_html($role['mark']); ?></i><?php echo esc_html($role['label']); ?></strong>
+                        <div class="harmat-app-shortcut-links">
+                            <?php foreach (($role['modules'] ?? array()) as $module) : ?>
+                                <a href="<?php echo esc_url(harmat_app_portal_module_url_20260609($module, $locale)); ?>"><?php echo esc_html($module['label']); ?></a>
+                            <?php endforeach; ?>
+                        </div>
+                    </article>
                 <?php endforeach; ?>
             </section>
             <footer class="harmat-app-foot">
