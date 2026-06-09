@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.45
+ * Version: 1.6.46
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.45';
+    const VERSION = '1.6.46';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -2487,6 +2487,53 @@ final class Harmat_Sales_Manager {
         return current_user_can(self::CAP_DELETE) || current_user_can('manage_options');
     }
 
+    private function can_delete_lead_record($lead) {
+        if ($this->can_delete_sales_records()) {
+            return true;
+        }
+        if (!$this->is_sales_staff_user() || !is_array($lead)) {
+            return false;
+        }
+
+        $current_user_id = get_current_user_id();
+        return $current_user_id && (int) ($lead['assigned_sales_id'] ?? 0) === $current_user_id;
+    }
+
+    private function can_delete_inquiry_record($post_id, $deals = null) {
+        if ($this->can_delete_sales_records()) {
+            return true;
+        }
+        if (!$this->is_sales_staff_user()) {
+            return false;
+        }
+
+        $post_id = absint($post_id);
+        if (!$post_id || get_post_type($post_id) !== 'harmat_offer_lead') {
+            return false;
+        }
+        if ($this->offer_inquiry_assigned_sales_id($post_id) !== get_current_user_id()) {
+            return false;
+        }
+
+        return !$this->find_deal_by_inquiry_id($post_id, $deals);
+    }
+
+    private function can_delete_deal_record($deal) {
+        if ($this->can_delete_sales_records()) {
+            return true;
+        }
+        if (!$this->is_sales_staff_user() || !is_array($deal)) {
+            return false;
+        }
+
+        $current_user_id = get_current_user_id();
+        if (!$current_user_id || (int) ($deal['assigned_sales_id'] ?? 0) !== $current_user_id) {
+            return false;
+        }
+
+        return in_array($this->normalize_deal_stage_key($deal['stage'] ?? ''), array('new', 'viewing', 'negotiation', 'lost'), true);
+    }
+
     private function is_sales_staff_user() {
         if ($this->is_sales_manager_user()) {
             return false;
@@ -2800,12 +2847,14 @@ final class Harmat_Sales_Manager {
     }
 
     private function deal_stage_locks_property($stage) {
+        $stage = $this->normalize_deal_stage_key($stage);
         return in_array((string) $stage, array('reserved', 'contract', 'closed'), true);
     }
 
     private function sync_property_to_deal($property_id, $deal_id, $stage, $price = '') {
         $property_id = absint($property_id);
         $deal_id = absint($deal_id);
+        $stage = $this->normalize_deal_stage_key($stage);
         if (!$property_id || !$deal_id || get_post_type($property_id) !== 'property') {
             return;
         }
@@ -2849,9 +2898,10 @@ final class Harmat_Sales_Manager {
             if (!$this->deal_stage_locks_property($candidate['stage'] ?? '')) {
                 continue;
             }
-            if (!$replacement || ($candidate['stage'] ?? '') === 'closed') {
+            $candidate_stage = $this->normalize_deal_stage_key($candidate['stage'] ?? '');
+            if (!$replacement || $candidate_stage === 'closed') {
                 $replacement = $candidate;
-                if (($candidate['stage'] ?? '') === 'closed') {
+                if ($candidate_stage === 'closed') {
                     break;
                 }
             }
@@ -3264,10 +3314,6 @@ final class Harmat_Sales_Manager {
     }
 
     private function handle_lead_delete() {
-        if (!$this->can_delete_sales_records()) {
-            wp_die('Nincs jogosultsag az ugyfel torlesehez.');
-        }
-
         $lead_id = isset($_POST['lead_id']) ? absint($_POST['lead_id']) : 0;
         $leads = $this->get_leads();
 
@@ -3276,6 +3322,10 @@ final class Harmat_Sales_Manager {
         }
 
         $lead = $leads[$lead_id];
+        if (!$this->can_delete_lead_record($lead) || (!$this->can_delete_sales_records() && $this->find_deal_by_lead_id($lead_id))) {
+            wp_die('Nincs jogosultsag az ugyfel torlesehez.');
+        }
+
         unset($leads[$lead_id]);
         $this->save_leads($leads);
         $this->log_sales_activity(
@@ -3299,13 +3349,12 @@ final class Harmat_Sales_Manager {
     }
 
     private function handle_inquiry_delete() {
-        if (!$this->can_delete_sales_records()) {
-            wp_die('Nincs jogosultsag az erdeklodes torlesehez.');
-        }
-
         $post_id = isset($_POST['inquiry_id']) ? absint($_POST['inquiry_id']) : 0;
         if (!$post_id || get_post_type($post_id) !== 'harmat_offer_lead') {
             wp_die('Hibas erdeklodes azonosito.');
+        }
+        if (!$this->can_delete_inquiry_record($post_id)) {
+            wp_die('Nincs jogosultsag az erdeklodes torlesehez.');
         }
 
         $data = $this->offer_inquiry_data($post_id);
@@ -3553,7 +3602,7 @@ final class Harmat_Sales_Manager {
         $property_id = isset($_POST['deal_property_id']) ? absint($_POST['deal_property_id']) : 0;
         $broker_id = isset($_POST['deal_broker_id']) ? absint($_POST['deal_broker_id']) : get_current_user_id();
         $assigned_sales_id = $can_manage && isset($_POST['deal_assigned_sales_id']) ? absint($_POST['deal_assigned_sales_id']) : (int) ($previous_deal['assigned_sales_id'] ?? ($can_manage ? 0 : get_current_user_id()));
-        $stage = isset($_POST['deal_stage']) ? sanitize_key($_POST['deal_stage']) : 'new';
+        $stage = $this->normalize_deal_stage_key(isset($_POST['deal_stage']) ? sanitize_key($_POST['deal_stage']) : 'new');
         $client_name = isset($_POST['deal_client_name']) ? sanitize_text_field(wp_unslash($_POST['deal_client_name'])) : '';
         $phone = isset($_POST['deal_phone']) ? sanitize_text_field(wp_unslash($_POST['deal_phone'])) : '';
         $email = isset($_POST['deal_email']) ? sanitize_email(wp_unslash($_POST['deal_email'])) : '';
@@ -3649,9 +3698,7 @@ final class Harmat_Sales_Manager {
             exit;
         }
 
-        if (!isset($this->deal_stage_options()[$stage])) {
-            $stage = 'new';
-        }
+        $stage = $this->normalize_deal_stage_key($stage);
         if ($payment_method && !isset($this->payment_method_options()[$payment_method])) {
             $payment_method = '';
         }
@@ -3697,7 +3744,7 @@ final class Harmat_Sales_Manager {
             }
             $staff_stages = array_keys($this->sales_staff_deal_stage_options());
             if (!in_array($stage, $staff_stages, true)) {
-                $previous_stage = $deal_id && isset($deals[$deal_id]['stage']) ? (string) $deals[$deal_id]['stage'] : '';
+                $previous_stage = $deal_id && isset($deals[$deal_id]['stage']) ? $this->normalize_deal_stage_key($deals[$deal_id]['stage']) : '';
                 $stage = $previous_stage ?: 'new';
             }
             if ($source_type !== 'website') {
@@ -3860,6 +3907,7 @@ final class Harmat_Sales_Manager {
             'customer_account_created_at' => isset($previous_deal['customer_account_created_at']) ? (string) $previous_deal['customer_account_created_at'] : '',
             'customer_account_sent_at' => isset($previous_deal['customer_account_sent_at']) ? (string) $previous_deal['customer_account_sent_at'] : '',
             'customer_materials' => isset($previous_deal['customer_materials']) && is_array($previous_deal['customer_materials']) ? $previous_deal['customer_materials'] : array(),
+            'customer_requests' => isset($previous_deal['customer_requests']) && is_array($previous_deal['customer_requests']) ? $previous_deal['customer_requests'] : array(),
             'created_at' => $created_at,
             'updated_at' => $now,
             'updated_by' => get_current_user_id(),
@@ -3885,7 +3933,7 @@ final class Harmat_Sales_Manager {
 
         if ($sync_property) {
             $previous_property_id = absint($previous_deal['property_id'] ?? 0);
-            $previous_stage = (string) ($previous_deal['stage'] ?? '');
+            $previous_stage = $this->normalize_deal_stage_key($previous_deal['stage'] ?? '');
             if ($previous_property_id && ($previous_property_id !== $property_id || !$this->deal_stage_locks_property($stage))) {
                 $this->refresh_property_status_after_deal_change($previous_property_id, $deal_id, $deals);
             }
@@ -4381,10 +4429,6 @@ final class Harmat_Sales_Manager {
     }
 
     private function handle_deal_delete() {
-        if (!$this->can_delete_sales_records()) {
-            wp_die('Nincs jogosultság az értékesítési ügylet törléséhez.');
-        }
-
         $deal_id = isset($_POST['deal_id']) ? absint($_POST['deal_id']) : 0;
         $deals = $this->get_deals();
         if (!$deal_id || empty($deals[$deal_id])) {
@@ -4392,8 +4436,12 @@ final class Harmat_Sales_Manager {
         }
 
         $deal = $deals[$deal_id];
+        if (!$this->can_delete_deal_record($deal)) {
+            wp_die('Nincs jogosultság az értékesítési ügylet törléséhez.');
+        }
+
         $property_id = absint($deal['property_id'] ?? 0);
-        $stage = (string) ($deal['stage'] ?? '');
+        $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $this->cleanup_deleted_deal_assets($deal);
         unset($deals[$deal_id]);
         $this->save_deals($deals);
@@ -6882,7 +6930,7 @@ final class Harmat_Sales_Manager {
         $week_expected_close = 0;
         $overdue_payments = 0;
         foreach ($visible_deals as $deal) {
-            $stage = (string) ($deal['stage'] ?? '');
+            $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
             $expected_close = (string) ($deal['expected_close'] ?? '');
             if ($expected_close >= $today && $expected_close <= $week_end && !in_array($stage, array('closed', 'lost'), true)) {
                 $week_expected_close++;
@@ -6950,7 +6998,7 @@ final class Harmat_Sales_Manager {
         }
 
         foreach ($deals as $deal) {
-            $stage = isset($stage_options[$deal['stage'] ?? '']) ? (string) $deal['stage'] : 'new';
+            $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
             $stage_counts[$stage]++;
             if (in_array($stage, array('closed', 'lost'), true)) {
                 continue;
@@ -7093,7 +7141,7 @@ final class Harmat_Sales_Manager {
             echo '<div class="harmat-sales-dashboard-list">';
             foreach (array_slice(array_values($deals), 0, 5) as $deal) {
                 $stage_options = $this->deal_stage_options();
-                $stage = isset($stage_options[$deal['stage']]) ? $deal['stage'] : 'new';
+                $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
                 $deal_url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) ($deal['id'] ?? 0)));
                 $deal_property = $deal['property_id'] ? get_the_title((int) $deal['property_id']) : '暂未指定';
                 $deal_next = $deal['next_step'] ?: $this->format_followup_datetime($deal['next_followup'] ?? '');
@@ -7230,6 +7278,7 @@ final class Harmat_Sales_Manager {
             $row = array(
                 'kind' => 'lead',
                 'id' => (int) ($lead['id'] ?? 0),
+                'lead' => $lead,
                 'source' => $source,
                 'source_label' => $this->lead_source_label($lead),
                 'date' => $this->format_lead_datetime($lead['created_at'] ?? ''),
@@ -7353,7 +7402,10 @@ final class Harmat_Sales_Manager {
         if (!empty($row['edit_url'])) {
             echo '<a href="' . esc_url($row['edit_url']) . '">编辑客户</a>';
         }
-        if ($this->can_delete_sales_records()) {
+        $can_delete_row = $kind === 'website'
+            ? $this->can_delete_inquiry_record($id)
+            : (!empty($row['lead']) && $this->can_delete_lead_record($row['lead']) && (!$linked_deal || $this->can_delete_sales_records()));
+        if ($can_delete_row) {
             if ($kind === 'website') {
                 echo '<form method="post">';
                 wp_nonce_field('harmat_sales_action_delete_inquiry');
@@ -7906,7 +7958,7 @@ final class Harmat_Sales_Manager {
                 $payment_statuses[$payment_status] ?? $payment_status,
                 $deal['payment_due_date'] ?? '',
                 !empty($deal['contract_status']) && isset($contract_options[$deal['contract_status']]) ? $contract_options[$deal['contract_status']] : '',
-                !empty($deal['stage']) && isset($stage_options[$deal['stage']]) ? $stage_options[$deal['stage']] : '',
+                $stage_options[$this->normalize_deal_stage_key($deal['stage'] ?? '')] ?? '',
                 !empty($deal['source_type']) && isset($source_options[$deal['source_type']]) ? $source_options[$deal['source_type']] : '',
                 $broker ? $broker->display_name : '',
                 $deal['closed_at'] ?: ($deal['expected_close'] ?? ''),
@@ -8109,8 +8161,9 @@ final class Harmat_Sales_Manager {
 
         $stage_counts = array_fill_keys(array_keys($this->deal_stage_options()), 0);
         foreach ($deals as $deal) {
-            if (isset($stage_counts[$deal['stage']])) {
-                $stage_counts[$deal['stage']]++;
+            $stage_key = $this->normalize_deal_stage_key($deal['stage'] ?? '');
+            if (isset($stage_counts[$stage_key])) {
+                $stage_counts[$stage_key]++;
             }
         }
         $deal_filters = array(
@@ -8123,6 +8176,9 @@ final class Harmat_Sales_Manager {
             'contract' => isset($_GET['deal_contract']) ? sanitize_key(wp_unslash($_GET['deal_contract'])) : '',
             'followup' => isset($_GET['deal_followup']) ? sanitize_key(wp_unslash($_GET['deal_followup'])) : '',
         );
+        if ($deal_filters['stage'] !== '') {
+            $deal_filters['stage'] = $this->normalize_deal_stage_key($deal_filters['stage']);
+        }
         $filtered_deals = $this->filter_sales_deals($deals, $deal_filters);
         $filtered_deals = $this->sort_sales_deals_by_priority($filtered_deals);
         $editor_open = (bool) ($form['id'] || $lead_id || $inquiry_id || !$deals);
@@ -8130,6 +8186,7 @@ final class Harmat_Sales_Manager {
         if (!isset($source_options_for_form[$form['source_type']])) {
             $source_options_for_form[$form['source_type']] = $this->deal_source_options()[$form['source_type']] ?? $form['source_type'];
         }
+        $form['stage'] = $this->normalize_deal_stage_key($form['stage'] ?? '');
         $stage_options_for_form = $can_manage ? $this->deal_stage_options() : $this->sales_staff_deal_stage_options();
         if (!isset($stage_options_for_form[$form['stage']])) {
             $stage_options_for_form[$form['stage']] = $this->deal_stage_options()[$form['stage']] ?? $form['stage'];
@@ -8139,7 +8196,7 @@ final class Harmat_Sales_Manager {
 
         echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact">';
         echo '<article><small>全部跟单</small><strong>' . count($deals) . '</strong></article>';
-        echo '<article><small>看房/沟通</small><strong>' . ((int) $stage_counts['contacted'] + (int) $stage_counts['viewing'] + (int) $stage_counts['negotiation']) . '</strong></article>';
+        echo '<article><small>机会/沟通</small><strong>' . ((int) $stage_counts['new'] + (int) $stage_counts['viewing'] + (int) $stage_counts['negotiation']) . '</strong></article>';
         echo '<article><small>预订/合同</small><strong>' . ((int) $stage_counts['reserved'] + (int) $stage_counts['contract']) . '</strong></article>';
         echo '<article><small>成交</small><strong>' . (int) $stage_counts['closed'] . '</strong></article>';
         echo '<article><small>流失</small><strong>' . (int) $stage_counts['lost'] . '</strong></article>';
@@ -8251,7 +8308,7 @@ final class Harmat_Sales_Manager {
             echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'deals'))) . '">取消编辑</a>';
         }
         echo '</div></form>';
-        if ($form['id'] && $this->can_delete_sales_records()) {
+        if ($form['id'] && $this->can_delete_deal_record($form)) {
             echo '<div class="harmat-sales-danger-zone"><div><strong>删除这个销售跟单</strong><span>删除后相关客户附件和客户中心账号也会同步清理，请确认不是正式成交资料后再操作。</span></div>';
             echo '<form method="post">';
             wp_nonce_field('harmat_sales_action_delete_deal');
@@ -8310,7 +8367,7 @@ final class Harmat_Sales_Manager {
             $columns[$stage] = array();
         }
         foreach ($deals as $deal) {
-            $stage = isset($stage_options[$deal['stage'] ?? '']) ? (string) $deal['stage'] : 'new';
+            $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
             $columns[$stage][] = $deal;
         }
 
@@ -8337,7 +8394,7 @@ final class Harmat_Sales_Manager {
 
     private function render_sales_deal_stage_board_card($deal) {
         $stage_options = $this->deal_stage_options();
-        $stage = isset($stage_options[$deal['stage'] ?? '']) ? (string) $deal['stage'] : 'new';
+        $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
         $followup_meta = $this->sales_deal_followup_meta($deal);
         $amount = (int) ($deal['amount'] ?? 0);
@@ -8354,7 +8411,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function sales_deal_followup_meta($deal) {
-        $stage = $deal['stage'] ?? '';
+        $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         if (in_array($stage, array('closed', 'lost'), true)) {
             return array(
                 'class' => 'done',
@@ -8519,7 +8576,7 @@ final class Harmat_Sales_Manager {
             if (!empty($filters['source']) && ($deal['source_type'] ?? '') !== $filters['source']) {
                 return false;
             }
-            if (!empty($filters['stage']) && ($deal['stage'] ?? '') !== $filters['stage']) {
+            if (!empty($filters['stage']) && $this->normalize_deal_stage_key($deal['stage'] ?? '') !== $this->normalize_deal_stage_key($filters['stage'])) {
                 return false;
             }
             if (!empty($filters['broker']) && (int) ($deal['broker_id'] ?? 0) !== (int) $filters['broker']) {
@@ -10452,7 +10509,7 @@ final class Harmat_Sales_Manager {
         }
         echo '</td>';
         echo '<td class="harmat-sales-note-cell">' . esc_html($data['message'] ?: '-') . ($data['property_url'] ? '<small><a href="' . esc_url($data['property_url']) . '" target="_blank" rel="noopener">打开房源</a></small>' : '') . '<small><a href="' . esc_url($this->sales_portal_url(array('view' => 'deals', 'inquiry_id' => $post_id))) . '">生成跟单</a></small>';
-        if ($this->can_delete_sales_records()) {
+        if ($this->can_delete_inquiry_record($post_id)) {
             echo '<form method="post" class="harmat-sales-inline-form">';
             wp_nonce_field('harmat_sales_action_delete_inquiry');
             echo '<input type="hidden" name="harmat_sales_action" value="delete_inquiry">';
@@ -10469,7 +10526,7 @@ final class Harmat_Sales_Manager {
         $payment_options = $this->payment_method_options();
         $payment_statuses = $this->payment_status_options();
         $contract_options = $this->contract_status_options();
-        $stage = isset($stage_options[$deal['stage']]) ? $deal['stage'] : 'new';
+        $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $deal['payment_received'] ?? '', $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
         $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
         $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
@@ -10523,7 +10580,7 @@ final class Harmat_Sales_Manager {
         if ($stage === 'closed' && $this->can_view_customer_profile($deal)) {
             echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'customers', 'customer_id' => (int) $deal['id']))) . '">档案</a>';
         }
-        if ($this->can_delete_sales_records()) {
+        if ($this->can_delete_deal_record($deal)) {
             echo '<form method="post">';
             wp_nonce_field('harmat_sales_action_delete_deal');
             echo '<input type="hidden" name="harmat_sales_action" value="delete_deal">';
@@ -10542,7 +10599,7 @@ final class Harmat_Sales_Manager {
         $payment_statuses = $this->payment_status_options();
         $contract_options = $this->contract_status_options();
         $source_options = $this->deal_source_options();
-        $stage = isset($stage_options[$deal['stage'] ?? '']) ? $deal['stage'] : 'new';
+        $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $deal['payment_received'] ?? '', $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
         $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
         $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
@@ -10580,7 +10637,7 @@ final class Harmat_Sales_Manager {
         if ($stage === 'closed' && $this->can_view_customer_profile($deal)) {
             echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'customers', 'customer_id' => (int) $deal['id']))) . '">档案</a>';
         }
-        if ($this->can_delete_sales_records()) {
+        if ($this->can_delete_deal_record($deal)) {
             echo '<form method="post" class="harmat-sales-card-delete-form">';
             wp_nonce_field('harmat_sales_action_delete_deal');
             echo '<input type="hidden" name="harmat_sales_action" value="delete_deal">';
@@ -10632,7 +10689,7 @@ final class Harmat_Sales_Manager {
         echo '</td>';
         echo '<td class="harmat-sales-note-cell">' . esc_html($lead['note'] ?: '-') . '</td>';
         echo '<td class="harmat-sales-actions"><a href="' . esc_url($this->sales_portal_url(array('view' => 'clients', 'edit_lead' => (int) $lead['id']))) . '">编辑</a><a href="' . esc_url($this->sales_portal_url(array('view' => 'deals', 'lead_id' => (int) $lead['id']))) . '">跟单</a>';
-        if ($this->can_delete_sales_records()) {
+        if ($this->can_delete_lead_record($lead) && (!$this->find_deal_by_lead_id((int) ($lead['id'] ?? 0)) || $this->can_delete_sales_records())) {
             echo '<form method="post">';
             wp_nonce_field('harmat_sales_action_delete_lead');
             echo '<input type="hidden" name="harmat_sales_action" value="delete_lead">';
@@ -11250,6 +11307,7 @@ final class Harmat_Sales_Manager {
                 'updated_by' => 0,
             ), $deal);
             $deals[$id]['id'] = $id;
+            $deals[$id]['stage'] = $this->normalize_deal_stage_key($deals[$id]['stage'] ?? '');
             if (empty($deals[$id]['crm_code'])) {
                 $deals[$id]['crm_code'] = $this->generate_deal_crm_code($id, $deals[$id]['created_at'] ?? '');
             }
@@ -11488,7 +11546,7 @@ final class Harmat_Sales_Manager {
         }
 
         foreach ($visible_deals as $deal) {
-            $stage = (string) ($deal['stage'] ?? 'new');
+            $stage = $this->normalize_deal_stage_key($deal['stage'] ?? 'new');
             if (in_array($stage, array('closed', 'lost'), true) || !empty($deal['next_followup'])) {
                 continue;
             }
@@ -12512,7 +12570,6 @@ final class Harmat_Sales_Manager {
     private function deal_stage_options() {
         return array(
             'new' => '新机会 / Új lehetőség',
-            'contacted' => '已联系 / Kapcsolatban',
             'viewing' => '已约看房 / Megtekintés',
             'negotiation' => '价格沟通 / Egyeztetés',
             'reserved' => '已预订 / Foglalva',
@@ -12520,6 +12577,16 @@ final class Harmat_Sales_Manager {
             'closed' => '已成交 / Lezárva',
             'lost' => '流失 / Elveszett',
         );
+    }
+
+    private function normalize_deal_stage_key($stage) {
+        $stage = sanitize_key((string) $stage);
+        if ($stage === 'contacted') {
+            return 'new';
+        }
+
+        $valid = array('new', 'viewing', 'negotiation', 'reserved', 'contract', 'closed', 'lost');
+        return in_array($stage, $valid, true) ? $stage : 'new';
     }
 
     private function sales_staff_deal_stage_options() {
@@ -12581,6 +12648,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function deal_stage_to_lead_status($stage) {
+        $stage = $this->normalize_deal_stage_key($stage);
         if ($stage === 'viewing') {
             return 'visited';
         }
@@ -12593,7 +12661,7 @@ final class Harmat_Sales_Manager {
         if ($stage === 'lost') {
             return 'lost';
         }
-        if (in_array($stage, array('contacted', 'negotiation'), true)) {
+        if ($stage === 'negotiation') {
             return 'contacted';
         }
         return 'new';
