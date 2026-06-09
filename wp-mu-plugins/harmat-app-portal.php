@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat App Portal
  * Description: Lightweight mobile app entry for buyers, sales staff, and brokers.
- * Version: 0.1.1
+ * Version: 0.1.2
  */
 
 defined('ABSPATH') || exit;
@@ -71,7 +71,7 @@ function harmat_app_portal_service_worker_20260609() {
     nocache_headers();
     header('Content-Type: application/javascript; charset=utf-8');
     ?>
-const HARMAT_APP_CACHE = 'harmat-app-v2';
+const HARMAT_APP_CACHE = 'harmat-app-v3';
 const HARMAT_APP_URLS = [
   '/app/?wp_lang=hu_HU',
   '/app/?wp_lang=zh_CN'
@@ -134,6 +134,10 @@ function harmat_app_portal_text_20260609($lang) {
             'privacy' => '隐私政策',
             'visual_title' => 'Harmat utca 22.',
             'visual_subtitle' => '1105 布达佩斯',
+            'continue_tag' => '已登录',
+            'continue_title' => '继续进入当前工作台',
+            'continue_prefix' => '当前账号可以直接打开',
+            'continue_button' => '继续进入',
             'roles' => array(
                 array(
                     'key' => 'buyer',
@@ -180,6 +184,10 @@ function harmat_app_portal_text_20260609($lang) {
         'privacy' => 'Adatvédelem',
         'visual_title' => 'Harmat utca 22.',
         'visual_subtitle' => '1105 Budapest',
+        'continue_tag' => 'Bejelentkezve',
+        'continue_title' => 'Folytatás az aktuális felületen',
+        'continue_prefix' => 'A jelenlegi fiókkal közvetlenül megnyitható',
+        'continue_button' => 'Tovább',
         'roles' => array(
             array(
                 'key' => 'buyer',
@@ -212,10 +220,43 @@ function harmat_app_portal_text_20260609($lang) {
     );
 }
 
+function harmat_app_portal_current_workspace_20260609($text, $locale) {
+    if (!is_user_logged_in()) {
+        return null;
+    }
+
+    $user = wp_get_current_user();
+    $roles = (array) $user->roles;
+    $role_map = array();
+    foreach ($text['roles'] as $role) {
+        $role_map[$role['key']] = $role;
+    }
+
+    if (current_user_can('manage_options') || in_array('harmat_sales_manager', $roles, true) || in_array('harmat_sales_staff', $roles, true)) {
+        $workspace = $role_map['sales'] ?? null;
+    } elseif (in_array('harmat_broker_viewer', $roles, true)) {
+        $workspace = $role_map['agent'] ?? null;
+    } elseif (current_user_can('harmat_view_customer_portal') || in_array('harmat_customer_owner', $roles, true)) {
+        $workspace = $role_map['buyer'] ?? null;
+    } else {
+        return null;
+    }
+
+    if (!$workspace) {
+        return null;
+    }
+
+    $workspace['url'] = add_query_arg('wp_lang', $locale, home_url($workspace['path']));
+    $workspace['user_label'] = $user->display_name ?: $user->user_login;
+
+    return $workspace;
+}
+
 function harmat_app_portal_render_20260609() {
     $lang = harmat_app_portal_lang_20260609();
     $locale = harmat_app_portal_locale_20260609($lang);
     $text = harmat_app_portal_text_20260609($lang);
+    $current_workspace = harmat_app_portal_current_workspace_20260609($text, $locale);
     $logo = harmat_app_portal_logo_20260609(192);
     $hero_image = home_url('/wp-content/uploads/2026/02/Harmat22_latvany-3-1536x864.jpg');
     $manifest_url = home_url('/app/manifest.webmanifest');
@@ -254,6 +295,11 @@ function harmat_app_portal_render_20260609() {
         .harmat-app-eyebrow{margin:0 0 10px;color:#8a5a18;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
         .harmat-app-hero h1{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:clamp(40px,7vw,82px);font-weight:500;line-height:.98}
         .harmat-app-hero p{max-width:620px;margin:18px 0 0;color:#526069;font-size:17px;line-height:1.65}
+        .harmat-app-continue{display:flex;align-items:center;justify-content:space-between;gap:16px;width:min(100%,780px);padding:16px 18px;border:1px solid rgba(168,118,45,.28);border-radius:8px;background:#fff;box-shadow:0 14px 35px rgba(39,49,56,.08)}
+        .harmat-app-continue small{display:block;margin-bottom:4px;color:#1f7a4d;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+        .harmat-app-continue strong{display:block;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:25px;font-weight:500;line-height:1.12}
+        .harmat-app-continue p{margin:6px 0 0;color:#687178;font-size:13px;line-height:1.45}
+        .harmat-app-continue a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:6px;background:#253137;color:#fff;font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap}
         .harmat-app-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:auto}
         .harmat-app-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:12px;min-height:260px;padding:18px;border:1px solid rgba(138,90,24,.2);border-radius:8px;background:#fff;color:#253137;text-decoration:none;box-shadow:0 18px 45px rgba(39,49,56,.08);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
         .harmat-app-card:hover{transform:translateY(-2px);border-color:#a8762d;box-shadow:0 24px 55px rgba(39,49,56,.12)}
@@ -280,6 +326,9 @@ function harmat_app_portal_render_20260609() {
             .harmat-app-card h2{font-size:clamp(13px,3.8vw,18px);line-height:1.08}
             .harmat-app-card small{font-size:9px;letter-spacing:.03em;line-height:1.25}
             .harmat-app-card p,.harmat-app-card span:last-child{display:none}
+            .harmat-app-continue{display:grid;gap:12px;padding:14px}
+            .harmat-app-continue strong{font-size:22px}
+            .harmat-app-continue a{width:100%}
             .harmat-app-top{align-items:flex-start}
             .harmat-app-lang{flex:0 0 auto}
         }
@@ -313,6 +362,16 @@ function harmat_app_portal_render_20260609() {
                 <h1><?php echo esc_html($text['headline']); ?></h1>
                 <p><?php echo esc_html($text['lead']); ?></p>
             </section>
+            <?php if ($current_workspace) : ?>
+                <section class="harmat-app-continue" aria-label="<?php echo esc_attr($text['continue_title']); ?>">
+                    <div>
+                        <small><?php echo esc_html($text['continue_tag']); ?></small>
+                        <strong><?php echo esc_html($text['continue_title']); ?></strong>
+                        <p><?php echo esc_html($text['continue_prefix'] . ': ' . $current_workspace['label'] . ' / ' . $current_workspace['user_label']); ?></p>
+                    </div>
+                    <a href="<?php echo esc_url($current_workspace['url']); ?>"><?php echo esc_html($text['continue_button']); ?></a>
+                </section>
+            <?php endif; ?>
             <section class="harmat-app-grid" aria-label="App portals">
                 <?php foreach ($text['roles'] as $role) : ?>
                     <?php $url = add_query_arg('wp_lang', $locale, home_url($role['path'])); ?>
