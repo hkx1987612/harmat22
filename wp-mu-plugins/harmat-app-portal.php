@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat App Portal
  * Description: Lightweight mobile app entry for buyers, sales staff, and brokers.
- * Version: 0.3.0
+ * Version: 0.4.0
  */
 
 defined('ABSPATH') || exit;
@@ -77,10 +77,12 @@ function harmat_app_portal_service_worker_20260609() {
     nocache_headers();
     header('Content-Type: application/javascript; charset=utf-8');
     ?>
-const HARMAT_APP_CACHE = 'harmat-app-v5';
+const HARMAT_APP_CACHE = 'harmat-app-v6';
 const HARMAT_APP_URLS = [
   '/app/?wp_lang=hu_HU',
-  '/app/?wp_lang=zh_CN'
+  '/app/?wp_lang=zh_CN',
+  '/app/demo/?wp_lang=hu_HU',
+  '/app/demo/?wp_lang=zh_CN'
 ];
 
 self.addEventListener('install', function(event) {
@@ -139,6 +141,7 @@ function harmat_app_portal_text_20260609($lang) {
             'install' => '可添加到手机桌面',
             'install_cta' => '安装 App',
             'privacy' => '隐私政策',
+            'demo_cta' => '查看试用版',
             'shortcuts_title' => '常用操作',
             'shortcuts_intro' => '选择身份后，也可以直接进入对应模块。',
             'visual_title' => 'Harmat utca 22.',
@@ -210,6 +213,7 @@ function harmat_app_portal_text_20260609($lang) {
         'install' => 'Hozzáadható a telefon kezdőképernyőjéhez',
         'install_cta' => 'App telepítése',
         'privacy' => 'Adatvédelem',
+        'demo_cta' => 'Próbaverzió',
         'shortcuts_title' => 'Gyors műveletek',
         'shortcuts_intro' => 'Válasszon szerepet, vagy nyissa meg közvetlenül a gyakori modulokat.',
         'visual_title' => 'Harmat utca 22.',
@@ -283,6 +287,274 @@ function harmat_app_portal_module_url_20260609($module, $locale) {
     }
 
     return $url;
+}
+
+function harmat_app_portal_demo_data_20260609($lang) {
+    if ($lang === 'zh') {
+        return array(
+            'title' => 'Harmat App 试用版',
+            'eyebrow' => '功能试用',
+            'headline' => '完整 App 工作台',
+            'intro' => '这里先展示买房者、销售和经纪人的完整手机端逻辑。当前为试用界面，不会修改真实数据。',
+            'notice' => '试用版只用于确认界面和流程；正式数据仍在原有客户、销售、经纪人后台中。',
+            'live_entry' => '返回正式入口',
+            'open_live' => '进入正式模块',
+            'roles_label' => '身份选择',
+            'language' => '语言',
+            'hu_label' => '匈牙利语',
+            'zh_label' => '中文',
+            'panels' => array(
+                'buyer' => array(
+                    'mark' => '客',
+                    'label' => '买房者',
+                    'title' => '买房者售后中心',
+                    'summary' => '房源、付款、合同文件、项目进度和售后事项集中在一个手机页面。',
+                    'kpis' => array(
+                        array('label' => '当前房源', 'value' => 'A1-1-L1'),
+                        array('label' => '付款进度', 'value' => '25%'),
+                        array('label' => '文件', 'value' => '3'),
+                        array('label' => '下个节点', 'value' => '2026-12-31'),
+                    ),
+                    'modules' => array(
+                        array('label' => '房源资料', 'detail' => '户型、面积、价格、房号和交付资料集中查看。', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
+                        array('label' => '付款计划', 'detail' => '首付、阶段款、尾款和已付款比例清晰显示。', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
+                        array('label' => '合同文件', 'detail' => '合同、付款凭证、附件和交付材料统一下载。', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
+                        array('label' => '售后事项', 'detail' => '客户提交问题后，销售端可以继续跟进处理。', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
+                        array('label' => '项目进度', 'detail' => '施工节点、照片和公告以后可作为售后内容更新。', 'path' => '/client/', 'anchor' => 'harmat-customer-progress'),
+                    ),
+                ),
+                'sales' => array(
+                    'mark' => '销',
+                    'label' => '销售',
+                    'title' => '销售移动工作台',
+                    'summary' => '询价、分配、跟单、成交客户、付款提醒和房源库存从手机端快速进入。',
+                    'kpis' => array(
+                        array('label' => '今日待办', 'value' => '8'),
+                        array('label' => '待指派', 'value' => '3'),
+                        array('label' => '逾期跟进', 'value' => '2'),
+                        array('label' => '本周询价', 'value' => '24'),
+                    ),
+                    'modules' => array(
+                        array('label' => '今日待办', 'detail' => '按今天、逾期、未来 7 天集中处理任务。', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
+                        array('label' => '询价汇总', 'detail' => '网站询价、经纪人询价和自来客户统一汇总。', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
+                        array('label' => '销售漏斗', 'detail' => '从新机会到预订、合同、成交形成自动化 CRM。', 'path' => '/sales/', 'query' => array('view' => 'deals')),
+                        array('label' => '成交客户', 'detail' => '维护客户档案、售后跟单、文件和后续事项。', 'path' => '/sales/', 'query' => array('view' => 'customers')),
+                        array('label' => '房源库存', 'detail' => '查看在售、预订、出售状态以及面积和价格筛选。', 'path' => '/sales/', 'query' => array('view' => 'properties')),
+                    ),
+                ),
+                'agent' => array(
+                    'mark' => '经',
+                    'label' => '经纪人',
+                    'title' => '经纪人合作中心',
+                    'summary' => '客户登记、跟进任务、房源查询、佣金记录和规则说明统一放在经纪人通道。',
+                    'kpis' => array(
+                        array('label' => '保护客户', 'value' => '12'),
+                        array('label' => '待跟进', 'value' => '4'),
+                        array('label' => '可售房源', 'value' => '124'),
+                        array('label' => '佣金记录', 'value' => '5'),
+                    ),
+                    'modules' => array(
+                        array('label' => '客户登记', 'detail' => '登记客户姓名、电话、意向房源和下次跟进时间。', 'path' => '/agent/'),
+                        array('label' => '我的客户', 'detail' => '查看客户保护期、状态、备注和后续跟进。', 'path' => '/agent/', 'query' => array('view' => 'clients')),
+                        array('label' => '待跟进', 'detail' => '把需要联系的客户变成清晰的任务列表。', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
+                        array('label' => '房源库存', 'detail' => '按房号、楼栋、面积、价格和状态筛选房源。', 'path' => '/agent/', 'query' => array('view' => 'properties')),
+                        array('label' => '规则说明', 'detail' => '佣金规则、客户保护和合作流程集中说明。', 'path' => '/agent/', 'query' => array('view' => 'rules')),
+                    ),
+                ),
+            ),
+        );
+    }
+
+    return array(
+        'title' => 'Harmat App próbaverzió',
+        'eyebrow' => 'Funkciópróba',
+        'headline' => 'Teljes mobil munkafelület',
+        'intro' => 'Ez a próbaverzió bemutatja a vevői, értékesítési és közvetítői mobil logikát. Nem módosít valódi adatot.',
+        'notice' => 'A próbaverzió a felület és a folyamat ellenőrzésére szolgál; az éles adatok továbbra is a meglévő portálokon maradnak.',
+        'live_entry' => 'Vissza az éles belépéshez',
+        'open_live' => 'Éles modul megnyitása',
+        'roles_label' => 'Szerepválasztás',
+        'language' => 'Nyelv',
+        'hu_label' => 'Magyar',
+        'zh_label' => 'Kínai',
+        'panels' => array(
+            'buyer' => array(
+                'mark' => 'V',
+                'label' => 'Vevő',
+                'title' => 'Vevői ügyfélközpont',
+                'summary' => 'Lakásadatok, fizetés, szerződéses fájlok, projektállapot és ügyintézés egy mobil nézetben.',
+                'kpis' => array(
+                    array('label' => 'Lakás', 'value' => 'A1-1-L1'),
+                    array('label' => 'Fizetés', 'value' => '25%'),
+                    array('label' => 'Fájl', 'value' => '3'),
+                    array('label' => 'Következő határidő', 'value' => '2026-12-31'),
+                ),
+                'modules' => array(
+                    array('label' => 'Lakásadatok', 'detail' => 'Alaprajz, terület, ár, lakásszám és átadási információk.', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
+                    array('label' => 'Fizetési terv', 'detail' => 'Előleg, ütemezett részletek, fennmaradó összeg és fizetési arány.', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
+                    array('label' => 'Dokumentumok', 'detail' => 'Szerződés, bizonylatok, mellékletek és ügyfélanyagok letöltése.', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
+                    array('label' => 'Ügyintézés', 'detail' => 'A vevő kérdést küldhet, az értékesítés pedig követni tudja.', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
+                    array('label' => 'Projektállapot', 'detail' => 'Később építési állapot, fotók és közlemények jelenhetnek meg.', 'path' => '/client/', 'anchor' => 'harmat-customer-progress'),
+                ),
+            ),
+            'sales' => array(
+                'mark' => 'É',
+                'label' => 'Értékesítés',
+                'title' => 'Értékesítési mobil munkafelület',
+                'summary' => 'Érdeklődések, kiosztás, ügykövetés, lezárt ügyfelek, fizetések és lakáskészlet gyors elérése.',
+                'kpis' => array(
+                    array('label' => 'Mai teendő', 'value' => '8'),
+                    array('label' => 'Kiosztásra vár', 'value' => '3'),
+                    array('label' => 'Lejárt követés', 'value' => '2'),
+                    array('label' => 'Heti érdeklődés', 'value' => '24'),
+                ),
+                'modules' => array(
+                    array('label' => 'Teendők', 'detail' => 'Mai, lejárt és következő 7 napos feladatok egy listában.', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
+                    array('label' => 'Érdeklődések', 'detail' => 'Weboldali, közvetítői és saját érdeklődések közös nézete.', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
+                    array('label' => 'Értékesítési ügyek', 'detail' => 'CRM folyamat az új lehetőségtől a foglaláson át a lezárásig.', 'path' => '/sales/', 'query' => array('view' => 'deals')),
+                    array('label' => 'Ügyfelek', 'detail' => 'Lezárt ügyfelek, utógondozás, fájlok és következő lépések.', 'path' => '/sales/', 'query' => array('view' => 'customers')),
+                    array('label' => 'Lakáskészlet', 'detail' => 'Elérhető, foglalt és eladott lakások szűrése ár és terület szerint.', 'path' => '/sales/', 'query' => array('view' => 'properties')),
+                ),
+            ),
+            'agent' => array(
+                'mark' => 'K',
+                'label' => 'Közvetítő',
+                'title' => 'Közvetítői partnerközpont',
+                'summary' => 'Ügyfélrögzítés, követési feladatok, lakáskeresés, jutalékrekordok és szabályok egy helyen.',
+                'kpis' => array(
+                    array('label' => 'Védett ügyfél', 'value' => '12'),
+                    array('label' => 'Teendő', 'value' => '4'),
+                    array('label' => 'Elérhető lakás', 'value' => '124'),
+                    array('label' => 'Jutalékrekord', 'value' => '5'),
+                ),
+                'modules' => array(
+                    array('label' => 'Ügyfélrögzítés', 'detail' => 'Név, telefon, érdeklődött lakás és következő kapcsolatfelvétel.', 'path' => '/agent/'),
+                    array('label' => 'Ügyfelek', 'detail' => 'Védelmi idő, státusz, megjegyzés és következő feladat.', 'path' => '/agent/', 'query' => array('view' => 'clients')),
+                    array('label' => 'Teendők', 'detail' => 'A következő kapcsolattartások feladatlistává alakulnak.', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
+                    array('label' => 'Lakások', 'detail' => 'Lakásszám, épület, terület, ár és státusz szerinti keresés.', 'path' => '/agent/', 'query' => array('view' => 'properties')),
+                    array('label' => 'Szabályok', 'detail' => 'Jutalék, ügyfélvédelem és együttműködési folyamat.', 'path' => '/agent/', 'query' => array('view' => 'rules')),
+                ),
+            ),
+        ),
+    );
+}
+
+function harmat_app_portal_render_demo_20260609() {
+    $lang = harmat_app_portal_lang_20260609();
+    $locale = harmat_app_portal_locale_20260609($lang);
+    $demo = harmat_app_portal_demo_data_20260609($lang);
+    $logo = harmat_app_portal_logo_20260609(192);
+    $app_url = add_query_arg('wp_lang', $locale, home_url('/app/'));
+
+    status_header(200);
+    nocache_headers();
+    header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
+    ?>
+<!doctype html>
+<html lang="<?php echo esc_attr($lang === 'zh' ? 'zh-Hans' : 'hu'); ?>">
+<head>
+    <meta charset="<?php echo esc_attr(get_bloginfo('charset')); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#253137">
+    <title><?php echo esc_html($demo['title']); ?></title>
+    <style>
+        *{box-sizing:border-box}
+        html,body{min-height:100%;margin:0}
+        body{background:#f7f0e4;color:#253137;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif}
+        .happ-demo-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:24px 0 42px}
+        .happ-demo-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:16px;border:1px solid #ead8b8;border-radius:18px;background:#fff;box-shadow:0 14px 34px rgba(70,54,28,.06)}
+        .happ-demo-brand{display:flex;align-items:center;gap:12px;color:#253137;text-decoration:none}.happ-demo-brand img{width:38px;height:38px;object-fit:contain}.happ-demo-brand span{display:block;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.happ-demo-brand strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:21px;font-weight:500}
+        .happ-demo-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}.happ-demo-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border:1px solid #ead8b8;border-radius:999px;background:#fffaf3;color:#8a5a18;font-size:13px;font-weight:900;text-decoration:none}.happ-demo-actions a.is-active{background:#253137;color:#fff;border-color:#253137}
+        .happ-demo-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.42fr);gap:16px;align-items:stretch;margin-bottom:16px}
+        .happ-demo-intro,.happ-demo-notice{padding:22px;border:1px solid #ead8b8;border-radius:22px;background:linear-gradient(135deg,#fffaf1,#fff);box-shadow:0 18px 45px rgba(70,54,28,.08)}
+        .happ-demo-intro small{display:block;margin-bottom:8px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.happ-demo-intro h1{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,5vw,58px);font-weight:500;line-height:1;letter-spacing:0}.happ-demo-intro p,.happ-demo-notice p{margin:10px 0 0;color:#5d6670;line-height:1.65}
+        .happ-demo-notice{display:grid;align-content:center;background:#253137;color:#fff}.happ-demo-notice strong{font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.happ-demo-notice p{color:#d7e0e3}
+        .happ-demo-role-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px;padding:8px;border:1px solid #ead8b8;border-radius:18px;background:#fff}
+        .happ-demo-role-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:0;border-radius:12px;background:#fffaf3;color:#253137;font:inherit;font-weight:900;cursor:pointer}.happ-demo-role-tabs button span{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#253137;color:#fff;font-size:12px}.happ-demo-role-tabs button.is-active{background:#a8762d;color:#fff}.happ-demo-role-tabs button.is-active span{background:#fff;color:#a8762d}
+        .happ-demo-panel{display:none}.happ-demo-panel.is-active{display:grid;gap:16px}
+        .happ-demo-panel-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:22px;border:1px solid #ead8b8;border-radius:22px;background:#fff;box-shadow:0 18px 45px rgba(70,54,28,.08)}
+        .happ-demo-panel-head h2{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:34px;font-weight:500;letter-spacing:0}.happ-demo-panel-head p{max-width:760px;margin:7px 0 0;color:#687178;line-height:1.6}.happ-demo-panel-head>a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:10px;background:#253137;color:#fff;font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap}
+        .happ-demo-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.happ-demo-kpis article{padding:15px;border:1px solid #ead8b8;border-radius:16px;background:#fff}.happ-demo-kpis small{display:block;color:#a5742c;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.happ-demo-kpis strong{display:block;margin-top:7px;color:#253137;font-size:24px;line-height:1.1;overflow-wrap:anywhere}
+        .happ-demo-modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.happ-demo-module{display:grid;grid-template-rows:auto auto 1fr auto;gap:9px;min-height:198px;padding:16px;border:1px solid #ead8b8;border-left:4px solid #a8762d;border-radius:16px;background:#fffaf3;color:#253137;text-decoration:none}.happ-demo-module b{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:#253137;color:#fff;font-size:12px}.happ-demo-module strong{font-size:18px}.happ-demo-module p{margin:0;color:#5d6670;font-size:13px;line-height:1.55}.happ-demo-module span{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 10px;border-radius:9px;background:#a8762d;color:#fff;font-size:12px;font-weight:900}
+        @media(max-width:760px){.happ-demo-shell{width:min(100% - 20px,720px);padding-top:12px}.happ-demo-top,.happ-demo-hero,.happ-demo-panel-head{grid-template-columns:1fr;display:grid}.happ-demo-actions{justify-content:flex-start}.happ-demo-role-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.happ-demo-role-tabs button{display:grid;gap:4px;min-height:74px;padding:8px 4px;font-size:12px}.happ-demo-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.happ-demo-panel-head>a{width:100%}.happ-demo-modules{grid-template-columns:1fr}.happ-demo-module{min-height:0}.happ-demo-intro,.happ-demo-notice,.happ-demo-panel-head{padding:18px}}
+    </style>
+</head>
+<body>
+    <main class="happ-demo-shell">
+        <header class="happ-demo-top">
+            <a class="happ-demo-brand" href="<?php echo esc_url($app_url); ?>">
+                <img src="<?php echo esc_url($logo); ?>" alt="Harmat">
+                <span>Harmat Lakópark</span>
+                <strong>Harmat App</strong>
+            </a>
+            <nav class="happ-demo-actions" aria-label="<?php echo esc_attr($demo['language']); ?>">
+                <a class="<?php echo $lang === 'hu' ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('wp_lang', 'hu_HU', home_url('/app/demo/'))); ?>"><?php echo esc_html($demo['hu_label']); ?></a>
+                <a class="<?php echo $lang === 'zh' ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('wp_lang', 'zh_CN', home_url('/app/demo/'))); ?>"><?php echo esc_html($demo['zh_label']); ?></a>
+                <a href="<?php echo esc_url($app_url); ?>"><?php echo esc_html($demo['live_entry']); ?></a>
+            </nav>
+        </header>
+        <section class="happ-demo-hero">
+            <div class="happ-demo-intro">
+                <small><?php echo esc_html($demo['eyebrow']); ?></small>
+                <h1><?php echo esc_html($demo['headline']); ?></h1>
+                <p><?php echo esc_html($demo['intro']); ?></p>
+            </div>
+            <aside class="happ-demo-notice">
+                <strong>Demo</strong>
+                <p><?php echo esc_html($demo['notice']); ?></p>
+            </aside>
+        </section>
+        <nav class="happ-demo-role-tabs" aria-label="<?php echo esc_attr($demo['roles_label']); ?>">
+            <?php foreach ($demo['panels'] as $key => $panel) : ?>
+                <button type="button" class="<?php echo $key === 'buyer' ? 'is-active' : ''; ?>" data-demo-role="<?php echo esc_attr($key); ?>"><span><?php echo esc_html($panel['mark']); ?></span><?php echo esc_html($panel['label']); ?></button>
+            <?php endforeach; ?>
+        </nav>
+        <?php foreach ($demo['panels'] as $key => $panel) : ?>
+            <?php $primary_module = $panel['modules'][0] ?? array('path' => '/app/'); ?>
+            <section class="happ-demo-panel <?php echo $key === 'buyer' ? 'is-active' : ''; ?>" data-demo-panel="<?php echo esc_attr($key); ?>">
+                <header class="happ-demo-panel-head">
+                    <div>
+                        <h2><?php echo esc_html($panel['title']); ?></h2>
+                        <p><?php echo esc_html($panel['summary']); ?></p>
+                    </div>
+                    <a href="<?php echo esc_url(harmat_app_portal_module_url_20260609($primary_module, $locale)); ?>"><?php echo esc_html($demo['open_live']); ?></a>
+                </header>
+                <section class="happ-demo-kpis" aria-label="<?php echo esc_attr($panel['title']); ?>">
+                    <?php foreach ($panel['kpis'] as $kpi) : ?>
+                        <article><small><?php echo esc_html($kpi['label']); ?></small><strong><?php echo esc_html($kpi['value']); ?></strong></article>
+                    <?php endforeach; ?>
+                </section>
+                <section class="happ-demo-modules">
+                    <?php foreach ($panel['modules'] as $index => $module) : ?>
+                        <a class="happ-demo-module" href="<?php echo esc_url(harmat_app_portal_module_url_20260609($module, $locale)); ?>">
+                            <b><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></b>
+                            <strong><?php echo esc_html($module['label']); ?></strong>
+                            <p><?php echo esc_html($module['detail']); ?></p>
+                            <span><?php echo esc_html($demo['open_live']); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </section>
+            </section>
+        <?php endforeach; ?>
+    </main>
+    <script>
+        (function(){
+            var buttons = document.querySelectorAll('[data-demo-role]');
+            var panels = document.querySelectorAll('[data-demo-panel]');
+            function activate(role) {
+                buttons.forEach(function(button) { button.classList.toggle('is-active', button.getAttribute('data-demo-role') === role); });
+                panels.forEach(function(panel) { panel.classList.toggle('is-active', panel.getAttribute('data-demo-panel') === role); });
+            }
+            buttons.forEach(function(button) {
+                button.addEventListener('click', function() { activate(button.getAttribute('data-demo-role')); });
+            });
+        })();
+    </script>
+</body>
+</html>
+    <?php
+    exit;
 }
 
 function harmat_app_portal_current_workspace_20260609($text, $locale) {
@@ -488,6 +760,7 @@ function harmat_app_portal_render_20260609() {
             <footer class="harmat-app-foot">
                 <span><?php echo esc_html($text['install']); ?></span>
                 <button class="harmat-app-install" type="button" hidden><?php echo esc_html($text['install_cta']); ?></button>
+                <a href="<?php echo esc_url(add_query_arg('wp_lang', $locale, home_url('/app/demo/'))); ?>"><?php echo esc_html($text['demo_cta']); ?></a>
                 <a href="<?php echo esc_url(home_url('/adatvedelmi-tajekoztato/')); ?>"><?php echo esc_html($text['privacy']); ?></a>
                 <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($text['home']); ?></a>
             </footer>
@@ -547,7 +820,13 @@ add_action('template_redirect', function () {
     if ($path === 'app/sw.js') {
         harmat_app_portal_service_worker_20260609();
     }
+    if ($path === 'app/demo') {
+        harmat_app_portal_render_demo_20260609();
+    }
     if ($path === 'app') {
+        if (!empty($_GET['demo'])) {
+            harmat_app_portal_render_demo_20260609();
+        }
         harmat_app_portal_render_20260609();
     }
 }, 0);
