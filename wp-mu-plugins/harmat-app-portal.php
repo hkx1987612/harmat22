@@ -1,832 +1,1195 @@
 <?php
 /**
  * Plugin Name: Harmat App Portal
- * Description: Lightweight mobile app entry for buyers, sales staff, and brokers.
- * Version: 0.4.0
+ * Description: PWA-style portal app entry for Harmat Lakópark 22.
+ * Version: 0.5.4
  */
 
-defined('ABSPATH') || exit;
-
-function harmat_app_portal_path_20260609() {
-    $path = isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '';
-    $path = (string) parse_url($path, PHP_URL_PATH);
-    return trim($path, '/');
-}
-
-function harmat_app_portal_lang_20260609() {
-    $raw = '';
-    if (isset($_GET['wp_lang'])) {
-        $raw = sanitize_text_field(wp_unslash($_GET['wp_lang']));
-    } elseif (isset($_GET['lang'])) {
-        $raw = sanitize_text_field(wp_unslash($_GET['lang']));
-    }
-
-    return stripos($raw, 'zh') !== false ? 'zh' : 'hu';
-}
-
-function harmat_app_portal_locale_20260609($lang) {
-    return $lang === 'zh' ? 'zh_CN' : 'hu_HU';
-}
-
-function harmat_app_portal_logo_20260609($size = 192) {
-    $icon = get_site_icon_url((int) $size);
-    if ($icon) {
-        return $icon;
-    }
-
-    return home_url('/wp-content/uploads/2025/11/cropped-Harmat_Logo_512-192x192.png');
-}
-
-function harmat_app_portal_manifest_20260609() {
-    status_header(200);
-    nocache_headers();
-    header('Content-Type: application/manifest+json; charset=utf-8');
-
-    $manifest = array(
-        'name' => 'Harmat Lakópark',
-        'short_name' => 'Harmat App',
-        'description' => 'Harmat Lakópark ügyfél-, értékesítési és közvetítői belépési pont.',
-        'start_url' => home_url('/app/?wp_lang=hu_HU'),
-        'scope' => home_url('/app/'),
-        'display' => 'standalone',
-        'orientation' => 'portrait',
-        'background_color' => '#f7f0e4',
-        'theme_color' => '#253137',
-        'icons' => array(
-            array(
-                'src' => harmat_app_portal_logo_20260609(192),
-                'sizes' => '192x192',
-                'type' => 'image/png',
-                'purpose' => 'any maskable',
-            ),
-            array(
-                'src' => harmat_app_portal_logo_20260609(512),
-                'sizes' => '512x512',
-                'type' => 'image/png',
-                'purpose' => 'any maskable',
-            ),
-        ),
-    );
-
-    echo wp_json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+if (!defined('ABSPATH')) {
     exit;
 }
 
-function harmat_app_portal_service_worker_20260609() {
+add_action('template_redirect', 'harmat_app_portal_route_20260610', 0);
+
+function harmat_app_portal_route_20260610(): void
+{
+    $request_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '/';
+    $path = (string) parse_url($request_uri, PHP_URL_PATH);
+    $path = '/' . trim($path, '/');
+
+    if ($path === '/app') {
+        harmat_app_portal_render_20260610(false);
+        exit;
+    }
+
+    if ($path === '/app/demo') {
+        harmat_app_portal_render_20260610(true);
+        exit;
+    }
+
+    if ($path === '/app/floorplans') {
+        harmat_app_portal_render_floorplans_20260610();
+        exit;
+    }
+
+    if ($path === '/app/manifest.webmanifest') {
+        harmat_app_portal_manifest_20260610();
+        exit;
+    }
+
+    if ($path === '/app/sw.js') {
+        harmat_app_portal_service_worker_20260610();
+        exit;
+    }
+
+    if ($path === '/app/icon.svg') {
+        harmat_app_portal_icon_20260610();
+        exit;
+    }
+}
+
+function harmat_app_portal_lang_20260610(): string
+{
+    $raw = isset($_GET['wp_lang']) ? sanitize_text_field(wp_unslash($_GET['wp_lang'])) : '';
+    return $raw === 'zh_CN' ? 'zh_CN' : 'hu_HU';
+}
+
+function harmat_app_portal_is_android_app_20260610(): bool
+{
+    $source = isset($_GET['source']) ? sanitize_text_field(wp_unslash($_GET['source'])) : '';
+    return $source === 'android_app';
+}
+
+function harmat_app_portal_private_headers_20260610(string $content_type): void
+{
     status_header(200);
-    nocache_headers();
-    header('Content-Type: application/javascript; charset=utf-8');
+    header('Content-Type: ' . $content_type . '; charset=utf-8');
+    header('X-Robots-Tag: noindex, nofollow', true);
+    header('X-Content-Type-Options: nosniff', true);
+}
+
+function harmat_app_portal_url_20260610(string $path): string
+{
+    return esc_url(home_url($path));
+}
+
+function harmat_app_portal_app_url_20260610(string $path, string $lang, bool $is_android_app = false): string
+{
+    $path = add_query_arg('wp_lang', $lang, $path);
+    if ($is_android_app) {
+        $path = add_query_arg('source', 'android_app', $path);
+    }
+    return harmat_app_portal_url_20260610($path);
+}
+
+function harmat_app_portal_sales_area_20260610(int $post_id): float
+{
+    $override = get_post_meta($post_id, '_harmat_sales_area', true);
+    if ($override !== '') {
+        return (float) $override;
+    }
+
+    $building = (float) get_post_meta($post_id, 'property_building_area', true);
+    $outdoor = (float) get_post_meta($post_id, 'property_land_area', true);
+    return $building + $outdoor;
+}
+
+function harmat_app_portal_floorplan_image_20260610(string $title, string $floorplan_url = ''): string
+{
+    if (function_exists('hm_migrated_property_floorplan_image_from_uploads')) {
+        $image = (string) hm_migrated_property_floorplan_image_from_uploads($title, $floorplan_url);
+        if ($image !== '') {
+            return $image;
+        }
+    }
+
+    $upload = wp_upload_dir();
+    $base = trailingslashit((string) ($upload['baseurl'] ?? content_url('/uploads'))) . '2026/05/';
+    $candidates = [
+        $title . '-cn-floorplan-display.jpg',
+        strtoupper($title) . '-cn-floorplan-display.jpg',
+        strtolower($title) . '-cn-floorplan-display.jpg',
+        $title . '-cn-floorplan.jpg',
+        strtoupper($title) . '-cn-floorplan.jpg',
+        strtolower($title) . '-cn-floorplan.jpg',
+    ];
+
+    return $base . rawurlencode($candidates[0]);
+}
+
+function harmat_app_portal_status_label_20260610(int $post_id): string
+{
+    if (function_exists('hm_migrated_property_status_label')) {
+        $status = hm_migrated_property_status_label($post_id);
+        if (is_array($status) && !empty($status[0])) {
+            return (string) $status[0];
+        }
+    }
+
+    $raw = (string) get_post_meta($post_id, 'property_status', true);
+    if ($raw === 'sold') {
+        return 'Eladva';
+    }
+    if ($raw === 'reserved') {
+        return 'Foglalva';
+    }
+    return 'Elérhető';
+}
+
+function harmat_app_portal_floorplans_20260610(): array
+{
+    $ids = get_posts([
+        'post_type' => 'property',
+        'post_status' => 'publish',
+        'posts_per_page' => -1,
+        'orderby' => 'title',
+        'order' => 'ASC',
+        'fields' => 'ids',
+        'no_found_rows' => true,
+    ]);
+
+    $items = [];
+    foreach ($ids as $post_id) {
+        $post_id = (int) $post_id;
+        $title = get_the_title($post_id);
+        if ($title === '') {
+            continue;
+        }
+
+        $rooms = (string) get_post_meta($post_id, 'property_rooms', true);
+        $bedrooms = (string) get_post_meta($post_id, 'property_bedrooms', true);
+        $floor_raw = get_post_meta($post_id, 'property_floor', true);
+        $floor = function_exists('hm_migrated_property_floor_label') ? (string) hm_migrated_property_floor_label($title, $floor_raw) : (string) $floor_raw;
+        $area = harmat_app_portal_sales_area_20260610($post_id);
+        $floorplan_url = (string) get_post_meta($post_id, 'property_floorplan', true);
+        $image = harmat_app_portal_floorplan_image_20260610($title, $floorplan_url);
+
+        $items[] = [
+            'id' => $post_id,
+            'title' => $title,
+            'rooms' => $rooms,
+            'bedrooms' => $bedrooms,
+            'floor' => $floor,
+            'area' => $area,
+            'status' => harmat_app_portal_status_label_20260610($post_id),
+            'image' => $image,
+            'url' => get_permalink($post_id),
+        ];
+    }
+
+    usort($items, static function ($a, $b) {
+        return strnatcasecmp((string) $a['title'], (string) $b['title']);
+    });
+
+    return $items;
+}
+
+function harmat_app_portal_format_area_20260610(float $area): string
+{
+    if ($area <= 0) {
+        return '';
+    }
+    return number_format($area, 2, ',', ' ') . ' m²';
+}
+
+function harmat_app_portal_text_20260610(string $lang): array
+{
+    $copy = [
+        'hu_HU' => [
+            'html_lang' => 'hu',
+            'brand' => 'Harmat Lakópark 22',
+            'portal' => 'Portál app',
+            'eyebrow' => '1105 Budapest, Harmat utca 22.',
+            'title' => 'Otthon, ahol jó megérkezni',
+            'subtitle' => 'A Harmat utca 22. új lakóparkja nyugodt mindennapokat, átgondolt alaprajzokat és kényelmes városi kapcsolatokat kínál Budapest X. kerületében.',
+            'install' => 'Telepítés a telefonra',
+            'open_demo' => 'Demo portál megnyitása',
+            'language' => '中文',
+            'language_href' => '/app/?wp_lang=zh_CN',
+            'demo_language_href' => '/app/demo/?wp_lang=zh_CN',
+            'continue' => 'Folytatás a portálon',
+            'section_tools' => 'Gyors műveletek',
+            'section_roles' => 'Belépési pontok szerepkör szerint',
+            'section_demo' => 'App-mód előnézet',
+            'section_demo_text' => 'A demo nézet megmutatja, hogyan áll majd össze a személyes ügyfélmappa: kedvencek, státusz, dokumentumok és üzenetek.',
+            'offline_floorplans_title' => 'Offline alaprajztár',
+            'offline_floorplans_heading' => 'Alaprajzok előkészítve a telefonra',
+            'offline_floorplans_body' => 'A portál külön, mobilra rendezett alaprajznézetet kap. A megnyitott alaprajzok gyorsítótárba kerülnek, így gyenge hálózat vagy offline helyzetben is visszanézhetők.',
+            'offline_floorplans_cta' => 'Alaprajztár megnyitása',
+            'offline_floorplans_note' => 'Tipp: nyisd meg a fontos alaprajzokat egyszer online, utána az app gyorsítótárból is vissza tudja adni őket.',
+            'floorplans_title' => 'Offline alaprajztár',
+            'floorplans_subtitle' => 'Mobilra rendezett Harmat 22 alaprajzok. Online megnyitás után a képek az app cache-be kerülnek, így később offline is visszanézhetők.',
+            'floorplans_back' => 'Vissza a portálra',
+            'floorplans_all' => 'Mind',
+            'floorplans_open_property' => 'Lakás adatlap',
+            'floorplans_cache_hint' => 'Offline előkészítés: az app a háttérben menti az alaprajzokat, amíg ez az oldal nyitva van.',
+            'floorplans_cache_progress' => 'Alaprajzok mentése offline használatra',
+            'floorplans_cache_complete' => 'Kész: a megnyitott alaprajzok offline is elérhetők.',
+            'floorplans_cache_wait' => 'A mentés a háttérben fut, az app közben használható.',
+            'open_full_search' => 'Részletes kereső',
+            'offline' => 'Offline indulóképernyő előkészítve',
+            'android' => 'Android WebView shell előkészítve',
+            'pwa' => 'PWA telepítés támogatva',
+            'footer' => 'Harmat Lakópark portál | külön ügyfél-, értékesítői és partnerfelületekkel.',
+            'dock_portal' => 'Portál',
+            'dock_flats' => 'Lakások',
+            'dock_virtual' => 'Választó',
+            'dock_ai' => 'AI',
+            'dock_account' => 'Fiók',
+            'tools' => [
+                ['tag' => 'Offline', 'title' => 'Alaprajztár', 'body' => 'Mobilra rendezett alaprajzok, cache-elhető képekkel.', 'href' => '/app/floorplans/'],
+                ['tag' => 'Kínálat', 'title' => 'Lakáskereső', 'body' => 'Szűrés szobaszám, ár és státusz alapján.', 'href' => '/lakaskereso/?source=portal_app'],
+                ['tag' => 'Térbeli nézet', 'title' => 'Virtuális választó', 'body' => 'Épület- és szintalapú lakásválasztás az első ütemhez.', 'href' => '/virtualis-lakasvalaszto-elso-utem/?source=portal_app'],
+                ['tag' => 'Segítség', 'title' => 'AI asszisztens', 'body' => 'Gyors kérdések lakásokról, foglalásról és kapcsolattartásról.', 'href' => '/?hm_assistant=open&source=portal_app'],
+            ],
+            'roles' => [
+                ['key' => 'client', 'tag' => 'Ügyfél', 'title' => 'Vevői portál', 'body' => 'Kedvenc lakások, foglalási állapot, dokumentumok és üzenetek.', 'href' => '/client/?source=portal_app'],
+                ['key' => 'sales', 'tag' => 'Csapat', 'title' => 'Értékesítői felület', 'body' => 'Érdeklődők, státuszok és gyors ügyfélkezelési belépés.', 'href' => '/sales/?source=portal_app'],
+                ['key' => 'agent', 'tag' => 'Partner', 'title' => 'Közvetítői belépés', 'body' => 'Partneri leadek és együttműködési folyamatok külön felületen.', 'href' => '/agent/?source=portal_app'],
+            ],
+            'demo_cards' => [
+                ['label' => 'Kedvencek', 'value' => 'Lakáslista mentése'],
+                ['label' => 'Státusz', 'value' => 'Érdeklődés és foglalás követése'],
+                ['label' => 'Dokumentumok', 'value' => 'Szerződéses anyagok egy helyen'],
+                ['label' => 'Üzenetek', 'value' => 'Kapcsolat az értékesítéssel'],
+            ],
+        ],
+        'zh_CN' => [
+            'html_lang' => 'zh-Hans',
+            'brand' => 'Harmat Lakópark 22',
+            'portal' => '门户 App',
+            'eyebrow' => '1105 Budapest, Harmat utca 22.',
+            'title' => 'Harmat 22，回家是一件轻松的事',
+            'subtitle' => '位于 Budapest X. 区 Harmat utca 22.，把安静的日常、实用的户型和便捷的城市连接放进一个手机门户里。',
+            'install' => '安装到手机桌面',
+            'open_demo' => '打开门户演示',
+            'language' => 'Magyar',
+            'language_href' => '/app/?wp_lang=hu_HU',
+            'demo_language_href' => '/app/demo/?wp_lang=hu_HU',
+            'continue' => '进入门户',
+            'section_tools' => '快捷功能',
+            'section_roles' => '按身份进入',
+            'section_demo' => 'App 模式预览',
+            'section_demo_text' => '演示页展示未来个人客户文件夹的结构：收藏房源、状态、文件和消息。',
+            'offline_floorplans_title' => '离线户型册',
+            'offline_floorplans_heading' => '把户型图先放进手机',
+            'offline_floorplans_body' => '门户会提供一个适合手机查看的户型图册。打开过的户型图会进入缓存，网络弱或离线时也能继续查看。',
+            'offline_floorplans_cta' => '打开户型册',
+            'offline_floorplans_note' => '提示：重要户型先在线打开一次，之后 app 可以从缓存里继续显示。',
+            'floorplans_title' => '离线户型册',
+            'floorplans_subtitle' => 'Harmat 22 手机户型图册。在线打开后，图片会进入 app 缓存，之后离线也可以回看。',
+            'floorplans_back' => '返回门户',
+            'floorplans_all' => '全部',
+            'floorplans_open_property' => '查看房源页',
+            'floorplans_cache_hint' => '离线准备：保持本页打开时，app 会在后台保存户型图缓存。',
+            'floorplans_cache_progress' => '正在保存户型图，供离线查看',
+            'floorplans_cache_complete' => '已完成：打开过的户型图可离线查看。',
+            'floorplans_cache_wait' => '缓存会在后台继续，不影响你使用 app。',
+            'open_full_search' => '详细找房',
+            'offline' => '已准备离线启动页',
+            'android' => 'Android WebView 外壳已准备',
+            'pwa' => '支持 PWA 安装',
+            'footer' => 'Harmat Lakópark 门户 | 客户、销售和合作伙伴入口分离。',
+            'dock_portal' => '门户',
+            'dock_flats' => '房源',
+            'dock_virtual' => '选房',
+            'dock_ai' => 'AI',
+            'dock_account' => '我的',
+            'tools' => [
+                ['tag' => '离线', 'title' => '离线户型册', 'body' => '手机端户型图册，支持图片缓存。', 'href' => '/app/floorplans/'],
+                ['tag' => '房源', 'title' => '找房器', 'body' => '按房间数、价格和状态筛选公寓。', 'href' => '/lakaskereso/?source=portal_app'],
+                ['tag' => '空间视图', 'title' => '虚拟选房', 'body' => '用楼栋和楼层视图查看第一期房源。', 'href' => '/virtualis-lakasvalaszto-elso-utem/?source=portal_app'],
+                ['tag' => '帮助', 'title' => 'AI 助手', 'body' => '快速询问房源、预订和联系方式。', 'href' => '/?hm_assistant=open&source=portal_app'],
+            ],
+            'roles' => [
+                ['key' => 'client', 'tag' => '客户', 'title' => '客户门户', 'body' => '收藏房源、预订状态、文件和消息。', 'href' => '/client/?source=portal_app'],
+                ['key' => 'sales', 'tag' => '团队', 'title' => '销售入口', 'body' => '线索、状态和客户跟进入口。', 'href' => '/sales/?source=portal_app'],
+                ['key' => 'agent', 'tag' => '合作', 'title' => '中介入口', 'body' => '合作伙伴线索和流程单独管理。', 'href' => '/agent/?source=portal_app'],
+            ],
+            'demo_cards' => [
+                ['label' => '收藏', 'value' => '保存感兴趣的公寓'],
+                ['label' => '状态', 'value' => '跟进咨询和预订'],
+                ['label' => '文件', 'value' => '合同资料集中管理'],
+                ['label' => '消息', 'value' => '联系销售团队'],
+            ],
+        ],
+    ];
+
+    return $copy[$lang] ?? $copy['hu_HU'];
+}
+
+function harmat_app_portal_render_20260610(bool $demo): void
+{
+    $lang = harmat_app_portal_lang_20260610();
+    $t = harmat_app_portal_text_20260610($lang);
+    $is_android_app = harmat_app_portal_is_android_app_20260610();
+    $android_source = $is_android_app ? '&source=android_app' : '';
+    $floorplans = $demo ? [] : harmat_app_portal_floorplans_20260610();
+    $language_href = $demo ? $t['demo_language_href'] : $t['language_href'];
+    if ($is_android_app) {
+        $language_href = add_query_arg('source', 'android_app', $language_href);
+    }
+
+    harmat_app_portal_private_headers_20260610('text/html');
     ?>
-const HARMAT_APP_CACHE = 'harmat-app-v6';
-const HARMAT_APP_URLS = [
-  '/app/?wp_lang=hu_HU',
-  '/app/?wp_lang=zh_CN',
-  '/app/demo/?wp_lang=hu_HU',
-  '/app/demo/?wp_lang=zh_CN'
+<!doctype html>
+<html lang="<?php echo esc_attr($t['html_lang']); ?>">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#28453b">
+    <title><?php echo esc_html($t['brand'] . ' | ' . $t['portal']); ?></title>
+    <link rel="manifest" href="<?php echo harmat_app_portal_url_20260610('/app/manifest.webmanifest'); ?>">
+    <link rel="icon" href="<?php echo harmat_app_portal_url_20260610('/app/icon.svg'); ?>" type="image/svg+xml">
+    <style>
+        :root {
+            --ink: #1f2d2a;
+            --muted: #66766f;
+            --moss: #355f4f;
+            --moss-dark: #24443a;
+            --brick: #b35b3c;
+            --sand: #d8c19b;
+            --cream: #f4ecdf;
+            --card: rgba(255, 252, 245, .82);
+            --line: rgba(31, 45, 42, .12);
+            --shadow: 0 24px 70px rgba(44, 52, 45, .18);
+        }
+        * { box-sizing: border-box; }
+        html { min-height: 100%; background: #efe4d2; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--ink);
+            font-family: "Aptos", "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at 12% 4%, rgba(179, 91, 60, .20), transparent 28rem),
+                radial-gradient(circle at 86% 12%, rgba(53, 95, 79, .24), transparent 30rem),
+                linear-gradient(145deg, #f7efe4 0%, #eadcc7 52%, #d7c3a2 100%);
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: .18;
+            background-image:
+                linear-gradient(90deg, rgba(31,45,42,.16) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(31,45,42,.10) 1px, transparent 1px);
+            background-size: 46px 46px;
+            mask-image: linear-gradient(to bottom, #000, transparent 72%);
+        }
+        a { color: inherit; text-decoration: none; }
+        .shell {
+            width: min(1160px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 24px 0 108px;
+            position: relative;
+        }
+        body.is-android-app .shell {
+            padding-top: max(46px, calc(env(safe-area-inset-top) + 24px));
+            padding-bottom: 28px;
+        }
+        body.is-android-app .dock {
+            display: none;
+        }
+        body.is-android-app .hero {
+            min-height: 0;
+            padding: 20px;
+            border-radius: 28px;
+        }
+        body.is-android-app .hero::after {
+            display: none;
+        }
+        body.is-android-app h1 {
+            margin: 12px 0 9px;
+            font-size: clamp(34px, 9.4vw, 48px);
+            line-height: .95;
+        }
+        body.is-android-app .subtitle {
+            font-size: 16px;
+            line-height: 1.42;
+        }
+        body.is-android-app .actions {
+            margin-top: 14px;
+        }
+        body.is-android-app .button {
+            min-height: 44px;
+            padding: 0 16px;
+        }
+        body.is-android-app .badges {
+            display: none;
+        }
+        body.is-android-app .offline-showcase {
+            margin-top: 14px;
+        }
+        body.is-android-app .offline-copy {
+            padding: 18px;
+        }
+        body.is-android-app .offline-copy h2 {
+            margin: 8px 0;
+            font-size: clamp(28px, 8vw, 38px);
+        }
+        body.is-android-app .offline-copy p {
+            margin-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.38;
+        }
+        body.is-android-app .offline-note,
+        body.is-android-app .offline-preview {
+            display: none;
+        }
+        body.is-android-app .offline-copy .button {
+            width: 100%;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            letter-spacing: -.03em;
+        }
+        .mark {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 15px;
+            color: #fff8ec;
+            background: linear-gradient(145deg, var(--moss), var(--brick));
+            box-shadow: 0 12px 28px rgba(36, 68, 58, .24);
+            font-weight: 900;
+        }
+        .lang {
+            padding: 10px 13px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 252, 245, .64);
+            backdrop-filter: blur(16px);
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .hero {
+            overflow: hidden;
+            position: relative;
+            min-height: 420px;
+            padding: clamp(28px, 6vw, 64px);
+            border: 1px solid rgba(255,255,255,.56);
+            border-radius: 38px;
+            background:
+                linear-gradient(135deg, rgba(255,252,245,.88), rgba(255,252,245,.56)),
+                radial-gradient(circle at 78% 18%, rgba(179, 91, 60, .22), transparent 20rem);
+            box-shadow: var(--shadow);
+        }
+        .hero::after {
+            content: "22";
+            position: absolute;
+            right: clamp(16px, 5vw, 64px);
+            bottom: -34px;
+            font-size: clamp(128px, 23vw, 300px);
+            font-weight: 900;
+            line-height: .8;
+            letter-spacing: -.12em;
+            color: rgba(53, 95, 79, .10);
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 720px; }
+        .eyebrow {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(53, 95, 79, .10);
+            color: var(--moss-dark);
+            font-weight: 800;
+            font-size: 13px;
+        }
+        h1 {
+            margin: 18px 0 14px;
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: clamp(42px, 7vw, 82px);
+            line-height: .92;
+            letter-spacing: -.07em;
+        }
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            max-width: 660px;
+            font-size: clamp(17px, 2.2vw, 22px);
+            line-height: 1.55;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 26px;
+        }
+        .button {
+            border: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 48px;
+            padding: 0 18px;
+            border-radius: 999px;
+            color: #fff8ec;
+            background: var(--moss-dark);
+            box-shadow: 0 16px 34px rgba(36, 68, 58, .24);
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .button.secondary { color: var(--moss-dark); background: rgba(255,252,245,.78); border: 1px solid var(--line); box-shadow: none; }
+        .badges {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 18px 0 0;
+        }
+        .badge {
+            padding: 14px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: rgba(255, 252, 245, .58);
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .offline-showcase {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: .92fr 1.08fr;
+            gap: 14px;
+            align-items: stretch;
+        }
+        .offline-copy,
+        .offline-preview {
+            border: 1px solid rgba(255,255,255,.56);
+            border-radius: 30px;
+            background: rgba(255, 252, 245, .82);
+            box-shadow: 0 18px 54px rgba(49, 57, 50, .12);
+            backdrop-filter: blur(20px);
+        }
+        .offline-copy {
+            padding: 24px;
+        }
+        .offline-copy h2 {
+            margin: 10px 0 10px;
+            font-family: "Georgia", "Times New Roman", serif;
+            font-size: clamp(30px, 4.5vw, 52px);
+            line-height: .98;
+            letter-spacing: -.06em;
+        }
+        .offline-copy p {
+            margin: 0 0 16px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .offline-note {
+            display: block;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .offline-preview {
+            padding: 14px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            overflow: hidden;
+        }
+        .offline-plan {
+            min-height: 230px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 22px;
+            background: #fffdf8;
+            border: 1px solid rgba(31,45,42,.10);
+        }
+        .offline-plan img {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 16px;
+            background: #fff;
+        }
+        .offline-plan strong {
+            font-size: 15px;
+            letter-spacing: -.03em;
+        }
+        .offline-plan span {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .section-title {
+            margin: 34px 0 14px;
+            font-size: 22px;
+            letter-spacing: -.04em;
+        }
+        .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+        .roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+        .card {
+            min-height: 190px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,.54);
+            border-radius: 28px;
+            background: var(--card);
+            box-shadow: 0 16px 50px rgba(49, 57, 50, .10);
+            backdrop-filter: blur(20px);
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 22px 58px rgba(49, 57, 50, .16); background: rgba(255, 252, 245, .95); }
+        .tag { color: var(--brick); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+        .card h2 { margin: 14px 0 8px; font-size: 22px; letter-spacing: -.04em; }
+        .card p { margin: 0; color: var(--muted); line-height: 1.48; }
+        .arrow { margin-top: 20px; font-weight: 900; color: var(--moss-dark); }
+        .demo-panel {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 14px;
+        }
+        .panel {
+            padding: 22px;
+            border: 1px solid rgba(255,255,255,.54);
+            border-radius: 30px;
+            background: rgba(31, 45, 42, .88);
+            color: #fff8ec;
+            box-shadow: var(--shadow);
+        }
+        .panel p { color: rgba(255, 248, 236, .76); line-height: 1.55; }
+        .mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .mini-card {
+            padding: 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,.10);
+            border: 1px solid rgba(255,255,255,.14);
+        }
+        .mini-card strong { display: block; margin-bottom: 6px; }
+        .phone {
+            min-height: 340px;
+            padding: 18px;
+            border-radius: 34px;
+            background: linear-gradient(160deg, #fdf8ef, #d7c3a2);
+            border: 10px solid rgba(31, 45, 42, .88);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 26px 70px rgba(31,45,42,.22);
+        }
+        .phone-line { height: 12px; border-radius: 999px; background: rgba(31,45,42,.16); margin-bottom: 12px; }
+        .phone-card { padding: 16px; border-radius: 22px; background: rgba(255,255,255,.66); margin-bottom: 10px; }
+        .footer { margin: 32px 0 0; color: var(--muted); text-align: center; font-size: 14px; }
+        .dock {
+            position: fixed;
+            z-index: 20;
+            left: 50%;
+            bottom: max(14px, env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            width: min(680px, calc(100% - 24px));
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            padding: 8px;
+            border-radius: 26px;
+            border: 1px solid rgba(255,255,255,.56);
+            background: rgba(255, 252, 245, .82);
+            backdrop-filter: blur(22px);
+            box-shadow: 0 18px 50px rgba(49, 57, 50, .18);
+        }
+        .dock a { padding: 10px 4px; border-radius: 18px; text-align: center; font-size: 12px; font-weight: 900; color: var(--muted); }
+        .dock a:first-child { background: var(--moss-dark); color: #fff8ec; }
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .roles, .demo-panel, .offline-showcase { grid-template-columns: 1fr; }
+            .offline-preview { grid-template-columns: repeat(3, minmax(150px, 1fr)); overflow-x: auto; }
+            .badges { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 560px) {
+            .shell { width: min(100% - 20px, 1160px); padding-top: 14px; }
+            .hero { border-radius: 28px; min-height: 0; }
+            .grid { grid-template-columns: 1fr; }
+            .offline-preview { grid-template-columns: repeat(3, 72vw); }
+            .card { min-height: 160px; }
+            .topbar { align-items: flex-start; }
+            .brand span:last-child { max-width: 160px; }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+            .hero, .card, .panel, .phone { animation: rise .5s ease both; }
+            .card:nth-child(2) { animation-delay: .04s; }
+            .card:nth-child(3) { animation-delay: .08s; }
+            .card:nth-child(4) { animation-delay: .12s; }
+            @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        }
+    </style>
+</head>
+<body class="<?php echo $is_android_app ? 'is-android-app' : ''; ?>">
+    <main class="shell">
+        <div class="topbar">
+            <a class="brand" href="<?php echo harmat_app_portal_url_20260610('/app/?wp_lang=' . rawurlencode($lang) . $android_source); ?>">
+                <span class="mark">H22</span>
+                <span><?php echo esc_html($t['brand']); ?></span>
+            </a>
+            <a class="lang" href="<?php echo harmat_app_portal_url_20260610($language_href); ?>"><?php echo esc_html($t['language']); ?></a>
+        </div>
+
+        <section class="hero">
+            <div class="hero-content">
+                <div class="eyebrow"><?php echo esc_html($t['eyebrow']); ?></div>
+                <h1><?php echo esc_html($demo ? $t['section_demo'] : $t['title']); ?></h1>
+                <p class="subtitle"><?php echo esc_html($demo ? $t['section_demo_text'] : $t['subtitle']); ?></p>
+                <div class="actions">
+                    <?php if ($is_android_app && !$demo) : ?>
+                        <a class="button" href="<?php echo harmat_app_portal_app_url_20260610('/app/floorplans/', $lang, true); ?>"><?php echo esc_html($t['offline_floorplans_cta']); ?></a>
+                        <a class="button secondary" href="<?php echo harmat_app_portal_url_20260610('/lakaskereso/?source=android_app'); ?>"><?php echo esc_html($t['open_full_search']); ?></a>
+                    <?php else : ?>
+                        <a class="button" href="<?php echo harmat_app_portal_url_20260610('/app/demo/?wp_lang=' . rawurlencode($lang) . $android_source); ?>"><?php echo esc_html($t['open_demo']); ?></a>
+                        <button class="button secondary" type="button" data-install hidden><?php echo esc_html($t['install']); ?></button>
+                    <?php endif; ?>
+                </div>
+                <div class="badges">
+                    <div class="badge"><?php echo esc_html($t['offline']); ?></div>
+                    <div class="badge"><?php echo esc_html($t['android']); ?></div>
+                    <div class="badge"><?php echo esc_html($t['pwa']); ?></div>
+                </div>
+            </div>
+        </section>
+
+        <?php if (!$demo) : ?>
+            <section class="offline-showcase" aria-label="<?php echo esc_attr($t['offline_floorplans_title']); ?>">
+                <div class="offline-copy">
+                    <span class="tag"><?php echo esc_html($t['offline_floorplans_title']); ?></span>
+                    <h2><?php echo esc_html($t['offline_floorplans_heading']); ?></h2>
+                    <p><?php echo esc_html($t['offline_floorplans_body']); ?></p>
+                    <a class="button" href="<?php echo harmat_app_portal_app_url_20260610('/app/floorplans/', $lang, $is_android_app); ?>"><?php echo esc_html($t['offline_floorplans_cta']); ?></a>
+                    <small class="offline-note"><?php echo esc_html($t['offline_floorplans_note']); ?></small>
+                </div>
+                <div class="offline-preview">
+                    <?php foreach (array_slice($floorplans, 0, 3) as $plan) : ?>
+                        <a class="offline-plan" href="<?php echo harmat_app_portal_app_url_20260610('/app/floorplans/', $lang, $is_android_app); ?>">
+                            <img src="<?php echo esc_url($plan['image']); ?>" alt="<?php echo esc_attr($plan['title']); ?>" loading="lazy" decoding="async">
+                            <strong><?php echo esc_html($plan['title']); ?></strong>
+                            <span><?php echo esc_html(trim(($plan['rooms'] ? $plan['rooms'] . ' szoba' : '') . ' · ' . harmat_app_portal_format_area_20260610((float) $plan['area']), ' ·')); ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+
+            <h2 class="section-title"><?php echo esc_html($t['section_tools']); ?></h2>
+            <section class="grid" aria-label="<?php echo esc_attr($t['section_tools']); ?>">
+                <?php foreach ($t['tools'] as $tool) : ?>
+                    <a class="card" href="<?php echo strpos($tool['href'], '/app/') === 0 ? harmat_app_portal_app_url_20260610($tool['href'], $lang, $is_android_app) : harmat_app_portal_url_20260610($tool['href']); ?>">
+                        <span class="tag"><?php echo esc_html($tool['tag']); ?></span>
+                        <span>
+                            <h2><?php echo esc_html($tool['title']); ?></h2>
+                            <p><?php echo esc_html($tool['body']); ?></p>
+                        </span>
+                        <span class="arrow">&rarr;</span>
+                    </a>
+                <?php endforeach; ?>
+            </section>
+
+            <h2 class="section-title"><?php echo esc_html($t['section_roles']); ?></h2>
+            <section class="roles" aria-label="<?php echo esc_attr($t['section_roles']); ?>">
+                <?php foreach ($t['roles'] as $role) : ?>
+                    <a class="card" href="<?php echo harmat_app_portal_url_20260610($role['href']); ?>" data-last-role="<?php echo esc_attr($role['key']); ?>">
+                        <span class="tag"><?php echo esc_html($role['tag']); ?></span>
+                        <span>
+                            <h2><?php echo esc_html($role['title']); ?></h2>
+                            <p><?php echo esc_html($role['body']); ?></p>
+                        </span>
+                        <span class="arrow">&rarr;</span>
+                    </a>
+                <?php endforeach; ?>
+            </section>
+        <?php else : ?>
+            <section class="demo-panel" aria-label="<?php echo esc_attr($t['section_demo']); ?>">
+                <div class="panel">
+                    <h2><?php echo esc_html($t['continue']); ?></h2>
+                    <p><?php echo esc_html($t['section_demo_text']); ?></p>
+                    <div class="mini-grid">
+                        <?php foreach ($t['demo_cards'] as $card) : ?>
+                            <div class="mini-card">
+                                <strong><?php echo esc_html($card['label']); ?></strong>
+                                <span><?php echo esc_html($card['value']); ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="phone" aria-hidden="true">
+                    <div class="phone-line"></div>
+                    <div class="phone-card"><strong><?php echo esc_html($t['brand']); ?></strong><br><?php echo esc_html($t['portal']); ?></div>
+                    <div class="phone-card"><?php echo esc_html($t['dock_flats']); ?> + <?php echo esc_html($t['dock_virtual']); ?></div>
+                    <div class="phone-card"><?php echo esc_html($t['dock_account']); ?> + <?php echo esc_html($t['dock_ai']); ?></div>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <p class="footer"><?php echo esc_html($t['footer']); ?></p>
+    </main>
+
+    <nav class="dock" aria-label="App navigation">
+        <a href="<?php echo harmat_app_portal_url_20260610('/app/?wp_lang=' . rawurlencode($lang) . $android_source); ?>"><?php echo esc_html($t['dock_portal']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/lakaskereso/?source=portal_app'); ?>"><?php echo esc_html($t['dock_flats']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/virtualis-lakasvalaszto-elso-utem/?source=portal_app'); ?>"><?php echo esc_html($t['dock_virtual']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/?hm_assistant=open&source=portal_app'); ?>"><?php echo esc_html($t['dock_ai']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/client/?source=portal_app'); ?>"><?php echo esc_html($t['dock_account']); ?></a>
+    </nav>
+
+    <script>
+    (function () {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/app/sw.js').catch(function () {});
+            });
+        }
+
+        var deferredPrompt = null;
+        var installButton = document.querySelector('[data-install]');
+
+        window.addEventListener('beforeinstallprompt', function (event) {
+            event.preventDefault();
+            deferredPrompt = event;
+            if (installButton) {
+                installButton.hidden = false;
+            }
+        });
+
+        if (installButton) {
+            installButton.addEventListener('click', function () {
+                if (!deferredPrompt) {
+                    return;
+                }
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.finally(function () {
+                    deferredPrompt = null;
+                    installButton.hidden = true;
+                });
+            });
+        }
+
+        var roleLinks = document.querySelectorAll('[data-last-role]');
+        for (var i = 0; i < roleLinks.length; i += 1) {
+            roleLinks[i].addEventListener('click', function () {
+                try {
+                    window.localStorage.setItem('harmat_last_role', this.getAttribute('data-last-role'));
+                } catch (error) {}
+            });
+        }
+    }());
+    </script>
+</body>
+</html>
+    <?php
+}
+
+function harmat_app_portal_manifest_20260610(): void
+{
+    harmat_app_portal_private_headers_20260610('application/manifest+json');
+
+    echo wp_json_encode([
+        'name' => 'Harmat Lakópark Portál',
+        'short_name' => 'Harmat 22',
+        'description' => 'Harmat Lakópark 22 mobil portál.',
+        'start_url' => home_url('/app/?wp_lang=hu_HU&source=pwa'),
+        'scope' => home_url('/'),
+        'display' => 'standalone',
+        'orientation' => 'portrait',
+        'background_color' => '#f4ecdf',
+        'theme_color' => '#28453b',
+        'icons' => [
+            ['src' => home_url('/app/icon.svg'), 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any maskable'],
+        ],
+        'shortcuts' => [
+            ['name' => 'Alaprajztár', 'url' => home_url('/app/floorplans/?wp_lang=hu_HU&source=pwa_shortcut')],
+            ['name' => 'Virtuális választó', 'url' => home_url('/virtualis-lakasvalaszto-elso-utem/?source=pwa_shortcut')],
+            ['name' => 'Ügyfélfiók', 'url' => home_url('/client/?source=pwa_shortcut')],
+        ],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+
+function harmat_app_portal_render_floorplans_20260610(): void
+{
+    $lang = harmat_app_portal_lang_20260610();
+    $t = harmat_app_portal_text_20260610($lang);
+    $is_android_app = harmat_app_portal_is_android_app_20260610();
+    $plans = harmat_app_portal_floorplans_20260610();
+    $assets = array_values(array_unique(array_filter(array_map(static function ($plan) {
+        return (string) ($plan['image'] ?? '');
+    }, $plans))));
+
+    harmat_app_portal_private_headers_20260610('text/html');
+    ?>
+<!doctype html>
+<html lang="<?php echo esc_attr($t['html_lang']); ?>">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#28453b">
+    <title><?php echo esc_html($t['brand'] . ' | ' . $t['floorplans_title']); ?></title>
+    <link rel="manifest" href="<?php echo harmat_app_portal_url_20260610('/app/manifest.webmanifest'); ?>">
+    <style>
+        :root{--ink:#1f2d2a;--muted:#66766f;--moss:#24443a;--brick:#b35b3c;--cream:#f4ecdf;--card:rgba(255,252,245,.88);--line:rgba(31,45,42,.12)}
+        *{box-sizing:border-box}
+        body{margin:0;min-height:100vh;color:var(--ink);font-family:"Aptos","Segoe UI",sans-serif;background:radial-gradient(circle at 12% 4%,rgba(179,91,60,.18),transparent 28rem),radial-gradient(circle at 90% 4%,rgba(53,95,79,.22),transparent 30rem),linear-gradient(145deg,#f7efe4 0%,#eadcc7 55%,#d7c3a2 100%)}
+        body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.14;background-image:linear-gradient(90deg,rgba(31,45,42,.16) 1px,transparent 1px),linear-gradient(0deg,rgba(31,45,42,.10) 1px,transparent 1px);background-size:46px 46px}
+        a{color:inherit;text-decoration:none}
+        .shell{position:relative;width:min(1160px,calc(100% - 24px));margin:0 auto;padding:24px 0 104px}
+        body.is-android-app .shell{padding-top:max(46px,calc(env(safe-area-inset-top) + 24px));padding-bottom:28px}
+        .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+        .brand{display:inline-flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.03em}
+        .mark{width:42px;height:42px;display:grid;place-items:center;border-radius:15px;color:#fff8ec;background:linear-gradient(145deg,#355f4f,#b35b3c);font-weight:900}
+        .back{padding:10px 13px;border:1px solid var(--line);border-radius:999px;background:rgba(255,252,245,.68);font-weight:900}
+        .hero{padding:clamp(24px,5vw,52px);border-radius:34px;background:rgba(255,252,245,.78);border:1px solid rgba(255,255,255,.58);box-shadow:0 24px 70px rgba(44,52,45,.16)}
+        .eyebrow{display:inline-flex;padding:8px 12px;border-radius:999px;background:rgba(53,95,79,.10);color:#24443a;font-size:13px;font-weight:900}
+        h1{margin:16px 0 12px;font-family:"Georgia","Times New Roman",serif;font-size:clamp(42px,7vw,78px);line-height:.92;letter-spacing:-.07em}
+        .subtitle{max-width:760px;margin:0;color:var(--muted);font-size:clamp(17px,2.2vw,22px);line-height:1.55}
+        .cache-hint{margin-top:16px;padding:14px 16px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.42);color:var(--muted);font-weight:800}
+        .filters{position:sticky;top:0;z-index:4;display:flex;gap:8px;margin:18px 0;padding:10px;border:1px solid rgba(255,255,255,.58);border-radius:24px;background:rgba(255,252,245,.82);backdrop-filter:blur(20px);overflow:auto}
+        .filters button{border:0;padding:11px 15px;border-radius:999px;background:rgba(31,45,42,.08);color:var(--muted);font-weight:900;white-space:nowrap}
+        .filters button.is-active{background:#24443a;color:#fff8ec}
+        .plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+        .plan-card{display:flex;flex-direction:column;gap:12px;min-height:360px;padding:14px;border:1px solid rgba(255,255,255,.58);border-radius:28px;background:var(--card);box-shadow:0 16px 48px rgba(49,57,50,.12)}
+        .plan-card img{width:100%;height:230px;object-fit:contain;border-radius:20px;background:#fff;border:1px solid rgba(31,45,42,.08)}
+        .plan-meta{display:flex;justify-content:space-between;gap:10px;color:var(--brick);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+        .plan-card h2{margin:0;font-size:22px;letter-spacing:-.04em}
+        .facts{display:flex;flex-wrap:wrap;gap:8px}
+        .facts span{padding:8px 10px;border-radius:999px;background:rgba(31,45,42,.07);color:var(--muted);font-size:13px;font-weight:900}
+        .property-link{margin-top:auto;display:inline-flex;justify-content:center;padding:12px 14px;border-radius:999px;background:#24443a;color:#fff8ec;font-weight:900}
+        .dock{position:fixed;z-index:20;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(680px,calc(100% - 24px));display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px;border-radius:26px;border:1px solid rgba(255,255,255,.56);background:rgba(255,252,245,.82);backdrop-filter:blur(22px);box-shadow:0 18px 50px rgba(49,57,50,.18)}
+        .dock a{padding:10px 4px;border-radius:18px;text-align:center;font-size:12px;font-weight:900;color:var(--muted)}
+        .dock a:nth-child(2){background:#24443a;color:#fff8ec}
+        body.is-android-app .dock{display:none}
+        @media(max-width:900px){.plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media(max-width:560px){.shell{width:min(100% - 20px,1160px);padding-top:14px}.plan-grid{grid-template-columns:1fr}.plan-card{min-height:0}.plan-card img{height:255px}.topbar{align-items:flex-start}.brand span:last-child{max-width:170px}}
+    </style>
+</head>
+<body class="<?php echo $is_android_app ? 'is-android-app' : ''; ?>">
+    <main class="shell">
+        <div class="topbar">
+            <a class="brand" href="<?php echo harmat_app_portal_app_url_20260610('/app/', $lang, $is_android_app); ?>">
+                <span class="mark">H22</span>
+                <span><?php echo esc_html($t['brand']); ?></span>
+            </a>
+            <a class="back" href="<?php echo harmat_app_portal_app_url_20260610('/app/', $lang, $is_android_app); ?>"><?php echo esc_html($t['floorplans_back']); ?></a>
+        </div>
+
+        <section class="hero">
+            <span class="eyebrow"><?php echo esc_html($t['eyebrow']); ?></span>
+            <h1><?php echo esc_html($t['floorplans_title']); ?></h1>
+            <p class="subtitle"><?php echo esc_html($t['floorplans_subtitle']); ?></p>
+            <div class="cache-hint" data-cache-status><?php echo esc_html($t['floorplans_cache_hint']); ?></div>
+        </section>
+
+        <nav class="filters" aria-label="Room filters">
+            <button class="is-active" type="button" data-room-filter=""><?php echo esc_html($t['floorplans_all']); ?></button>
+            <?php foreach (['1', '2', '3', '4', '5'] as $room) : ?>
+                <button type="button" data-room-filter="<?php echo esc_attr($room); ?>"><?php echo esc_html($room); ?> szoba</button>
+            <?php endforeach; ?>
+        </nav>
+
+        <section class="plan-grid" data-plan-grid>
+            <?php foreach ($plans as $plan) : ?>
+                <?php
+                $room_label = $plan['rooms'] ? $plan['rooms'] . ' szoba' : '';
+                $bedroom_label = $plan['bedrooms'] ? $plan['bedrooms'] . ' háló' : '';
+                $area_label = harmat_app_portal_format_area_20260610((float) $plan['area']);
+                ?>
+                <article class="plan-card" data-rooms="<?php echo esc_attr($plan['rooms']); ?>">
+                    <img src="<?php echo esc_url($plan['image']); ?>" alt="<?php echo esc_attr($plan['title']); ?>" loading="lazy" decoding="async" data-floorplan-image>
+                    <div class="plan-meta">
+                        <span><?php echo esc_html($plan['status']); ?></span>
+                        <span><?php echo esc_html($plan['floor']); ?></span>
+                    </div>
+                    <h2><?php echo esc_html($plan['title']); ?></h2>
+                    <div class="facts">
+                        <?php foreach (array_filter([$room_label, $bedroom_label, $area_label]) as $fact) : ?>
+                            <span><?php echo esc_html($fact); ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <a class="property-link" href="<?php echo esc_url($plan['url']); ?>"><?php echo esc_html($t['floorplans_open_property']); ?></a>
+                </article>
+            <?php endforeach; ?>
+        </section>
+    </main>
+
+    <nav class="dock" aria-label="App navigation">
+        <a href="<?php echo harmat_app_portal_app_url_20260610('/app/', $lang, $is_android_app); ?>"><?php echo esc_html($t['dock_portal']); ?></a>
+        <a href="<?php echo harmat_app_portal_app_url_20260610('/app/floorplans/', $lang, $is_android_app); ?>"><?php echo esc_html($t['dock_flats']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/virtualis-lakasvalaszto-elso-utem/?source=portal_app'); ?>"><?php echo esc_html($t['dock_virtual']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/?hm_assistant=open&source=portal_app'); ?>"><?php echo esc_html($t['dock_ai']); ?></a>
+        <a href="<?php echo harmat_app_portal_url_20260610('/client/?source=portal_app'); ?>"><?php echo esc_html($t['dock_account']); ?></a>
+    </nav>
+
+    <script>
+    window.HARMAT_FLOORPLAN_ASSETS = <?php echo wp_json_encode($assets, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    (function () {
+        var buttons = document.querySelectorAll('[data-room-filter]');
+        var cards = document.querySelectorAll('[data-rooms]');
+        for (var i = 0; i < buttons.length; i += 1) {
+            buttons[i].addEventListener('click', function () {
+                var room = this.getAttribute('data-room-filter') || '';
+                for (var b = 0; b < buttons.length; b += 1) {
+                    buttons[b].classList.toggle('is-active', buttons[b] === this);
+                }
+                for (var c = 0; c < cards.length; c += 1) {
+                    var rooms = cards[c].getAttribute('data-rooms') || '';
+                    cards[c].hidden = !!room && rooms !== room;
+                }
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/app/sw.js').catch(function () {});
+        }
+
+        if ('caches' in window && Array.isArray(window.HARMAT_FLOORPLAN_ASSETS)) {
+            var status = document.querySelector('[data-cache-status]');
+            var assets = window.HARMAT_FLOORPLAN_ASSETS.slice(0);
+            var total = assets.length;
+            var done = 0;
+            var cacheName = 'harmat-app-floorplans-v2';
+            var batchSize = 3;
+
+            function setStatus(message) {
+                if (status) {
+                    status.textContent = message;
+                }
+            }
+
+            function cacheBatch(cache) {
+                var batch = assets.splice(0, batchSize);
+                if (!batch.length) {
+                    setStatus('<?php echo esc_js($t['floorplans_cache_complete']); ?>');
+                    return Promise.resolve();
+                }
+
+                setStatus('<?php echo esc_js($t['floorplans_cache_progress']); ?> ' + done + '/' + total + '. <?php echo esc_js($t['floorplans_cache_wait']); ?>');
+                return Promise.all(batch.map(function (url) {
+                    return cache.add(url).catch(function () {});
+                })).then(function () {
+                    done += batch.length;
+                    setStatus('<?php echo esc_js($t['floorplans_cache_progress']); ?> ' + Math.min(done, total) + '/' + total + '. <?php echo esc_js($t['floorplans_cache_wait']); ?>');
+                    return new Promise(function (resolve) {
+                        window.setTimeout(function () {
+                            resolve(cacheBatch(cache));
+                        }, 180);
+                    });
+                });
+            }
+
+            caches.open(cacheName).then(function (cache) {
+                if (!total) {
+                    setStatus('<?php echo esc_js($t['floorplans_cache_hint']); ?>');
+                    return;
+                }
+                if ('requestIdleCallback' in window) {
+                    window.requestIdleCallback(function () { cacheBatch(cache); }, { timeout: 1200 });
+                } else {
+                    window.setTimeout(function () { cacheBatch(cache); }, 400);
+                }
+            }).catch(function () {
+                setStatus('<?php echo esc_js($t['floorplans_cache_hint']); ?>');
+            });
+        }
+    }());
+    </script>
+</body>
+</html>
+    <?php
+}
+
+function harmat_app_portal_service_worker_20260610(): void
+{
+    harmat_app_portal_private_headers_20260610('application/javascript');
+    ?>
+const HARMAT_APP_CACHE = 'harmat-app-portal-v13';
+const HARMAT_APP_PRECACHE = [
+  '/app/?wp_lang=hu_HU&source=pwa_cache',
+  '/app/?wp_lang=zh_CN&source=pwa_cache',
+  '/app/demo/?wp_lang=hu_HU&source=pwa_cache',
+  '/app/demo/?wp_lang=zh_CN&source=pwa_cache',
+  '/app/floorplans/?wp_lang=hu_HU&source=pwa_cache',
+  '/app/floorplans/?wp_lang=zh_CN&source=pwa_cache',
+  '/app/icon.svg'
 ];
 
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(HARMAT_APP_CACHE)
-      .then(function(cache) { return cache.addAll(HARMAT_APP_URLS); })
-      .catch(function() { return true; })
+      .then(function (cache) { return cache.addAll(HARMAT_APP_PRECACHE); })
+      .catch(function () {})
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', function (event) {
   event.waitUntil(
-    caches.keys().then(function(keys) {
-      return Promise.all(keys.filter(function(key) {
-        return key !== HARMAT_APP_CACHE && key.indexOf('harmat-app-') === 0;
-      }).map(function(key) { return caches.delete(key); }));
+    caches.keys().then(function (keys) {
+      return Promise.all(keys.map(function (key) {
+        if (key !== HARMAT_APP_CACHE && key.indexOf('harmat-app-') === 0) {
+          return caches.delete(key);
+        }
+        return Promise.resolve();
+      }));
     })
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', function(event) {
-  const requestUrl = new URL(event.request.url);
-  if (requestUrl.origin !== location.origin || requestUrl.pathname.indexOf('/app') !== 0) {
+self.addEventListener('fetch', function (event) {
+  const request = event.request;
+  if (request.method !== 'GET') {
     return;
   }
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).then(function (response) {
+        const copy = response.clone();
+        caches.open(HARMAT_APP_CACHE).then(function (cache) { cache.put(request, copy); });
+        return response;
+      }).catch(function () {
+        return caches.match(request).then(function (cached) {
+          return cached || caches.match('/app/?wp_lang=hu_HU&source=pwa_cache');
+        });
+      })
+    );
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request).then(function(response) {
-      const copy = response.clone();
-      caches.open(HARMAT_APP_CACHE).then(function(cache) { cache.put(event.request, copy); });
-      return response;
-    }).catch(function() {
-      return caches.match(event.request).then(function(response) {
-        return response || caches.match('/app/?wp_lang=hu_HU');
+    caches.match(request).then(function (cached) {
+      if (cached) {
+        return cached;
+      }
+      return fetch(request).then(function (response) {
+        if (response && response.status === 200 && new URL(request.url).origin === location.origin) {
+          const copy = response.clone();
+          caches.open(HARMAT_APP_CACHE).then(function (cache) { cache.put(request, copy); });
+        }
+        return response;
       });
     })
   );
 });
     <?php
-    exit;
 }
 
-function harmat_app_portal_text_20260609($lang) {
-    if ($lang === 'zh') {
-        return array(
-            'html_lang' => 'zh-Hans',
-            'title' => 'Harmat App',
-            'eyebrow' => 'Harmat Lakópark',
-            'headline' => '统一入口',
-            'lead' => '买房者、销售团队和经纪人使用同一个移动入口，选择身份后进入对应工作台。',
-            'language' => '语言',
-            'hu_label' => '匈牙利语',
-            'zh_label' => '中文',
-            'home' => '返回网站',
-            'install' => '可添加到手机桌面',
-            'install_cta' => '安装 App',
-            'privacy' => '隐私政策',
-            'demo_cta' => '查看试用版',
-            'shortcuts_title' => '常用操作',
-            'shortcuts_intro' => '选择身份后，也可以直接进入对应模块。',
-            'visual_title' => 'Harmat utca 22.',
-            'visual_subtitle' => '1105 布达佩斯',
-            'continue_tag' => '已登录',
-            'continue_title' => '继续进入当前工作台',
-            'continue_prefix' => '当前账号可以直接打开',
-            'continue_button' => '继续进入',
-            'roles' => array(
-                array(
-                    'key' => 'buyer',
-                    'mark' => '客',
-                    'label' => '买房者',
-                    'sub' => '客户中心',
-                    'body' => '查看房源资料、付款进度、合同文件和售后事项。',
-                    'cta' => '进入买房者通道',
-                    'path' => '/client/',
-                    'modules' => array(
-                        array('label' => '房源资料', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
-                        array('label' => '付款节点', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
-                        array('label' => '合同文件', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
-                        array('label' => '售后事项', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
-                    ),
-                ),
-                array(
-                    'key' => 'sales',
-                    'mark' => '销',
-                    'label' => '销售',
-                    'sub' => '销售工作台',
-                    'body' => '处理询价、跟单、成交客户、付款提醒和房源库存。',
-                    'cta' => '进入销售通道',
-                    'path' => '/sales/',
-                    'modules' => array(
-                        array('label' => '今日待办', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
-                        array('label' => '询价汇总', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
-                        array('label' => '成交客户', 'path' => '/sales/', 'query' => array('view' => 'customers')),
-                        array('label' => '房源库存', 'path' => '/sales/', 'query' => array('view' => 'properties')),
-                    ),
-                ),
-                array(
-                    'key' => 'agent',
-                    'mark' => '经',
-                    'label' => '经纪人',
-                    'sub' => '经纪人中心',
-                    'body' => '登记客户、维护跟进、查看在售房源和佣金记录。',
-                    'cta' => '进入经纪人通道',
-                    'path' => '/agent/',
-                    'modules' => array(
-                        array('label' => '客户登记', 'path' => '/agent/'),
-                        array('label' => '我的客户', 'path' => '/agent/', 'query' => array('view' => 'clients')),
-                        array('label' => '待跟进', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
-                        array('label' => '房源库存', 'path' => '/agent/', 'query' => array('view' => 'properties')),
-                    ),
-                ),
-            ),
-        );
-    }
-
-    return array(
-        'html_lang' => 'hu',
-        'title' => 'Harmat App',
-        'eyebrow' => 'Harmat Lakópark',
-        'headline' => 'Egységes belépési pont',
-        'lead' => 'Vevők, értékesítők és közvetítők egy közös mobil belépőből jutnak a saját felületükre.',
-        'language' => 'Nyelv',
-        'hu_label' => 'Magyar',
-        'zh_label' => 'Kínai',
-        'home' => 'Vissza a weboldalra',
-        'install' => 'Hozzáadható a telefon kezdőképernyőjéhez',
-        'install_cta' => 'App telepítése',
-        'privacy' => 'Adatvédelem',
-        'demo_cta' => 'Próbaverzió',
-        'shortcuts_title' => 'Gyors műveletek',
-        'shortcuts_intro' => 'Válasszon szerepet, vagy nyissa meg közvetlenül a gyakori modulokat.',
-        'visual_title' => 'Harmat utca 22.',
-        'visual_subtitle' => '1105 Budapest',
-        'continue_tag' => 'Bejelentkezve',
-        'continue_title' => 'Folytatás az aktuális felületen',
-        'continue_prefix' => 'A jelenlegi fiókkal közvetlenül megnyitható',
-        'continue_button' => 'Tovább',
-        'roles' => array(
-            array(
-                'key' => 'buyer',
-                'mark' => 'V',
-                'label' => 'Vevő',
-                'sub' => 'Ügyfélfelület',
-                'body' => 'Lakásadatok, fizetési ütemezés, szerződéses fájlok és ügyintézés.',
-                'cta' => 'Vevői belépés',
-                'path' => '/client/',
-                'modules' => array(
-                    array('label' => 'Lakásadatok', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
-                    array('label' => 'Fizetések', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
-                    array('label' => 'Dokumentumok', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
-                    array('label' => 'Ügyintézés', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
-                ),
-            ),
-            array(
-                'key' => 'sales',
-                'mark' => 'É',
-                'label' => 'Értékesítés',
-                'sub' => 'Munkafelület',
-                'body' => 'Érdeklődések, ügyek, lezárt ügyfelek, fizetések és lakáskészlet.',
-                'cta' => 'Értékesítési belépés',
-                'path' => '/sales/',
-                'modules' => array(
-                    array('label' => 'Teendők', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
-                    array('label' => 'Érdeklődések', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
-                    array('label' => 'Ügyfelek', 'path' => '/sales/', 'query' => array('view' => 'customers')),
-                    array('label' => 'Lakáskészlet', 'path' => '/sales/', 'query' => array('view' => 'properties')),
-                ),
-            ),
-            array(
-                'key' => 'agent',
-                'mark' => 'K',
-                'label' => 'Közvetítő',
-                'sub' => 'Partnerfelület',
-                'body' => 'Ügyfélrögzítés, követés, elérhető lakások és jutalékrekordok.',
-                'cta' => 'Közvetítői belépés',
-                'path' => '/agent/',
-                'modules' => array(
-                    array('label' => 'Ügyfélrögzítés', 'path' => '/agent/'),
-                    array('label' => 'Ügyfelek', 'path' => '/agent/', 'query' => array('view' => 'clients')),
-                    array('label' => 'Teendők', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
-                    array('label' => 'Lakások', 'path' => '/agent/', 'query' => array('view' => 'properties')),
-                ),
-            ),
-        ),
-    );
+function harmat_app_portal_icon_20260610(): void
+{
+    harmat_app_portal_private_headers_20260610('image/svg+xml');
+    echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#355f4f"/><stop offset="1" stop-color="#b35b3c"/></linearGradient></defs><rect width="512" height="512" rx="120" fill="#f4ecdf"/><path d="M116 336V156h54v70h84v-70h54v180h-54v-68h-84v68h-54Zm228 0v-42l70-62c19-17 27-29 27-43 0-15-11-25-28-25-18 0-32 10-48 31l-38-30c22-32 48-50 90-50 48 0 80 28 80 70 0 35-18 56-52 85l-36 30h90v36H344Z" fill="url(#g)"/></svg>';
 }
-
-function harmat_app_portal_module_url_20260609($module, $locale) {
-    $path = isset($module['path']) ? (string) $module['path'] : '/app/';
-    $args = array('wp_lang' => $locale);
-    if (!empty($module['query']) && is_array($module['query'])) {
-        foreach ($module['query'] as $key => $value) {
-            $args[sanitize_key($key)] = sanitize_text_field((string) $value);
-        }
-    }
-
-    $url = add_query_arg($args, home_url($path));
-    if (!empty($module['anchor'])) {
-        $url .= '#' . rawurlencode(sanitize_title((string) $module['anchor']));
-    }
-
-    return $url;
-}
-
-function harmat_app_portal_demo_data_20260609($lang) {
-    if ($lang === 'zh') {
-        return array(
-            'title' => 'Harmat App 试用版',
-            'eyebrow' => '功能试用',
-            'headline' => '完整 App 工作台',
-            'intro' => '这里先展示买房者、销售和经纪人的完整手机端逻辑。当前为试用界面，不会修改真实数据。',
-            'notice' => '试用版只用于确认界面和流程；正式数据仍在原有客户、销售、经纪人后台中。',
-            'live_entry' => '返回正式入口',
-            'open_live' => '进入正式模块',
-            'roles_label' => '身份选择',
-            'language' => '语言',
-            'hu_label' => '匈牙利语',
-            'zh_label' => '中文',
-            'panels' => array(
-                'buyer' => array(
-                    'mark' => '客',
-                    'label' => '买房者',
-                    'title' => '买房者售后中心',
-                    'summary' => '房源、付款、合同文件、项目进度和售后事项集中在一个手机页面。',
-                    'kpis' => array(
-                        array('label' => '当前房源', 'value' => 'A1-1-L1'),
-                        array('label' => '付款进度', 'value' => '25%'),
-                        array('label' => '文件', 'value' => '3'),
-                        array('label' => '下个节点', 'value' => '2026-12-31'),
-                    ),
-                    'modules' => array(
-                        array('label' => '房源资料', 'detail' => '户型、面积、价格、房号和交付资料集中查看。', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
-                        array('label' => '付款计划', 'detail' => '首付、阶段款、尾款和已付款比例清晰显示。', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
-                        array('label' => '合同文件', 'detail' => '合同、付款凭证、附件和交付材料统一下载。', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
-                        array('label' => '售后事项', 'detail' => '客户提交问题后，销售端可以继续跟进处理。', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
-                        array('label' => '项目进度', 'detail' => '施工节点、照片和公告以后可作为售后内容更新。', 'path' => '/client/', 'anchor' => 'harmat-customer-progress'),
-                    ),
-                ),
-                'sales' => array(
-                    'mark' => '销',
-                    'label' => '销售',
-                    'title' => '销售移动工作台',
-                    'summary' => '询价、分配、跟单、成交客户、付款提醒和房源库存从手机端快速进入。',
-                    'kpis' => array(
-                        array('label' => '今日待办', 'value' => '8'),
-                        array('label' => '待指派', 'value' => '3'),
-                        array('label' => '逾期跟进', 'value' => '2'),
-                        array('label' => '本周询价', 'value' => '24'),
-                    ),
-                    'modules' => array(
-                        array('label' => '今日待办', 'detail' => '按今天、逾期、未来 7 天集中处理任务。', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
-                        array('label' => '询价汇总', 'detail' => '网站询价、经纪人询价和自来客户统一汇总。', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
-                        array('label' => '销售漏斗', 'detail' => '从新机会到预订、合同、成交形成自动化 CRM。', 'path' => '/sales/', 'query' => array('view' => 'deals')),
-                        array('label' => '成交客户', 'detail' => '维护客户档案、售后跟单、文件和后续事项。', 'path' => '/sales/', 'query' => array('view' => 'customers')),
-                        array('label' => '房源库存', 'detail' => '查看在售、预订、出售状态以及面积和价格筛选。', 'path' => '/sales/', 'query' => array('view' => 'properties')),
-                    ),
-                ),
-                'agent' => array(
-                    'mark' => '经',
-                    'label' => '经纪人',
-                    'title' => '经纪人合作中心',
-                    'summary' => '客户登记、跟进任务、房源查询、佣金记录和规则说明统一放在经纪人通道。',
-                    'kpis' => array(
-                        array('label' => '保护客户', 'value' => '12'),
-                        array('label' => '待跟进', 'value' => '4'),
-                        array('label' => '可售房源', 'value' => '124'),
-                        array('label' => '佣金记录', 'value' => '5'),
-                    ),
-                    'modules' => array(
-                        array('label' => '客户登记', 'detail' => '登记客户姓名、电话、意向房源和下次跟进时间。', 'path' => '/agent/'),
-                        array('label' => '我的客户', 'detail' => '查看客户保护期、状态、备注和后续跟进。', 'path' => '/agent/', 'query' => array('view' => 'clients')),
-                        array('label' => '待跟进', 'detail' => '把需要联系的客户变成清晰的任务列表。', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
-                        array('label' => '房源库存', 'detail' => '按房号、楼栋、面积、价格和状态筛选房源。', 'path' => '/agent/', 'query' => array('view' => 'properties')),
-                        array('label' => '规则说明', 'detail' => '佣金规则、客户保护和合作流程集中说明。', 'path' => '/agent/', 'query' => array('view' => 'rules')),
-                    ),
-                ),
-            ),
-        );
-    }
-
-    return array(
-        'title' => 'Harmat App próbaverzió',
-        'eyebrow' => 'Funkciópróba',
-        'headline' => 'Teljes mobil munkafelület',
-        'intro' => 'Ez a próbaverzió bemutatja a vevői, értékesítési és közvetítői mobil logikát. Nem módosít valódi adatot.',
-        'notice' => 'A próbaverzió a felület és a folyamat ellenőrzésére szolgál; az éles adatok továbbra is a meglévő portálokon maradnak.',
-        'live_entry' => 'Vissza az éles belépéshez',
-        'open_live' => 'Éles modul megnyitása',
-        'roles_label' => 'Szerepválasztás',
-        'language' => 'Nyelv',
-        'hu_label' => 'Magyar',
-        'zh_label' => 'Kínai',
-        'panels' => array(
-            'buyer' => array(
-                'mark' => 'V',
-                'label' => 'Vevő',
-                'title' => 'Vevői ügyfélközpont',
-                'summary' => 'Lakásadatok, fizetés, szerződéses fájlok, projektállapot és ügyintézés egy mobil nézetben.',
-                'kpis' => array(
-                    array('label' => 'Lakás', 'value' => 'A1-1-L1'),
-                    array('label' => 'Fizetés', 'value' => '25%'),
-                    array('label' => 'Fájl', 'value' => '3'),
-                    array('label' => 'Következő határidő', 'value' => '2026-12-31'),
-                ),
-                'modules' => array(
-                    array('label' => 'Lakásadatok', 'detail' => 'Alaprajz, terület, ár, lakásszám és átadási információk.', 'path' => '/client/', 'anchor' => 'harmat-customer-apartment'),
-                    array('label' => 'Fizetési terv', 'detail' => 'Előleg, ütemezett részletek, fennmaradó összeg és fizetési arány.', 'path' => '/client/', 'anchor' => 'harmat-customer-payment'),
-                    array('label' => 'Dokumentumok', 'detail' => 'Szerződés, bizonylatok, mellékletek és ügyfélanyagok letöltése.', 'path' => '/client/', 'anchor' => 'harmat-customer-documents'),
-                    array('label' => 'Ügyintézés', 'detail' => 'A vevő kérdést küldhet, az értékesítés pedig követni tudja.', 'path' => '/client/', 'anchor' => 'harmat-customer-aftercare'),
-                    array('label' => 'Projektállapot', 'detail' => 'Később építési állapot, fotók és közlemények jelenhetnek meg.', 'path' => '/client/', 'anchor' => 'harmat-customer-progress'),
-                ),
-            ),
-            'sales' => array(
-                'mark' => 'É',
-                'label' => 'Értékesítés',
-                'title' => 'Értékesítési mobil munkafelület',
-                'summary' => 'Érdeklődések, kiosztás, ügykövetés, lezárt ügyfelek, fizetések és lakáskészlet gyors elérése.',
-                'kpis' => array(
-                    array('label' => 'Mai teendő', 'value' => '8'),
-                    array('label' => 'Kiosztásra vár', 'value' => '3'),
-                    array('label' => 'Lejárt követés', 'value' => '2'),
-                    array('label' => 'Heti érdeklődés', 'value' => '24'),
-                ),
-                'modules' => array(
-                    array('label' => 'Teendők', 'detail' => 'Mai, lejárt és következő 7 napos feladatok egy listában.', 'path' => '/sales/', 'query' => array('view' => 'tasks')),
-                    array('label' => 'Érdeklődések', 'detail' => 'Weboldali, közvetítői és saját érdeklődések közös nézete.', 'path' => '/sales/', 'query' => array('view' => 'inquiries')),
-                    array('label' => 'Értékesítési ügyek', 'detail' => 'CRM folyamat az új lehetőségtől a foglaláson át a lezárásig.', 'path' => '/sales/', 'query' => array('view' => 'deals')),
-                    array('label' => 'Ügyfelek', 'detail' => 'Lezárt ügyfelek, utógondozás, fájlok és következő lépések.', 'path' => '/sales/', 'query' => array('view' => 'customers')),
-                    array('label' => 'Lakáskészlet', 'detail' => 'Elérhető, foglalt és eladott lakások szűrése ár és terület szerint.', 'path' => '/sales/', 'query' => array('view' => 'properties')),
-                ),
-            ),
-            'agent' => array(
-                'mark' => 'K',
-                'label' => 'Közvetítő',
-                'title' => 'Közvetítői partnerközpont',
-                'summary' => 'Ügyfélrögzítés, követési feladatok, lakáskeresés, jutalékrekordok és szabályok egy helyen.',
-                'kpis' => array(
-                    array('label' => 'Védett ügyfél', 'value' => '12'),
-                    array('label' => 'Teendő', 'value' => '4'),
-                    array('label' => 'Elérhető lakás', 'value' => '124'),
-                    array('label' => 'Jutalékrekord', 'value' => '5'),
-                ),
-                'modules' => array(
-                    array('label' => 'Ügyfélrögzítés', 'detail' => 'Név, telefon, érdeklődött lakás és következő kapcsolatfelvétel.', 'path' => '/agent/'),
-                    array('label' => 'Ügyfelek', 'detail' => 'Védelmi idő, státusz, megjegyzés és következő feladat.', 'path' => '/agent/', 'query' => array('view' => 'clients')),
-                    array('label' => 'Teendők', 'detail' => 'A következő kapcsolattartások feladatlistává alakulnak.', 'path' => '/agent/', 'query' => array('view' => 'tasks')),
-                    array('label' => 'Lakások', 'detail' => 'Lakásszám, épület, terület, ár és státusz szerinti keresés.', 'path' => '/agent/', 'query' => array('view' => 'properties')),
-                    array('label' => 'Szabályok', 'detail' => 'Jutalék, ügyfélvédelem és együttműködési folyamat.', 'path' => '/agent/', 'query' => array('view' => 'rules')),
-                ),
-            ),
-        ),
-    );
-}
-
-function harmat_app_portal_render_demo_20260609() {
-    $lang = harmat_app_portal_lang_20260609();
-    $locale = harmat_app_portal_locale_20260609($lang);
-    $demo = harmat_app_portal_demo_data_20260609($lang);
-    $logo = harmat_app_portal_logo_20260609(192);
-    $app_url = add_query_arg('wp_lang', $locale, home_url('/app/'));
-
-    status_header(200);
-    nocache_headers();
-    header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
-    ?>
-<!doctype html>
-<html lang="<?php echo esc_attr($lang === 'zh' ? 'zh-Hans' : 'hu'); ?>">
-<head>
-    <meta charset="<?php echo esc_attr(get_bloginfo('charset')); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="robots" content="noindex,nofollow">
-    <meta name="theme-color" content="#253137">
-    <title><?php echo esc_html($demo['title']); ?></title>
-    <style>
-        *{box-sizing:border-box}
-        html,body{min-height:100%;margin:0}
-        body{background:#f7f0e4;color:#253137;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif}
-        .happ-demo-shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:24px 0 42px}
-        .happ-demo-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;padding:16px;border:1px solid #ead8b8;border-radius:18px;background:#fff;box-shadow:0 14px 34px rgba(70,54,28,.06)}
-        .happ-demo-brand{display:flex;align-items:center;gap:12px;color:#253137;text-decoration:none}.happ-demo-brand img{width:38px;height:38px;object-fit:contain}.happ-demo-brand span{display:block;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.happ-demo-brand strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:21px;font-weight:500}
-        .happ-demo-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}.happ-demo-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border:1px solid #ead8b8;border-radius:999px;background:#fffaf3;color:#8a5a18;font-size:13px;font-weight:900;text-decoration:none}.happ-demo-actions a.is-active{background:#253137;color:#fff;border-color:#253137}
-        .happ-demo-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.42fr);gap:16px;align-items:stretch;margin-bottom:16px}
-        .happ-demo-intro,.happ-demo-notice{padding:22px;border:1px solid #ead8b8;border-radius:22px;background:linear-gradient(135deg,#fffaf1,#fff);box-shadow:0 18px 45px rgba(70,54,28,.08)}
-        .happ-demo-intro small{display:block;margin-bottom:8px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.happ-demo-intro h1{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:clamp(34px,5vw,58px);font-weight:500;line-height:1;letter-spacing:0}.happ-demo-intro p,.happ-demo-notice p{margin:10px 0 0;color:#5d6670;line-height:1.65}
-        .happ-demo-notice{display:grid;align-content:center;background:#253137;color:#fff}.happ-demo-notice strong{font-family:Georgia,"Times New Roman",serif;font-size:27px;font-weight:500}.happ-demo-notice p{color:#d7e0e3}
-        .happ-demo-role-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px;padding:8px;border:1px solid #ead8b8;border-radius:18px;background:#fff}
-        .happ-demo-role-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:0;border-radius:12px;background:#fffaf3;color:#253137;font:inherit;font-weight:900;cursor:pointer}.happ-demo-role-tabs button span{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#253137;color:#fff;font-size:12px}.happ-demo-role-tabs button.is-active{background:#a8762d;color:#fff}.happ-demo-role-tabs button.is-active span{background:#fff;color:#a8762d}
-        .happ-demo-panel{display:none}.happ-demo-panel.is-active{display:grid;gap:16px}
-        .happ-demo-panel-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:22px;border:1px solid #ead8b8;border-radius:22px;background:#fff;box-shadow:0 18px 45px rgba(70,54,28,.08)}
-        .happ-demo-panel-head h2{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:34px;font-weight:500;letter-spacing:0}.happ-demo-panel-head p{max-width:760px;margin:7px 0 0;color:#687178;line-height:1.6}.happ-demo-panel-head>a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:10px;background:#253137;color:#fff;font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap}
-        .happ-demo-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.happ-demo-kpis article{padding:15px;border:1px solid #ead8b8;border-radius:16px;background:#fff}.happ-demo-kpis small{display:block;color:#a5742c;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.happ-demo-kpis strong{display:block;margin-top:7px;color:#253137;font-size:24px;line-height:1.1;overflow-wrap:anywhere}
-        .happ-demo-modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.happ-demo-module{display:grid;grid-template-rows:auto auto 1fr auto;gap:9px;min-height:198px;padding:16px;border:1px solid #ead8b8;border-left:4px solid #a8762d;border-radius:16px;background:#fffaf3;color:#253137;text-decoration:none}.happ-demo-module b{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:#253137;color:#fff;font-size:12px}.happ-demo-module strong{font-size:18px}.happ-demo-module p{margin:0;color:#5d6670;font-size:13px;line-height:1.55}.happ-demo-module span{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 10px;border-radius:9px;background:#a8762d;color:#fff;font-size:12px;font-weight:900}
-        @media(max-width:760px){.happ-demo-shell{width:min(100% - 20px,720px);padding-top:12px}.happ-demo-top,.happ-demo-hero,.happ-demo-panel-head{grid-template-columns:1fr;display:grid}.happ-demo-actions{justify-content:flex-start}.happ-demo-role-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.happ-demo-role-tabs button{display:grid;gap:4px;min-height:74px;padding:8px 4px;font-size:12px}.happ-demo-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.happ-demo-panel-head>a{width:100%}.happ-demo-modules{grid-template-columns:1fr}.happ-demo-module{min-height:0}.happ-demo-intro,.happ-demo-notice,.happ-demo-panel-head{padding:18px}}
-    </style>
-</head>
-<body>
-    <main class="happ-demo-shell">
-        <header class="happ-demo-top">
-            <a class="happ-demo-brand" href="<?php echo esc_url($app_url); ?>">
-                <img src="<?php echo esc_url($logo); ?>" alt="Harmat">
-                <span>Harmat Lakópark</span>
-                <strong>Harmat App</strong>
-            </a>
-            <nav class="happ-demo-actions" aria-label="<?php echo esc_attr($demo['language']); ?>">
-                <a class="<?php echo $lang === 'hu' ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('wp_lang', 'hu_HU', home_url('/app/demo/'))); ?>"><?php echo esc_html($demo['hu_label']); ?></a>
-                <a class="<?php echo $lang === 'zh' ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('wp_lang', 'zh_CN', home_url('/app/demo/'))); ?>"><?php echo esc_html($demo['zh_label']); ?></a>
-                <a href="<?php echo esc_url($app_url); ?>"><?php echo esc_html($demo['live_entry']); ?></a>
-            </nav>
-        </header>
-        <section class="happ-demo-hero">
-            <div class="happ-demo-intro">
-                <small><?php echo esc_html($demo['eyebrow']); ?></small>
-                <h1><?php echo esc_html($demo['headline']); ?></h1>
-                <p><?php echo esc_html($demo['intro']); ?></p>
-            </div>
-            <aside class="happ-demo-notice">
-                <strong>Demo</strong>
-                <p><?php echo esc_html($demo['notice']); ?></p>
-            </aside>
-        </section>
-        <nav class="happ-demo-role-tabs" aria-label="<?php echo esc_attr($demo['roles_label']); ?>">
-            <?php foreach ($demo['panels'] as $key => $panel) : ?>
-                <button type="button" class="<?php echo $key === 'buyer' ? 'is-active' : ''; ?>" data-demo-role="<?php echo esc_attr($key); ?>"><span><?php echo esc_html($panel['mark']); ?></span><?php echo esc_html($panel['label']); ?></button>
-            <?php endforeach; ?>
-        </nav>
-        <?php foreach ($demo['panels'] as $key => $panel) : ?>
-            <?php $primary_module = $panel['modules'][0] ?? array('path' => '/app/'); ?>
-            <section class="happ-demo-panel <?php echo $key === 'buyer' ? 'is-active' : ''; ?>" data-demo-panel="<?php echo esc_attr($key); ?>">
-                <header class="happ-demo-panel-head">
-                    <div>
-                        <h2><?php echo esc_html($panel['title']); ?></h2>
-                        <p><?php echo esc_html($panel['summary']); ?></p>
-                    </div>
-                    <a href="<?php echo esc_url(harmat_app_portal_module_url_20260609($primary_module, $locale)); ?>"><?php echo esc_html($demo['open_live']); ?></a>
-                </header>
-                <section class="happ-demo-kpis" aria-label="<?php echo esc_attr($panel['title']); ?>">
-                    <?php foreach ($panel['kpis'] as $kpi) : ?>
-                        <article><small><?php echo esc_html($kpi['label']); ?></small><strong><?php echo esc_html($kpi['value']); ?></strong></article>
-                    <?php endforeach; ?>
-                </section>
-                <section class="happ-demo-modules">
-                    <?php foreach ($panel['modules'] as $index => $module) : ?>
-                        <a class="happ-demo-module" href="<?php echo esc_url(harmat_app_portal_module_url_20260609($module, $locale)); ?>">
-                            <b><?php echo esc_html(str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT)); ?></b>
-                            <strong><?php echo esc_html($module['label']); ?></strong>
-                            <p><?php echo esc_html($module['detail']); ?></p>
-                            <span><?php echo esc_html($demo['open_live']); ?></span>
-                        </a>
-                    <?php endforeach; ?>
-                </section>
-            </section>
-        <?php endforeach; ?>
-    </main>
-    <script>
-        (function(){
-            var buttons = document.querySelectorAll('[data-demo-role]');
-            var panels = document.querySelectorAll('[data-demo-panel]');
-            function activate(role) {
-                buttons.forEach(function(button) { button.classList.toggle('is-active', button.getAttribute('data-demo-role') === role); });
-                panels.forEach(function(panel) { panel.classList.toggle('is-active', panel.getAttribute('data-demo-panel') === role); });
-            }
-            buttons.forEach(function(button) {
-                button.addEventListener('click', function() { activate(button.getAttribute('data-demo-role')); });
-            });
-        })();
-    </script>
-</body>
-</html>
-    <?php
-    exit;
-}
-
-function harmat_app_portal_current_workspace_20260609($text, $locale) {
-    if (!is_user_logged_in()) {
-        return null;
-    }
-
-    $user = wp_get_current_user();
-    $roles = (array) $user->roles;
-    $role_map = array();
-    foreach ($text['roles'] as $role) {
-        $role_map[$role['key']] = $role;
-    }
-
-    if (current_user_can('manage_options') || in_array('harmat_sales_manager', $roles, true) || in_array('harmat_sales_staff', $roles, true)) {
-        $workspace = $role_map['sales'] ?? null;
-    } elseif (in_array('harmat_broker_viewer', $roles, true)) {
-        $workspace = $role_map['agent'] ?? null;
-    } elseif (current_user_can('harmat_view_customer_portal') || in_array('harmat_customer_owner', $roles, true)) {
-        $workspace = $role_map['buyer'] ?? null;
-    } else {
-        return null;
-    }
-
-    if (!$workspace) {
-        return null;
-    }
-
-    $workspace['url'] = add_query_arg('wp_lang', $locale, home_url($workspace['path']));
-    $workspace['user_label'] = $user->display_name ?: $user->user_login;
-
-    return $workspace;
-}
-
-function harmat_app_portal_render_20260609() {
-    $lang = harmat_app_portal_lang_20260609();
-    $locale = harmat_app_portal_locale_20260609($lang);
-    $text = harmat_app_portal_text_20260609($lang);
-    $current_workspace = harmat_app_portal_current_workspace_20260609($text, $locale);
-    $logo = harmat_app_portal_logo_20260609(192);
-    $hero_image = home_url('/wp-content/uploads/2026/02/Harmat22_latvany-3-1536x864.jpg');
-    $manifest_url = home_url('/app/manifest.webmanifest');
-
-    status_header(200);
-    nocache_headers();
-    header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
-    ?>
-<!doctype html>
-<html lang="<?php echo esc_attr($text['html_lang']); ?>">
-<head>
-    <meta charset="<?php echo esc_attr(get_bloginfo('charset')); ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="robots" content="noindex,nofollow">
-    <meta name="theme-color" content="#253137">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Harmat App">
-    <title><?php echo esc_html($text['title']); ?></title>
-    <link rel="manifest" href="<?php echo esc_url($manifest_url); ?>">
-    <link rel="apple-touch-icon" href="<?php echo esc_url($logo); ?>">
-    <style>
-        *{box-sizing:border-box}
-        html,body{min-height:100%;margin:0}
-        body{background:#f7f0e4;color:#253137;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif}
-        .harmat-app-shell{min-height:100svh;display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,43vw)}
-        .harmat-app-main{display:flex;flex-direction:column;gap:24px;padding:clamp(22px,5vw,64px)}
-        .harmat-app-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
-        .harmat-app-brand{display:flex;align-items:center;gap:12px;color:#253137;text-decoration:none}
-        .harmat-app-brand img{width:42px;height:42px;object-fit:contain}
-        .harmat-app-brand span{display:block;color:#8a5a18;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
-        .harmat-app-brand strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:20px;font-weight:500}
-        .harmat-app-lang{display:flex;align-items:center;gap:6px;padding:6px;border:1px solid rgba(138,90,24,.22);border-radius:999px;background:#fff}
-        .harmat-app-lang a{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 12px;border-radius:999px;color:#8a5a18;font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap}
-        .harmat-app-lang a.is-active{background:#253137;color:#fff}
-        .harmat-app-hero{max-width:780px}
-        .harmat-app-eyebrow{margin:0 0 10px;color:#8a5a18;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
-        .harmat-app-hero h1{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:clamp(40px,7vw,82px);font-weight:500;line-height:.98;letter-spacing:0}
-        .harmat-app-hero p{max-width:620px;margin:18px 0 0;color:#526069;font-size:17px;line-height:1.65}
-        .harmat-app-continue{display:flex;align-items:center;justify-content:space-between;gap:16px;width:min(100%,780px);padding:16px 18px;border:1px solid rgba(168,118,45,.28);border-radius:8px;background:#fff;box-shadow:0 14px 35px rgba(39,49,56,.08)}
-        .harmat-app-continue small{display:block;margin-bottom:4px;color:#1f7a4d;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
-        .harmat-app-continue strong{display:block;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:25px;font-weight:500;line-height:1.12}
-        .harmat-app-continue p{margin:6px 0 0;color:#687178;font-size:13px;line-height:1.45}
-        .harmat-app-continue a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:6px;background:#253137;color:#fff;font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap}
-        .harmat-app-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:auto}
-        .harmat-app-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:12px;min-height:260px;padding:18px;border:1px solid rgba(138,90,24,.2);border-radius:8px;background:#fff;color:#253137;text-decoration:none;box-shadow:0 18px 45px rgba(39,49,56,.08);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
-        .harmat-app-card:hover{transform:translateY(-2px);border-color:#a8762d;box-shadow:0 24px 55px rgba(39,49,56,.12)}
-        .harmat-app-mark{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:#253137;color:#fff;font-weight:900;font-style:normal}
-        .harmat-app-card h2{margin:0;color:#17262c;font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:500;line-height:1.1;letter-spacing:0;overflow-wrap:anywhere}
-        .harmat-app-card small{display:block;margin-top:5px;color:#a8762d;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-        .harmat-app-card p{margin:0;color:#5f6970;font-size:14px;line-height:1.55}
-        .harmat-app-card span:last-child{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 12px;border-radius:6px;background:#a8762d;color:#fff;font-size:13px;font-weight:900;text-align:center}
-        .harmat-app-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-        .harmat-app-shortcuts-head{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:2px}
-        .harmat-app-shortcuts-head h2{margin:0;color:#18262c;font-family:Georgia,"Times New Roman",serif;font-size:30px;font-weight:500;line-height:1.05;letter-spacing:0}
-        .harmat-app-shortcuts-head p{max-width:520px;margin:0;color:#687178;font-size:13px;line-height:1.5;text-align:right}
-        .harmat-app-shortcut-group{display:grid;gap:10px;padding:14px;border:1px solid rgba(138,90,24,.18);border-radius:8px;background:rgba(255,255,255,.72)}
-        .harmat-app-shortcut-group strong{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#253137;font-size:14px}
-        .harmat-app-shortcut-group strong i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:999px;background:#253137;color:#fff;font-size:11px;font-style:normal}
-        .harmat-app-shortcut-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-        .harmat-app-shortcut-links a{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 9px;border:1px solid rgba(168,118,45,.26);border-radius:6px;background:#fff;color:#8a5a18;font-size:12px;font-weight:900;text-align:center;text-decoration:none;line-height:1.2}
-        .harmat-app-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:#687178;font-size:13px}
-        .harmat-app-foot a,.harmat-app-install{display:inline-flex;align-items:center;min-height:34px;color:#8a5a18;font-weight:900;text-decoration:none}
-        .harmat-app-install{border:1px solid rgba(138,90,24,.28);border-radius:999px;background:#fff;padding:0 12px;font:inherit;font-size:13px;cursor:pointer}
-        .harmat-app-install[hidden]{display:none}
-        .harmat-app-visual{position:relative;min-height:100%;background:#253137;overflow:hidden}
-        .harmat-app-visual img{width:100%;height:100%;object-fit:cover;filter:saturate(.94);opacity:.82}
-        .harmat-app-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(37,49,55,.16),rgba(37,49,55,.58))}
-        .harmat-app-visual-card{position:absolute;left:24px;right:24px;bottom:24px;z-index:1;padding:18px;border:1px solid rgba(255,255,255,.26);border-radius:8px;background:rgba(255,255,255,.9);backdrop-filter:blur(8px)}
-        .harmat-app-visual-card strong{display:block;color:#253137;font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:500}
-        .harmat-app-visual-card span{display:block;margin-top:6px;color:#687178;font-size:13px;line-height:1.5}
-        @media(max-width:980px){
-            .harmat-app-shell{grid-template-columns:1fr}
-            .harmat-app-visual{display:none}
-            .harmat-app-main{min-height:100svh}
-            .harmat-app-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-            .harmat-app-card{min-height:118px;padding:12px 8px;align-content:start;justify-items:center;text-align:center;grid-template-rows:auto auto;gap:7px}
-            .harmat-app-mark{width:32px;height:32px;font-size:13px}
-            .harmat-app-card h2{font-size:clamp(13px,3.8vw,18px);line-height:1.08}
-            .harmat-app-card small{font-size:9px;letter-spacing:.03em;line-height:1.25}
-            .harmat-app-card p,.harmat-app-card span:last-child{display:none}
-            .harmat-app-shortcuts{grid-template-columns:1fr;gap:8px}
-            .harmat-app-shortcuts-head{display:grid;gap:4px;margin-top:0}
-            .harmat-app-shortcuts-head h2{font-size:24px}
-            .harmat-app-shortcuts-head p{text-align:left}
-            .harmat-app-shortcut-group{grid-template-columns:88px minmax(0,1fr);align-items:center;padding:10px}
-            .harmat-app-shortcut-group strong{display:grid;gap:4px;justify-items:start;font-size:13px}
-            .harmat-app-shortcut-links{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-            .harmat-app-shortcut-links a{min-height:34px;padding:0 4px;font-size:10px}
-            .harmat-app-continue{display:grid;gap:12px;padding:14px}
-            .harmat-app-continue strong{font-size:22px}
-            .harmat-app-continue a{width:100%}
-            .harmat-app-top{align-items:flex-start}
-            .harmat-app-lang{flex:0 0 auto}
-        }
-        @media(max-width:520px){
-            .harmat-app-main{padding:18px 14px 22px;gap:20px}
-            .harmat-app-top{display:grid;gap:12px}
-            .harmat-app-lang{justify-self:start}
-            .harmat-app-hero h1{font-size:42px}
-            .harmat-app-hero p{font-size:15px}
-            .harmat-app-grid{gap:7px}
-            .harmat-app-card{padding:11px 6px}
-            .harmat-app-shortcut-group{grid-template-columns:1fr}
-            .harmat-app-shortcut-links a{font-size:10px}
-        }
-    </style>
-</head>
-<body>
-    <main class="harmat-app-shell">
-        <section class="harmat-app-main" aria-label="Harmat App">
-            <header class="harmat-app-top">
-                <a class="harmat-app-brand" href="<?php echo esc_url(home_url('/')); ?>">
-                    <img src="<?php echo esc_url($logo); ?>" alt="Harmat">
-                    <span><?php echo esc_html($text['eyebrow']); ?></span>
-                    <strong>Harmat App</strong>
-                </a>
-                <nav class="harmat-app-lang" aria-label="<?php echo esc_attr($text['language']); ?>">
-                    <a class="<?php echo $lang === 'hu' ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('wp_lang', 'hu_HU', home_url('/app/'))); ?>"><?php echo esc_html($text['hu_label']); ?></a>
-                    <a class="<?php echo $lang === 'zh' ? 'is-active' : ''; ?>" href="<?php echo esc_url(add_query_arg('wp_lang', 'zh_CN', home_url('/app/'))); ?>"><?php echo esc_html($text['zh_label']); ?></a>
-                </nav>
-            </header>
-            <section class="harmat-app-hero">
-                <p class="harmat-app-eyebrow"><?php echo esc_html($text['eyebrow']); ?></p>
-                <h1><?php echo esc_html($text['headline']); ?></h1>
-                <p><?php echo esc_html($text['lead']); ?></p>
-            </section>
-            <?php if ($current_workspace) : ?>
-                <section class="harmat-app-continue" aria-label="<?php echo esc_attr($text['continue_title']); ?>">
-                    <div>
-                        <small><?php echo esc_html($text['continue_tag']); ?></small>
-                        <strong><?php echo esc_html($text['continue_title']); ?></strong>
-                        <p><?php echo esc_html($text['continue_prefix'] . ': ' . $current_workspace['label'] . ' / ' . $current_workspace['user_label']); ?></p>
-                    </div>
-                    <a href="<?php echo esc_url($current_workspace['url']); ?>"><?php echo esc_html($text['continue_button']); ?></a>
-                </section>
-            <?php endif; ?>
-            <section class="harmat-app-grid" aria-label="App portals">
-                <?php foreach ($text['roles'] as $role) : ?>
-                    <?php $url = add_query_arg('wp_lang', $locale, home_url($role['path'])); ?>
-                    <a class="harmat-app-card harmat-app-card-<?php echo esc_attr($role['key']); ?>" href="<?php echo esc_url($url); ?>">
-                        <i class="harmat-app-mark" aria-hidden="true"><?php echo esc_html($role['mark']); ?></i>
-                        <h2><?php echo esc_html($role['label']); ?><small><?php echo esc_html($role['sub']); ?></small></h2>
-                        <p><?php echo esc_html($role['body']); ?></p>
-                        <span><?php echo esc_html($role['cta']); ?></span>
-                    </a>
-                <?php endforeach; ?>
-            </section>
-            <section class="harmat-app-shortcuts" aria-label="<?php echo esc_attr($text['shortcuts_title']); ?>">
-                <div class="harmat-app-shortcuts-head">
-                    <h2><?php echo esc_html($text['shortcuts_title']); ?></h2>
-                    <p><?php echo esc_html($text['shortcuts_intro']); ?></p>
-                </div>
-                <?php foreach ($text['roles'] as $role) : ?>
-                    <article class="harmat-app-shortcut-group">
-                        <strong><i aria-hidden="true"><?php echo esc_html($role['mark']); ?></i><?php echo esc_html($role['label']); ?></strong>
-                        <div class="harmat-app-shortcut-links">
-                            <?php foreach (($role['modules'] ?? array()) as $module) : ?>
-                                <a href="<?php echo esc_url(harmat_app_portal_module_url_20260609($module, $locale)); ?>"><?php echo esc_html($module['label']); ?></a>
-                            <?php endforeach; ?>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
-            </section>
-            <footer class="harmat-app-foot">
-                <span><?php echo esc_html($text['install']); ?></span>
-                <button class="harmat-app-install" type="button" hidden><?php echo esc_html($text['install_cta']); ?></button>
-                <a href="<?php echo esc_url(add_query_arg('wp_lang', $locale, home_url('/app/demo/'))); ?>"><?php echo esc_html($text['demo_cta']); ?></a>
-                <a href="<?php echo esc_url(home_url('/adatvedelmi-tajekoztato/')); ?>"><?php echo esc_html($text['privacy']); ?></a>
-                <a href="<?php echo esc_url(home_url('/')); ?>"><?php echo esc_html($text['home']); ?></a>
-            </footer>
-        </section>
-        <aside class="harmat-app-visual" aria-hidden="true">
-            <img src="<?php echo esc_url($hero_image); ?>" alt="">
-            <div class="harmat-app-visual-card">
-                <strong><?php echo esc_html($text['visual_title']); ?></strong>
-                <span><?php echo esc_html($text['visual_subtitle']); ?></span>
-            </div>
-        </aside>
-    </main>
-    <script>
-        (function(){
-            var deferredInstallPrompt = null;
-            var installButton = document.querySelector('.harmat-app-install');
-
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function(){
-                    navigator.serviceWorker.register('/app/sw.js', { scope: '/app/' }).catch(function(){});
-                });
-            }
-
-            window.addEventListener('beforeinstallprompt', function(event) {
-                event.preventDefault();
-                deferredInstallPrompt = event;
-                if (installButton) installButton.hidden = false;
-            });
-
-            if (installButton) {
-                installButton.addEventListener('click', function() {
-                    if (!deferredInstallPrompt) return;
-                    deferredInstallPrompt.prompt();
-                    deferredInstallPrompt.userChoice.finally(function() {
-                        deferredInstallPrompt = null;
-                        installButton.hidden = true;
-                    });
-                });
-            }
-        })();
-    </script>
-</body>
-</html>
-    <?php
-    exit;
-}
-
-add_action('template_redirect', function () {
-    if (is_admin()) {
-        return;
-    }
-
-    $path = harmat_app_portal_path_20260609();
-    if ($path === 'app/manifest.webmanifest') {
-        harmat_app_portal_manifest_20260609();
-    }
-    if ($path === 'app/sw.js') {
-        harmat_app_portal_service_worker_20260609();
-    }
-    if ($path === 'app/demo') {
-        harmat_app_portal_render_demo_20260609();
-    }
-    if ($path === 'app') {
-        if (!empty($_GET['demo'])) {
-            harmat_app_portal_render_demo_20260609();
-        }
-        harmat_app_portal_render_20260609();
-    }
-}, 0);

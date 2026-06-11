@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.20
+ * Version: 1.3.21
  */
 
 if (!defined('ABSPATH')) {
@@ -247,6 +247,9 @@ function harmat_perf_start_visible_text_cleanup() {
     if (is_admin() || wp_doing_ajax()) {
         return;
     }
+    if (harmat_perf_is_private_portal_path()) {
+        return;
+    }
 
     ob_start('harmat_perf_cleanup_visible_html');
 }
@@ -263,7 +266,7 @@ function harmat_perf_is_private_portal_path() {
     }
 
     $path = harmat_perf_request_path();
-    return preg_match('~^(sales|agent|client|belepes)(/|$)~', $path) === 1;
+    return preg_match('~^(sales|agent|client|customer|ugyfel|belepes|sales-admin|lawyer)(/|$)~i', $path) === 1;
 }
 
 function harmat_perf_dequeue_heavy_assets() {
@@ -806,6 +809,58 @@ function harmat_perf_offer_form_guard() {
     return item.hidePrice ? '\u00c1r egyeztet\u00e9s alapj\u00e1n' : money(item.price);
   }
 
+  function attribution() {
+    var keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'lead_source'];
+    var params = new URLSearchParams(window.location.search || '');
+    var stored = {};
+    try { stored = JSON.parse(window.sessionStorage.getItem('harmatLeadAttribution') || '{}') || {}; } catch (e) {}
+    var changed = false;
+    keys.forEach(function (key) {
+      var value = params.get(key);
+      if (value) {
+        stored[key] = value.slice(0, 180);
+        changed = true;
+      }
+    });
+    if (!stored.landing_page) {
+      stored.landing_page = window.location.href;
+      changed = true;
+    }
+    if (!stored.referrer && document.referrer) {
+      stored.referrer = document.referrer.slice(0, 400);
+      changed = true;
+    }
+    if (!stored.lead_source) {
+      stored.lead_source = stored.utm_source || 'website';
+      changed = true;
+    }
+    if (changed) {
+      try { window.sessionStorage.setItem('harmatLeadAttribution', JSON.stringify(stored)); } catch (e) {}
+    }
+    return stored;
+  }
+
+  function ensureHidden(form, name, value) {
+    var field = form.querySelector('[name="' + name + '"]');
+    if (!field) {
+      field = document.createElement('input');
+      field.type = 'hidden';
+      field.name = name;
+      form.appendChild(field);
+    }
+    if (typeof value !== 'undefined') field.value = value || '';
+    return field;
+  }
+
+  function ensureLeadMetaFields(form) {
+    var data = attribution();
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'landing_page', 'referrer', 'lead_source'].forEach(function (name) {
+      ensureHidden(form, name, data[name] || '');
+    });
+    ensureHidden(form, '_harmat_offer_nonce', '<?php echo esc_js(wp_create_nonce('harmat_public_offer')); ?>');
+    ensureHidden(form, 'harmat_company_url', '');
+  }
+
   function setIfEmpty(form, name, value) {
     var field = form.querySelector('[name="' + name + '"]');
     if (!field || String(field.value || '').trim() || !value) return;
@@ -883,6 +938,7 @@ function harmat_perf_offer_form_guard() {
 
     function update() {
       fillSinglePropertyDefaults(form);
+      ensureLeadMetaFields(form);
       ensurePrivacy();
       submit.disabled = false;
       submit.classList.remove('harmat-submit-disabled');
@@ -962,6 +1018,7 @@ function harmat_perf_offer_success_fallback() {
   var thankYouUrl = '<?php echo esc_js(home_url('/koszonjuk/')); ?>';
   var feedbackBase = '<?php echo esc_js(rest_url('contact-form-7/v1/contact-forms/')); ?>';
   var fastOfferEndpoint = '<?php echo esc_js(rest_url('harmat-sales-manager/v1/offer')); ?>';
+  var offerNonce = '<?php echo esc_js(wp_create_nonce('harmat_public_offer')); ?>';
   var offerIds = { '1002': true, '8761': true };
   var redirected = false;
 
@@ -1102,6 +1159,13 @@ function harmat_perf_offer_success_fallback() {
 
     var body = new FormData(form);
     body.append('source_url', window.location.href);
+    body.append('_harmat_offer_nonce', valueOf(form, '_harmat_offer_nonce') || offerNonce);
+    try {
+      var stored = JSON.parse(window.sessionStorage.getItem('harmatLeadAttribution') || '{}') || {};
+      ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'landing_page', 'referrer', 'lead_source'].forEach(function (name) {
+        if (!body.get(name) && stored[name]) body.append(name, stored[name]);
+      });
+    } catch (e) {}
 
     fetch(fastOfferEndpoint, {
       method: 'POST',
@@ -5933,8 +5997,14 @@ function harmat_perf_lakaskereso_search_patch() {
   function cardSqm(card) {
     return numberValue(card.dataset.sqmPrice);
   }
+  function cardPrice(card) {
+    return numberValue(card.dataset.price);
+  }
   function isPriceKnown(card) {
     return card.dataset.priceHidden !== "1" && cardSqm(card) > 0;
+  }
+  function isTotalPriceKnown(card) {
+    return card.dataset.priceHidden !== "1" && cardPrice(card) > 0;
   }
   function sortCards(cards, sort) {
     if (!cards.length) return;
@@ -5944,6 +6014,15 @@ function harmat_perf_lakaskereso_search_patch() {
       if (!card.dataset.originalOrder) card.dataset.originalOrder = String(index);
     });
     cards.slice().sort(function (a, b) {
+      if (sort === "price-asc" || sort === "price-desc") {
+        var ap = isTotalPriceKnown(a);
+        var bp = isTotalPriceKnown(b);
+        if (ap !== bp) return ap ? -1 : 1;
+        if (ap && bp) {
+          var priceDelta = cardPrice(a) - cardPrice(b);
+          if (priceDelta !== 0) return sort === "price-asc" ? priceDelta : -priceDelta;
+        }
+      }
       if (sort === "sqm-asc" || sort === "sqm-desc") {
         var ak = isPriceKnown(a);
         var bk = isPriceKnown(b);

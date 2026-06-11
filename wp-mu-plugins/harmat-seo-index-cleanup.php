@@ -2,10 +2,15 @@
 /**
  * Plugin Name: Harmat SEO Index Cleanup
  * Description: SEO-only redirects and sitemap cleanup for legacy property templates.
+ * Version: 2026.06.10.1
  */
 
 if (!defined('ABSPATH')) {
     exit;
+}
+
+function harmat_seo_index_request_path() {
+    return trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
 }
 
 add_action('template_redirect', function () {
@@ -13,7 +18,7 @@ add_action('template_redirect', function () {
         return;
     }
 
-    $path = trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+    $path = harmat_seo_index_request_path();
 
     if ($path === 'property' || $path === 'apartment' || strpos($path, 'apartment/') === 0) {
         wp_safe_redirect(home_url('/lakaskereso/'), 301);
@@ -47,7 +52,7 @@ add_filter('wpseo_sitemap_entry', function ($url, $type, $object) {
         return false;
     }
 
-    $hidden_page_ids = array(174, 10513, 10539, 8533, 8538, 8543, 8548, 8553);
+    $hidden_page_ids = array(174, 10513, 10539, 4683, 4704, 4718, 4722, 4726);
     if (is_object($object) && isset($object->ID) && in_array((int) $object->ID, $hidden_page_ids, true)) {
         return false;
     }
@@ -66,7 +71,7 @@ add_filter('wpseo_sitemap_post_type_first_links', function ($links, $post_type) 
 }, 10, 2);
 
 add_filter('wpseo_robots', function ($robots) {
-    if (is_page(array(174, 10513, 10539, 8533, 8538, 8543, 8548, 8553))) {
+    if (is_page(array(174, 10513, 10539))) {
         return 'noindex,follow';
     }
 

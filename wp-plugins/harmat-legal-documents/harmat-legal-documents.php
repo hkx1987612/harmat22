@@ -3,7 +3,7 @@
  * Plugin Name: Harmat jogi dokumentumok
  * Plugin URI: https://harmat22.hu
  * Description: Védett ügyvédi dokumentumtár a Harmat22 értékesítési ügyeihez és lakásaihoz kapcsolva.
- * Version: 0.1.3
+ * Version: 0.1.4
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Legal_Documents {
-    const VERSION = '0.1.3';
+    const VERSION = '0.1.4';
     const ROLE_LAWYER = 'harmat_lawyer';
     const CAP_VIEW = 'harmat_view_legal_documents';
     const CAP_UPLOAD = 'harmat_upload_legal_documents';
@@ -196,6 +196,8 @@ final class Harmat_Legal_Documents {
             $this->handle_upload_document();
         } elseif ($action === 'delete_document') {
             $this->handle_delete_document();
+        } elseif ($action === 'update_document_review') {
+            $this->handle_update_document_review();
         } elseif ($action === 'create_lawyer_user') {
             $this->handle_create_lawyer_user();
         } elseif ($action === 'update_case') {
@@ -217,6 +219,10 @@ final class Harmat_Legal_Documents {
             $property_id = (int) $deal['property_id'];
         }
         $return_url = $this->context_url($context, $this->selection_args($deal_id, $property_id));
+        $target = $this->with_case_data($this->make_target($property_id, $deal));
+        if (!$this->target_has_legal_case($target)) {
+            $this->redirect_with_error($return_url, $this->inactive_case_message());
+        }
 
         if (empty($_FILES['legal_document']) || !is_array($_FILES['legal_document']) || empty($_FILES['legal_document']['name'])) {
             $this->redirect_with_error($return_url, 'Kérjük, válasszon ki egy feltöltendő fájlt.');
@@ -265,10 +271,17 @@ final class Harmat_Legal_Documents {
         $docs = $this->get_documents(true);
         $id = $this->next_document_id($docs);
         $now = current_time('mysql');
+        $version_group = $this->document_version_group($deal_id, $property_id, $category, $title);
+        $version_number = $this->next_document_version_number($docs, $version_group);
+        $this->archive_previous_document_versions($docs, $version_group);
         $docs[$id] = array(
             'id' => $id,
             'property_id' => $property_id,
             'deal_id' => $deal_id,
+            'customer_id' => (int) ($target['customer_id'] ?? 0),
+            'crm_code' => (string) ($target['crm_code'] ?? ''),
+            'sales_owner_id' => (int) ($target['sales_owner_id'] ?? 0),
+            'lawyer_owner_id' => get_current_user_id(),
             'client_name' => $client_name,
             'buyer_id_note' => $buyer_id_note,
             'apartment_code' => $apartment_code,
@@ -284,6 +297,12 @@ final class Harmat_Legal_Documents {
             'download_key' => wp_generate_password(24, false, false),
             'uploaded_at' => $now,
             'uploaded_by' => get_current_user_id(),
+            'version_group' => $version_group,
+            'version_number' => $version_number,
+            'is_active_version' => true,
+            'review_status' => 'uploaded',
+            'reviewer_id' => 0,
+            'reviewed_at' => '',
             'deleted_at' => '',
             'deleted_by' => 0,
         );
@@ -312,16 +331,44 @@ final class Harmat_Legal_Documents {
         }
 
         $doc = $docs[$doc_id];
-        $path = $this->absolute_private_path($doc['relative_path']);
-        if ($path && file_exists($path)) {
-            @unlink($path);
-        }
         $docs[$doc_id]['deleted_at'] = current_time('mysql');
         $docs[$doc_id]['deleted_by'] = get_current_user_id();
+        $docs[$doc_id]['review_status'] = 'archived';
+        $docs[$doc_id]['is_active_version'] = false;
         $this->save_documents($docs);
-        $this->add_audit('delete', $doc_id, $doc['title'] ?? '', $doc['client_name'] ?? '', $doc['apartment_code'] ?? '');
+        $this->add_audit('archive_document', $doc_id, $doc['title'] ?? '', $doc['client_name'] ?? '', $doc['apartment_code'] ?? '');
 
         wp_safe_redirect(add_query_arg('legal_deleted', '1', $return_url));
+        exit;
+    }
+
+    private function handle_update_document_review() {
+        if (!current_user_can(self::CAP_UPLOAD)) {
+            wp_die('Nincs jogosultság jogi dokumentum ellenőrzéséhez.');
+        }
+
+        $doc_id = isset($_POST['document_id']) ? absint($_POST['document_id']) : 0;
+        check_admin_referer('harmat_legal_review_document_' . $doc_id);
+
+        $context = $this->posted_context();
+        $deal_id = isset($_POST['deal_id']) ? absint($_POST['deal_id']) : 0;
+        $property_id = isset($_POST['property_id']) ? absint($_POST['property_id']) : 0;
+        $return_url = $this->context_url($context, $this->selection_args($deal_id, $property_id));
+        $docs = $this->get_documents(true);
+
+        if (!$doc_id || empty($docs[$doc_id]) || !empty($docs[$doc_id]['deleted_at'])) {
+            $this->redirect_with_error($return_url, 'A jogi dokumentum nem található.');
+        }
+
+        $review_status = isset($_POST['review_status']) ? sanitize_key(wp_unslash($_POST['review_status'])) : 'under_review';
+        $review_status = $this->normalize_checklist_status($review_status);
+        $docs[$doc_id]['review_status'] = $review_status;
+        $docs[$doc_id]['reviewer_id'] = get_current_user_id();
+        $docs[$doc_id]['reviewed_at'] = current_time('mysql');
+        $this->save_documents($docs);
+        $this->add_audit('review_document', $doc_id, $docs[$doc_id]['title'] ?? '', $docs[$doc_id]['client_name'] ?? '', $docs[$doc_id]['apartment_code'] ?? '');
+
+        wp_safe_redirect(add_query_arg('legal_reviewed', '1', $return_url));
         exit;
     }
 
@@ -400,11 +447,12 @@ final class Harmat_Legal_Documents {
         if (!$case_key || empty($target['property_id'])) {
             $this->redirect_with_error($return_url, 'Az ügy módosítása előtt válasszon ki egy lakást.');
         }
+        if (!$this->target_has_legal_case($target)) {
+            $this->redirect_with_error($return_url, $this->inactive_case_message());
+        }
 
         $case_status = isset($_POST['case_status']) ? sanitize_key(wp_unslash($_POST['case_status'])) : '';
-        if (!isset($this->case_statuses()[$case_status])) {
-            $case_status = 'new_reservation';
-        }
+        $case_status = $this->normalize_case_status($case_status);
 
         $deadline = isset($_POST['next_deadline']) ? sanitize_text_field(wp_unslash($_POST['next_deadline'])) : '';
         if ($deadline !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $deadline)) {
@@ -414,9 +462,10 @@ final class Harmat_Legal_Documents {
         $posted_items = isset($_POST['checklist']) && is_array($_POST['checklist']) ? wp_unslash($_POST['checklist']) : array();
         $checklist = array();
         foreach ($this->checklist_items() as $key => $label) {
-            $value = isset($posted_items[$key]) ? sanitize_key($posted_items[$key]) : 'pending';
+            $value = isset($posted_items[$key]) ? sanitize_key($posted_items[$key]) : 'missing';
+            $value = $this->normalize_checklist_status($value);
             if (!isset($this->checklist_statuses()[$value])) {
-                $value = 'pending';
+                $value = 'missing';
             }
             $checklist[$key] = $value;
         }
@@ -429,6 +478,10 @@ final class Harmat_Legal_Documents {
             'case_key' => $case_key,
             'deal_id' => $deal_id,
             'property_id' => $property_id,
+            'customer_id' => (int) ($target['customer_id'] ?? 0),
+            'crm_code' => (string) ($target['crm_code'] ?? ''),
+            'sales_owner_id' => (int) ($target['sales_owner_id'] ?? 0),
+            'lawyer_owner_id' => get_current_user_id(),
             'case_status' => $case_status,
             'checklist' => $checklist,
             'missing_note' => $missing_note,
@@ -438,6 +491,7 @@ final class Harmat_Legal_Documents {
             'updated_by' => get_current_user_id(),
         );
         $this->save_cases($cases);
+        $this->sync_legal_case_to_sales($case_status, $deal_id, $target);
         $this->add_audit('update_case', 0, $this->case_status_label($case_status), $target['client_name'] ?? '', $target['title'] ?? '');
 
         wp_safe_redirect(add_query_arg('legal_case_updated', '1', $return_url));
@@ -594,6 +648,10 @@ final class Harmat_Legal_Documents {
                 'id' => $id,
                 'property_id' => 0,
                 'deal_id' => 0,
+                'customer_id' => 0,
+                'crm_code' => '',
+                'sales_owner_id' => 0,
+                'lawyer_owner_id' => 0,
                 'client_name' => '',
                 'buyer_id_note' => '',
                 'apartment_code' => '',
@@ -609,10 +667,24 @@ final class Harmat_Legal_Documents {
                 'download_key' => '',
                 'uploaded_at' => '',
                 'uploaded_by' => 0,
+                'version_group' => '',
+                'version_number' => 1,
+                'is_active_version' => true,
+                'review_status' => 'uploaded',
+                'reviewer_id' => 0,
+                'reviewed_at' => '',
                 'deleted_at' => '',
                 'deleted_by' => 0,
             ), $doc);
             $doc['id'] = $id;
+            $doc['customer_id'] = absint($doc['customer_id'] ?? 0);
+            $doc['sales_owner_id'] = absint($doc['sales_owner_id'] ?? 0);
+            $doc['lawyer_owner_id'] = absint($doc['lawyer_owner_id'] ?? 0);
+            $doc['version_number'] = max(1, absint($doc['version_number'] ?? 1));
+            if (empty($doc['version_group'])) {
+                $doc['version_group'] = $this->document_version_group($doc['deal_id'] ?? 0, $doc['property_id'] ?? 0, $doc['category'] ?? 'other', $doc['title'] ?: ($doc['original_name'] ?? ''));
+            }
+            $doc['review_status'] = $this->normalize_checklist_status($doc['review_status'] ?? 'uploaded');
             if (!$include_deleted && !empty($doc['deleted_at'])) {
                 continue;
             }
@@ -631,6 +703,35 @@ final class Harmat_Legal_Documents {
     private function next_document_id($docs) {
         $ids = array_map('absint', array_keys($docs));
         return $ids ? max($ids) + 1 : 1;
+    }
+
+    private function document_version_group($deal_id, $property_id, $category, $title) {
+        $base = implode('|', array(
+            absint($deal_id),
+            absint($property_id),
+            sanitize_key((string) $category),
+            sanitize_title((string) $title),
+        ));
+        return substr(hash('sha256', $base), 0, 24);
+    }
+
+    private function next_document_version_number($docs, $version_group) {
+        $max = 0;
+        foreach ($docs as $doc) {
+            if (($doc['version_group'] ?? '') === $version_group) {
+                $max = max($max, absint($doc['version_number'] ?? 1));
+            }
+        }
+        return $max + 1;
+    }
+
+    private function archive_previous_document_versions(&$docs, $version_group) {
+        foreach ($docs as $id => $doc) {
+            if (($doc['version_group'] ?? '') !== $version_group || !empty($doc['deleted_at'])) {
+                continue;
+            }
+            $docs[$id]['is_active_version'] = false;
+        }
     }
 
     private function get_cases($include_empty = false) {
@@ -652,6 +753,10 @@ final class Harmat_Legal_Documents {
             $case['case_key'] = $case_key;
             $case['deal_id'] = absint($case['deal_id'] ?? 0);
             $case['property_id'] = absint($case['property_id'] ?? 0);
+            $case['customer_id'] = absint($case['customer_id'] ?? 0);
+            $case['sales_owner_id'] = absint($case['sales_owner_id'] ?? 0);
+            $case['lawyer_owner_id'] = absint($case['lawyer_owner_id'] ?? 0);
+            $case['case_status'] = $this->normalize_case_status($case['case_status'] ?? 'new_case');
             $case['checklist'] = $this->normalize_checklist($case['checklist'] ?? array());
             if (!$include_empty && empty($case['updated_at'])) {
                 continue;
@@ -670,7 +775,11 @@ final class Harmat_Legal_Documents {
             'case_key' => '',
             'deal_id' => 0,
             'property_id' => 0,
-            'case_status' => 'new_reservation',
+            'customer_id' => 0,
+            'crm_code' => '',
+            'sales_owner_id' => 0,
+            'lawyer_owner_id' => 0,
+            'case_status' => 'new_case',
             'checklist' => $this->normalize_checklist(array()),
             'missing_note' => '',
             'case_note' => '',
@@ -720,9 +829,10 @@ final class Harmat_Legal_Documents {
         $items = is_array($items) ? $items : array();
         $normalized = array();
         foreach ($this->checklist_items() as $key => $label) {
-            $value = isset($items[$key]) ? sanitize_key((string) $items[$key]) : 'pending';
+            $value = isset($items[$key]) ? sanitize_key((string) $items[$key]) : 'missing';
+            $value = $this->normalize_checklist_status($value);
             if (!isset($this->checklist_statuses()[$value])) {
-                $value = 'pending';
+                $value = 'missing';
             }
             $normalized[$key] = $value;
         }
@@ -731,15 +841,35 @@ final class Harmat_Legal_Documents {
 
     private function case_statuses() {
         return array(
-            'new_reservation' => 'Új foglalás',
-            'documents_pending' => 'Dokumentumokra vár',
-            'contract_draft' => 'Szerződéstervezet',
-            'client_review' => 'Ügyfél jóváhagyás',
-            'signing' => 'Aláírásra kész',
-            'signed' => 'Aláírva',
-            'registry_filing' => 'Földhivatali beadás',
-            'completed' => 'Lezárva',
+            'new_case' => 'Új ügy',
+            'missing_documents' => 'Hiányzó dokumentumok',
+            'lawyer_review' => 'Ügyvédi ellenőrzés alatt',
+            'contract_draft' => 'Szerződéstervezet készül',
+            'contract_sent' => 'Szerződés kiküldve',
+            'client_approval' => 'Ügyfél jóváhagyásra vár',
+            'signing_scheduling' => 'Aláírás időpontja egyeztetés alatt',
+            'signed' => 'Szerződés aláírva',
+            'payment_followup' => 'Fizetés követése',
+            'archived' => 'Archiválva',
+            'terminated' => 'Megszűnt',
         );
+    }
+
+    private function normalize_case_status($status) {
+        $status = sanitize_key((string) $status);
+        $map = array(
+            'new_reservation' => 'new_case',
+            'documents_pending' => 'missing_documents',
+            'contract_draft' => 'contract_draft',
+            'client_review' => 'client_approval',
+            'signing' => 'signing_scheduling',
+            'registry_filing' => 'signed',
+            'completed' => 'archived',
+        );
+        if (isset($map[$status])) {
+            $status = $map[$status];
+        }
+        return isset($this->case_statuses()[$status]) ? $status : 'new_case';
     }
 
     private function checklist_items() {
@@ -758,16 +888,34 @@ final class Harmat_Legal_Documents {
 
     private function checklist_statuses() {
         return array(
-            'pending' => 'Függőben',
             'missing' => 'Hiányzik',
-            'received' => 'Beérkezett',
-            'not_applicable' => 'Nem releváns',
+            'uploaded' => 'Feltöltve',
+            'under_review' => 'Ellenőrzés alatt',
+            'accepted' => 'Elfogadva',
+            'revision_needed' => 'Javítás szükséges',
+            'signed' => 'Aláírva',
+            'archived' => 'Archiválva',
         );
+    }
+
+    private function normalize_checklist_status($status) {
+        $status = sanitize_key((string) $status);
+        $map = array(
+            'pending' => 'missing',
+            'received' => 'uploaded',
+            'not_applicable' => 'archived',
+            'review' => 'under_review',
+            'approved' => 'accepted',
+        );
+        if (isset($map[$status])) {
+            $status = $map[$status];
+        }
+        return isset($this->checklist_statuses()[$status]) ? $status : 'missing';
     }
 
     private function case_status_label($status) {
         $statuses = $this->case_statuses();
-        return $statuses[$status] ?? ($status ?: 'Új foglalás');
+        return $statuses[$status] ?? ($status ?: 'Új ügy');
     }
 
     private function case_missing_count($case) {
@@ -780,10 +928,53 @@ final class Harmat_Legal_Documents {
         return $count;
     }
 
+    private function inactive_case_message() {
+        return 'Még nincs ügyvédi ügy. Az ügyvédi folyamat foglalás vagy szerződéses szakasz után indul.';
+    }
+
+    private function legal_case_deal_stages() {
+        return array('reserved', 'contract', 'closed');
+    }
+
+    private function target_has_legal_case($target) {
+        $stage = sanitize_key((string) ($target['deal_stage'] ?? ''));
+        if (in_array($stage, $this->legal_case_deal_stages(), true)) {
+            return true;
+        }
+
+        $payment_status = sanitize_key((string) ($target['payment_status'] ?? ''));
+        if (in_array($payment_status, array('partial', 'paid', 'overdue'), true)) {
+            return true;
+        }
+
+        if (!empty($target['payment_due_date'])) {
+            return true;
+        }
+
+        if (($target['contract_status'] ?? '') === 'signed') {
+            return true;
+        }
+
+        if (in_array(($target['sales_status'] ?? ''), array('reserved', 'sold'), true) && (!empty($target['crm_code']) || !empty($target['client_name']))) {
+            return true;
+        }
+
+        return false;
+    }
+
     private function with_case_data($target) {
         $case = $this->get_case_for_target($target);
         $target['case'] = $case;
-        $target['case_status'] = $case['case_status'] ?? 'new_reservation';
+        $target['legal_case_active'] = $this->target_has_legal_case($target);
+        if (empty($target['legal_case_active'])) {
+            $target['case_status'] = '';
+            $target['case_status_label'] = 'Még nincs ügyvédi ügy';
+            $target['missing_count'] = 0;
+            $target['missing_note'] = '';
+            $target['next_deadline'] = '';
+            return $target;
+        }
+        $target['case_status'] = $case['case_status'] ?? 'new_case';
         $target['case_status_label'] = $this->case_status_label($target['case_status']);
         $target['missing_count'] = $this->case_missing_count($case);
         $target['missing_note'] = $case['missing_note'] ?? '';
@@ -917,6 +1108,9 @@ final class Harmat_Legal_Documents {
             'sales_status_label' => $this->property_status_label($sales_status),
             'deal_stage' => $deal['stage'] ?? '',
             'deal_stage_label' => $this->deal_stage_label($deal['stage'] ?? ''),
+            'customer_id' => (int) ($deal['customer_user_id'] ?? 0),
+            'sales_owner_id' => (int) ($deal['assigned_sales_id'] ?? 0),
+            'lawyer_owner_id' => 0,
             'client_name' => $deal['client_name'] ?? '',
             'phone' => $deal['phone'] ?? '',
             'email' => $deal['email'] ?? '',
@@ -925,6 +1119,7 @@ final class Harmat_Legal_Documents {
             'payment_received' => $deal['payment_received'] ?? '',
             'payment_status' => $deal['payment_status'] ?? '',
             'payment_due_date' => $deal['payment_due_date'] ?? '',
+            'payment_plan_items' => isset($deal['payment_plan_items']) && is_array($deal['payment_plan_items']) ? $deal['payment_plan_items'] : array(),
             'contract_status' => $deal['contract_status'] ?? '',
             'updated_at' => $deal['updated_at'] ?? '',
         );
@@ -963,7 +1158,7 @@ final class Harmat_Legal_Documents {
             $target = $this->make_target($property_id, $deal);
             $target = $this->with_case_data($target);
             $target['doc_count'] = $doc_counts['d' . (int) $deal['id']] ?? ($property_id ? ($doc_counts['p' . $property_id] ?? 0) : 0);
-            $target['needs_lawyer'] = in_array($target['deal_stage'], array('reserved', 'contract', 'closed'), true) || $target['sales_status'] === 'reserved' || $target['sales_status'] === 'sold';
+            $target['needs_lawyer'] = !empty($target['legal_case_active']) && (in_array($target['deal_stage'], $this->legal_case_deal_stages(), true) || $target['sales_status'] === 'reserved' || $target['sales_status'] === 'sold' || !empty($target['payment_due_date']));
             if (!empty($target['missing_count']) || !empty($target['missing_note'])) {
                 $target['needs_lawyer'] = true;
             }
@@ -982,7 +1177,7 @@ final class Harmat_Legal_Documents {
             $target = $this->make_target($property_id);
             $target = $this->with_case_data($target);
             $target['doc_count'] = $doc_counts[$key] ?? 0;
-            $target['needs_lawyer'] = $target['sales_status'] === 'reserved' || $target['sales_status'] === 'sold' || $target['doc_count'] > 0;
+            $target['needs_lawyer'] = !empty($target['legal_case_active']) && ($target['sales_status'] === 'reserved' || $target['sales_status'] === 'sold');
             if (!empty($target['missing_count']) || !empty($target['missing_note'])) {
                 $target['needs_lawyer'] = true;
             }
@@ -1036,8 +1231,8 @@ final class Harmat_Legal_Documents {
     private function property_status_label($status) {
         $labels = array(
             'current' => 'Elérhető',
-            'reserved' => 'Foglalt',
-            'sold' => 'Eladva',
+            'reserved' => 'Foglalva',
+            'sold' => 'Értékesítve',
         );
         return $labels[$status] ?? '-';
     }
@@ -1049,8 +1244,8 @@ final class Harmat_Legal_Documents {
             'viewing' => 'Megtekintés',
             'negotiation' => 'Tárgyalás',
             'reserved' => 'Foglalva',
-            'contract' => 'Szerződés folyamatban',
-            'closed' => 'Lezárva',
+            'contract' => 'Szerződés alatt',
+            'closed' => 'Értékesítve',
             'lost' => 'Elveszett',
         );
         return $labels[$stage] ?? ($stage ?: '-');
@@ -1090,6 +1285,142 @@ final class Harmat_Legal_Documents {
         return $value !== '' ? number_format((float) $value, 0, '.', ' ') . ' HUF' : '-';
     }
 
+    private function sync_legal_case_to_sales($case_status, $deal_id, $target) {
+        $deal_id = absint($deal_id);
+        if (!$deal_id) {
+            return;
+        }
+
+        $deals = $this->get_deals();
+        if (empty($deals[$deal_id]) || !is_array($deals[$deal_id])) {
+            return;
+        }
+
+        $changed = false;
+        if ($case_status === 'signed') {
+            if (($deals[$deal_id]['contract_status'] ?? '') !== 'signed') {
+                $deals[$deal_id]['contract_status'] = 'signed';
+                $changed = true;
+            }
+            if (empty($deals[$deal_id]['payment_plan_items'])) {
+                $plan = $this->legal_basic_payment_plan($deals[$deal_id]);
+                if ($plan) {
+                    $deals[$deal_id]['payment_plan_items'] = $plan;
+                    $deals[$deal_id]['payment_schedule'] = $this->legal_payment_schedule_text($plan);
+                    $changed = true;
+                }
+            }
+            if (empty($deals[$deal_id]['payment_status'])) {
+                $deals[$deal_id]['payment_status'] = 'not_started';
+                $changed = true;
+            }
+        } elseif ($case_status === 'payment_followup' && empty($deals[$deal_id]['payment_status'])) {
+            $deals[$deal_id]['payment_status'] = 'not_started';
+            $changed = true;
+        }
+
+        if ($changed) {
+            $deals[$deal_id]['updated_at'] = current_time('mysql');
+            $deals[$deal_id]['updated_by'] = get_current_user_id();
+            update_option('harmat_sales_deals_v1', $deals, false);
+            $this->add_audit('sync_sales', 0, $this->case_status_label($case_status), $target['client_name'] ?? '', $target['title'] ?? '');
+        }
+
+        $this->suggest_property_status_from_legal_case($case_status, $target);
+    }
+
+    private function legal_basic_payment_plan($deal) {
+        $total = (int) preg_replace('/[^\d]/', '', (string) ($deal['amount'] ?? ''));
+        if ($total <= 0) {
+            return array();
+        }
+
+        $paid = (int) preg_replace('/[^\d]/', '', (string) ($deal['payment_received'] ?? ''));
+        $deposit = min($total, (int) preg_replace('/[^\d]/', '', (string) ($deal['deposit'] ?? '')));
+        $due = (string) (($deal['payment_due_date'] ?? '') ?: ($deal['expected_close'] ?? ''));
+        if ($due && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $due)) {
+            $due = '';
+        }
+
+        $items = array();
+        if ($deposit > 0) {
+            $deposit_paid = min($deposit, $paid);
+            $paid -= $deposit_paid;
+            $items[] = array(
+                'label' => 'Foglaló',
+                'percent' => rtrim(rtrim(number_format(($deposit / $total) * 100, 2, '.', ''), '0'), '.'),
+                'amount' => (string) $deposit,
+                'due_date' => (string) ($deal['expected_close'] ?? ''),
+                'paid_amount' => $deposit_paid ? (string) $deposit_paid : '',
+                'status' => $this->legal_payment_plan_status($deposit, $deposit_paid, (string) ($deal['expected_close'] ?? '')),
+                'note' => 'Ügyvédi modulból generált alap fizetési ütem.',
+            );
+        }
+
+        $balance = max(0, $total - $deposit);
+        if ($balance > 0) {
+            $items[] = array(
+                'label' => 'Szerződés szerinti hátralék',
+                'percent' => rtrim(rtrim(number_format(($balance / $total) * 100, 2, '.', ''), '0'), '.'),
+                'amount' => (string) $balance,
+                'due_date' => $due,
+                'paid_amount' => $paid ? (string) min($balance, $paid) : '',
+                'status' => $this->legal_payment_plan_status($balance, $paid, $due),
+                'note' => 'Az értékesítés a pontos ütemezést módosíthatja.',
+            );
+        }
+
+        return $items;
+    }
+
+    private function legal_payment_plan_status($amount, $paid_amount, $due_date = '') {
+        $amount = (int) $amount;
+        $paid_amount = (int) $paid_amount;
+        if ($amount > 0 && $paid_amount >= $amount) {
+            return 'paid';
+        }
+        if ($paid_amount > 0) {
+            return 'partial';
+        }
+        if ($due_date && strtotime($due_date) < strtotime(current_time('Y-m-d'))) {
+            return 'overdue';
+        }
+        return 'pending';
+    }
+
+    private function legal_payment_schedule_text($items) {
+        $lines = array();
+        foreach ($items as $item) {
+            $amount = !empty($item['amount']) ? $this->money_label($item['amount']) : '-';
+            $due = !empty($item['due_date']) ? $item['due_date'] : '-';
+            $percent = !empty($item['percent']) ? ' (' . $item['percent'] . '%)' : '';
+            $lines[] = trim(($item['label'] ?: 'Fizetési ütem') . $percent . ': ' . $amount . ', határidő: ' . $due);
+        }
+        return implode("\n", $lines);
+    }
+
+    private function suggest_property_status_from_legal_case($case_status, $target) {
+        $property_id = absint($target['property_id'] ?? 0);
+        if (!$property_id || get_post_type($property_id) !== 'property') {
+            return;
+        }
+
+        $suggested = '';
+        if (in_array($case_status, array('contract_draft', 'contract_sent', 'client_approval', 'signing_scheduling', 'signed', 'payment_followup'), true)) {
+            $suggested = 'reserved';
+        }
+        if ($case_status === 'archived' && ($target['deal_stage'] ?? '') === 'closed') {
+            $suggested = 'sold';
+        }
+        if (!$suggested) {
+            return;
+        }
+
+        update_post_meta($property_id, '_harmat_legal_suggested_property_status', $suggested);
+        update_post_meta($property_id, '_harmat_legal_suggested_property_status_at', current_time('mysql'));
+        update_post_meta($property_id, '_harmat_legal_suggested_property_status_by', get_current_user_id());
+    }
+
     private function add_audit($action, $doc_id, $title, $client_name, $apartment_code) {
         $audit = get_option(self::OPTION_AUDIT, array());
         if (!is_array($audit)) {
@@ -1117,9 +1448,13 @@ final class Harmat_Legal_Documents {
         $labels = array(
             'upload' => 'Feltöltés',
             'delete' => 'Törlés',
+            'archive_document' => 'Dokumentum archiválása',
+            'review_document' => 'Dokumentum ellenőrzése',
             'download' => 'Letöltés',
             'create_lawyer' => 'Ügyvédi fiók létrehozása',
             'update_case' => 'Ügyfolyamat frissítése',
+            'view_case' => 'Ügy megnyitása',
+            'sync_sales' => 'Értékesítési adatok szinkronja',
         );
         return $labels[$action] ?? (string) $action;
     }
@@ -1299,7 +1634,10 @@ final class Harmat_Legal_Documents {
             echo '<div class="hld-notice hld-success">A jogi dokumentum feltöltve és mentve.</div>';
         }
         if (isset($_GET['legal_deleted'])) {
-            echo '<div class="hld-notice hld-success">A jogi dokumentum törölve.</div>';
+            echo '<div class="hld-notice hld-success">A jogi dokumentum archiválva. A fájl a védett tárhelyen megmarad.</div>';
+        }
+        if (isset($_GET['legal_reviewed'])) {
+            echo '<div class="hld-notice hld-success">A dokumentum ellenőrzési állapota mentve.</div>';
         }
         if (isset($_GET['legal_case_updated'])) {
             echo '<div class="hld-notice hld-success">Az ügyvédi ügyfolyamat frissítve.</div>';
@@ -1324,13 +1662,21 @@ final class Harmat_Legal_Documents {
             $this->render_legal_home($context);
             return;
         }
+        $this->add_audit('view_case', 0, $target['case_status_label'] ?? '', $target['client_name'] ?? '', $target['title'] ?? '');
 
         echo '<section class="hld-grid">';
         echo '<div class="hld-main">';
         $this->render_target_overview($context, $target);
-        $this->render_case_panel($context, $target);
-        $this->render_upload_panel($context, $target);
-        $this->render_documents_panel($context, $target);
+        if (!empty($target['legal_case_active'])) {
+            $this->render_case_panel($context, $target);
+            $this->render_upload_panel($context, $target);
+            $this->render_documents_panel($context, $target);
+        } else {
+            $this->render_inactive_case_panel();
+            if ($this->documents_for_target($target)) {
+                $this->render_documents_panel($context, $target);
+            }
+        }
         echo '</div>';
         echo '<aside class="hld-side">';
         $this->render_summary_panel($target);
@@ -1346,20 +1692,56 @@ final class Harmat_Legal_Documents {
     private function legal_tasks() {
         $tasks = array();
         foreach ($this->legal_targets() as $target) {
+            if (empty($target['legal_case_active'])) {
+                continue;
+            }
             $has_missing = !empty($target['missing_count']) || !empty($target['missing_note']);
+            $url = $this->target_url('lawyer', $target);
             if (!empty($target['next_deadline'])) {
                 $tasks[] = array(
                     'date' => $target['next_deadline'],
                     'type' => 'Határidő',
                     'title' => $target['title'],
-                    'url' => $this->target_url('lawyer', $target),
+                    'url' => $url,
                 );
             } elseif ($has_missing) {
                 $tasks[] = array(
                     'date' => current_time('Y-m-d'),
-                    'type' => 'Hiánypótlás',
+                    'type' => 'Hiányzó dokumentumok',
                     'title' => $target['title'],
-                    'url' => $this->target_url('lawyer', $target),
+                    'url' => $url,
+                );
+            }
+            if (($target['case_status'] ?? '') === 'contract_draft') {
+                $tasks[] = array(
+                    'date' => !empty($target['next_deadline']) ? $target['next_deadline'] : date_i18n('Y-m-d', strtotime('+3 days', current_time('timestamp'))),
+                    'type' => 'Szerződéstervezet határideje',
+                    'title' => $target['title'],
+                    'url' => $url,
+                );
+            }
+            if (($target['case_status'] ?? '') === 'client_approval') {
+                $tasks[] = array(
+                    'date' => !empty($target['next_deadline']) ? $target['next_deadline'] : date_i18n('Y-m-d', strtotime('+5 days', current_time('timestamp'))),
+                    'type' => 'Ügyfél visszaigazolás',
+                    'title' => $target['title'],
+                    'url' => $url,
+                );
+            }
+            if (($target['case_status'] ?? '') === 'signing_scheduling') {
+                $tasks[] = array(
+                    'date' => !empty($target['next_deadline']) ? $target['next_deadline'] : current_time('Y-m-d'),
+                    'type' => 'Aláírási időpont egyeztetés',
+                    'title' => $target['title'],
+                    'url' => $url,
+                );
+            }
+            if (!empty($target['payment_due_date'])) {
+                $tasks[] = array(
+                    'date' => $target['payment_due_date'],
+                    'type' => 'Fizetési határidő',
+                    'title' => $target['title'],
+                    'url' => $url,
                 );
             }
         }
@@ -1553,6 +1935,10 @@ final class Harmat_Legal_Documents {
         echo '</section>';
     }
 
+    private function render_inactive_case_panel() {
+        echo '<section class="hld-panel hld-inactive-case"><h2>Még nincs ügyvédi ügy</h2><div class="hld-empty">' . esc_html($this->inactive_case_message()) . '</div></section>';
+    }
+
     private function render_case_panel($context, $target) {
         $case = $target['case'] ?? $this->get_case_for_target($target);
         $checklist = $case['checklist'] ?? $this->normalize_checklist(array());
@@ -1576,7 +1962,7 @@ final class Harmat_Legal_Documents {
         foreach ($this->checklist_items() as $key => $label) {
             echo '<label><span>' . esc_html($label) . '</span><select name="checklist[' . esc_attr($key) . ']">';
             foreach ($this->checklist_statuses() as $status_key => $status_label) {
-                echo '<option value="' . esc_attr($status_key) . '"' . selected($checklist[$key] ?? 'pending', $status_key, false) . '>' . esc_html($status_label) . '</option>';
+                echo '<option value="' . esc_attr($status_key) . '"' . selected($checklist[$key] ?? 'missing', $status_key, false) . '>' . esc_html($status_label) . '</option>';
             }
             echo '</select></label>';
         }
@@ -1621,9 +2007,12 @@ final class Harmat_Legal_Documents {
             return;
         }
 
-        echo '<div class="hld-table-wrap"><table class="hld-table"><thead><tr><th>Fájl</th><th>Vevő / lakás</th><th>Típus</th><th>Feltöltés</th><th>Művelet</th></tr></thead><tbody>';
+        echo '<div class="hld-table-wrap"><table class="hld-table"><thead><tr><th>Fájl</th><th>Vevő / lakás</th><th>Típus</th><th>Verzió / ellenőrzés</th><th>Művelet</th></tr></thead><tbody>';
         foreach ($docs as $doc) {
             $uploader = !empty($doc['uploaded_by']) ? get_userdata((int) $doc['uploaded_by']) : null;
+            $reviewer = !empty($doc['reviewer_id']) ? get_userdata((int) $doc['reviewer_id']) : null;
+            $review_statuses = $this->checklist_statuses();
+            $review_status = $this->normalize_checklist_status($doc['review_status'] ?? 'uploaded');
             echo '<tr>';
             echo '<td><strong>' . esc_html($doc['title'] ?: $doc['original_name']) . '</strong><small>' . esc_html($doc['original_name']) . ' / ' . esc_html($this->file_size_label($doc['size'])) . '</small>';
             if (!empty($doc['buyer_id_note'])) {
@@ -1635,8 +2024,22 @@ final class Harmat_Legal_Documents {
             echo '</td>';
             echo '<td><strong>' . esc_html($doc['client_name'] ?: ($target['client_name'] ?: '-')) . '</strong><small>' . esc_html($doc['apartment_code'] ?: $target['title']) . '</small></td>';
             echo '<td><span class="hld-badge">' . esc_html($categories[$doc['category']] ?? $categories['other']) . '</span></td>';
-            echo '<td><strong>' . esc_html($doc['uploaded_at'] ?: '-') . '</strong><small>' . esc_html($uploader ? $uploader->display_name : '-') . '</small></td>';
+            echo '<td><strong>v' . esc_html((string) max(1, (int) ($doc['version_number'] ?? 1))) . ' · ' . esc_html(!empty($doc['is_active_version']) ? 'Aktív verzió' : 'Korábbi verzió') . '</strong><small>' . esc_html($review_statuses[$review_status] ?? $review_status) . '</small><small>Feltöltve: ' . esc_html($doc['uploaded_at'] ?: '-') . ' / ' . esc_html($uploader ? $uploader->display_name : '-') . '</small><small>Ellenőrizte: ' . esc_html($reviewer ? $reviewer->display_name : '-') . ' / ' . esc_html($doc['reviewed_at'] ?: '-') . '</small></td>';
             echo '<td class="hld-actions"><a href="' . esc_url($this->download_url($doc)) . '">Letöltés</a>';
+            if (current_user_can(self::CAP_UPLOAD)) {
+                echo '<form method="post" class="hld-review-form">';
+                wp_nonce_field('harmat_legal_review_document_' . (int) $doc['id']);
+                echo '<input type="hidden" name="harmat_legal_action" value="update_document_review">';
+                echo '<input type="hidden" name="return_context" value="' . esc_attr($context) . '">';
+                echo '<input type="hidden" name="deal_id" value="' . esc_attr((int) ($target['deal_id'] ?? 0)) . '">';
+                echo '<input type="hidden" name="property_id" value="' . esc_attr((int) ($target['property_id'] ?? 0)) . '">';
+                echo '<input type="hidden" name="document_id" value="' . esc_attr((int) $doc['id']) . '">';
+                echo '<select name="review_status">';
+                foreach ($review_statuses as $status_key => $status_label) {
+                    echo '<option value="' . esc_attr($status_key) . '"' . selected($review_status, $status_key, false) . '>' . esc_html($status_label) . '</option>';
+                }
+                echo '</select><button type="submit">Mentés</button></form>';
+            }
             if (current_user_can(self::CAP_MANAGE)) {
                 echo '<form method="post">';
                 wp_nonce_field('harmat_legal_delete_document_' . (int) $doc['id']);
@@ -1645,7 +2048,7 @@ final class Harmat_Legal_Documents {
                 echo '<input type="hidden" name="deal_id" value="' . esc_attr((int) ($target['deal_id'] ?? 0)) . '">';
                 echo '<input type="hidden" name="property_id" value="' . esc_attr((int) ($target['property_id'] ?? 0)) . '">';
                 echo '<input type="hidden" name="document_id" value="' . esc_attr((int) $doc['id']) . '">';
-                echo '<button type="submit" onclick="return confirm(\'Biztosan törli ezt a jogi dokumentumot a szerverről?\')">Törlés</button>';
+                echo '<button type="submit" onclick="return confirm(\'Biztosan archiválja ezt a jogi dokumentumot? A fájl megmarad a védett tárhelyen.\')">Archiválás</button>';
                 echo '</form>';
             }
             echo '</td></tr>';
@@ -1721,7 +2124,7 @@ final class Harmat_Legal_Documents {
 
     private function base_css() {
         return '
-        *{box-sizing:border-box}body.hld-body{margin:0;background:#fbf4e7;color:#253137;font-family:Montserrat,Arial,sans-serif}.hld-shell{width:min(1320px,calc(100% - 32px));margin:0 auto;padding:28px 0 44px}.hld-login{min-height:100vh;display:grid;place-items:center;padding:24px}.hld-hero,.hld-panel{border:1px solid #ead8b8;background:#fff;border-radius:18px;box-shadow:0 14px 34px rgba(70,54,28,.06)}.hld-hero{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:16px;padding:28px 30px;background:linear-gradient(135deg,#fffaf1,#fff)}.hld-eyebrow{margin:0 0 8px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.hld-hero h1,.hld-panel h1,.hld-panel h2,.hld-section-title h3{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-weight:500}.hld-hero h1{font-size:38px}.hld-hero p,.hld-muted,.hld-panel p{color:#687178;line-height:1.65}.hld-user{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:999px;background:#fff;border:1px solid #ead8b8}.hld-user span{font-weight:900}.hld-user a,.hld-panel a{color:#a8762d;font-weight:900;text-decoration:none}.hld-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px;padding:8px;border-radius:18px;background:#fff;border:1px solid #ead8b8;box-shadow:0 10px 28px rgba(70,54,28,.05)}.hld-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:12px;color:#253137;text-decoration:none;font-weight:900}.hld-nav a.is-active{background:#a8762d;color:#fff}.hld-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px}.hld-main,.hld-side{display:grid;gap:18px;align-content:start}.hld-panel{padding:20px}.hld-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}.hld-panel h2{font-size:27px}.hld-form,.hld-mini-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hld-mini-form{grid-template-columns:1fr}.hld-form label,.hld-mini-form label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.05em}.hld-form input,.hld-form select,.hld-form textarea,.hld-mini-form input,.hld-filter input,.hld-filter select{width:100%;min-height:42px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.hld-wide,.hld-form-actions{grid-column:1/-1}.hld-form-actions{display:flex;gap:12px;align-items:center}.hld-form-actions span{color:#687178;font-size:13px}.hld-form button,.hld-mini-form button,.hld-filter button,.hld-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff!important;font-weight:900;letter-spacing:.08em;text-decoration:none;cursor:pointer}.hld-button-light{background:#fffaf3!important;color:#a8762d!important;border:1px solid #ead8b8}.hld-filter{display:flex;gap:8px;margin-bottom:14px}.hld-filter input{min-width:280px}.hld-section-title{display:flex;align-items:center;gap:10px;margin:18px 0 10px}.hld-section-title h3{font-size:23px}.hld-section-title span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:999px;background:#a8762d;color:#fff;font-weight:900}.hld-apartment-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.hld-apartment-card{display:grid;gap:10px;padding:15px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3;color:#253137!important;text-decoration:none!important}.hld-apartment-card.is-priority{border-color:#a8762d;box-shadow:0 10px 28px rgba(168,118,45,.14)}.hld-card-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.hld-card-top strong{font-size:18px}.hld-card-top em{padding:4px 8px;border-radius:999px;background:#efe4d2;color:#7c551d;font-style:normal;font-size:11px;font-weight:900}.hld-apartment-card small{display:block;color:#8a6a3a;font-size:11px;font-weight:900;text-transform:uppercase}.hld-apartment-card b{display:block;color:#253137;overflow-wrap:anywhere}.hld-target-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.hld-target-kpis article,.hld-buyer-strip span,.hld-task-kpis span{padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.hld-target-kpis small,.hld-buyer-strip small,.hld-task-kpis small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.hld-target-kpis strong,.hld-buyer-strip b,.hld-task-kpis b{display:block;margin-top:6px;color:#253137;overflow-wrap:anywhere}.hld-task-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.hld-task-kpis b{font-size:30px}.hld-buyer-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}.hld-table-wrap{overflow:auto}.hld-table{width:100%;min-width:900px;border-collapse:separate;border-spacing:0 8px}.hld-table th{padding:0 12px 4px;text-align:left;color:#9a6b27;font-size:12px;letter-spacing:.08em}.hld-table td{padding:14px 12px;background:#fffaf3;border-top:1px solid #ead8b8;border-bottom:1px solid #ead8b8;vertical-align:top}.hld-table td:first-child{border-left:1px solid #ead8b8;border-radius:12px 0 0 12px}.hld-table td:last-child{border-right:1px solid #ead8b8;border-radius:0 12px 12px 0}.hld-table strong{display:block;color:#253137}.hld-table small{display:block;margin-top:5px;color:#687178;line-height:1.45}.hld-badge{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#efe4d2;color:#7c551d;font-size:12px;font-weight:900}.hld-actions{white-space:nowrap}.hld-actions a,.hld-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;margin:0 6px 6px 0;padding:0 10px;border:1px solid #a8762d;border-radius:9px;background:#fff;color:#a8762d;font:inherit;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.hld-actions button{border-color:#d92d20;color:#b42318}.hld-actions form{display:inline}.hld-notice{margin:0 0 16px;padding:14px 16px;border-radius:14px;font-weight:800}.hld-notice span{display:block;margin-top:6px}.hld-success{background:#ecfdf3;color:#027a48;border:1px solid #abefc6}.hld-error{background:#fff1f3;color:#b42318;border:1px solid #fecdca}.hld-empty{padding:24px;border:1px dashed #d4bea0;border-radius:16px;color:#6f7780;background:#fffaf3}.hld-stats,.hld-user-list,.hld-audit{display:grid;gap:10px}.hld-stats span,.hld-user-list span,.hld-audit span{display:block;padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.hld-stats small,.hld-user-list small,.hld-audit small{display:block;color:#687178;margin-top:5px}.hld-stats b{display:block;margin-top:6px;font-size:22px;color:#253137}code{padding:2px 6px;border-radius:6px;background:#fffaf3;color:#253137}.hld-login .hld-panel{width:min(470px,100%);padding:28px}.hld-login form{display:grid;gap:14px;margin-top:18px}.hld-login form p{margin:0}.hld-login label{display:grid;gap:7px;color:#52616a;font-size:14px;font-weight:800}.hld-login input[type=text],.hld-login input[type=password]{width:100%;min-height:46px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.hld-login .login-remember label{display:flex;align-items:center;gap:8px}.hld-login input[type=checkbox]{width:18px;height:18px;accent-color:#a8762d}.hld-login input[type=submit]{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff;font-weight:900;letter-spacing:.06em;cursor:pointer}@media(max-width:1000px){.hld-shell{width:min(100% - 20px,760px);padding-top:14px}.hld-hero,.hld-panel-head{display:grid}.hld-hero h1{font-size:31px}.hld-grid,.hld-form,.hld-target-kpis,.hld-buyer-strip,.hld-task-kpis{grid-template-columns:1fr}.hld-panel{padding:16px}.hld-filter{display:grid}.hld-filter input{min-width:0}.hld-user{border-radius:14px;align-items:flex-start}}';
+        *{box-sizing:border-box}body.hld-body{margin:0;background:#fbf4e7;color:#253137;font-family:Montserrat,Arial,sans-serif}.hld-shell{width:min(1320px,calc(100% - 32px));margin:0 auto;padding:28px 0 44px}.hld-login{min-height:100vh;display:grid;place-items:center;padding:24px}.hld-hero,.hld-panel{border:1px solid #ead8b8;background:#fff;border-radius:18px;box-shadow:0 14px 34px rgba(70,54,28,.06)}.hld-hero{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:16px;padding:28px 30px;background:linear-gradient(135deg,#fffaf1,#fff)}.hld-eyebrow{margin:0 0 8px;color:#a5742c;font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.hld-hero h1,.hld-panel h1,.hld-panel h2,.hld-section-title h3{margin:0;color:#253137;font-family:Georgia,"Times New Roman",serif;font-weight:500}.hld-hero h1{font-size:38px}.hld-hero p,.hld-muted,.hld-panel p{color:#687178;line-height:1.65}.hld-user{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:999px;background:#fff;border:1px solid #ead8b8}.hld-user span{font-weight:900}.hld-user a,.hld-panel a{color:#a8762d;font-weight:900;text-decoration:none}.hld-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px;padding:8px;border-radius:18px;background:#fff;border:1px solid #ead8b8;box-shadow:0 10px 28px rgba(70,54,28,.05)}.hld-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:12px;color:#253137;text-decoration:none;font-weight:900}.hld-nav a.is-active{background:#a8762d;color:#fff}.hld-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px}.hld-main,.hld-side{display:grid;gap:18px;align-content:start}.hld-panel{padding:20px}.hld-panel-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}.hld-panel h2{font-size:27px}.hld-form,.hld-mini-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.hld-mini-form{grid-template-columns:1fr}.hld-form label,.hld-mini-form label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.05em}.hld-form input,.hld-form select,.hld-form textarea,.hld-mini-form input,.hld-filter input,.hld-filter select{width:100%;min-height:42px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.hld-wide,.hld-form-actions{grid-column:1/-1}.hld-form-actions{display:flex;gap:12px;align-items:center}.hld-form-actions span{color:#687178;font-size:13px}.hld-form button,.hld-mini-form button,.hld-filter button,.hld-button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff!important;font-weight:900;letter-spacing:.08em;text-decoration:none;cursor:pointer}.hld-button-light{background:#fffaf3!important;color:#a8762d!important;border:1px solid #ead8b8}.hld-filter{display:flex;gap:8px;margin-bottom:14px}.hld-filter input{min-width:280px}.hld-section-title{display:flex;align-items:center;gap:10px;margin:18px 0 10px}.hld-section-title h3{font-size:23px}.hld-section-title span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:999px;background:#a8762d;color:#fff;font-weight:900}.hld-apartment-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.hld-apartment-card{display:grid;gap:10px;padding:15px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3;color:#253137!important;text-decoration:none!important}.hld-apartment-card.is-priority{border-color:#a8762d;box-shadow:0 10px 28px rgba(168,118,45,.14)}.hld-card-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.hld-card-top strong{font-size:18px}.hld-card-top em{padding:4px 8px;border-radius:999px;background:#efe4d2;color:#7c551d;font-style:normal;font-size:11px;font-weight:900}.hld-apartment-card small{display:block;color:#8a6a3a;font-size:11px;font-weight:900;text-transform:uppercase}.hld-apartment-card b{display:block;color:#253137;overflow-wrap:anywhere}.hld-target-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.hld-target-kpis article,.hld-buyer-strip span,.hld-task-kpis span{padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.hld-target-kpis small,.hld-buyer-strip small,.hld-task-kpis small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}.hld-target-kpis strong,.hld-buyer-strip b,.hld-task-kpis b{display:block;margin-top:6px;color:#253137;overflow-wrap:anywhere}.hld-task-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.hld-task-kpis b{font-size:30px}.hld-buyer-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}.hld-table-wrap{overflow:auto}.hld-table{width:100%;min-width:900px;border-collapse:separate;border-spacing:0 8px}.hld-table th{padding:0 12px 4px;text-align:left;color:#9a6b27;font-size:12px;letter-spacing:.08em}.hld-table td{padding:14px 12px;background:#fffaf3;border-top:1px solid #ead8b8;border-bottom:1px solid #ead8b8;vertical-align:top}.hld-table td:first-child{border-left:1px solid #ead8b8;border-radius:12px 0 0 12px}.hld-table td:last-child{border-right:1px solid #ead8b8;border-radius:0 12px 12px 0}.hld-table strong{display:block;color:#253137}.hld-table small{display:block;margin-top:5px;color:#687178;line-height:1.45}.hld-badge{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#efe4d2;color:#7c551d;font-size:12px;font-weight:900}.hld-actions{white-space:nowrap}.hld-actions a,.hld-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;margin:0 6px 6px 0;padding:0 10px;border:1px solid #a8762d;border-radius:9px;background:#fff;color:#a8762d;font:inherit;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.hld-actions button{border-color:#d92d20;color:#b42318}.hld-actions form{display:inline}.hld-actions .hld-review-form{display:grid;grid-template-columns:minmax(130px,1fr) auto;gap:6px;margin:6px 0}.hld-actions .hld-review-form button{margin:0}.hld-actions select{min-height:34px;padding:6px 8px;border:1px solid #e3cfad;border-radius:9px;background:#fff;color:#253137;font:inherit;font-size:12px}.hld-notice{margin:0 0 16px;padding:14px 16px;border-radius:14px;font-weight:800}.hld-notice span{display:block;margin-top:6px}.hld-success{background:#ecfdf3;color:#027a48;border:1px solid #abefc6}.hld-error{background:#fff1f3;color:#b42318;border:1px solid #fecdca}.hld-empty{padding:24px;border:1px dashed #d4bea0;border-radius:16px;color:#6f7780;background:#fffaf3}.hld-stats,.hld-user-list,.hld-audit{display:grid;gap:10px}.hld-stats span,.hld-user-list span,.hld-audit span{display:block;padding:12px;border-radius:12px;background:#fffaf3;border:1px solid #ead8b8}.hld-stats small,.hld-user-list small,.hld-audit small{display:block;color:#687178;margin-top:5px}.hld-stats b{display:block;margin-top:6px;font-size:22px;color:#253137}code{padding:2px 6px;border-radius:6px;background:#fffaf3;color:#253137}.hld-login .hld-panel{width:min(470px,100%);padding:28px}.hld-login form{display:grid;gap:14px;margin-top:18px}.hld-login form p{margin:0}.hld-login label{display:grid;gap:7px;color:#52616a;font-size:14px;font-weight:800}.hld-login input[type=text],.hld-login input[type=password]{width:100%;min-height:46px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.hld-login .login-remember label{display:flex;align-items:center;gap:8px}.hld-login input[type=checkbox]{width:18px;height:18px;accent-color:#a8762d}.hld-login input[type=submit]{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff;font-weight:900;letter-spacing:.06em;cursor:pointer}@media(max-width:1000px){.hld-shell{width:min(100% - 20px,760px);padding-top:14px}.hld-hero,.hld-panel-head{display:grid}.hld-hero h1{font-size:31px}.hld-grid,.hld-form,.hld-target-kpis,.hld-buyer-strip,.hld-task-kpis{grid-template-columns:1fr}.hld-panel{padding:16px}.hld-filter{display:grid}.hld-filter input{min-width:0}.hld-user{border-radius:14px;align-items:flex-start}}';
     }
 }
 

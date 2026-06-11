@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.6
+ * Version: 1.1.7
  */
 
 if (!defined('ABSPATH')) {
@@ -37,11 +37,11 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.6');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.7');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
-    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.6', true);
+    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.7', true);
     wp_enqueue_script('harmat-lakas-redesign');
     wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
 }, 90);
@@ -56,7 +56,7 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v9';
+    return 'harmat_lakas_redesign_markup_v10';
 }
 
 function harmat_lakas_redesign_clear_cache() {
@@ -415,6 +415,14 @@ function harmat_lakas_redesign_render() {
                     <?php endforeach; ?>
                 </select>
             </label>
+            <label class="hm-lakas-sort-field">
+                <span>Vételár szerint</span>
+                <select data-filter="sort">
+                    <option value="">Alapértelmezett</option>
+                    <option value="price-asc">Legalacsonyabb ár</option>
+                    <option value="price-desc">Legmagasabb ár</option>
+                </select>
+            </label>
             <div class="hm-lakas-range-field" data-sqm-range>
                 <span>m² ár tartomány</span>
                 <div class="hm-lakas-range-box">
@@ -510,7 +518,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-stats{grid-column:2;grid-row:1/3;display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;align-self:center}
     .hm-lakas-stats span{min-height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border:1px solid rgba(168,118,45,.22);border-radius:999px;background:#fff;color:#687078;font-size:12px;font-weight:700}
     .hm-lakas-stats strong{color:#253137;font-size:16px}
-    .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(470px,2.35fr) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
+    .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(360px,2fr) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
     .hm-lakas-tabs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
     .hm-lakas-tabs button,.hm-lakas-reset{min-height:38px;padding:0 18px;border:1px solid rgba(168,118,45,.34);background:#fff;color:#8c621f;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
     .hm-lakas-tabs button{border-radius:999px}
@@ -777,13 +785,28 @@ function harmat_lakas_redesign_js() {
       function cardSqm(card){
         return numberValue(card.dataset.sqmPrice);
       }
+      function cardPrice(card){
+        return numberValue(card.dataset.price);
+      }
       function isPriceKnown(card){
         return card.dataset.priceHidden!=="1"&&cardSqm(card)>0;
+      }
+      function isTotalPriceKnown(card){
+        return card.dataset.priceHidden!=="1"&&cardPrice(card)>0;
       }
       function sortCards(){
         if(!grid) return;
         var sorted=cards.slice();
         sorted.sort(function(a,b){
+          if(state.sort==="price-asc"||state.sort==="price-desc"){
+            var ap=isTotalPriceKnown(a);
+            var bp=isTotalPriceKnown(b);
+            if(ap!==bp) return ap?-1:1;
+            if(ap&&bp){
+              var priceDelta=cardPrice(a)-cardPrice(b);
+              if(priceDelta!==0) return state.sort==="price-asc"?priceDelta:-priceDelta;
+            }
+          }
           if(state.sort==="sqm-asc"||state.sort==="sqm-desc"){
             var ak=isPriceKnown(a);
             var bk=isPriceKnown(b);

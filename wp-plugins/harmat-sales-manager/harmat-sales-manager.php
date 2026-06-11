@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.47
+ * Version: 1.6.49
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.47';
+    const VERSION = '1.6.49';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -67,6 +67,8 @@ final class Harmat_Sales_Manager {
         add_filter('wpcf7_posted_data', array($this, 'prefill_cf7_property_data'));
         add_action('wpcf7_mail_sent', array($this, 'capture_cf7_offer_inquiry_sent'), 999, 1);
         add_action('wpcf7_mail_failed', array($this, 'capture_cf7_offer_inquiry_failed'), 999, 1);
+        add_action('wp_login', array($this, 'log_sales_portal_login'), 10, 2);
+        add_action('wp_logout', array($this, 'log_sales_portal_logout'), 10, 1);
     }
 
     private function is_portal_request_path() {
@@ -608,7 +610,7 @@ final class Harmat_Sales_Manager {
             return;
         }
 
-        wp_safe_redirect(add_query_arg('rooms', $rooms, home_url('/lakaskereso/')), 302);
+        wp_safe_redirect(add_query_arg('rooms', $rooms, home_url('/lakaskereso/')), 301);
         exit;
     }
 
@@ -718,16 +720,19 @@ final class Harmat_Sales_Manager {
         $export = isset($_GET['sales_export']) ? sanitize_key(wp_unslash($_GET['sales_export'])) : '';
         if ($export === 'payments_summary') {
             check_admin_referer('harmat_sales_export_payments_summary');
+            $this->log_sales_activity('export_payments_summary', 'export', 0, '导出付款汇总 CSV');
             $this->export_sales_payments_summary_csv();
             return;
         }
         if ($export === 'payments_plan') {
             check_admin_referer('harmat_sales_export_payments_plan');
+            $this->log_sales_activity('export_payments_plan', 'export', 0, '导出付款节点 CSV');
             $this->export_sales_payments_plan_csv();
             return;
         }
         if ($export === 'activity_log') {
             check_admin_referer('harmat_sales_export_activity_log');
+            $this->log_sales_activity('export_activity_log', 'export', 0, '导出动作记录 CSV');
             $this->export_sales_activity_log_csv();
             return;
         }
@@ -5595,6 +5600,28 @@ final class Harmat_Sales_Manager {
             '销售漏斗状态' => 'Értékesítési tölcsér',
             '从询价、指派、跟单到成交，主管可以快速看出哪个环节需要处理。' => 'Az érdeklődéstől a kiosztáson és ügykövetésen át a lezárásig gyorsan látszik, hol van teendő.',
             '进入跟单' => 'Ügyek megnyitása',
+            '转化率指标' => 'Konverziós mutatók',
+            '从访问、询价、跟单、看房、预订、合同到成交的主管视角。' => 'Vezetői nézet a látogatástól az érdeklődésen, ügykövetésen, megtekintésen, foglaláson és szerződésen át a lezárásig.',
+            '查看询价' => 'Érdeklődések megnyitása',
+            '访客到询价' => 'Látogatóból érdeklődés',
+            '询价到跟进' => 'Érdeklődésből követés',
+            '跟进到看房' => 'Követésből megtekintés',
+            '看房到预订' => 'Megtekintésből foglalás',
+            '预订到合同' => 'Foglalásból szerződés',
+            '合同到成交' => 'Szerződésből lezárás',
+            '销售表现' => 'Értékesítői teljesítmény',
+            '按内部销售汇总线索、跟进、看房、预订、合同、成交和平均响应时间。' => 'Belső értékesítőnként összesíti a leadeket, követéseket, megtekintéseket, foglalásokat, szerződéseket, lezárásokat és átlagos reakcióidőt.',
+            '销售' => 'Értékesítő',
+            '线索' => 'Lead',
+            '跟进' => 'Követés',
+            '看房' => 'Megtekintés',
+            '报价' => 'Ajánlat',
+            '预订' => 'Foglalás',
+            '合同' => 'Szerződés',
+            '成交率' => 'Lezárási arány',
+            '平均响应' => 'Átlagos reakció',
+            '佣金估算' => 'Jutalékbecslés',
+            '暂无可统计的销售表现数据。' => 'Még nincs értékelhető értékesítői teljesítményadat.',
             '新询价' => 'Új érdeklődés',
             '已指派' => 'Kiosztva',
             '未生成跟单' => 'Nincs ügy létrehozva',
@@ -5739,6 +5766,10 @@ final class Harmat_Sales_Manager {
             '自动任务' => 'Automatikus feladat',
             '主管需指派询价' => 'Vezetői kiosztás szükséges',
             '已指派询价需生成跟单' => 'Kiosztott érdeklődésből ügyet kell létrehozni',
+            '报价发出3天后需确认客户反馈' => 'Ajánlatküldés után 3 nappal ügyfél-visszajelzést kell ellenőrizni',
+            '看房提醒' => 'Megtekintési emlékeztető',
+            '明天有预约看房，请提前确认' => 'Holnap lakásmegtekintés várható, kérjük előre erősítse meg.',
+            '客户7天未活跃，请安排下一次联系' => 'Az ügyfél 7 napja inaktív, kérjük ütemezzen új kapcsolatfelvételt.',
             '新客户需首次联系' => 'Új ügyfél első kapcsolatfelvétele szükséges',
             '请设置下次跟进' => 'Következő kapcsolatfelvételt kell beállítani',
             '请设置下一步跟进' => 'Következő lépést kell beállítani',
@@ -6039,6 +6070,23 @@ final class Harmat_Sales_Manager {
             '来源与备注' => 'Forrás és megjegyzések',
             '来源客户' => 'Forrásügyfél',
             '来源询价' => 'Forrás érdeklődés',
+            '来源与需求画像' => 'Forrás és igényprofil',
+            '当前阶段' => 'Aktuális fázis',
+            '跟进销售' => 'Követő értékesítő',
+            '预算 / 金额' => 'Keret / összeg',
+            '房间偏好' => 'Szobaszám preferencia',
+            '花园 / 露台偏好' => 'Kert / terasz preferencia',
+            '偏好联系时间' => 'Preferált kapcsolatfelvételi idő',
+            '花园或露台 / kert vagy terasz' => 'Kert vagy terasz',
+            '花园 / kert' => 'Kert',
+            '露台 / terasz' => 'Terasz',
+            'elfogadva' => 'Elfogadva',
+            'igen' => 'Igen',
+            'nem / nincs megadva' => 'Nem / nincs megadva',
+            '可能重复客户' => 'Lehetséges duplikált ügyfél',
+            '系统按电话、邮箱和相似姓名提示。合并前请先人工确认；如确认重复，可在动作记录里保留处理轨迹。' => 'A rendszer telefon, e-mail és hasonló név alapján jelez. Összevonás előtt kérjük, ellenőrizze manuálisan; megerősített duplikáció esetén a műveleti naplóban maradjon nyom.',
+            '未填写客户' => 'Nincs megadott ügyfél',
+            '打开记录' => 'Rekord megnyitása',
             '执行状态' => 'Végrehajtási státusz',
             '销售、付款、合同、佣金和交付节点。' => 'Értékesítési, fizetési, szerződéses, jutalék- és átadási pontok.',
             '销售、付款、合同和交付节点。' => 'Értékesítési, fizetési, szerződéses és átadási pontok.',
@@ -7202,6 +7250,263 @@ final class Harmat_Sales_Manager {
         );
     }
 
+    private function sales_rate_label($value, $total) {
+        $value = (int) $value;
+        $total = (int) $total;
+        if ($total <= 0) {
+            return '-';
+        }
+        return number_format(($value / $total) * 100, 1, ',', ' ') . '%';
+    }
+
+    private function sales_recent_visit_totals($days = 7) {
+        $stats = get_option(self::VISIT_STATS_OPTION, array());
+        if (!is_array($stats)) {
+            $stats = array();
+        }
+
+        $today = current_time('Y-m-d');
+        $visitors = array();
+        $pageviews = 0;
+        for ($i = 0; $i < max(1, (int) $days); $i++) {
+            $date = date('Y-m-d', strtotime('-' . $i . ' days', strtotime($today)));
+            $day_data = isset($stats[$date]) && is_array($stats[$date]) ? $stats[$date] : array();
+            $pageviews += (int) ($day_data['pageviews'] ?? 0);
+            if (isset($day_data['visitors']) && is_array($day_data['visitors'])) {
+                foreach ($day_data['visitors'] as $visitor_hash => $flag) {
+                    $visitors[$date . ':' . $visitor_hash] = 1;
+                }
+            }
+        }
+
+        return array(
+            'visitors' => count($visitors),
+            'pageviews' => $pageviews,
+        );
+    }
+
+    private function sales_stage_at_least($stage, $minimum_stage) {
+        $order = array(
+            'new' => 10,
+            'viewing' => 20,
+            'negotiation' => 30,
+            'reserved' => 40,
+            'contract' => 50,
+            'closed' => 60,
+            'lost' => 0,
+        );
+        $stage = $this->normalize_deal_stage_key($stage);
+        $minimum_stage = $this->normalize_deal_stage_key($minimum_stage);
+        return (int) ($order[$stage] ?? 0) >= (int) ($order[$minimum_stage] ?? 0);
+    }
+
+    private function count_sales_deals_at_least($deals, $minimum_stage) {
+        $count = 0;
+        foreach ($deals as $deal) {
+            $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
+            if ($stage !== 'lost' && $this->sales_stage_at_least($stage, $minimum_stage)) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    private function count_recent_offer_inquiries($days = 7) {
+        $after = date('Y-m-d 00:00:00', strtotime('-' . (max(1, (int) $days) - 1) . ' days', current_time('timestamp')));
+        $query = new WP_Query(array(
+            'post_type' => 'harmat_offer_lead',
+            'post_status' => array('private', 'publish', 'draft'),
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'date_query' => array(
+                array(
+                    'after' => $after,
+                    'inclusive' => true,
+                ),
+            ),
+        ));
+        return (int) $query->found_posts;
+    }
+
+    private function sales_conversion_metrics($deals, $leads) {
+        $visit_totals = $this->sales_recent_visit_totals(7);
+        $visible_inquiries = 0;
+        $visible_assigned_inquiries = 0;
+        $can_manage = $this->is_sales_manager_user();
+        $current_user_id = get_current_user_id();
+
+        foreach ($this->get_offer_inquiry_posts(300) as $inquiry_post) {
+            $assigned_sales_id = $this->offer_inquiry_assigned_sales_id((int) $inquiry_post->ID);
+            if (!$can_manage && $assigned_sales_id !== $current_user_id) {
+                continue;
+            }
+            $visible_inquiries++;
+            if ($assigned_sales_id || $this->find_deal_by_inquiry_id((int) $inquiry_post->ID, $deals)) {
+                $visible_assigned_inquiries++;
+            }
+        }
+
+        $inquiry_total = $visible_inquiries + count($leads);
+        $followup_total = count($deals);
+        foreach ($leads as $lead) {
+            if (!empty($lead['next_followup']) || !in_array((string) ($lead['status'] ?? 'new'), array('', 'new'), true)) {
+                $followup_total++;
+            }
+        }
+        $appointment_total = $this->count_sales_deals_at_least($deals, 'viewing');
+        $reservation_total = $this->count_sales_deals_at_least($deals, 'reserved');
+        $contract_total = $this->count_sales_deals_at_least($deals, 'contract');
+        $deal_total = $this->count_sales_deals_at_least($deals, 'closed');
+        $recent_inquiries = $this->count_recent_offer_inquiries(7);
+
+        return array(
+            array(
+                'label' => '访客到询价',
+                'value' => $this->sales_rate_label($recent_inquiries, $visit_totals['visitors']),
+                'detail' => $recent_inquiries . ' / ' . $visit_totals['visitors'] . '（近7天）',
+            ),
+            array(
+                'label' => '询价到跟进',
+                'value' => $this->sales_rate_label(max($visible_assigned_inquiries, $followup_total), $inquiry_total),
+                'detail' => max($visible_assigned_inquiries, $followup_total) . ' / ' . $inquiry_total,
+            ),
+            array(
+                'label' => '跟进到看房',
+                'value' => $this->sales_rate_label($appointment_total, max(1, count($deals))),
+                'detail' => $appointment_total . ' / ' . count($deals),
+            ),
+            array(
+                'label' => '看房到预订',
+                'value' => $this->sales_rate_label($reservation_total, $appointment_total),
+                'detail' => $reservation_total . ' / ' . $appointment_total,
+            ),
+            array(
+                'label' => '预订到合同',
+                'value' => $this->sales_rate_label($contract_total, $reservation_total),
+                'detail' => $contract_total . ' / ' . $reservation_total,
+            ),
+            array(
+                'label' => '合同到成交',
+                'value' => $this->sales_rate_label($deal_total, $contract_total),
+                'detail' => $deal_total . ' / ' . $contract_total,
+            ),
+        );
+    }
+
+    private function render_sales_conversion_metrics($deals, $leads) {
+        if (!$this->is_sales_manager_user()) {
+            return;
+        }
+
+        echo '<section class="harmat-sales-panel harmat-sales-conversion-panel">';
+        echo '<div class="harmat-sales-panel-head"><div><h2>转化率指标</h2><p>从访问、询价、跟单、看房、预订、合同到成交的主管视角。</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'inquiries'))) . '">查看询价</a></div>';
+        echo '<div class="harmat-sales-conversion-grid">';
+        foreach ($this->sales_conversion_metrics($deals, $leads) as $metric) {
+            echo '<article><small>' . esc_html($metric['label']) . '</small><strong>' . esc_html($metric['value']) . '</strong><span>' . esc_html($metric['detail']) . '</span></article>';
+        }
+        echo '</div></section>';
+    }
+
+    private function sales_performance_rows($deals, $leads) {
+        $rows = array();
+        foreach ($this->get_internal_sales_users() as $sales_user) {
+            $rows[(int) $sales_user->ID] = array(
+                'user_id' => (int) $sales_user->ID,
+                'name' => $sales_user->display_name ?: $sales_user->user_login,
+                'leads' => 0,
+                'followups' => 0,
+                'appointments' => 0,
+                'offers' => 0,
+                'reservations' => 0,
+                'contracts' => 0,
+                'deals' => 0,
+                'response_seconds_total' => 0,
+                'response_count' => 0,
+                'commission' => 0,
+            );
+        }
+
+        foreach ($this->get_offer_inquiry_posts(300) as $inquiry_post) {
+            $assigned_sales_id = $this->offer_inquiry_assigned_sales_id((int) $inquiry_post->ID);
+            if ($assigned_sales_id && isset($rows[$assigned_sales_id])) {
+                $rows[$assigned_sales_id]['leads']++;
+            }
+        }
+
+        foreach ($leads as $lead) {
+            $assigned_sales_id = (int) ($lead['assigned_sales_id'] ?? 0);
+            if ($assigned_sales_id && isset($rows[$assigned_sales_id])) {
+                $rows[$assigned_sales_id]['leads']++;
+            }
+        }
+
+        foreach ($deals as $deal) {
+            $assigned_sales_id = (int) ($deal['assigned_sales_id'] ?? 0);
+            if (!$assigned_sales_id || !isset($rows[$assigned_sales_id])) {
+                continue;
+            }
+            $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
+            $rows[$assigned_sales_id]['followups']++;
+            $rows[$assigned_sales_id]['offers'] += !empty($deal['amount']) ? 1 : 0;
+            $rows[$assigned_sales_id]['appointments'] += $this->sales_stage_at_least($stage, 'viewing') && $stage !== 'lost' ? 1 : 0;
+            $rows[$assigned_sales_id]['reservations'] += $this->sales_stage_at_least($stage, 'reserved') && $stage !== 'lost' ? 1 : 0;
+            $rows[$assigned_sales_id]['contracts'] += $this->sales_stage_at_least($stage, 'contract') && $stage !== 'lost' ? 1 : 0;
+            $rows[$assigned_sales_id]['deals'] += $stage === 'closed' ? 1 : 0;
+            $rows[$assigned_sales_id]['commission'] += $this->deal_commission_amount($deal);
+
+            $inquiry_id = (int) ($deal['inquiry_id'] ?? 0);
+            if ($inquiry_id) {
+                $inquiry_created = strtotime((string) get_post_field('post_date', $inquiry_id));
+                $deal_created = strtotime((string) ($deal['created_at'] ?? ''));
+                if ($inquiry_created && $deal_created && $deal_created >= $inquiry_created) {
+                    $rows[$assigned_sales_id]['response_seconds_total'] += ($deal_created - $inquiry_created);
+                    $rows[$assigned_sales_id]['response_count']++;
+                }
+            }
+        }
+
+        return array_values(array_filter($rows, function($row) {
+            return (int) $row['leads'] + (int) $row['followups'] + (int) $row['deals'] > 0;
+        }));
+    }
+
+    private function render_sales_performance_dashboard($deals, $leads) {
+        if (!$this->is_sales_manager_user()) {
+            return;
+        }
+        $rows = $this->sales_performance_rows($deals, $leads);
+
+        echo '<section class="harmat-sales-panel harmat-sales-performance-panel">';
+        echo '<div class="harmat-sales-panel-head"><div><h2>销售表现</h2><p>按内部销售汇总线索、跟进、看房、预订、合同、成交和平均响应时间。</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'deals'))) . '">查看跟单</a></div>';
+        if (!$rows) {
+            echo '<div class="harmat-sales-empty">暂无可统计的销售表现数据。</div></section>';
+            return;
+        }
+
+        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-performance-table"><thead><tr><th>销售</th><th>线索</th><th>跟进</th><th>看房</th><th>报价</th><th>预订</th><th>合同</th><th>成交</th><th>成交率</th><th>平均响应</th><th>佣金估算</th></tr></thead><tbody>';
+        foreach ($rows as $row) {
+            $avg_response = '-';
+            if ((int) $row['response_count'] > 0) {
+                $hours = round(((int) $row['response_seconds_total'] / (int) $row['response_count']) / HOUR_IN_SECONDS, 1);
+                $avg_response = $hours . ' h';
+            }
+            echo '<tr>';
+            echo '<td><strong>' . esc_html($row['name']) . '</strong></td>';
+            echo '<td>' . esc_html((string) (int) $row['leads']) . '</td>';
+            echo '<td>' . esc_html((string) (int) $row['followups']) . '</td>';
+            echo '<td>' . esc_html((string) (int) $row['appointments']) . '</td>';
+            echo '<td>' . esc_html((string) (int) $row['offers']) . '</td>';
+            echo '<td>' . esc_html((string) (int) $row['reservations']) . '</td>';
+            echo '<td>' . esc_html((string) (int) $row['contracts']) . '</td>';
+            echo '<td>' . esc_html((string) (int) $row['deals']) . '</td>';
+            echo '<td>' . esc_html($this->sales_rate_label($row['deals'], max(1, $row['followups']))) . '</td>';
+            echo '<td>' . esc_html($avg_response) . '</td>';
+            echo '<td>' . esc_html($row['commission'] ? $this->format_money($row['commission']) . ' Ft' : '-') . '</td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table></div></section>';
+    }
+
     private function sales_traffic_day_label($date, $today) {
         if ($date === $today) {
             return '今天';
@@ -7417,6 +7722,8 @@ final class Harmat_Sales_Manager {
         echo '</section>';
 
         $this->render_sales_funnel_panel($deals, $leads);
+        $this->render_sales_conversion_metrics($deals, $leads);
+        $this->render_sales_performance_dashboard($deals, $leads);
 
         $this->render_sales_traffic_summary($can_manage);
 
@@ -7942,7 +8249,7 @@ final class Harmat_Sales_Manager {
             }
         }
         $next_id = $ids ? max($ids) + 1 : 1;
-        $user_id = get_current_user_id();
+        $user_id = isset($context['actor_user_id']) ? absint($context['actor_user_id']) : get_current_user_id();
         $user = $user_id ? get_userdata($user_id) : null;
         $assigned_sales_id = isset($context['assigned_sales_id']) ? absint($context['assigned_sales_id']) : 0;
         $related_user_ids = isset($context['related_user_ids']) && is_array($context['related_user_ids']) ? array_map('absint', $context['related_user_ids']) : array();
@@ -7981,6 +8288,55 @@ final class Harmat_Sales_Manager {
         update_option(self::ACTIVITY_LOG_OPTION, array_values($raw), false);
     }
 
+    public function log_sales_portal_login($user_login, $user) {
+        if (!$user instanceof WP_User || !$this->is_private_portal_user($user)) {
+            return;
+        }
+
+        $this->log_sales_activity(
+            'login',
+            'security',
+            (int) $user->ID,
+            '登录 CRM / portal',
+            array(
+                'actor_user_id' => (int) $user->ID,
+                'related_user_ids' => array((int) $user->ID),
+            )
+        );
+    }
+
+    public function log_sales_portal_logout($user_id = 0) {
+        $user_id = absint($user_id);
+        if (!$user_id) {
+            $user_id = get_current_user_id();
+        }
+        $user = $user_id ? get_userdata($user_id) : null;
+        if (!$user instanceof WP_User || !$this->is_private_portal_user($user)) {
+            return;
+        }
+
+        $this->log_sales_activity(
+            'logout',
+            'security',
+            (int) $user->ID,
+            '退出 CRM / portal',
+            array(
+                'actor_user_id' => (int) $user->ID,
+                'related_user_ids' => array((int) $user->ID),
+            )
+        );
+    }
+
+    private function is_private_portal_user($user) {
+        if (!$user instanceof WP_User) {
+            return false;
+        }
+        return (bool) array_intersect(
+            array(self::ROLE_MANAGER, self::ROLE_SALES, self::ROLE_BROKER, self::ROLE_CUSTOMER),
+            (array) $user->roles
+        );
+    }
+
     private function sales_activity_action_options() {
         return array(
             'lead_create' => '新增客户',
@@ -7996,6 +8352,11 @@ final class Harmat_Sales_Manager {
             'trash_restore' => '恢复记录',
             'trash_purge' => '永久删除',
             'customer_followup' => '维护成交客户',
+            'export_payments_summary' => '导出付款汇总',
+            'export_payments_plan' => '导出付款节点',
+            'export_activity_log' => '导出动作记录',
+            'login' => '登录',
+            'logout' => '退出',
         );
     }
 
@@ -8016,6 +8377,8 @@ final class Harmat_Sales_Manager {
             'customer' => '成交客户',
             'property' => '房源',
             'user' => '账号',
+            'export' => '导出',
+            'security' => '安全',
         );
         $object_type = (string) $object_type;
         return $labels[$object_type] ?? ($object_type ?: '-');
@@ -9513,6 +9876,7 @@ final class Harmat_Sales_Manager {
         $this->render_sales_customer_followup_box($deal);
         $this->render_sales_customer_materials($deal);
         $this->render_sales_customer_requests($deal);
+        $this->render_sales_duplicate_contact_notice($deal);
 
         echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact">';
         echo '<article><small>成交金额</small><strong>' . esc_html($amount ? $this->format_money($amount) : '-') . '</strong></article>';
@@ -9778,7 +10142,75 @@ final class Harmat_Sales_Manager {
         echo '<div class="harmat-sales-detail-wide"><dt>交付/售后备注</dt><dd>' . nl2br(esc_html($deal['handover_note'] ?: '-')) . '</dd></div>';
         echo '<div class="harmat-sales-detail-wide"><dt>内部售后备注</dt><dd>' . nl2br(esc_html($deal['aftercare_note'] ?: '-')) . '</dd></div>';
         echo '</dl></section>';
+        $this->render_sales_customer_source_profile($deal, $lead, $inquiry, $source_label);
         echo '</div>';
+    }
+
+    private function render_sales_customer_source_profile($deal, $lead, $inquiry, $source_label) {
+        $assigned_sales = !empty($deal['assigned_sales_id']) ? get_userdata((int) $deal['assigned_sales_id']) : null;
+        $stage_options = $this->deal_stage_options();
+        $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
+        $lead_source = $inquiry ? ($inquiry['lead_source'] ?: $source_label) : $source_label;
+        $budget = $inquiry && !empty($inquiry['budget_range']) ? $inquiry['budget_range'] : (!empty($deal['amount']) ? $this->format_money($deal['amount']) . ' Ft' : '-');
+        $room_preference = $inquiry ? ($inquiry['preferred_room_count'] ?: ($inquiry['rooms'] ?: '-')) : '-';
+        $outdoor_preference = $this->sales_infer_outdoor_preference(array(
+            $inquiry['message'] ?? '',
+            $inquiry['conversation_summary'] ?? '',
+            $lead['note'] ?? '',
+            $deal['note'] ?? '',
+        ));
+        $interest = array_filter(array(
+            $inquiry['apartment'] ?? '',
+            $lead && !empty($lead['property_id']) ? get_the_title((int) $lead['property_id']) : '',
+            !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '',
+        ));
+        $utm_parts = array();
+        if ($inquiry) {
+            foreach (array('utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term') as $utm_key) {
+                if (!empty($inquiry[$utm_key])) {
+                    $utm_parts[] = $utm_key . ': ' . $inquiry[$utm_key];
+                }
+            }
+        }
+        $privacy = $inquiry && ($inquiry['privacy_consent'] ?? '') === 'accepted' ? 'elfogadva' : '-';
+        $marketing = $inquiry && !empty($inquiry['marketing_consent']) ? 'igen' : 'nem / nincs megadva';
+
+        echo '<section><h3>来源与需求画像</h3><dl>';
+        echo '<div><dt>来源</dt><dd>' . esc_html($lead_source ?: '-') . '</dd></div>';
+        echo '<div><dt>当前阶段</dt><dd>' . esc_html($stage_options[$stage] ?? '-') . '</dd></div>';
+        echo '<div><dt>跟进销售</dt><dd>' . esc_html($assigned_sales ? ($assigned_sales->display_name ?: $assigned_sales->user_login) : '-') . '</dd></div>';
+        echo '<div><dt>意向房源</dt><dd>' . esc_html($interest ? implode(' / ', array_unique($interest)) : '-') . '</dd></div>';
+        echo '<div><dt>预算 / 金额</dt><dd>' . esc_html($budget) . '</dd></div>';
+        echo '<div><dt>房间偏好</dt><dd>' . esc_html($room_preference) . '</dd></div>';
+        echo '<div><dt>花园 / 露台偏好</dt><dd>' . esc_html($outdoor_preference ?: '-') . '</dd></div>';
+        echo '<div><dt>偏好联系时间</dt><dd>' . esc_html($inquiry['preferred_contact_time'] ?? '-') . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>Landing page</dt><dd>' . esc_html($inquiry['landing_page'] ?? '-') . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>Source page</dt><dd>' . esc_html($inquiry['source_page'] ?? '-') . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>Referrer</dt><dd>' . esc_html($inquiry['referrer'] ?? '-') . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>UTM</dt><dd>' . esc_html($utm_parts ? implode(' / ', $utm_parts) : '-') . '</dd></div>';
+        echo '<div><dt>GDPR consent</dt><dd>' . esc_html($privacy) . '</dd></div>';
+        echo '<div><dt>Marketing consent</dt><dd>' . esc_html($marketing) . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>AI assistant summary</dt><dd>' . nl2br(esc_html($inquiry['conversation_summary'] ?? '-')) . '</dd></div>';
+        echo '</dl></section>';
+    }
+
+    private function sales_infer_outdoor_preference($texts) {
+        $text = strtolower(remove_accents(implode(' ', array_filter(array_map('strval', (array) $texts)))));
+        if ($text === '') {
+            return '';
+        }
+        $has_garden = strpos($text, 'kert') !== false || strpos($text, 'garden') !== false || strpos($text, 'kertes') !== false || strpos($text, '花园') !== false;
+        $has_terrace = strpos($text, 'terasz') !== false || strpos($text, 'erkely') !== false || strpos($text, 'terrace') !== false || strpos($text, 'balcony') !== false || strpos($text, '露台') !== false || strpos($text, '阳台') !== false;
+        if ($has_garden && $has_terrace) {
+            return '花园或露台 / kert vagy terasz';
+        }
+        if ($has_garden) {
+            return '花园 / kert';
+        }
+        if ($has_terrace) {
+            return '露台 / terasz';
+        }
+        return '';
     }
 
     private function render_sales_customer_timeline($deal) {
@@ -11244,6 +11676,23 @@ final class Harmat_Sales_Manager {
             $name = preg_replace('/^Magán:\s*/u', '', $name);
         }
 
+        $tracking = get_post_meta($post_id, '_harmat_offer_tracking', true);
+        if (!is_array($tracking)) {
+            $tracking = array();
+        }
+        $utm = get_post_meta($post_id, '_harmat_offer_utm', true);
+        if (!is_array($utm)) {
+            $utm = array();
+        }
+        if (isset($tracking['utm']) && is_array($tracking['utm'])) {
+            $utm = array_merge($tracking['utm'], $utm);
+        }
+        $source_page = get_post_meta($post_id, '_harmat_offer_source_page', true);
+        $lead_source = (string) ($tracking['lead_source'] ?? ($utm['lead_source'] ?? $this->inquiry_value($posted, 'lead_source')));
+        if ($lead_source === '') {
+            $lead_source = 'website';
+        }
+
         return array(
             'name' => $name,
             'email' => get_post_meta($post_id, '_harmat_offer_email', true) ?: $this->inquiry_value($posted, 'your-email'),
@@ -11258,6 +11707,25 @@ final class Harmat_Sales_Manager {
             'message' => $this->inquiry_value($posted, 'your-message') ?: get_post_field('post_content', $post_id),
             'mail_status' => get_post_meta($post_id, '_harmat_offer_mail_status', true),
             'checked_at' => get_post_meta($post_id, '_harmat_offer_mail_checked_at', true),
+            'crm_code' => get_post_meta($post_id, '_harmat_offer_crm_code', true),
+            'lead_source' => $lead_source,
+            'source_page' => esc_url_raw($source_page ?: ($tracking['source_page'] ?? ($utm['source_page'] ?? $this->inquiry_value($posted, 'source_url')))),
+            'landing_page' => esc_url_raw($tracking['landing_page'] ?? ($utm['landing_page'] ?? $this->inquiry_value($posted, 'landing_page'))),
+            'referrer' => esc_url_raw($tracking['referrer'] ?? ($utm['referrer'] ?? $this->inquiry_value($posted, 'referrer'))),
+            'utm_source' => sanitize_text_field((string) ($tracking['utm_source'] ?? ($utm['utm_source'] ?? $this->inquiry_value($posted, 'utm_source')))),
+            'utm_medium' => sanitize_text_field((string) ($tracking['utm_medium'] ?? ($utm['utm_medium'] ?? $this->inquiry_value($posted, 'utm_medium')))),
+            'utm_campaign' => sanitize_text_field((string) ($tracking['utm_campaign'] ?? ($utm['utm_campaign'] ?? $this->inquiry_value($posted, 'utm_campaign')))),
+            'utm_content' => sanitize_text_field((string) ($tracking['utm_content'] ?? ($utm['utm_content'] ?? $this->inquiry_value($posted, 'utm_content')))),
+            'utm_term' => sanitize_text_field((string) ($tracking['utm_term'] ?? ($utm['utm_term'] ?? $this->inquiry_value($posted, 'utm_term')))),
+            'privacy_consent' => $this->inquiry_value($posted, 'privacy-acceptance') !== '' ? 'accepted' : '',
+            'marketing_consent' => $this->inquiry_value($posted, 'marketing-consent'),
+            'security' => get_post_meta($post_id, '_harmat_offer_security', true),
+            'conversation_summary' => get_post_meta($post_id, '_harmat_offer_conversation_summary', true) ?: (string) ($tracking['conversation_summary'] ?? ''),
+            'customer_intent' => sanitize_text_field((string) ($tracking['customer_intent'] ?? '')),
+            'preferred_room_count' => get_post_meta($post_id, '_harmat_offer_preferred_room_count', true) ?: (string) ($tracking['preferred_room_count'] ?? ''),
+            'preferred_contact_time' => get_post_meta($post_id, '_harmat_offer_preferred_contact_time', true) ?: (string) ($tracking['preferred_contact_time'] ?? ''),
+            'budget_range' => $this->inquiry_value($posted, 'budget_range'),
+            'apartment_type' => $this->inquiry_value($posted, 'apartment_type'),
         );
     }
 
@@ -11879,6 +12347,75 @@ final class Harmat_Sales_Manager {
         );
     }
 
+    private function sales_duplicate_matches_for_contact($client_name, $phone, $email, $current_deal_id = 0) {
+        $email_key = strtolower(sanitize_email((string) $email));
+        $phone_key = $this->normalize_contact_phone($phone);
+        $name_key = $this->normalize_lead_name($client_name);
+        $matches = array();
+        $current_deal = $current_deal_id ? ($this->get_deals()[(int) $current_deal_id] ?? null) : null;
+        $current_inquiry_id = $current_deal ? (int) ($current_deal['inquiry_id'] ?? 0) : 0;
+        $current_lead_id = $current_deal ? (int) ($current_deal['lead_id'] ?? 0) : 0;
+
+        foreach ($this->sales_duplicate_contact_dataset((int) $current_deal_id) as $item) {
+            $item_source = (string) ($item['source'] ?? '');
+            if ($current_inquiry_id && (int) ($item['id'] ?? 0) === $current_inquiry_id && strpos($item_source, '询价') !== false) {
+                continue;
+            }
+            if ($current_lead_id && (int) ($item['id'] ?? 0) === $current_lead_id && strpos($item_source, '客户跟进') !== false) {
+                continue;
+            }
+            $matched_by = array();
+            if ($email_key !== '' && !empty($item['email']) && strtolower((string) $item['email']) === $email_key) {
+                $matched_by[] = 'e-mail';
+            }
+            if ($phone_key !== '' && !empty($item['phone_digits']) && (string) $item['phone_digits'] === $phone_key) {
+                $matched_by[] = 'telefon';
+            }
+            if (!$matched_by && $name_key !== '' && !empty($item['client'])) {
+                similar_text($name_key, $this->normalize_lead_name($item['client']), $percent);
+                if ($percent >= 86) {
+                    $matched_by[] = 'hasonló név';
+                }
+            }
+            if ($matched_by) {
+                $item['matched_by'] = implode(', ', $matched_by);
+                $matches[] = $item;
+            }
+            if (count($matches) >= 6) {
+                break;
+            }
+        }
+
+        return $matches;
+    }
+
+    private function render_sales_duplicate_contact_notice($deal) {
+        $matches = $this->sales_duplicate_matches_for_contact(
+            $deal['client_name'] ?? '',
+            $deal['phone'] ?? '',
+            $deal['email'] ?? '',
+            (int) ($deal['id'] ?? 0)
+        );
+        if (!$matches) {
+            return;
+        }
+
+        echo '<section class="harmat-sales-panel harmat-sales-duplicate-panel">';
+        echo '<div class="harmat-sales-panel-head"><div><h2>可能重复客户</h2><p>系统按电话、邮箱和相似姓名提示。合并前请先人工确认；如确认重复，可在动作记录里保留处理轨迹。</p></div></div>';
+        echo '<div class="harmat-sales-duplicate-list">';
+        foreach ($matches as $match) {
+            echo '<article>';
+            echo '<strong>' . esc_html($match['client'] ?: '未填写客户') . '</strong>';
+            echo '<span>' . esc_html($match['source'] ?? '-') . '</span>';
+            echo '<small>' . esc_html(($match['matched_by'] ?? '-') . ' / ' . (($match['email'] ?? '') ?: ($match['phone'] ?? '-'))) . '</small>';
+            if (!empty($match['url'])) {
+                echo '<a href="' . esc_url($match['url']) . '">打开记录</a>';
+            }
+            echo '</article>';
+        }
+        echo '</div></section>';
+    }
+
     private function normalize_contact_phone($phone) {
         $digits = preg_replace('/\D+/', '', (string) $phone);
         return strlen($digits) >= 7 ? $digits : '';
@@ -11957,6 +12494,28 @@ final class Harmat_Sales_Manager {
                     $this->sales_portal_url(array('view' => 'deals', 'inquiry_id' => $post_id))
                 );
             }
+
+            if (($data['mail_status'] ?? '') === 'sent') {
+                $tasks[] = $this->make_sales_task(
+                    $this->sales_rule_due_datetime($created_at, 3 * DAY_IN_SECONDS),
+                    '自动任务',
+                    '报价发出3天后需确认客户反馈',
+                    $data['name'] ?? '',
+                    $data['apartment'] ?? '',
+                    $this->sales_portal_url(array('view' => 'inquiries'))
+                );
+            }
+
+            if (!empty($data['date']) && (string) $data['date'] === date('Y-m-d', strtotime('+1 day', current_time('timestamp')))) {
+                $tasks[] = $this->make_sales_task(
+                    trim((string) $data['date'] . ' ' . ((string) ($data['time'] ?? '') ?: '09:00')),
+                    '看房提醒',
+                    '明天有预约看房，请提前确认',
+                    $data['name'] ?? '',
+                    $data['apartment'] ?? '',
+                    $this->sales_portal_url(array('view' => 'inquiries'))
+                );
+            }
         }
 
         foreach ($visible_leads as $lead) {
@@ -12007,6 +12566,18 @@ final class Harmat_Sales_Manager {
                 $property_title,
                 $deal_url
             );
+
+            $inactive_base = $deal['last_contacted_at'] ?: ($deal['updated_at'] ?: ($deal['created_at'] ?? ''));
+            if ($inactive_base && strtotime((string) $inactive_base) <= strtotime('-7 days', current_time('timestamp'))) {
+                $tasks[] = $this->make_sales_task(
+                    $this->sales_rule_due_datetime($inactive_base, 7 * DAY_IN_SECONDS),
+                    '自动任务',
+                    '客户7天未活跃，请安排下一次联系',
+                    $deal['client_name'] ?? '',
+                    $property_title,
+                    $deal_url
+                );
+            }
         }
 
         return array_values(array_filter($tasks));
@@ -13921,7 +14492,7 @@ JS;
         .harmat-sales-permission-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}.harmat-sales-permission-strip article{padding:14px 16px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 10px 24px rgba(70,54,28,.05)}.harmat-sales-permission-strip small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.harmat-sales-permission-strip strong{display:block;margin-top:5px;color:#253137;font-size:17px}.harmat-sales-permission-strip span{display:block;margin-top:5px;color:#687178;font-size:13px;line-height:1.45}.harmat-sales-staff-guard{display:flex;gap:12px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;border:1px solid #d6eadb;border-radius:14px;background:#f3fbf5;color:#1f5134}.harmat-sales-staff-guard strong{white-space:nowrap;color:#0d6b3a}.harmat-sales-staff-guard span{color:#40604c;line-height:1.5}
         .harmat-sales-notice{margin:0 0 16px;padding:14px 16px;border-radius:14px;font-weight:800}.harmat-sales-notice span{display:block;margin-top:8px}.harmat-sales-notice code{display:inline-block;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.72);font-size:15px}.harmat-sales-notice-success{background:#eef8f1;color:#1f7a4d;border:1px solid #cce9d5}.harmat-sales-notice-error{background:#fff1f0;color:#b42318;border:1px solid #ffd1cc}
         .harmat-sales-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin:0 0 18px}.harmat-sales-kpis article{padding:18px;border-radius:18px;background:#fff;border:1px solid #ead8b8;box-shadow:0 12px 30px rgba(70,54,28,.06)}.harmat-sales-kpis small{display:block;color:#a5742c;font-weight:900;letter-spacing:.08em}.harmat-sales-kpis strong{display:block;margin-top:8px;color:#253137;font-size:34px;line-height:1}.harmat-sales-kpis strong a{color:#a8762d;text-decoration:none}.harmat-sales-kpis-compact{grid-template-columns:repeat(5,minmax(0,1fr))}.harmat-sales-workbench-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
-        .harmat-sales-funnel-panel{padding-bottom:18px}.harmat-sales-funnel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.harmat-sales-funnel-card{display:grid;gap:7px;min-height:132px;padding:14px;border:1px solid #ead8b8;border-radius:14px;background:#fffaf3;text-decoration:none;transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease}.harmat-sales-funnel-card:hover{border-color:#a8762d;transform:translateY(-1px);box-shadow:0 12px 26px rgba(70,54,28,.08)}.harmat-sales-funnel-card small{color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-funnel-card strong{color:#253137;font-size:32px;line-height:1}.harmat-sales-funnel-card span{color:#253137;font-size:15px;font-weight:900}.harmat-sales-funnel-card em{display:inline-flex;width:max-content;max-width:100%;margin-top:auto;padding:5px 9px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px;font-style:normal;font-weight:900}.harmat-sales-funnel-card em span{color:inherit;font-size:inherit;letter-spacing:0;text-transform:none}.harmat-sales-funnel-card em b{font:inherit;color:inherit}.harmat-sales-funnel-card.needs-attention{border-color:#e3c06d;background:#fff8df}.harmat-sales-funnel-card.needs-attention em{background:#fff1f0;color:#b42318}.harmat-sales-funnel-closed em{background:#eef8f1;color:#1f7a4d}.harmat-sales-funnel-lost em{background:#eceff1;color:#687178}.harmat-sales-funnel-rules{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border:1px solid #ead8b8;border-radius:12px;background:#fff}.harmat-sales-funnel-rules span{flex:0 0 auto;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-funnel-rules strong{color:#5d6670;font-size:13px;line-height:1.45}
+        .harmat-sales-funnel-panel{padding-bottom:18px}.harmat-sales-funnel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.harmat-sales-funnel-card{display:grid;gap:7px;min-height:132px;padding:14px;border:1px solid #ead8b8;border-radius:14px;background:#fffaf3;text-decoration:none;transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease}.harmat-sales-funnel-card:hover{border-color:#a8762d;transform:translateY(-1px);box-shadow:0 12px 26px rgba(70,54,28,.08)}.harmat-sales-funnel-card small{color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-funnel-card strong{color:#253137;font-size:32px;line-height:1}.harmat-sales-funnel-card span{color:#253137;font-size:15px;font-weight:900}.harmat-sales-funnel-card em{display:inline-flex;width:max-content;max-width:100%;margin-top:auto;padding:5px 9px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px;font-style:normal;font-weight:900}.harmat-sales-funnel-card em span{color:inherit;font-size:inherit;letter-spacing:0;text-transform:none}.harmat-sales-funnel-card em b{font:inherit;color:inherit}.harmat-sales-funnel-card.needs-attention{border-color:#e3c06d;background:#fff8df}.harmat-sales-funnel-card.needs-attention em{background:#fff1f0;color:#b42318}.harmat-sales-funnel-closed em{background:#eef8f1;color:#1f7a4d}.harmat-sales-funnel-lost em{background:#eceff1;color:#687178}.harmat-sales-funnel-rules{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px 14px;border:1px solid #ead8b8;border-radius:12px;background:#fff}.harmat-sales-funnel-rules span{flex:0 0 auto;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-funnel-rules strong{color:#5d6670;font-size:13px;line-height:1.45}.harmat-sales-conversion-panel,.harmat-sales-performance-panel{margin-bottom:18px}.harmat-sales-conversion-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.harmat-sales-conversion-grid article{padding:15px 14px;border:1px solid #ead8b8;border-radius:14px;background:#fffaf3}.harmat-sales-conversion-grid small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-conversion-grid strong{display:block;margin-top:7px;color:#253137;font-size:28px;line-height:1}.harmat-sales-conversion-grid span{display:block;margin-top:7px;color:#687178;font-size:12px;font-weight:800}.harmat-sales-performance-table{min-width:1120px}.harmat-sales-duplicate-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.harmat-sales-duplicate-list article{display:grid;gap:6px;padding:13px;border:1px solid #ffd1cc;border-radius:14px;background:#fff7f5}.harmat-sales-duplicate-list strong{color:#253137}.harmat-sales-duplicate-list span{color:#a5742c;font-size:12px;font-weight:900}.harmat-sales-duplicate-list small{color:#687178;overflow-wrap:anywhere}.harmat-sales-duplicate-list a{display:inline-flex;width:max-content;min-height:34px;align-items:center;padding:0 10px;border-radius:9px;background:#a8762d;color:#fff;text-decoration:none;font-weight:900}
         .harmat-sales-traffic-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:center;margin:0 0 18px;padding:10px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 10px 28px rgba(70,54,28,.05)}.harmat-sales-traffic-strip span{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:8px 12px;border-radius:12px;background:#fffaf3;border:1px solid rgba(234,216,184,.82)}.harmat-sales-traffic-strip small{color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-strip strong{color:#253137;font-size:22px;line-height:1}.harmat-sales-traffic-strip a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;border-radius:12px;background:#a8762d;color:#fff;font-weight:900;text-decoration:none;white-space:nowrap}
         .harmat-sales-traffic-panel{margin-bottom:18px}.harmat-sales-traffic-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-traffic-grid article{padding:15px 16px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-grid small{display:block;color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-grid strong{display:block;margin-top:6px;color:#253137;font-size:28px;line-height:1}.harmat-sales-traffic-grid span{display:block;margin-top:6px;color:#687178;font-size:12px;font-weight:800}.harmat-sales-traffic-pages{padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-pages h3{margin:0 0 10px;color:#9a6b27;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-pages p{margin:0;color:#687178}.harmat-sales-traffic-pages ol{display:grid;gap:8px;margin:0;padding:0;list-style:none}.harmat-sales-traffic-pages li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid rgba(234,216,184,.72)}.harmat-sales-traffic-pages a{color:#253137;font-weight:900;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.harmat-sales-traffic-pages span{color:#a8762d;font-size:13px;font-weight:900;white-space:nowrap}.harmat-sales-traffic-pages small{grid-column:1/-1;color:#8a9299;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .harmat-sales-traffic-days{margin-top:14px;padding:14px;border:1px solid #ead8b8;border-radius:16px;background:#fffaf3}.harmat-sales-traffic-days h3{margin:0 0 10px;color:#9a6b27;font-size:13px;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-traffic-days p{margin:0;color:#687178}.harmat-sales-traffic-day-table{overflow:auto;border:1px solid rgba(234,216,184,.86);border-radius:12px;background:#fff}.harmat-sales-traffic-day-table table{width:100%;min-width:520px;border-collapse:collapse}.harmat-sales-traffic-day-table th{padding:10px 12px;background:#fbf4e7;color:#9a6b27;font-size:12px;text-align:left;text-transform:uppercase}.harmat-sales-traffic-day-table td{padding:11px 12px;border-top:1px solid #ead8b8;color:#253137;font-size:15px;font-weight:900}.harmat-sales-traffic-day-table td strong{display:block;color:#253137}.harmat-sales-traffic-day-table td small{display:block;margin-top:3px;color:#8a9299;font-size:12px;font-weight:700}
@@ -13938,7 +14509,7 @@ JS;
         .harmat-sales-search{display:flex;gap:8px;align-items:center}.harmat-sales-search input{min-width:260px}.harmat-sales-rule-list,.harmat-sales-stage-list{display:grid;gap:12px}.harmat-sales-rule-list span,.harmat-sales-stage-list span{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-rule-list strong,.harmat-sales-stage-list strong{color:#9a6b27}.harmat-sales-rule-list b,.harmat-sales-stage-list b{color:#253137;font-size:20px}.harmat-sales-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.harmat-sales-link-grid a{display:grid;gap:7px;padding:15px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;text-decoration:none}.harmat-sales-link-grid strong{color:#253137}.harmat-sales-link-grid code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a8762d;background:#fff;padding:6px 8px;border-radius:8px}.harmat-sales-link-grid span{color:#6f7780;font-size:13px}
         .harmat-sales-customer-table{min-width:1800px}.harmat-sales-head-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.harmat-sales-customer-profile-grid{align-items:start}.harmat-sales-customer-detail{display:grid;gap:14px}.harmat-sales-customer-detail section{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-detail h3,.harmat-sales-customer-ledger h3{margin:0 0 12px;color:#a8762d;font-size:14px;letter-spacing:.08em}.harmat-sales-customer-detail dl,.harmat-sales-customer-ledger dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-sales-customer-detail div,.harmat-sales-customer-ledger div{padding:10px;border-radius:10px;background:#fff}.harmat-sales-customer-detail dt,.harmat-sales-customer-ledger dt{color:#6f7780;font-size:12px;font-weight:900}.harmat-sales-customer-detail dd,.harmat-sales-customer-ledger dd{margin:5px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-sales-customer-flow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-customer-flow article{display:grid;gap:7px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-flow small{color:#a8762d;font-weight:900;letter-spacing:.06em}.harmat-sales-customer-flow strong{color:#253137;font-size:20px;overflow-wrap:anywhere}.harmat-sales-customer-flow .harmat-sales-pill{margin-top:2px}.harmat-sales-customer-ledger{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-form{margin-bottom:16px}.harmat-sales-material-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-list strong{color:#253137}.harmat-sales-material-list small{color:#6f7780}.harmat-sales-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-material-list a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-material-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:2px}.harmat-sales-material-actions form{margin:0}.harmat-sales-material-actions button{min-height:34px;padding:0 10px;border:1px solid #d92d20;border-radius:9px;background:#fff;color:#b42318;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.harmat-sales-request-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-request-card{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;border-left:4px solid #a8762d}.harmat-sales-request-card header{display:flex;justify-content:space-between;gap:10px;align-items:center}.harmat-sales-request-card header span{color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-sales-request-card header b{padding:5px 9px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px}.harmat-sales-request-card strong{color:#253137;font-size:16px}.harmat-sales-request-card small{color:#6f7780;line-height:1.4}.harmat-sales-request-card p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-detail-wide{grid-column:1/-1}
         .harmat-sales-actions{min-width:150px}.harmat-sales-actions form{display:inline-block;margin:0 6px 6px 0}.harmat-sales-actions a,.harmat-sales-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:0 10px;border:1px solid #a8762d;border-radius:8px;background:#fff;color:#a8762d;font:inherit;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer}.harmat-sales-actions button{border-color:#d92d20;color:#b42318}.harmat-sales-inline-form{display:flex;gap:6px;align-items:center}.harmat-sales-inline-form select{min-width:150px;min-height:34px;padding:6px 8px;border:1px solid #e3cfad;border-radius:8px;background:#fffaf3;color:#253137}.harmat-sales-inline-form button{min-height:34px;padding:0 10px;border:1px solid #a8762d;border-radius:8px;background:#fff;color:#a8762d;font-weight:900;cursor:pointer}.harmat-sales-empty{padding:24px;border:1px dashed #d4bea0;border-radius:16px;color:#6f7780;background:#fffaf3}
-        @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer,.harmat-sales-funnel-rules{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip,.harmat-sales-traffic-grid,.harmat-sales-traffic-strip,.harmat-sales-task-filter,.harmat-sales-task-card,.harmat-sales-funnel-grid{grid-template-columns:1fr}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}.harmat-sales-task-card a{width:100%}}
+        @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer,.harmat-sales-funnel-rules{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip,.harmat-sales-traffic-grid,.harmat-sales-traffic-strip,.harmat-sales-task-filter,.harmat-sales-task-card,.harmat-sales-funnel-grid,.harmat-sales-conversion-grid,.harmat-sales-duplicate-list{grid-template-columns:1fr}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}.harmat-sales-task-card a{width:100%}}
         ';
     }
 

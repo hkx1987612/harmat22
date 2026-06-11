@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Local Assistant
  * Plugin URI: https://harmat22.hu
  * Description: Local knowledge-base assistant for Harmat Lakópark apartment questions, prices, FAQ, and sales handoff.
- * Version: 0.2.1
+ * Version: 0.3.1
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -47,7 +47,7 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.2.1';
+    const VERSION = '0.3.1';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
     const CONTACT_PHONE = '+36-30-641-03-58';
@@ -73,25 +73,236 @@ final class Harmat_Local_Assistant {
                 ),
             ),
         ));
+
+        register_rest_route(self::REST_NAMESPACE, '/handoff', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'handoff_request'),
+            'permission_callback' => '__return_true',
+        ));
+
+        register_rest_route(self::REST_NAMESPACE, '/event', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'event_request'),
+            'permission_callback' => '__return_true',
+        ));
     }
 
     public function answer_request(WP_REST_Request $request) {
+        $nonce_error = $this->validate_rest_nonce($request);
+        if ($nonce_error) {
+            return $nonce_error;
+        }
+
+        if (!$this->check_rate_limit('ask', 40, 5 * MINUTE_IN_SECONDS)) {
+            return new WP_Error('harmat_ai_rate_limited', 'Túl sok kérés érkezett. Kérjük, próbálja újra néhány perc múlva.', array('status' => 429));
+        }
+
         $message = trim((string) $request->get_param('message'));
         $message = wp_strip_all_tags($message);
         $message = mb_substr($message, 0, 260, 'UTF-8');
+        $requested_lang = sanitize_key((string) $request->get_param('lang'));
+        if (!in_array($requested_lang, array('hu', 'zh', 'en'), true)) {
+            $requested_lang = '';
+        }
 
         if ($message === '') {
+            $lang = $requested_lang ?: 'hu';
             return rest_ensure_response(array(
                 'ok' => false,
-                'answer' => $this->text('empty', 'hu'),
+                'answer' => $this->text('empty', $lang),
                 'cards' => array(),
-                'suggestions' => $this->default_suggestions('hu'),
+                'actions' => array(),
+                'suggestions' => $this->default_suggestions($lang),
             ));
         }
 
-        $lang = $this->detect_language($message);
+        $lang = $requested_lang ?: $this->detect_language($message);
+        $this->track_event('assistant_question', array('lang' => $lang, 'message_len' => strlen($message)));
         $result = $this->answer_message($message, $lang);
         return rest_ensure_response($result);
+    }
+
+    public function handoff_request(WP_REST_Request $request) {
+        $nonce_error = $this->validate_rest_nonce($request);
+        if ($nonce_error) {
+            return $nonce_error;
+        }
+
+        if ((string) $request->get_param('company_url') !== '') {
+            return rest_ensure_response(array('success' => true, 'ignored' => true));
+        }
+
+        $lang = sanitize_key((string) $request->get_param('lang'));
+        if (!in_array($lang, array('hu', 'zh', 'en'), true)) {
+            $lang = 'hu';
+        }
+        $name = sanitize_text_field((string) $request->get_param('name'));
+        $phone = sanitize_text_field((string) $request->get_param('phone'));
+        $email = sanitize_email((string) $request->get_param('email'));
+        $message = sanitize_textarea_field((string) $request->get_param('message'));
+        $context = sanitize_textarea_field((string) $request->get_param('context'));
+        $page = esc_url_raw((string) $request->get_param('page'));
+        $intent = sanitize_key((string) $request->get_param('intent'));
+        $interested_unit = sanitize_text_field((string) $request->get_param('interested_unit'));
+        $apartment_type = sanitize_text_field((string) $request->get_param('apartment_type'));
+        $budget_range = sanitize_text_field((string) $request->get_param('budget_range'));
+        $preferred_contact_time = sanitize_text_field((string) $request->get_param('preferred_contact_time'));
+        $preferred_room_count = sanitize_text_field((string) $request->get_param('preferred_room_count'));
+        $conversation_summary = sanitize_textarea_field((string) $request->get_param('conversation_summary'));
+        $utm = $this->sanitize_utm($request->get_param('utm'));
+
+        if ($name === '' || ($phone === '' && $email === '')) {
+            return new WP_Error('harmat_ai_handoff_required', $this->by_lang($lang, 'Kerjuk, adja meg nevet es legalabb egy elerhetoseget.', '请填写姓名，并至少留下电话或邮箱。', 'Please enter your name and at least one contact detail.'), array('status' => 400));
+        }
+        if ((string) $request->get_param('email') !== '' && !is_email($email)) {
+            return new WP_Error('harmat_ai_handoff_email', $this->by_lang($lang, 'Az e-mail cim nem megfelelo.', '邮箱格式不正确。', 'The email address is not valid.'), array('status' => 400));
+        }
+
+        $rate_key = 'harmat_ai_handoff_' . md5($this->visitor_key() . '|' . strtolower($email) . '|' . preg_replace('/\D+/', '', $phone));
+        if (get_transient($rate_key)) {
+            return new WP_Error('harmat_ai_handoff_rate', $this->by_lang($lang, 'Koszonjuk, az adatok mar rogzitesre kerultek. Kerjuk, varjon nehany percet uj kuldes elott.', '谢谢，系统已经收到。请稍等几分钟后再重复提交。', 'Thank you, we have received your details. Please wait a few minutes before submitting again.'), array('status' => 429));
+        }
+        set_transient($rate_key, 1, 10 * MINUTE_IN_SECONDS);
+
+        $stored_message = trim($message);
+        if ($stored_message === '') {
+            $stored_message = $this->by_lang($lang, 'AI asszisztensbol emberi visszahivast kert.', '客户通过 AI 客服请求人工跟进。', 'Customer requested human follow-up from the AI assistant.');
+        }
+        if ($context !== '') {
+            $stored_message .= "\n\nAI context:\n" . $context;
+        }
+        if ($conversation_summary !== '') {
+            $stored_message .= "\n\nConversation summary:\n" . $conversation_summary;
+        }
+        if ($interested_unit !== '' || $apartment_type !== '' || $budget_range !== '' || $preferred_room_count !== '' || $preferred_contact_time !== '') {
+            $stored_message .= "\n\nLead details:";
+            if ($interested_unit !== '') {
+                $stored_message .= "\nInterested unit: " . $interested_unit;
+            }
+            if ($apartment_type !== '') {
+                $stored_message .= "\nApartment type: " . $apartment_type;
+            }
+            if ($budget_range !== '') {
+                $stored_message .= "\nBudget range: " . $budget_range;
+            }
+            if ($preferred_room_count !== '') {
+                $stored_message .= "\nPreferred room count: " . $preferred_room_count;
+            }
+            if ($preferred_contact_time !== '') {
+                $stored_message .= "\nPreferred contact time: " . $preferred_contact_time;
+            }
+        }
+        if ($page !== '') {
+            $stored_message .= "\n\nOldal: " . $page;
+        }
+
+        $posted = array(
+            'your-name' => $name,
+            'your-email' => $email,
+            'your-phone' => $phone,
+            'your-date' => '',
+            'your-time' => '',
+            'your-message' => $stored_message,
+            'selected-building' => '',
+            'selected-floor' => '',
+            'selected-apartment' => $interested_unit,
+            'selected-area' => '',
+            'selected-rooms' => '',
+            'selected-price' => '',
+            'selected-url' => $page,
+            'privacy-acceptance' => '1',
+            'marketing-consent' => '',
+            'source' => $page,
+            'lead_source' => 'Harmat asszisztens',
+            'intent' => $intent,
+            'interested_unit' => $interested_unit,
+            'apartment_type' => $apartment_type,
+            'budget_range' => $budget_range,
+            'preferred_contact_time' => $preferred_contact_time,
+            'preferred_room_count' => $preferred_room_count,
+            'conversation_summary' => $conversation_summary,
+        );
+
+        $post_id = wp_insert_post(array(
+            'post_type' => 'harmat_offer_lead',
+            'post_status' => 'private',
+            'post_title' => 'AI: ' . $name . ' - ' . current_time('ymd-His'),
+            'post_content' => $stored_message,
+        ), true);
+
+        if (is_wp_error($post_id) || !$post_id) {
+            return new WP_Error('harmat_ai_handoff_save', $this->by_lang($lang, 'A rogzitest most nem sikerult elvegezni.', '暂时无法保存，请稍后再试。', 'We could not save the request right now.'), array('status' => 500));
+        }
+
+        $crm = 'AI-' . current_time('Ymd') . '-' . str_pad((string) $post_id, 5, '0', STR_PAD_LEFT);
+        update_post_meta($post_id, '_harmat_offer_posted', $posted);
+        update_post_meta($post_id, '_harmat_offer_email', $email);
+        update_post_meta($post_id, '_harmat_offer_phone', $phone);
+        update_post_meta($post_id, '_harmat_offer_apartment', $interested_unit);
+        update_post_meta($post_id, '_harmat_offer_date', '');
+        update_post_meta($post_id, '_harmat_offer_time', $preferred_contact_time);
+        update_post_meta($post_id, '_harmat_offer_crm_code', $crm);
+        update_post_meta($post_id, '_harmat_offer_mail_status', 'queued');
+        update_post_meta($post_id, '_harmat_offer_mail_checked_at', current_time('mysql'));
+        update_post_meta($post_id, '_harmat_offer_tracking', array(
+            'lead_source' => 'Harmat asszisztens',
+            'landing_page' => $page,
+            'source_page' => $page,
+            'referrer' => isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '',
+            'intent' => $intent,
+            'utm' => $utm,
+            'conversation_summary' => $conversation_summary,
+            'interested_unit' => $interested_unit,
+            'preferred_room_count' => $preferred_room_count,
+        ));
+        update_post_meta($post_id, '_harmat_offer_source_page', $page);
+        update_post_meta($post_id, '_harmat_offer_utm', $utm);
+        update_post_meta($post_id, '_harmat_offer_conversation_summary', $conversation_summary);
+        update_post_meta($post_id, '_harmat_offer_preferred_room_count', $preferred_room_count);
+        update_post_meta($post_id, '_harmat_offer_preferred_contact_time', $preferred_contact_time);
+
+        if (has_action('harmat_sales_public_offer_mail')) {
+            wp_schedule_single_event(time() + 1, 'harmat_sales_public_offer_mail', array((int) $post_id));
+            spawn_cron(time());
+        } else {
+            wp_mail(self::CONTACT_EMAIL, 'Harmat AI - ugyfel visszahivast ker', $stored_message . "\n\nNev: " . $name . "\nTelefon: " . $phone . "\nE-mail: " . $email, array('Content-Type: text/plain; charset=UTF-8'));
+        }
+
+        $this->track_event($intent === 'appointment' ? 'appointment_submitted' : 'offer_request_submitted', array('lang' => $lang, 'lead_id' => (int) $post_id));
+
+        $message_key = $intent === 'appointment' ? 'appointment_saved' : 'handoff_saved';
+        return rest_ensure_response(array(
+            'success' => true,
+            'crm' => $crm,
+            'message' => $this->text($message_key, $lang),
+        ));
+    }
+
+    public function event_request(WP_REST_Request $request) {
+        $nonce_error = $this->validate_rest_nonce($request);
+        if ($nonce_error) {
+            return $nonce_error;
+        }
+
+        $event = sanitize_key((string) $request->get_param('event'));
+        $allowed = array(
+            'assistant_open',
+            'quick_button_click',
+            'apartment_recommendation',
+            'offer_request_started',
+            'offer_request_submitted',
+            'appointment_started',
+            'appointment_submitted',
+            'human_handoff',
+            'unknown_question',
+        );
+        if (!in_array($event, $allowed, true)) {
+            return rest_ensure_response(array('success' => false));
+        }
+
+        $meta = $request->get_param('meta');
+        $this->track_event($event, is_array($meta) ? $meta : array());
+        return rest_ensure_response(array('success' => true));
     }
 
     public function render_shortcode() {
@@ -116,7 +327,13 @@ final class Harmat_Local_Assistant {
         $printed = true;
 
         $endpoint = esc_url_raw(rest_url(self::REST_NAMESPACE . '/ask'));
+        $handoff_endpoint = esc_url_raw(rest_url(self::REST_NAMESPACE . '/handoff'));
+        $event_endpoint = esc_url_raw(rest_url(self::REST_NAMESPACE . '/event'));
         $nonce = wp_create_nonce('wp_rest');
+        $page_lang = substr((string) get_locale(), 0, 2);
+        if (!in_array($page_lang, array('hu', 'zh', 'en'), true)) {
+            $page_lang = 'hu';
+        }
         ?>
         <style id="harmat-local-assistant-style">
           .harmat-local-ai-launch {
@@ -183,6 +400,27 @@ final class Harmat_Local_Assistant {
           }
           .harmat-local-ai-head strong { display: block; font-size: 15px; line-height: 1.2; }
           .harmat-local-ai-head small { display: block; margin-top: 3px; color: rgba(255,255,255,.72); font-size: 11px; }
+          .harmat-local-ai-head-tools { display: flex; align-items: center; gap: 8px; }
+          .harmat-local-ai-lang {
+            display: inline-flex;
+            gap: 3px;
+            padding: 3px;
+            border: 1px solid rgba(255,255,255,.22);
+            border-radius: 999px;
+            background: rgba(255,255,255,.08);
+          }
+          .harmat-local-ai-lang button {
+            min-width: 34px;
+            min-height: 26px;
+            padding: 0 7px;
+            border: 0;
+            border-radius: 999px;
+            background: transparent;
+            color: rgba(255,255,255,.78);
+            font: 800 11px/1 Montserrat, Arial, sans-serif;
+            cursor: pointer;
+          }
+          .harmat-local-ai-lang button.is-active { background: #fff7e9; color: #8a5a18; }
           .harmat-local-ai-close {
             width: 32px;
             height: 32px;
@@ -213,7 +451,8 @@ final class Harmat_Local_Assistant {
           .harmat-local-ai-msg.user { justify-self: end; background: #9a6a2a; color: #fff; }
           .harmat-local-ai-cards { display: grid; gap: 8px; margin-top: 8px; }
           .harmat-local-ai-card {
-            display: block;
+            display: grid;
+            gap: 8px;
             padding: 10px;
             border: 1px solid #eadcc7;
             border-radius: 7px;
@@ -223,6 +462,75 @@ final class Harmat_Local_Assistant {
           }
           .harmat-local-ai-card b { display: block; margin-bottom: 5px; color: #9a6a2a; }
           .harmat-local-ai-card span { display: block; color: #5d6468; font-size: 12px; line-height: 1.45; }
+          .harmat-local-ai-card-actions,
+          .harmat-local-ai-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 3px;
+          }
+          .harmat-local-ai-card-actions a,
+          .harmat-local-ai-actions a,
+          .harmat-local-ai-actions button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 0 10px;
+            border: 1px solid #d8bd8d;
+            border-radius: 6px;
+            background: #fffaf2;
+            color: #6c4a1d;
+            font: 800 12px/1.1 Montserrat, Arial, sans-serif;
+            text-decoration: none;
+            cursor: pointer;
+          }
+          .harmat-local-ai-card-actions a.is-primary,
+          .harmat-local-ai-actions a.is-primary,
+          .harmat-local-ai-actions button.is-primary { background: #9a6a2a; color: #fff; border-color: #9a6a2a; }
+          .harmat-local-ai-handoff {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #d8bd8d;
+            border-radius: 7px;
+            background: #fffaf2;
+          }
+          .harmat-local-ai-handoff strong { color: #283137; font-size: 13px; }
+          .harmat-local-ai-handoff span { color: #6b5a44; font-size: 12px; line-height: 1.45; }
+          .harmat-local-ai-handoff input,
+          .harmat-local-ai-handoff textarea {
+            width: 100%;
+            min-height: 36px;
+            padding: 8px 9px;
+            border: 1px solid #d8bd8d;
+            border-radius: 6px;
+            background: #fff;
+            color: #273136;
+            font: 500 12px/1.35 Montserrat, Arial, sans-serif;
+          }
+          .harmat-local-ai-handoff textarea { min-height: 58px; resize: vertical; }
+          .harmat-local-ai-handoff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+          .harmat-local-ai-handoff label {
+            display: flex;
+            gap: 7px;
+            align-items: flex-start;
+            color: #6b5a44;
+            font-size: 11px;
+            line-height: 1.35;
+          }
+          .harmat-local-ai-handoff label input { width: 14px; min-height: 14px; margin-top: 2px; padding: 0; }
+          .harmat-local-ai-handoff button {
+            min-height: 36px;
+            border: 0;
+            border-radius: 6px;
+            background: #9a6a2a;
+            color: #fff;
+            font: 800 12px/1 Montserrat, Arial, sans-serif;
+            cursor: pointer;
+          }
+          .harmat-local-ai-handoff small { color: #1f7a4d; font-size: 11px; line-height: 1.35; }
           .harmat-local-ai-suggestions { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 12px; background: #fffaf2; }
           .harmat-local-ai-suggestions button {
             min-height: 31px;
@@ -271,6 +579,7 @@ final class Harmat_Local_Assistant {
           @media (max-width: 520px) {
             .harmat-local-ai-launch { right: 12px; bottom: 12px; padding-right: 14px; }
             .harmat-local-ai-panel { right: 12px; bottom: 68px; max-height: calc(100vh - 86px); }
+            .harmat-local-ai-handoff-grid { grid-template-columns: 1fr; }
           }
         </style>
         <button class="harmat-local-ai-launch" type="button" aria-controls="harmat-local-ai-panel" aria-expanded="false">
@@ -287,7 +596,14 @@ final class Harmat_Local_Assistant {
               <strong>Harmat asszisztens</strong>
               <small>Lakás, ár, alaprajz és időpont</small>
             </div>
-            <button class="harmat-local-ai-close" type="button" aria-label="Bezárás">×</button>
+            <div class="harmat-local-ai-head-tools">
+              <div class="harmat-local-ai-lang" aria-label="Nyelv">
+                <button type="button" data-harmat-ai-lang="hu">Magyar</button>
+                <button type="button" data-harmat-ai-lang="zh">中文</button>
+                <button type="button" data-harmat-ai-lang="en">EN</button>
+              </div>
+              <button class="harmat-local-ai-close" type="button" aria-label="Bezárás">×</button>
+            </div>
           </div>
           <div class="harmat-local-ai-body" data-harmat-local-ai-body></div>
           <div class="harmat-local-ai-suggestions" data-harmat-local-ai-suggestions></div>
@@ -303,7 +619,10 @@ final class Harmat_Local_Assistant {
           window.__harmatLocalAssistantReady = true;
 
           var endpoint = <?php echo wp_json_encode($endpoint); ?>;
+          var handoffEndpoint = <?php echo wp_json_encode($handoff_endpoint); ?>;
+          var eventEndpoint = <?php echo wp_json_encode($event_endpoint); ?>;
           var nonce = <?php echo wp_json_encode($nonce); ?>;
+          var currentLang = <?php echo wp_json_encode($page_lang); ?>;
           var panel = null;
           var launch = null;
           var close = null;
@@ -311,6 +630,17 @@ final class Harmat_Local_Assistant {
           var form = null;
           var input = null;
           var suggestions = null;
+          var conversation = [];
+          var defaultQuickButtons = {
+            hu: ['Milyen lakások érhetők el?', '2 szobás lakást keresek', 'Kertes lakást keresek', 'Nagy teraszos lakást keresek', 'Árajánlatot kérek', 'Időpontot foglalok', 'Hol található a bemutatóiroda?', 'Mikor várható az átadás?', 'Finanszírozás / CSOK érdekel', 'Kapcsolat az értékesítéssel'],
+            zh: ['有哪些房源可选？', '我要找两房', '我要带花园的房源', '我要大露台房源', '我要报价', '预约看房', '销售办公室在哪里？', '什么时候交付？', '贷款 / CSOK 咨询', '联系销售'],
+            en: ['What apartments are available?', 'I am looking for a 2-room apartment', 'I am looking for a garden apartment', 'I am looking for a large terrace apartment', 'Request an offer', 'Book a viewing', 'Where is the sales office?', 'When is handover expected?', 'Financing / CSOK', 'Contact sales']
+          };
+          var introText = {
+            hu: 'Üdvözlöm! Automatizált Harmat asszisztensként segítek lakást keresni, ajánlatot kérni vagy időpontot indítani. Kérdezhet árakról, szobaszámról, alapterületről, vásárlási folyamatról vagy konkrét lakásról, például A1-F-L1. A válaszok tájékoztató jellegűek, a végleges adatokat az értékesítés erősíti meg.',
+            zh: '您好，我是 Harmat 自动客服，可以帮您找房、查参考价格、预约看房或提交报价需求。您可以问房间数、预算、面积、交付、周边，或直接输入房号，例如 A1-F-L1。回答为参考信息，最终以销售团队确认和正式文件为准。',
+            en: 'Hello, I am the automated Harmat assistant. I can help with apartment search, indicative prices, offer requests and viewing requests. You can ask by room count, budget, area, handover, surroundings, or a unit code such as A1-F-L1. Answers are informative; final data is confirmed by sales.'
+          };
 
           function refreshElements() {
             panel = document.getElementById('harmat-local-ai-panel');
@@ -323,13 +653,54 @@ final class Harmat_Local_Assistant {
             return !!(panel && launch && close && body && form && input && suggestions);
           }
 
+          function trackingMeta(extra) {
+            var params = new URLSearchParams(window.location.search || '');
+            var meta = {
+              lang: currentLang,
+              path: window.location.pathname || '',
+              source_page: window.location.href
+            };
+            ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function(key) {
+              if (params.get(key)) meta[key] = params.get(key);
+            });
+            if (extra) {
+              Object.keys(extra).forEach(function(key) { meta[key] = extra[key]; });
+            }
+            return meta;
+          }
+
+          function trackEvent(name, meta) {
+            try {
+              fetch(eventEndpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-WP-Nonce': nonce},
+                credentials: 'same-origin',
+                body: JSON.stringify({event: name, meta: trackingMeta(meta || {})})
+              }).catch(function(){});
+            } catch (e) {}
+          }
+
+          function setLanguage(lang) {
+            if (!defaultQuickButtons[lang]) lang = 'hu';
+            currentLang = lang;
+            if (panel) {
+              panel.querySelectorAll('[data-harmat-ai-lang]').forEach(function(button) {
+                button.classList.toggle('is-active', button.getAttribute('data-harmat-ai-lang') === currentLang);
+              });
+            }
+            if (input) {
+              input.placeholder = lang === 'zh' ? '请输入您的问题...' : (lang === 'en' ? 'Type your question...' : 'Írja be kérdését...');
+            }
+            setSuggestions(defaultQuickButtons[currentLang]);
+          }
+
           function esc(text) {
             return String(text || '').replace(/[&<>"']/g, function (c) {
               return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
             });
           }
 
-          function addMessage(kind, text, cards) {
+          function addMessage(kind, text, cards, handoff, actions) {
             if (!body && !refreshElements()) return;
             var msg = document.createElement('div');
             msg.className = 'harmat-local-ai-msg ' + kind;
@@ -338,15 +709,30 @@ final class Harmat_Local_Assistant {
               var list = document.createElement('div');
               list.className = 'harmat-local-ai-cards';
               cards.forEach(function (card) {
-                var link = document.createElement('a');
-                link.className = 'harmat-local-ai-card';
-                link.href = card.url || '#';
-                link.innerHTML = '<b>' + esc(card.title) + '</b><span>' + esc(card.meta) + '</span>';
-                list.appendChild(link);
+                var item = document.createElement('div');
+                item.className = 'harmat-local-ai-card';
+                var viewUrl = card.url || '#';
+                var offerUrl = card.offer_url || viewUrl;
+                item.innerHTML =
+                  '<b>' + esc(card.title) + '</b>' +
+                  '<span>' + esc(card.meta) + '</span>' +
+                  '<div class="harmat-local-ai-card-actions">' +
+                    '<a href="' + esc(viewUrl) + '">' + esc(card.view_label || 'Megnézem') + '</a>' +
+                    '<a class="is-primary" href="' + esc(offerUrl) + '">' + esc(card.offer_label || 'Árajánlatot kérek') + '</a>' +
+                  '</div>';
+                list.appendChild(item);
               });
               msg.appendChild(list);
             }
+            if (kind === 'bot' && actions && actions.length) {
+              appendActions(msg, actions);
+            }
+            if (kind === 'bot' && handoff) {
+              appendHandoffForm(msg, handoff, text);
+            }
             body.appendChild(msg);
+            conversation.push({kind: kind, text: String(text || '').slice(0, 500)});
+            if (conversation.length > 12) conversation = conversation.slice(-12);
             if (kind === 'bot') {
               window.setTimeout(function () {
                 body.scrollTop = Math.max(0, msg.offsetTop - body.offsetTop - 8);
@@ -356,14 +742,73 @@ final class Harmat_Local_Assistant {
             }
           }
 
+          function appendActions(container, actions) {
+            var wrap = document.createElement('div');
+            wrap.className = 'harmat-local-ai-actions';
+            actions.forEach(function(action) {
+              if (action.message) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = action.primary ? 'is-primary' : '';
+                button.textContent = action.label || '';
+                button.addEventListener('click', function() {
+                  trackEvent('quick_button_click', {label: action.label || '', action: 'message'});
+                  input.value = action.message;
+                  form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                });
+                wrap.appendChild(button);
+                return;
+              }
+              var link = document.createElement('a');
+              link.className = action.primary ? 'is-primary' : '';
+              link.href = action.url || '#';
+              if (action.external) {
+                link.target = '_blank';
+                link.rel = 'noopener';
+              }
+              link.textContent = action.label || '';
+              link.addEventListener('click', function() { trackEvent(action.event || 'quick_button_click', {label: action.label || ''}); });
+              wrap.appendChild(link);
+            });
+            container.appendChild(wrap);
+          }
+
+          function appendHandoffForm(container, handoff, contextText) {
+            var formNode = document.createElement('form');
+            formNode.className = 'harmat-local-ai-handoff';
+            formNode.setAttribute('data-harmat-local-ai-handoff', '1');
+            formNode.dataset.context = contextText || '';
+            formNode.dataset.intent = handoff.intent || '';
+            formNode.dataset.lang = handoff.lang || 'hu';
+            formNode.innerHTML =
+              '<strong>' + esc(handoff.title || 'Kapcsolatfelvetel') + '</strong>' +
+              '<span>' + esc(handoff.text || '') + '</span>' +
+              '<input name="name" autocomplete="name" required placeholder="' + esc(handoff.name_placeholder || 'Nev') + '">' +
+              '<input name="phone" autocomplete="tel" placeholder="' + esc(handoff.phone_placeholder || 'Telefon') + '">' +
+              '<input name="email" type="email" autocomplete="email" placeholder="' + esc(handoff.email_placeholder || 'E-mail') + '">' +
+              '<div class="harmat-local-ai-handoff-grid">' +
+                '<input name="interested_unit" autocomplete="off" placeholder="' + esc(handoff.unit_placeholder || 'Lakás vagy típus') + '">' +
+                '<input name="preferred_room_count" autocomplete="off" placeholder="' + esc(handoff.rooms_placeholder || 'Szobaszám') + '">' +
+                '<input name="budget_range" autocomplete="off" placeholder="' + esc(handoff.budget_placeholder || 'Árkeret') + '">' +
+                '<input name="preferred_contact_time" autocomplete="off" placeholder="' + esc(handoff.time_placeholder || 'Mikor hívjuk?') + '">' +
+              '</div>' +
+              '<textarea name="message" maxlength="500" placeholder="' + esc(handoff.message_placeholder || 'Uzenet') + '"></textarea>' +
+              '<input name="company_url" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true">' +
+              '<label><input type="checkbox" name="privacy" required> <span>' + esc(handoff.privacy || '') + '</span></label>' +
+              '<button type="submit">' + esc(handoff.button || 'Kuldes') + '</button>' +
+              '<small data-harmat-ai-handoff-status></small>';
+            container.appendChild(formNode);
+          }
+
           function setSuggestions(items) {
             if (!suggestions && !refreshElements()) return;
             suggestions.innerHTML = '';
-            (items || []).slice(0, 4).forEach(function (text) {
+            (items || defaultQuickButtons[currentLang] || []).slice(0, 10).forEach(function (text) {
               var btn = document.createElement('button');
               btn.type = 'button';
               btn.textContent = text;
               btn.onclick = function () {
+                trackEvent('quick_button_click', {label: text});
                 input.value = text;
                 form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
               };
@@ -375,10 +820,12 @@ final class Harmat_Local_Assistant {
             if (!refreshElements()) return;
             panel.classList.add('is-open');
             launch.setAttribute('aria-expanded', 'true');
+            setLanguage(currentLang);
+            trackEvent('assistant_open');
             if (!body.dataset.started) {
               body.dataset.started = '1';
-              addMessage('bot', 'Üdvözlöm! Automatizált Harmat asszisztensként segítek lakást keresni. Kérdezhet árakról, szobaszámról, alapterületről, vásárlási folyamatról vagy konkrét lakásról, például A1-F-L1. A válaszok tájékoztató jellegűek, a végleges adatokat az értékesítés erősíti meg.');
-              setSuggestions(['Vásárlás menete?', '2 szobás 70 millió Ft körül', 'Mennyi az A1-F-L1 ára?', 'Időpontot kérek']);
+              addMessage('bot', introText[currentLang] || introText.hu);
+              setSuggestions(defaultQuickButtons[currentLang]);
             }
             setTimeout(function () { input && input.focus(); }, 80);
           }
@@ -405,15 +852,80 @@ final class Harmat_Local_Assistant {
                   'X-WP-Nonce': nonce
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({ message: text, lang: currentLang })
               });
               var data = await response.json();
               pending.remove();
-              addMessage('bot', data.answer || 'Nem sikerült választ adni.', data.cards || []);
+              if (data.event) trackEvent(data.event, {intent: data.intent || ''});
+              addMessage('bot', data.answer || 'Nem sikerült választ adni.', data.cards || [], data.handoff || null, data.actions || []);
               setSuggestions(data.suggestions || []);
             } catch (err) {
               pending.remove();
               addMessage('bot', 'Most nem sikerült elérni az asszisztenst. Kérem, próbálja újra később, vagy írjon az ertekesites@harmat22.hu címre.');
+            }
+          }
+
+          async function handleHandoffSubmit(event) {
+            event.preventDefault();
+            var handoffForm = event.target;
+            var status = handoffForm.querySelector('[data-harmat-ai-handoff-status]');
+            var button = handoffForm.querySelector('button[type="submit"]');
+            var name = (handoffForm.querySelector('[name="name"]') || {}).value || '';
+            var phone = (handoffForm.querySelector('[name="phone"]') || {}).value || '';
+            var email = (handoffForm.querySelector('[name="email"]') || {}).value || '';
+            var message = (handoffForm.querySelector('[name="message"]') || {}).value || '';
+            var company = (handoffForm.querySelector('[name="company_url"]') || {}).value || '';
+            var interestedUnit = (handoffForm.querySelector('[name="interested_unit"]') || {}).value || '';
+            var roomCount = (handoffForm.querySelector('[name="preferred_room_count"]') || {}).value || '';
+            var budgetRange = (handoffForm.querySelector('[name="budget_range"]') || {}).value || '';
+            var contactTime = (handoffForm.querySelector('[name="preferred_contact_time"]') || {}).value || '';
+            if (!name.trim() || (!phone.trim() && !email.trim())) {
+              if (status) status.textContent = 'Kérjük, adjon meg nevet és telefonszámot vagy e-mailt.';
+              return;
+            }
+            if (button) button.disabled = true;
+            if (status) status.textContent = 'Küldés folyamatban...';
+            try {
+              var response = await fetch(handoffEndpoint, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-WP-Nonce': nonce
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                  name: name,
+                  phone: phone,
+                  email: email,
+                  message: message,
+                  company_url: company,
+                  context: handoffForm.dataset.context || '',
+                  conversation_summary: conversation.map(function(item){ return item.kind + ': ' + item.text; }).join('\\n'),
+                  intent: handoffForm.dataset.intent || '',
+                  lang: handoffForm.dataset.lang || 'hu',
+                  page: window.location.href,
+                  source_page: window.location.href,
+                  interested_unit: interestedUnit,
+                  apartment_type: interestedUnit,
+                  preferred_room_count: roomCount,
+                  budget_range: budgetRange,
+                  preferred_contact_time: contactTime,
+                  utm: trackingMeta({})
+                })
+              });
+              var data = await response.json();
+              if (!response.ok || data.code) {
+                throw new Error(data.message || 'Küldés sikertelen.');
+              }
+              if (status) status.textContent = data.message || 'Köszönjük, hamarosan jelentkezünk.';
+              trackEvent(handoffForm.dataset.intent === 'appointment' ? 'appointment_submitted' : 'offer_request_submitted', {crm: data.crm || ''});
+              handoffForm.classList.add('is-sent');
+              Array.prototype.forEach.call(handoffForm.querySelectorAll('input,textarea,button'), function(control) {
+                control.disabled = true;
+              });
+            } catch (error) {
+              if (button) button.disabled = false;
+              if (status) status.textContent = error.message || 'Most nem sikerült elküldeni. Kérjük, próbálja újra.';
             }
           }
 
@@ -439,8 +951,18 @@ final class Harmat_Local_Assistant {
               event.preventDefault();
               closePanel();
             }
+            var langButton = target.closest('[data-harmat-ai-lang]');
+            if (langButton) {
+              event.preventDefault();
+              setLanguage(langButton.getAttribute('data-harmat-ai-lang'));
+              trackEvent('quick_button_click', {label: 'language_' + currentLang});
+            }
           }, true);
           document.addEventListener('submit', function (event) {
+            if (event.target && event.target.matches && event.target.matches('[data-harmat-local-ai-handoff]')) {
+              handleHandoffSubmit(event);
+              return;
+            }
             if (event.target && event.target.matches && event.target.matches('[data-harmat-local-ai-form]')) {
               handleSubmit(event);
             }
@@ -469,9 +991,62 @@ final class Harmat_Local_Assistant {
         if ($code) {
             $apartment = $this->find_apartment($code, $apartments);
             if ($apartment) {
-                return $this->response($this->apartment_answer($apartment, $lang, $profile), array($this->card($apartment, $profile)), $lang);
+                return $this->response($this->apartment_answer($apartment, $lang, $profile), array($this->card($apartment, $profile)), $lang, null, $this->apartment_actions($apartment, $lang), '', $intent);
             }
             return $this->response($this->unknown_apartment_answer($code, $lang), array(), $lang);
+        }
+
+        if ($this->is_offer_request($normalized)) {
+            $this->track_event('offer_request_started', array('lang' => $lang));
+            return $this->response(
+                $this->offer_request_answer($lang),
+                array(),
+                $lang,
+                $this->handoff_payload('offer', $lang, $filters, $profile),
+                $this->sales_contact_actions($lang),
+                'offer_request_started',
+                'offer'
+            );
+        }
+
+        if ($this->is_appointment_request($normalized)) {
+            $this->track_event('appointment_started', array('lang' => $lang));
+            return $this->response(
+                $this->sales_office_visit_answer($lang),
+                array(),
+                $lang,
+                $this->handoff_payload('appointment', $lang, $filters, $profile),
+                $this->sales_office_actions($lang),
+                'appointment_started',
+                'appointment'
+            );
+        }
+
+        if ($this->is_sales_office_request($normalized)) {
+            return $this->response(
+                $this->sales_office_visit_answer($lang),
+                array(),
+                $lang,
+                null,
+                $this->sales_office_actions($lang),
+                '',
+                'location'
+            );
+        }
+
+        if ($this->is_available_list_request($normalized)) {
+            $matches = $this->default_available_apartments($apartments, $filters, $profile);
+            if ($matches) {
+                return $this->response(
+                    $this->recommendation_answer($matches, $filters, $lang),
+                    $this->cards_for_matches($matches, $profile, $lang),
+                    $lang,
+                    null,
+                    $this->recommendation_actions($lang),
+                    'apartment_recommendation',
+                    'recommendation'
+                );
+            }
         }
 
         $profile_driven_search = !$filters['has_search'] && $this->profile_requests_recommendation($profile, $normalized);
@@ -487,14 +1062,14 @@ final class Harmat_Local_Assistant {
             }
         }
 
-        if ($filters['has_search'] && ($filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['area_min'] || $filters['area_max'] || $filters['cheap'] || $ground_floor_search || $profile_driven_search)) {
+        if ($filters['has_search'] && ($filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['area_min'] || $filters['area_max'] || $filters['building'] || $filters['floor'] || $filters['garden'] || $filters['terrace'] || $filters['cheap'] || $ground_floor_search || $profile_driven_search)) {
             $matches = $this->search_apartments($apartments, $filters);
             if ($matches) {
-                return $this->response($this->recommendation_answer($matches, $filters, $lang), $this->cards_for_matches($matches, $profile), $lang);
+                return $this->response($this->recommendation_answer($matches, $filters, $lang), $this->cards_for_matches($matches, $profile, $lang), $lang, null, $this->recommendation_actions($lang), 'apartment_recommendation', 'recommendation');
             }
             $near_matches = $this->near_match_apartments($apartments, $filters);
             if ($near_matches) {
-                return $this->response($this->near_match_answer($near_matches, $filters, $lang), $this->cards_for_matches($near_matches, $profile), $lang);
+                return $this->response($this->near_match_answer($near_matches, $filters, $lang), $this->cards_for_matches($near_matches, $profile, $lang), $lang, null, $this->recommendation_actions($lang), 'apartment_recommendation', 'recommendation');
             }
             return $this->response($this->text('no_match', $lang), array(), $lang);
         }
@@ -512,14 +1087,19 @@ final class Harmat_Local_Assistant {
             return $this->response($this->price_overview_answer($apartments, $lang), array(), $lang);
         }
 
-        return $this->response($this->text('fallback', $lang), array(), $lang);
+        $this->track_event('unknown_question', array('lang' => $lang, 'intent' => $intent));
+        return $this->response($this->text('fallback', $lang), array(), $lang, $this->handoff_payload('handoff', $lang, $filters, $profile), $this->sales_contact_actions($lang), 'unknown_question', $intent);
     }
 
-    private function response($answer, $cards, $lang) {
+    private function response($answer, $cards, $lang, $handoff = null, $actions = array(), $event = '', $intent = '') {
         return array(
             'ok' => true,
             'answer' => $answer,
             'cards' => $cards,
+            'handoff' => $handoff,
+            'actions' => $actions,
+            'event' => $event,
+            'intent' => $intent,
             'suggestions' => $this->default_suggestions($lang),
         );
     }
@@ -623,7 +1203,7 @@ final class Harmat_Local_Assistant {
             'location' => 0,
         );
 
-        if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['cheap']) || !empty($filters['ground_floor'])) {
+        if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['building']) || !empty($filters['floor']) || !empty($filters['garden']) || !empty($filters['terrace']) || !empty($filters['cheap']) || !empty($filters['ground_floor'])) {
             $scores['apartment_search'] += 4;
         }
         if (!empty($filters['has_search'])) {
@@ -639,7 +1219,7 @@ final class Harmat_Local_Assistant {
         $this->add_intent_score($scores, 'floorplan', $normalized, array('alaprajz', 'floorplan', 'floor plan', 'layout', 'pdf', 'virtualis', 'lakasvalaszto', '户型图', '平面图', '虚拟选房', '房源详情'), 5);
         $this->add_intent_score($scores, 'appointment', $normalized, array('idopont', 'megtekintes', 'ajanlatkeres', 'ajanlat', 'contact', 'appointment', 'visit', 'viewing', 'quote', 'offer', '预约', '看房', '联系', '报价', '询价'), 6);
         $this->add_intent_score($scores, 'payment', $normalized, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'payment', 'pay', 'installment', 'schedule', '付款', '付款方式', '怎么付款', '分期', '全款', '首付', '50-50'), 5);
-        $this->add_intent_score($scores, 'loan', $normalized, array('hitel', 'bank', 'loan', 'mortgage', '贷款', '按揭', '银行贷款'), 7);
+        $this->add_intent_score($scores, 'loan', $normalized, array('finanszirozas', 'finanszírozás', 'hitel', 'bank', 'loan', 'mortgage', 'financing', '贷款', '按揭', '银行贷款', '融资'), 7);
         $this->add_intent_score($scores, 'subsidy', $normalized, array('csok', 'tamogatas', 'subsidy', '补贴', '政府补贴', '家庭补贴'), 7);
         $this->add_intent_score($scores, 'discount', $normalized, array('engedmeny', 'kedvezmeny', 'akcio', 'alku', 'discount', 'promotion', 'negotiate', '优惠', '折扣', '砍价', '讲价', '便宜点', '特价'), 8);
         $this->add_intent_score($scores, 'legal', $normalized, array('szerzodes', 'ugyved', 'ado', 'illetek', 'foldhivatal', 'contract', 'lawyer', 'legal', 'tax', 'duty', 'permit', 'residence permit', 'vat', '合同', '律师', '法律', '税费', '过户', '许可', '居留', '印花税'), 8);
@@ -674,7 +1254,7 @@ final class Harmat_Local_Assistant {
         if ($profile_driven_search || $ground_floor_search) {
             return false;
         }
-        if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['cheap'])) {
+        if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['building']) || !empty($filters['floor']) || !empty($filters['garden']) || !empty($filters['terrace']) || !empty($filters['cheap'])) {
             return false;
         }
         return in_array($intent, array('appointment', 'payment', 'loan', 'subsidy', 'discount', 'legal', 'surroundings', 'pet', 'garden', 'opening', 'handover', 'project_count', 'parking', 'technical', 'developer', 'process', 'help', 'location'), true);
@@ -695,17 +1275,9 @@ final class Harmat_Local_Assistant {
                     'For contract, tax, duty, land-registry, permit or legal questions, I can only provide general guidance. Sales and the lawyer must confirm the exact answer based on the selected unit, buyer situation and contract documents.'
                 );
             case 'loan':
-                return $this->by_lang($lang,
-                    'Új építésű lakásnál banki finanszírozás is szóba jöhet, de a hitelképesség, önerő, kamat és banki feltételek egyediek. Az asszisztens nem ígérhet hiteljóváhagyást; pontos választ az értékesítési csapat és a bank tud adni.',
-                    '新房通常可以考虑银行贷款，但贷款资格、首付比例、利率和银行条件因人而异。AI 不能承诺贷款获批、首付比例或具体利率，准确方案需要销售团队和银行确认。',
-                    'Bank financing may be possible for new-build apartments, but eligibility, down payment, interest rate and bank terms are individual. The assistant cannot promise loan approval; details should be confirmed with sales and the bank.'
-                );
+                return $this->financing_answer($lang);
             case 'subsidy':
-                return $this->by_lang($lang,
-                    'A CSOK és egyéb támogatások jogosultsága személyes helyzettől, jogszabályoktól és banki feltételektől függ. Ebben nem szeretnék pontatlan ígéretet tenni; az értékesítés segíthet a pontos egyeztetés elindításában.',
-                    'CSOK 或其他补贴取决于个人条件、法规和银行要求，AI 不应承诺能否使用。建议联系销售团队，由他们协助进一步确认。',
-                    'CSOK or other subsidies depend on personal eligibility, regulations and bank terms. I should not make promises; the sales team can help start the proper verification.'
-                );
+                return $this->financing_answer($lang);
             case 'payment':
                 return $this->by_lang($lang,
                     'A fizetési lehetőségeket az értékesítési csapat erősíti meg a kiválasztott lakás és vevői helyzet alapján. Egyeztethető irány lehet teljes fizetés, 50%-50% ütemezés vagy részletfizetési ütemezés; a végleges dátumokat és arányokat a szerződés rögzíti.',
@@ -738,11 +1310,7 @@ final class Harmat_Local_Assistant {
         }
 
         if ($this->has_any($text, array('ertekesites indul', 'ertekesitesi indul', 'nyito', 'nyitas', 'mikor indul', 'start', 'sales launch', 'launch date', 'opening date', 'launch', '开盘', '开售', '发售', '什么时候卖', '什么时候开'))) {
-            return $this->by_lang($lang,
-                'A Harmat Lakópark értékesítési indulása 2026. június 12. A pontos napi programot, foglalási sorrendet és aktuális feltételeket az értékesítési csapat erősíti meg.',
-                'Harmat Lakópark 项目开盘时间为 2026年6月12日。当天具体安排、选房/保留顺序和实时条件，以销售团队确认为准。',
-                'The Harmat Lakópark sales launch date is June 12, 2026. The exact daily program, reservation order and current terms should be confirmed by the sales team.'
-            );
+            return $this->opening_construction_answer($lang);
         }
 
         if ($this->has_any($text, array('foldszinti kert', 'foldszint kert', 'kert ajandek', 'ajandek kert', 'foldszint', 'garden', 'ground floor garden', 'ground-floor garden', 'gift garden', 'included garden', '底楼花园', '底层花园', '花园赠送', '赠送花园', '送花园', '底楼', '底层'))) {
@@ -861,11 +1429,7 @@ final class Harmat_Local_Assistant {
         }
 
         if ($this->has_any($text, array('atadas', 'hatarido', 'handover', 'delivery', '交付', '交房', '什么时候'))) {
-            return $this->by_lang($lang,
-                'Az első ütem várható átadása jelenlegi információink szerint 2028 második negyedéve. A pontos szerződéses határidőt az értékesítés erősíti meg.',
-                '目前资料显示，第一期预计 2028 年第二季度交付。具体合同日期需要销售团队最终确认。',
-                'The expected handover for the first phase is currently 2028 Q2. The contractual date should be confirmed by the sales team.'
-            );
+            return $this->opening_construction_answer($lang);
         }
 
         if ($this->has_any($text, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'payment', 'pay', 'installment', 'schedule', '付款', '付款方式', '怎么付款', '分期', '全款', '首付', '50-50'))) {
@@ -892,20 +1456,12 @@ final class Harmat_Local_Assistant {
             );
         }
 
-        if ($this->has_any($text, array('hitel', 'bank', 'loan', 'mortgage', '贷款', '按揭'))) {
-            return $this->by_lang($lang,
-                'Új építésű lakásnál banki finanszírozás is szóba jöhet, de a hitelképesség, önerő, kamat és banki feltételek egyediek. Az asszisztens nem ígérhet hiteljóváhagyást; pontos választ az értékesítési csapat és a bank tud adni.',
-                '新房通常可以考虑银行贷款，但贷款资格、首付比例、利率和银行条件因人而异。AI 不能承诺贷款获批或具体利率，准确方案需要销售团队和银行确认。',
-                'Bank financing may be possible for new-build apartments, but eligibility, down payment, interest rate and bank terms are individual. The assistant cannot promise loan approval; details should be confirmed with sales and the bank.'
-            );
+        if ($this->has_any($text, array('finanszirozas', 'finanszírozás', 'hitel', 'bank', 'loan', 'mortgage', 'financing', '贷款', '按揭', '融资'))) {
+            return $this->financing_answer($lang);
         }
 
         if ($this->has_any($text, array('csok', 'tamogatas', 'subsidy', '补贴'))) {
-            return $this->by_lang($lang,
-                'A CSOK és egyéb támogatások jogosultsága személyes helyzettől és jogszabályoktól függ. Ebben nem szeretnék pontatlan ígéretet tenni, az értékesítés tud segíteni a pontos egyeztetésben.',
-                'CSOK 或其他补贴取决于个人条件和法规，AI 不应承诺。建议联系销售团队确认。',
-                'CSOK or other subsidies depend on personal eligibility and regulations. I should not make promises; the sales team can help verify details.'
-            );
+            return $this->financing_answer($lang);
         }
 
         if ($this->has_any($text, array('idopont', 'megtekintes', 'ajanlat', 'ajanlatkeres', 'contact', 'appointment', 'visit', 'viewing', 'quote', 'offer', '预约', '看房', '联系', '报价', '询价'))) {
@@ -927,6 +1483,157 @@ final class Harmat_Local_Assistant {
         return null;
     }
 
+    private function is_offer_request($normalized) {
+        return $this->has_any($normalized, array('arajanlatot kerek', 'arajanlat', 'ajanlatot kerek', 'ajanlatkeres', 'quote', 'offer request', 'request an offer', '我要报价', '索取报价', '报价', '询价'));
+    }
+
+    private function is_appointment_request($normalized) {
+        return $this->has_any($normalized, array('idopontot foglalok', 'idopont foglalas', 'idopontot kerek', 'megtekintes', 'bemutatoiroda idopont', 'book a viewing', 'appointment', 'viewing', '预约看房', '预约', '看房'));
+    }
+
+    private function is_sales_office_request($normalized) {
+        return $this->has_any($normalized, array('bemutatoiroda', 'ertekesitesi iroda', 'hol talalhato', 'utvonal', 'google terkep', 'sales office', 'showroom', 'where is the sales office', '销售办公室', '售楼处', '销售中心', '在哪里', '路线'));
+    }
+
+    private function is_available_list_request($normalized) {
+        return $this->has_any($normalized, array('milyen lakasok erhetok el', 'elerheto lakasok', 'milyen lakasok', 'what apartments are available', 'available apartments', '有哪些房源', '可选房源', '可售房源', '有什么房源'));
+    }
+
+    private function offer_request_answer($lang) {
+        return $this->by_lang($lang,
+            'Rendben, elindíthatjuk az ajánlatkérést. Kérem, adja meg a nevét, telefonszámát vagy e-mail címét, az érdeklődött lakást vagy lakástípust, árkeretet és a preferált kapcsolatfelvételi időt. Az üzenet CRM-be kerül Harmat asszisztens forrásként.',
+            '可以，我帮您发起报价需求。请填写姓名、电话或邮箱、意向房号/房型、预算范围和方便联系的时间。线索会以 Harmat asszisztens 来源进入销售 CRM。',
+            'Sure, we can start an offer request. Please enter your name, phone or email, interested unit or apartment type, budget range and preferred contact time. The lead will be saved to the CRM with Harmat assistant as source.'
+        );
+    }
+
+    private function sales_office_visit_answer($lang) {
+        return $this->by_lang($lang,
+            'A bemutatóiroda címe: 1105 Budapest, Harmat utca 22. A helyszínen projektmakett és értékesítési konzultáció érhető el. Időpontot lehet kérni, de az időpont nem automatikus visszaigazolás: az értékesítési csapat hamarosan megerősíti.',
+            '销售办公室地址：1105 Budapest, Harmat utca 22. 现场可查看项目模型/沙盘，并与销售团队沟通。可以提交预约，但系统不会自动确认时间，销售团队会尽快回确认。',
+            'The sales office address is 1105 Budapest, Harmat utca 22. A project model and sales consultation are available. You can request an appointment, but it is not automatically confirmed; the sales team will confirm it soon.'
+        );
+    }
+
+    private function financing_answer($lang) {
+        return $this->by_lang($lang,
+            'Finanszírozás, banki hitel vagy CSOK lehetőség iránti érdeklődés esetén az értékesítési csapat segít elindítani az egyeztetést. A finanszírozási információk tájékoztató jellegűek, nem minősülnek pénzügyi tanácsadásnak.',
+            '如果您关注贷款、银行融资或 CSOK，可以由销售团队协助启动进一步确认。融资信息仅供参考，不构成财务建议。',
+            'If you are interested in financing, bank loan or CSOK options, the sales team can help start the discussion. Financing information is informative only and does not constitute financial advice.'
+        );
+    }
+
+    private function opening_construction_answer($lang) {
+        return $this->by_lang($lang,
+            'Fontos projektidőpontok: 2026. június 12. alapkőletétel és hivatalos értékesítési nyitás, bemutatóiroda megnyitása és projektmakett bemutatása. Az I. ütem várható átadása jelenlegi információ szerint 2028 Q2.',
+            '重要项目节点：2026年6月12日奠基仪式和正式开盘，同时开放销售办公室并展示项目模型/沙盘。第一期预计交付时间为 2028 年第二季度。',
+            'Key project milestones: June 12, 2026 foundation-stone ceremony and official sales opening, sales office opening and project model presentation. Expected phase I handover is currently 2028 Q2.'
+        );
+    }
+
+    private function handoff_payload($type, $lang, $filters = array(), $profile = array()) {
+        $is_appointment = $type === 'appointment';
+        $title = $is_appointment
+            ? $this->by_lang($lang, 'Időpontkérés', '预约看房', 'Viewing request')
+            : $this->by_lang($lang, 'Kapcsolat az értékesítéssel', '联系销售', 'Contact sales');
+        $text = $is_appointment
+            ? $this->by_lang($lang, 'Köszönjük! Az értékesítési csapat hamarosan visszaigazolja az időpontot.', '谢谢！销售团队会尽快确认预约时间。', 'Thank you. The sales team will confirm the appointment soon.')
+            : $this->by_lang($lang, 'Ezt az értékesítési csapat tudja pontosan megerősíteni. Kérhet visszahívást vagy ajánlatot.', '这个问题需要销售团队准确确认。您可以申请回电或报价。', 'The sales team can confirm this precisely. You can request a callback or offer.');
+
+        return array(
+            'intent' => $is_appointment ? 'appointment' : ($type === 'offer' ? 'offer' : 'handoff'),
+            'lang' => $lang,
+            'title' => $title,
+            'text' => $text,
+            'name_placeholder' => $this->by_lang($lang, 'Név', '姓名', 'Name'),
+            'phone_placeholder' => $this->by_lang($lang, 'Telefon', '电话', 'Phone'),
+            'email_placeholder' => 'E-mail',
+            'unit_placeholder' => $this->by_lang($lang, 'Lakás vagy típus', '意向房号或房型', 'Unit or type'),
+            'rooms_placeholder' => $this->by_lang($lang, 'Szobaszám', '房间数', 'Room count'),
+            'budget_placeholder' => $this->by_lang($lang, 'Árkeret', '预算范围', 'Budget range'),
+            'time_placeholder' => $this->by_lang($lang, 'Preferált kapcsolatfelvételi idő', '方便联系时间', 'Preferred contact time'),
+            'message_placeholder' => $this->by_lang($lang, 'Üzenet, kérdés vagy megjegyzés', '留言或补充需求', 'Message or note'),
+            'privacy' => $this->by_lang($lang, 'Elfogadom az adatkezelési tájékoztatót.', '我同意隐私政策和数据处理说明。', 'I accept the privacy notice.'),
+            'button' => $is_appointment
+                ? $this->by_lang($lang, 'Időpontkérés küldése', '提交预约', 'Send viewing request')
+                : $this->by_lang($lang, 'Küldés az értékesítésnek', '发送给销售', 'Send to sales'),
+        );
+    }
+
+    private function sales_office_actions($lang) {
+        return array(
+            array(
+                'label' => $this->by_lang($lang, 'Időpontot foglalok', '预约看房', 'Book a viewing'),
+                'message' => $this->by_lang($lang, 'Időpontot foglalok', '预约看房', 'Book a viewing'),
+                'primary' => true,
+                'event' => 'appointment_started',
+            ),
+            array(
+                'label' => $this->by_lang($lang, 'Útvonal Google Térképen', 'Google 地图路线', 'Google Maps route'),
+                'url' => 'https://www.google.com/maps/search/?api=1&query=1105%20Budapest%2C%20Harmat%20utca%2022',
+                'external' => true,
+            ),
+            array(
+                'label' => $this->by_lang($lang, 'Telefonos kapcsolat', '电话联系', 'Call sales'),
+                'url' => 'tel:+36306410358',
+                'event' => 'human_handoff',
+            ),
+        );
+    }
+
+    private function sales_contact_actions($lang) {
+        return array(
+            array(
+                'label' => $this->by_lang($lang, 'Visszahívást kérek', '申请回电', 'Request a callback'),
+                'message' => $this->by_lang($lang, 'Kapcsolat az értékesítéssel', '联系销售', 'Contact sales'),
+                'primary' => true,
+                'event' => 'human_handoff',
+            ),
+            array(
+                'label' => '+36-30-641-03-58',
+                'url' => 'tel:+36306410358',
+                'event' => 'human_handoff',
+            ),
+            array(
+                'label' => 'ertekesites@harmat22.hu',
+                'url' => 'mailto:ertekesites@harmat22.hu',
+                'event' => 'human_handoff',
+            ),
+        );
+    }
+
+    private function recommendation_actions($lang) {
+        return array(
+            array(
+                'label' => $this->by_lang($lang, 'Árajánlatot kérek', '我要报价', 'Request an offer'),
+                'message' => $this->by_lang($lang, 'Árajánlatot kérek', '我要报价', 'Request an offer'),
+                'primary' => true,
+                'event' => 'offer_request_started',
+            ),
+            array(
+                'label' => $this->by_lang($lang, 'Időpontot foglalok', '预约看房', 'Book a viewing'),
+                'message' => $this->by_lang($lang, 'Időpontot foglalok', '预约看房', 'Book a viewing'),
+                'event' => 'appointment_started',
+            ),
+        );
+    }
+
+    private function apartment_actions($apartment, $lang) {
+        $url = (string) ($apartment['property_url'] ?? home_url('/lakaskereso/'));
+        return array(
+            array(
+                'label' => $this->by_lang($lang, 'Árajánlatot kérek', '我要报价', 'Request an offer'),
+                'message' => $this->by_lang($lang, 'Árajánlatot kérek ' . ($apartment['apartment'] ?? ''), '我要报价 ' . ($apartment['apartment'] ?? ''), 'Request an offer for ' . ($apartment['apartment'] ?? '')),
+                'primary' => true,
+                'event' => 'offer_request_started',
+            ),
+            array(
+                'label' => $this->by_lang($lang, 'Adatlap megnyitása', '打开房源页', 'Open detail page'),
+                'url' => $url,
+            ),
+        );
+    }
+
     private function extract_filters($message, $normalized) {
         $filters = array(
             'rooms' => null,
@@ -934,23 +1641,27 @@ final class Harmat_Local_Assistant {
             'area' => null,
             'area_min' => null,
             'area_max' => null,
+            'building' => null,
+            'floor' => null,
+            'garden' => false,
+            'terrace' => false,
             'cheap' => false,
             'ground_floor' => false,
             'profile' => array(),
             'has_search' => false,
         );
 
-        if ($this->has_any($normalized, array('ket szob', '2 szob', 'two room', 'two-room')) || preg_match('/(?:两|二|2)\s*(?:房|室|居|个房间)/u', $message)) {
+        if ($this->has_any($normalized, array('ket szob', '2 szob', '2-room', 'two room', 'two-room')) || preg_match('/(?:两|二|2)\s*(?:房|室|居|个房间)/u', $message)) {
             $filters['rooms'] = 2;
-        } elseif ($this->has_any($normalized, array('egy szob', '1 szob', 'one room', 'one-room')) || preg_match('/(?:一|1)\s*(?:房|室|居|个房间)/u', $message)) {
+        } elseif ($this->has_any($normalized, array('egy szob', '1 szob', '1-room', 'one room', 'one-room')) || preg_match('/(?:一|1)\s*(?:房|室|居|个房间)/u', $message)) {
             $filters['rooms'] = 1;
-        } elseif ($this->has_any($normalized, array('harom szob', '3 szob', 'three room', 'three-room')) || preg_match('/(?:三|3)\s*(?:房|室|居|个房间)/u', $message)) {
+        } elseif ($this->has_any($normalized, array('harom szob', '3 szob', '3-room', 'three room', 'three-room')) || preg_match('/(?:三|3)\s*(?:房|室|居|个房间)/u', $message)) {
             $filters['rooms'] = 3;
-        } elseif ($this->has_any($normalized, array('negy szob', '4 szob', 'four room', 'four-room')) || preg_match('/(?:四|4)\s*(?:房|室|居|个房间)/u', $message)) {
+        } elseif ($this->has_any($normalized, array('negy szob', '4 szob', '4-room', 'four room', 'four-room')) || preg_match('/(?:四|4)\s*(?:房|室|居|个房间)/u', $message)) {
             $filters['rooms'] = 4;
-        } elseif ($this->has_any($normalized, array('ot szob', '5 szob', 'five room', 'five-room')) || preg_match('/(?:五|5)\s*(?:房|室|居|个房间)/u', $message)) {
+        } elseif ($this->has_any($normalized, array('ot szob', '5 szob', '5-room', 'five room', 'five-room')) || preg_match('/(?:五|5)\s*(?:房|室|居|个房间)/u', $message)) {
             $filters['rooms'] = 5;
-        } elseif (preg_match('/([1-5])\s*(szob|room|rooms|房|居)/iu', $message, $match)) {
+        } elseif (preg_match('/([1-5])\s*-?\s*(szob|room|rooms|房|居)/iu', $message, $match)) {
             $filters['rooms'] = (int) $match[1];
         } elseif ($this->has_any($normalized, array('egy szob', '1 szob'))) {
             $filters['rooms'] = 1;
@@ -982,11 +1693,23 @@ final class Harmat_Local_Assistant {
             $filters['budget'] = (int) preg_replace('/\D/', '', $match[1]);
         }
 
-        $filters['cheap'] = $this->has_any($normalized, array('olcso', 'legolcsobb', 'cheap', 'cheapest', '便宜', '最低', '低价'));
-        $filters['ground_floor'] = $this->has_any($normalized, array('foldszint', 'fsz', 'garden', 'ground floor', 'ground-floor', '底楼', '底层', '花园'));
+        if (preg_match('/\b(A[1-4])\b/iu', $message, $match)) {
+            $filters['building'] = strtoupper($match[1]);
+        }
 
-        $filters['has_search'] = $filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['area_min'] || $filters['area_max'] || $filters['cheap'] || $filters['ground_floor'] ||
-            $this->has_any($normalized, array('ajanl', 'keres', 'lakast', 'lakas', 'recommend', 'available', 'budget', 'buy', '预算', '推荐', '买房', '房源'));
+        if ($this->has_any($normalized, array('foldszint', 'fsz', 'ground floor', 'ground-floor', '底楼', '底层'))) {
+            $filters['floor'] = 'Fsz';
+        } elseif (preg_match('/(?:^|\D)([1-9])\s*(?:emelet|floor|楼层|楼)/iu', $message, $match)) {
+            $filters['floor'] = (string) (int) $match[1];
+        }
+
+        $filters['cheap'] = $this->has_any($normalized, array('olcso', 'legolcsobb', 'cheap', 'cheapest', '便宜', '最低', '低价'));
+        $filters['garden'] = $this->has_any($normalized, array('kert', 'kertes', 'garden', 'gift garden', 'included garden', '底楼花园', '底层花园', '花园', '赠送花园', '送花园'));
+        $filters['ground_floor'] = $this->has_any($normalized, array('foldszint', 'fsz', 'ground floor', 'ground-floor', '底楼', '底层')) || $filters['garden'];
+        $filters['terrace'] = $this->has_any($normalized, array('terasz', 'erkely', 'erkély', 'nagy terasz', 'large terrace', 'balcony', '露台', '大露台', '阳台'));
+
+        $filters['has_search'] = $filters['rooms'] || $filters['budget'] || $filters['area'] || $filters['area_min'] || $filters['area_max'] || $filters['building'] || $filters['floor'] || $filters['cheap'] || $filters['ground_floor'] || $filters['garden'] || $filters['terrace'] ||
+            $this->has_any($normalized, array('ajanl', 'keres', 'lakast', 'lakas', 'recommend', 'available', 'looking for', 'budget', 'buy', '预算', '推荐', '买房', '房源', 'lakások érhetők el', 'lakasok erhetok el'));
 
         return $filters;
     }
@@ -1046,6 +1769,9 @@ final class Harmat_Local_Assistant {
     private function search_apartments($apartments, $filters) {
         $matches = array();
         foreach ($apartments as $apartment) {
+            if (!$this->is_available_apartment($apartment)) {
+                continue;
+            }
             if ($filters['rooms'] && (int) ($apartment['rooms'] ?? 0) !== (int) $filters['rooms']) {
                 continue;
             }
@@ -1061,6 +1787,18 @@ final class Harmat_Local_Assistant {
             if (!empty($filters['ground_floor']) && (string) ($apartment['floor'] ?? '') !== 'Fsz') {
                 continue;
             }
+            if (!empty($filters['building']) && strtoupper((string) ($apartment['building'] ?? '')) !== strtoupper((string) $filters['building'])) {
+                continue;
+            }
+            if (!empty($filters['floor']) && (string) ($apartment['floor'] ?? '') !== (string) $filters['floor']) {
+                continue;
+            }
+            if (!empty($filters['terrace']) && (string) ($apartment['floor'] ?? '') === 'Fsz' && empty($filters['garden'])) {
+                continue;
+            }
+            if ((!empty($filters['terrace']) || !empty($filters['garden'])) && !$this->apartment_has_outdoor_data($apartment)) {
+                continue;
+            }
             $matches[] = $apartment;
         }
 
@@ -1073,6 +1811,14 @@ final class Harmat_Local_Assistant {
             $sb = $this->buyer_match_score($b, $filters['profile'] ?? array());
             if ($sa !== $sb) {
                 return $sb <=> $sa;
+            }
+
+            if (!empty($filters['terrace']) || !empty($filters['garden']) || !empty($filters['ground_floor'])) {
+                $oa = $this->outdoor_area_value($a);
+                $ob = $this->outdoor_area_value($b);
+                if ($oa !== $ob) {
+                    return $ob <=> $oa;
+                }
             }
 
             if ($filters['area']) {
@@ -1104,6 +1850,67 @@ final class Harmat_Local_Assistant {
         return array_slice($matches, 0, 8);
     }
 
+    private function default_available_apartments($apartments, $filters, $profile) {
+        $filters['profile'] = $profile;
+        $matches = $this->search_apartments($apartments, $filters);
+        if (!$matches) {
+            $filters['rooms'] = null;
+            $filters['budget'] = null;
+            $filters['area'] = null;
+            $filters['area_min'] = null;
+            $filters['area_max'] = null;
+            $matches = $this->search_apartments($apartments, $filters);
+        }
+        return array_slice($matches, 0, 5);
+    }
+
+    private function is_available_apartment($apartment) {
+        $status = $this->normalize((string) ($apartment['status'] ?? ''));
+        if ($status === '') {
+            return true;
+        }
+        return !($this->has_any($status, array('elad', 'sold', 'foglalt', 'reserved')));
+    }
+
+    private function apartment_has_outdoor_data($apartment) {
+        foreach (array('outdoor_area_m2', 'terrace_m2', 'terrace', 'outdoor_m2', 'garden_m2', 'balcony_m2') as $key) {
+            if (isset($apartment[$key]) && (float) $apartment[$key] > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function outdoor_area_value($apartment) {
+        foreach (array('outdoor_area_m2', 'garden_m2', 'terrace_m2', 'balcony_m2', 'terrace', 'outdoor_m2') as $key) {
+            if (!isset($apartment[$key])) {
+                continue;
+            }
+            $value = (float) str_replace(',', '.', (string) $apartment[$key]);
+            if ($value > 0) {
+                return $value;
+            }
+        }
+        return 0.0;
+    }
+
+    private function outdoor_label($apartment, $lang) {
+        $type = (string) ($apartment['outdoor_type'] ?? '');
+        $floor = (string) ($apartment['floor'] ?? '');
+        if ($type === 'garden' || $floor === 'Fsz') {
+            return $this->by_lang($lang, 'Kert / terasz', '花园 / 露台', 'Garden / terrace');
+        }
+        return $this->by_lang($lang, 'Terasz / erkély', '露台 / 阳台', 'Terrace / balcony');
+    }
+
+    private function outdoor_summary($apartment, $lang) {
+        $area = $this->outdoor_area_value($apartment);
+        if ($area <= 0) {
+            return '';
+        }
+        return $this->outdoor_label($apartment, $lang) . ' ' . $this->format_area($area) . ' m²';
+    }
+
     private function near_match_apartments($apartments, $filters) {
         $relaxed = $filters;
         $relaxed['budget'] = null;
@@ -1116,6 +1923,11 @@ final class Harmat_Local_Assistant {
         }
         if (!$matches && !empty($relaxed['ground_floor'])) {
             $relaxed['ground_floor'] = false;
+            $relaxed['garden'] = false;
+            $matches = $this->search_apartments($apartments, $relaxed);
+        }
+        if (!$matches && !empty($relaxed['terrace'])) {
+            $relaxed['terrace'] = false;
             $matches = $this->search_apartments($apartments, $relaxed);
         }
 
@@ -1123,7 +1935,7 @@ final class Harmat_Local_Assistant {
     }
 
     private function near_match_answer($matches, $filters, $lang) {
-        $top = array_slice($matches, 0, 3);
+        $top = array_slice($matches, 0, 5);
         $lines = array();
         foreach ($top as $item) {
             $lines[] = $this->recommendation_line($item, $lang, $filters['profile'] ?? array());
@@ -1186,6 +1998,7 @@ final class Harmat_Local_Assistant {
         $price = (int) ($item['price_huf'] ?? 0);
         $sqm = (int) ($item['sqm_price_huf'] ?? 0);
         $floor = (string) ($item['floor'] ?? '');
+        $outdoor = $this->outdoor_area_value($item);
 
         if (!empty($profile['investment'])) {
             $score += ($rooms <= 2) ? 6 : 0;
@@ -1204,6 +2017,10 @@ final class Harmat_Local_Assistant {
         }
         if (!empty($profile['pet'])) {
             $score += ($floor === 'Fsz') ? 2 : 0;
+        }
+        if (!empty($profile['garden'])) {
+            $score += ($floor === 'Fsz') ? 7 : 0;
+            $score += min(5, (int) floor($outdoor / 35));
         }
         if (!empty($profile['price_sensitive'])) {
             $score += ($price > 0 && $price <= 65000000) ? 5 : 0;
@@ -1241,7 +2058,7 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
     }
 
     private function recommendation_answer($matches, $filters, $lang) {
-        $top = array_slice($matches, 0, 3);
+        $top = array_slice($matches, 0, 5);
         $lines = array();
         foreach ($top as $item) {
             $lines[] = $this->recommendation_line($item, $lang, $filters['profile'] ?? array());
@@ -1259,6 +2076,13 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
             '以上价格为当前资料参考价，最终可售状态和价格需要销售团队确认。',
             'Prices are indicative; final availability and price should be confirmed by sales.'
         );
+        if (!empty($filters['terrace'])) {
+            $suffix .= "\n" . $this->by_lang($lang,
+                'A terasz vagy erkély pontos méretét a kiválasztott lakás adatlapja és az értékesítési csapat erősíti meg.',
+                '露台或阳台的准确面积，请以具体房源页和销售团队确认为准。',
+                'Exact terrace or balcony size should be confirmed on the selected apartment page and by the sales team.'
+            );
+        }
 
         return $prefix . ($profile_note ? "\n" . $profile_note : '') . "\n\n" . implode("\n", $lines) . "\n\n" . $suffix;
     }
@@ -1266,17 +2090,19 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
     private function recommendation_line($item, $lang, $profile = array()) {
         $sqm = $this->format_money($item['sqm_price_huf'] ?? 0) . ' / m²';
         $status = (string) ($item['status'] ?? '');
+        $outdoor = $this->outdoor_summary($item, $lang);
         $tags = $this->apartment_tags($item, $profile, $lang);
         $tag_text = $tags ? $this->tag_prefix($lang) . implode($this->tag_separator($lang), $tags) . $this->sentence_end($lang) : '';
 
         if ($lang === 'zh') {
             return sprintf(
-                '%s：%s，%s，%s，销售面积 %s m²，参考总价 %s，参考单价 %s，状态：%s。%s',
+                '%s：%s，%s，%s，销售面积 %s m²%s，参考总价 %s，参考单价 %s，状态：%s。%s',
                 $item['apartment'],
                 $item['building'],
                 $this->floor_label($item['floor'], 'zh'),
                 $this->room_label($item, 'zh'),
                 $this->format_area($item['sales_area_m2']),
+                $outdoor ? '，' . $outdoor : '',
                 $this->format_money($item['price_huf']),
                 $sqm,
                 $status,
@@ -1286,12 +2112,13 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
 
         if ($lang === 'en') {
             return sprintf(
-                '%s: building %s, %s, %s, %s m² sales area, indicative total price %s, indicative sqm price %s, status: %s. %s',
+                '%s: building %s, %s, %s, %s m² sales area%s, indicative total price %s, indicative sqm price %s, status: %s. %s',
                 $item['apartment'],
                 $item['building'],
                 $this->floor_label($item['floor'], 'en'),
                 $this->room_label($item, 'en'),
                 $this->format_area($item['sales_area_m2']),
+                $outdoor ? ', ' . $outdoor : '',
                 $this->format_money($item['price_huf']),
                 $sqm,
                 $status,
@@ -1300,12 +2127,13 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
         }
 
         return sprintf(
-            '%s: %s épület, %s, %s, %s m² eladási terület, tájékoztató teljes ár %s, négyzetméterár %s, státusz: %s. %s',
+            '%s: %s épület, %s, %s, %s m² eladási terület%s, tájékoztató teljes ár %s, négyzetméterár %s, státusz: %s. %s',
             $item['apartment'],
             $item['building'],
             $this->floor_label($item['floor'], 'hu'),
             $this->room_label($item, 'hu'),
             $this->format_area($item['sales_area_m2']),
+            $outdoor ? ', ' . $outdoor : '',
             $this->format_money($item['price_huf']),
             $sqm,
             $status,
@@ -1371,13 +2199,17 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
         $tags_hu = $this->tags_sentence($item, $profile, 'hu');
         $tags_zh = $this->tags_sentence($item, $profile, 'zh');
         $tags_en = $this->tags_sentence($item, $profile, 'en');
+        $outdoor_hu = $this->outdoor_summary($item, 'hu');
+        $outdoor_zh = $this->outdoor_summary($item, 'zh');
+        $outdoor_en = $this->outdoor_summary($item, 'en');
         $hu = sprintf(
-            '%s jelenlegi adatai: %s épület, %s, %s, %s m² eladási terület. Tájékoztató teljes ár: %s. Négyzetméterár: %s. Státusz: %s.%s Adatlap: %s. Alaprajz/PDF: %s. A végleges árat és elérhetőséget az értékesítés erősíti meg.',
+            '%s jelenlegi adatai: %s épület, %s, %s, %s m² eladási terület%s. Tájékoztató teljes ár: %s. Négyzetméterár: %s. Státusz: %s.%s Adatlap: %s. Alaprajz/PDF: %s. A végleges árat és elérhetőséget az értékesítés erősíti meg.',
             $item['apartment'],
             $item['building'],
             $floor_hu,
             $this->room_label($item, 'hu'),
             $this->format_area($item['sales_area_m2']),
+            $outdoor_hu ? ', ' . $outdoor_hu : '',
             $this->format_money($item['price_huf']),
             $this->format_money($item['sqm_price_huf']) . ' / m²',
             (string) ($item['status'] ?? ''),
@@ -1386,12 +2218,13 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
             $floorplan_url
         );
         $zh = sprintf(
-            '%s 当前资料：%s 楼，%s，%s，销售面积 %s m²。参考总价：%s；参考单价：%s / m²。状态：%s。%s详情页：%s。户型图/PDF：%s。最终价格和可售状态请以销售团队确认为准。',
+            '%s 当前资料：%s 楼，%s，%s，销售面积 %s m²%s。参考总价：%s；参考单价：%s / m²。状态：%s。%s详情页：%s。户型图/PDF：%s。最终价格和可售状态请以销售团队确认为准。',
             $item['apartment'],
             $item['building'],
             $floor_zh,
             $this->room_label($item, 'zh'),
             $this->format_area($item['sales_area_m2']),
+            $outdoor_zh ? '，' . $outdoor_zh : '',
             $this->format_money($item['price_huf']),
             $this->format_money($item['sqm_price_huf']),
             (string) ($item['status'] ?? ''),
@@ -1400,12 +2233,13 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
             $floorplan_url
         );
         $en = sprintf(
-            '%s current data: building %s, %s, %s, %s m² sales area. Indicative total price: %s. Indicative sqm price: %s / m². Status: %s.%s Detail page: %s. Floor plan/PDF: %s. Final availability and price should be confirmed by sales.',
+            '%s current data: building %s, %s, %s, %s m² sales area%s. Indicative total price: %s. Indicative sqm price: %s / m². Status: %s.%s Detail page: %s. Floor plan/PDF: %s. Final availability and price should be confirmed by sales.',
             $item['apartment'],
             $item['building'],
             $floor_en,
             $this->room_label($item, 'en'),
             $this->format_area($item['sales_area_m2']),
+            $outdoor_en ? ', ' . $outdoor_en : '',
             $this->format_money($item['price_huf']),
             $this->format_money($item['sqm_price_huf']),
             (string) ($item['status'] ?? ''),
@@ -1417,21 +2251,26 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
         return $this->by_lang($lang, $hu, $zh, $en);
     }
 
-    private function cards_for_matches($matches, $profile) {
+    private function cards_for_matches($matches, $profile, $lang = 'hu') {
         $cards = array();
-        foreach (array_slice($matches, 0, 4) as $item) {
-            $cards[] = $this->card($item, $profile);
+        foreach (array_slice($matches, 0, 5) as $item) {
+            $cards[] = $this->card($item, $profile, $lang);
         }
         return $cards;
     }
 
-    private function card($item, $profile = array()) {
-        $tags = $this->apartment_tags($item, $profile, 'hu');
+    private function card($item, $profile = array(), $lang = 'hu') {
+        $tags = $this->apartment_tags($item, $profile, $lang);
         $tag_text = $tags ? ' · ' . implode(', ', array_slice($tags, 0, 2)) : '';
+        $url = (string) ($item['property_url'] ?? home_url('/lakaskereso/'));
+        $apartment = (string) ($item['apartment'] ?? '');
         return array(
-            'title' => (string) $item['apartment'],
-            'url' => (string) $item['property_url'],
-            'meta' => sprintf('%s · %s szoba · %s m² · %s · %s / m²%s', $item['building'], $item['rooms'], $this->format_area($item['sales_area_m2']), $this->format_money($item['price_huf']), $this->format_money($item['sqm_price_huf']), $tag_text),
+            'title' => $apartment,
+            'url' => $url,
+            'offer_url' => add_query_arg(array('assistant_offer' => rawurlencode($apartment)), $url),
+            'view_label' => $this->by_lang($lang, 'Megnézem', '查看房源', 'View'),
+            'offer_label' => $this->by_lang($lang, 'Árajánlatot kérek', '我要报价', 'Request offer'),
+            'meta' => sprintf('%s · %s · %s · %s m²%s · %s · %s / m²%s', $item['building'], $this->floor_label($item['floor'] ?? '', $lang), $this->room_label($item, $lang), $this->format_area($item['sales_area_m2']), $this->outdoor_summary($item, $lang) ? ' · ' . $this->outdoor_summary($item, $lang) : '', $this->format_money($item['price_huf']), $this->format_money($item['sqm_price_huf']), $tag_text),
         );
     }
 
@@ -1450,9 +2289,16 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
         $price = (int) ($item['price_huf'] ?? 0);
         $sqm = (int) ($item['sqm_price_huf'] ?? 0);
         $floor = (string) ($item['floor'] ?? '');
+        $outdoor = $this->outdoor_area_value($item);
 
         if ($floor === 'Fsz') {
             $tags[] = $this->by_lang($lang, 'ajándék kert', '底楼赠送花园', 'gift garden');
+        }
+        if ($floor === 'Fsz' && $outdoor >= 80) {
+            $tags[] = $this->by_lang($lang, 'nagyobb kert', '较大花园', 'larger garden');
+        }
+        if ($floor !== 'Fsz' && $outdoor >= 20) {
+            $tags[] = $this->by_lang($lang, 'nagy terasz', '大露台', 'large terrace');
         }
         if (!empty($profile['investment']) && $rooms <= 2) {
             $tags[] = $this->by_lang($lang, 'befektetési shortlist', '投资优先', 'investment shortlist');
@@ -1655,6 +2501,114 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
         return $hu;
     }
 
+    private function visitor_key() {
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) wp_unslash($_SERVER['REMOTE_ADDR']) : '';
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? substr((string) wp_unslash($_SERVER['HTTP_USER_AGENT']), 0, 160) : '';
+        return hash_hmac('sha256', $ip . '|' . $ua, wp_salt('auth'));
+    }
+
+    private function validate_rest_nonce(WP_REST_Request $request) {
+        $nonce = (string) $request->get_header('X-WP-Nonce');
+        if ($nonce !== '' && wp_verify_nonce($nonce, 'wp_rest')) {
+            return null;
+        }
+
+        return new WP_Error(
+            'harmat_ai_nonce',
+            'A biztonsági ellenőrzés lejárt. Kérjük, frissítse az oldalt, majd próbálja újra.',
+            array('status' => 403)
+        );
+    }
+
+    private function check_rate_limit($scope, $limit, $ttl) {
+        $scope = sanitize_key((string) $scope);
+        $limit = max(1, (int) $limit);
+        $ttl = max(60, (int) $ttl);
+        $key = 'harmat_ai_rate_' . md5($scope . '|' . $this->visitor_key());
+        $count = (int) get_transient($key);
+
+        if ($count >= $limit) {
+            return false;
+        }
+
+        set_transient($key, $count + 1, $ttl);
+        return true;
+    }
+
+    private function sanitize_utm($utm) {
+        if (!is_array($utm)) {
+            return array();
+        }
+
+        $allowed = array('utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'landing_page', 'source_page', 'referrer', 'lead_source', 'path');
+        $clean = array();
+        foreach ($allowed as $key) {
+            if (!isset($utm[$key])) {
+                continue;
+            }
+            $value = is_scalar($utm[$key]) ? (string) $utm[$key] : '';
+            if ($value === '') {
+                continue;
+            }
+            $clean[$key] = in_array($key, array('landing_page', 'source_page', 'referrer'), true)
+                ? esc_url_raw($value)
+                : sanitize_text_field($value);
+        }
+        return $clean;
+    }
+
+    private function track_event($event, $meta = array()) {
+        $event = sanitize_key((string) $event);
+        $allowed = array(
+            'assistant_open',
+            'assistant_question',
+            'quick_button_click',
+            'apartment_recommendation',
+            'offer_request_started',
+            'offer_request_submitted',
+            'appointment_started',
+            'appointment_submitted',
+            'human_handoff',
+            'unknown_question',
+        );
+        if (!in_array($event, $allowed, true)) {
+            return;
+        }
+
+        $safe_meta = array();
+        if (is_array($meta)) {
+            foreach ($meta as $key => $value) {
+                if (!is_scalar($value)) {
+                    continue;
+                }
+                $safe_meta[sanitize_key((string) $key)] = sanitize_text_field(mb_substr((string) $value, 0, 180, 'UTF-8'));
+            }
+        }
+
+        $option = 'harmat_ai_events_' . current_time('Ymd');
+        $payload = get_option($option, array());
+        if (!is_array($payload)) {
+            $payload = array();
+        }
+        if (empty($payload['counts']) || !is_array($payload['counts'])) {
+            $payload['counts'] = array();
+        }
+        if (empty($payload['recent']) || !is_array($payload['recent'])) {
+            $payload['recent'] = array();
+        }
+
+        $payload['counts'][$event] = (int) ($payload['counts'][$event] ?? 0) + 1;
+        $payload['recent'][] = array(
+            'event' => $event,
+            'time' => current_time('mysql'),
+            'meta' => $safe_meta,
+        );
+        $payload['recent'] = array_slice($payload['recent'], -80);
+
+        update_option($option, $payload, false);
+        do_action('harmat_ai_assistant_event', $event, $safe_meta);
+    }
+
     private function text($key, $lang) {
         $texts = array(
             'empty' => array(
@@ -1690,19 +2644,32 @@ Ha lakást keres, írja meg a szobaszámot, árkeretet és hogy saját használa
 
 If you are looking for a unit, share room count, budget and whether it is for own use or investment.",
             ),
+            'handoff_saved' => array(
+                'hu' => 'Köszönjük! Az értékesítési csapat hamarosan felveszi Önnel a kapcsolatot.',
+                'zh' => '谢谢！销售团队会尽快与您联系。',
+                'en' => 'Thank you. The sales team will contact you soon.',
+            ),
+            'appointment_saved' => array(
+                'hu' => 'Köszönjük! Az értékesítési csapat hamarosan visszaigazolja az időpontot.',
+                'zh' => '谢谢！销售团队会尽快确认预约时间。',
+                'en' => 'Thank you. The sales team will confirm the appointment soon.',
+            ),
         );
 
+        if (!isset($texts[$key])) {
+            $key = 'fallback';
+        }
         return $texts[$key][$lang] ?? $texts[$key]['hu'];
     }
 
     private function default_suggestions($lang) {
         if ($lang === 'zh') {
-            return array('7000万两房推荐', 'A1-F-L1 价格', '适合投资的房源', '怎么预约看房？');
+            return array('有哪些房源可选？', '我要找两房', '我要带花园的房源', '我要大露台房源', '我要报价', '预约看房', '销售办公室在哪里？', '什么时候交付？', '贷款 / CSOK 咨询', '联系销售');
         }
         if ($lang === 'en') {
-            return array('2-room around 70M Ft', 'A1-F-L1 price', 'Investment options', 'Book a viewing');
+            return array('What apartments are available?', 'I am looking for a 2-room apartment', 'I am looking for a garden apartment', 'I am looking for a large terrace apartment', 'Request an offer', 'Book a viewing', 'Where is the sales office?', 'When is handover expected?', 'Financing / CSOK', 'Contact sales');
         }
-        return array('2 szobás 70 millió Ft körül', 'A1-F-L1 ára', 'Befektetésre jó lakások', 'Időpontot kérek');
+        return array('Milyen lakások érhetők el?', '2 szobás lakást keresek', 'Kertes lakást keresek', 'Nagy teraszos lakást keresek', 'Árajánlatot kérek', 'Időpontot foglalok', 'Hol található a bemutatóiroda?', 'Mikor várható az átadás?', 'Finanszírozás / CSOK érdekel', 'Kapcsolat az értékesítéssel');
     }
 }
 

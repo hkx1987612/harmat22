@@ -141,6 +141,37 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 - Repaired the public inquiry flow after property-page quote buttons and the global quote CTA stopped producing emails/sales records: `harmat-performance-guard` v1.3.19 now forces CF7 assets on public pages, submits cloned/lightbox offer forms through the official CF7 REST feedback endpoint, redirects to `/koszonjuk/` only after a real `mail_sent` response, and shows an inline validation message when required fields or privacy acceptance are missing. `harmat-sales-manager` v1.6.26 now captures CF7 offer submissions into `harmat_offer_lead`, fills CRM codes, records mail status, updates existing legacy-synced records instead of creating duplicates, and forces both same-page quote buttons (`#opal-contactform-popup`) and property quote links into the unified popup route. Verified A1-1-L1 top-card quote flow reached the thank-you page and generated a sales inquiry with `mail_status=sent`; verified the direct CF7 endpoint returned `mail_sent`; the user then manually confirmed the two quote buttons work. Cleaned Codex test leads and one duplicate legacy huangkangxing test lead while preserving the CRM-bearing huangkangxing record. Live rollback backups: `/home/harmath2/codex-backups/inquiry-form-fix-20260607-073607`, `/home/harmath2/codex-backups/inquiry-form-fix2-20260607-074121`, `/home/harmath2/codex-backups/inquiry-rest-submit-20260607-074501`, `/home/harmath2/codex-backups/inquiry-button-force-open-20260607-075659`.
 - Optimized public quote-submit speed in `harmat-performance-guard` v1.3.20 and `harmat-sales-manager` v1.6.27: property quote forms now first post to a fast public sales endpoint that immediately saves the inquiry, assigns CRM, queues async sales/customer emails, and redirects the visitor without waiting for mail delivery. CF7 remains as a fallback. Verified the fast endpoint returned success in about 0.8 seconds, created an A1-1-L1 inquiry with CRM and `mail_status=sent`, then removed the Codex test lead. Live rollback backup: `/home/harmath2/codex-backups/inquiry-fast-submit-20260607-080334`.
 
+- Deployed Google indexing cleanup on 2026-06-10: `harmat-migrated-snippets` v2026.06.10.1 now excludes robots/feed/trackback responses from the public HTML output buffer so `/robots.txt` no longer receives the clean-footer HTML; `harmat-seo-index-cleanup` v2026.06.10.1 lets the first-phase and A1-A4 virtual selector pages index and appear in the page sitemap while keeping hidden legacy pages excluded; `harmat-sales-manager` v1.6.49 changes legacy room-type shortcuts such as `/studio-apartman/`, `/2-szobas/`, and `/5-szobas/` from temporary 302 redirects to permanent 301 redirects toward `/lakaskereso/?rooms=N`, and the room shortcut pages are removed from the sitemap. Verified PHP syntax, flushed object/transient cache, checked clean robots output, sitemap index/page/property/video sitemaps without HTML pollution, virtual selector pages as `index, follow`, room shortcuts as 301, and homepage/search/property/project smoke pages as HTTP 200. Live rollback backups: `/home/harmath2/codex-backups/seo-index-cleanup-20260610-082903` and `/home/harmath2/codex-backups/seo-index-cleanup-final-20260610-083220`.
+- Deployed the June 8 public polish batch in `harmat-migrated-snippets` v2026.06.08.1, `harmat-performance-guard`, `harmat-sales-manager`, and `hm-legal-cookie-compliance`: sales/agent/lawyer/customer portal paths no longer inherit the public three-column footer, hidden Contact Form 7 modal instances are deduplicated and moved to the end of the DOM with `aria-hidden`/`inert`, the homepage counter suffix is normalized from `m2` to `m²`, the homepage now has a small `Kiemelt lakások` section with 6 current priced units from live sales data, `/finanszirozas/` and `/epitesi-naplo/` are created/rendered, Impresszum lists technical providers, public offer forms capture UTM/landing/referrer metadata, and the fast offer endpoint adds origin/nonce/honeypot/duplicate throttling checks. Verified PHP syntax locally and remotely, purged WordPress object cache, transients, LiteSpeed, Autoptimize, and Elementor generated CSS, then checked logged-out source for homepage, `/sales/`, `/property/a1-f-l2/`, `/finanszirozas/`, `/epitesi-naplo/`, and `/impresszum/`. Live rollback backup: `/home/harmath2/codex-backups/public-polish-20260608-20260608-133026`.
+- Deployed `harmat-sales-manager` v1.6.28 for the sales task workspace: `/sales/?view=tasks` now separates overdue, today, next 7 days, and future tasks, adds task-type counts, a customer/property/title search, status/type filters, an "优先处理" card board with action hints, and per-task due text such as overdue days or days remaining. Existing task sources remain unchanged: lead follow-up, deal follow-up, payment plan nodes, payment due date, broker commission due date, expected close date, and closed-customer aftercare follow-up for sales staff. Verified PHP syntax locally and on the server, purged WordPress/LiteSpeed/Autoptimize caches, and opened the live sales task page successfully. Live rollback backup: `/home/harmath2/codex-backups/sales-tasks-1.6.28-20260608-135545`.
+
+- Deployed `harmat-sales-manager` v1.6.29 for the sales assignment workflow: sales managers can assign website inquiries, customer leads, and sales deals to internal manager/sales users; secondary sales can see assigned website inquiries, assigned customers, assigned deals, and related tasks while broker-source and commission logic remain tied to the broker record. Added assigned-sales filters/display to deal/customer views and quick assignment controls on inquiry, client, and deal tables. Verified PHP syntax locally and on the server, purged WordPress/transient cache, and opened live `/sales/?view=inquiries` plus `/sales/?view=deals` without fatal errors. Live rollback backup: `/home/harmath2/codex-backups/sales-assignment-1.6.29-20260608-143700`.
+- Deployed `harmat-sales-manager` v1.6.30 as a small sales-navigation fix: the manager-only broker/account page still existed at `/sales/?view=brokers`, but its navigation label was too generic (`账号`), so it now displays as `经纪人/账号`. Verified live sales navigation shows the link and no fatal errors. Live rollback backup: `/home/harmath2/codex-backups/sales-broker-nav-1.6.30-20260608-152316`.
+
+- Deployed `harmat-sales-manager` v1.6.31 to recover stuck public quote notification emails: the Andrási Alex / A1-4-L2 quote inquiry had been saved to the sales backend but remained in `_harmat_offer_mail_status=queued` with no pending cron event, so no sales mailbox notification was sent. Added a small recovery pass for older queued quote emails, clearer send-status metadata, and manually resent the affected inquiry. Verified the affected record is now `sent`, both sales and customer mail timestamps are recorded, and no quote inquiries remain queued. Live rollback backup: `/home/harmath2/codex-backups/sales-offer-mail-recovery-1.6.31-20260608-153209`.
+- Deployed `harmat-sales-manager` v1.6.32 to make delete permissions explicit for sales supervisors: added the `harmat_delete_sales_records` capability, granted it to sales managers and administrators, removed it from sales staff and brokers, and switched sales deal/client/inquiry delete handlers/buttons to this permission. Website inquiries can now be deleted from the sales inquiry list by supervisors, using WordPress trash for safer recovery. Verified live role caps, `/sales/?view=inquiries`, `/sales/?view=deals`, and `/sales/?view=brokers`. Live rollback backup: `/home/harmath2/codex-backups/sales-delete-permission-1.6.32-20260608-175354`.
+- Deployed `harmat-sales-manager` v1.6.33 as a follow-up for supervisor delete UX: sales deal cards now show a supervisor-only delete button, and the deal edit panel includes a separate danger zone with a `删除销售跟单` button. Both routes keep the browser confirmation prompt before submitting. Verified `/sales/?view=deals` shows card delete buttons and `/sales/?view=deals&edit_deal=2` shows the edit-page danger zone with confirmation. Live rollback backup: `/home/harmath2/codex-backups/sales-deal-delete-buttons-1.6.33-20260608-180828`.
+
+- Deployed `harmat-sales-manager` v1.6.35 for the sales inquiry/follow-up workflow: `/sales/?view=inquiries` is now a unified inquiry summary covering website inquiries, broker inquiries, and walk-in inquiries with source search/filtering; client source fields are fixed to those three source types; inquiry/client rows keep direct "generate deal" entry points; and `/sales/?view=activity` adds an action log for lead saves/deletes, inquiry assignments/deletes, deal saves/assignments/deletes, and closed-customer maintenance. Verified PHP syntax locally and on the server, flushed WordPress object cache, and checked live `/sales/?view=inquiries`, `/sales/?view=activity`, and `/sales/?view=clients`. Live rollback backup: `/home/harmath2/codex-backups/sales-inquiry-activity-1.6.35-20260608-182738`.
+
+- Deployed `harmat-migrated-snippets` v2026.06.08.3 for homepage featured-apartment polish: the `Kiemelt lakások` block now appears after the appointment image/banner and before the gallery, and its six cards are selected from live available/priced apartments by multiple recommendation scenarios instead of a simple lowest-price list. Cards now show a short Hungarian reason label such as `Belépő ár`, `Kedvező m² ár`, `Kompakt lakás`, `2 szobás ajánlat`, `Külső térrel`, or `Tágasabb választás`. Verified local and remote PHP syntax, flushed WordPress cache/transients, and checked desktop/mobile logged-out rendering: 6 cards, correct order, no horizontal overflow. Live rollback backup: `/home/harmath2/codex-backups/home-featured-reorder-20260608`.
+
+- Deployed `harmat-migrated-snippets` v2026.06.08.6 as an urgent property-detail layout fix after `/lakaskereso/` apartment clicks showed the old Elementor floorplan gallery as a full-width brown overlay on every unit page. The fix scopes the legacy floorplan gallery inside the property detail layout, disables the runaway zoom overlay, hides the duplicate old button row, and leaves `/lakaskereso/` search/filter markup untouched. Also kept the AI assistant launch button above the old scroll-to-top layer so the two controls do not overlap. Verified local and remote PHP syntax, flushed WordPress cache/transients and Elementor CSS, checked live source for `/property/a1-1-l1/`, `/property/a4-1-l3/`, and `/lakaskereso/`, and browser-verified desktop plus 390px mobile property pages with no horizontal overflow, hidden overlay, hidden old buttons, and normal floorplan image sizing. Live rollback backup: `/home/harmath2/codex-backups/property-floorplan-layout-20260608/harmat-migrated-snippets.php.bak-20260608-211303`.
+- Deployed `harmat-migrated-snippets` v2026.06.08.7 as a one-apartment property-detail sample only for A1-1-L1 (`postid-4286`): the page now shows a cleaner detail block with the large floorplan image, PDF floorplan action, apartment facts, and the existing parsed room list, while the old Elementor floorplan/detail block is hidden only on this sample unit. Other property pages keep the previous stable layout. Verified local and remote PHP syntax, flushed WordPress cache/transients and Elementor CSS, source-checked A1-1-L1 has one sample section and A4-1-L3 has none, and browser-checked desktop plus 390px mobile A1-1-L1 with no horizontal overflow. Live rollback backup: `/home/harmath2/codex-backups/property-detail-sample-a1-20260608/harmat-migrated-snippets.php.bak-20260608-212423`.
+- Polished the A1-1-L1 property-detail sample in `harmat-migrated-snippets` v2026.06.08.9: the availability status is shown beside the apartment title so the top facts become two clean rows, the duplicate lower facts/offer/PDF card was removed entirely, the lower section now contains only the floorplan image on the left and the room list on the right, and the floorplan image links to the image itself rather than the PDF. Verified PHP syntax locally and remotely, flushed WordPress/transients/Elementor CSS, checked source output, and browser-verified A1-1-L1 desktop/mobile plus A4-1-L3 scope control. Live rollback backup: `/home/harmath2/codex-backups/property-detail-sample-left-right-20260608/harmat-migrated-snippets.php.bak-20260608-214552`.
+- Refined the A1-1-L1 visual sample in `harmat-migrated-snippets` v2026.06.08.10 without changing content or scope: the title-side availability block is now a lighter green status badge, the floorplan image sits in a more polished drawing-display frame, and the right-side room list has cleaner spacing, lighter row treatment, and a stronger total-area row. Verified PHP syntax locally and remotely, flushed WordPress/transients/Elementor CSS, source-checked A1-1-L1 and A4-1-L3, and browser-verified desktop/mobile with no horizontal overflow and no sample markup on A4. Live rollback backup: `/home/harmath2/codex-backups/property-detail-sample-visual-polish-20260608/harmat-migrated-snippets.php.bak-20260608-215136`.
+- Promoted the polished property-detail template to all 124 published property pages in `harmat-migrated-snippets` v2026.06.08.12. The old Elementor floorplan/detail block is removed from public HTML when the new template can be generated, the top status badge and two-row fact grid now apply globally, and the lower section uses the official `2026/05/*-cn-floorplan.jpg` images beside the parsed room list. Added image containment rules so floorplan previews scale proportionally inside the display frame without overflowing or cropping; old extracted images remain only as a fallback. Verified PHP syntax locally and remotely, flushed WordPress/transients/Elementor CSS, batch-audited all 124 sitemap property URLs with zero problems, confirmed every page has one new detail section, one floorplan image, room rows, zero old `03069d8` blocks, and no lower duplicate PDF CTA, then browser-tested multiple desktop and mobile property pages with no horizontal overflow. Live rollback backups: `/home/harmath2/codex-backups/property-detail-template-all-20260608/harmat-migrated-snippets.php.bak-20260608-215754` and `/home/harmath2/codex-backups/property-detail-template-all-images-20260608/harmat-migrated-snippets.php.bak-20260608-220238`.
+- Generated cropped display versions for all 124 official `2026/05/*-cn-floorplan.jpg` images after some plans displayed too small inside the new floorplan frame. The new files are saved as `*-cn-floorplan-display.jpg` and do not overwrite the original images. Cropping detected non-white content bounds, added a small white guard, and improved the visual floorplan occupancy from roughly 40-45% to about 82% on the generated images. `harmat-migrated-snippets` v2026.06.08.13 now prefers the display images and falls back to the original images. Verified A1-4-L3, A1-1-L4, and A4-2-L2 render with the display images, no old detail markup, and no horizontal overflow. Live rollback backup for the template change: `/home/harmath2/codex-backups/property-floorplan-display-images-20260608/harmat-migrated-snippets.php.bak-20260608-221926`; generated image backups, if overwritten later, are stored under `/home/harmath2/codex-backups/floorplan-display-images-20260608`.
+- Added and activated the new `Harmat Site Maintenance` admin plugin v0.1.0 at `wp-content/plugins/harmat-site-maintenance/` from local `wp-plugins/harmat-site-maintenance/`. The plugin provides an admin-only `Harmat Maintenance` dashboard with manual public-page health checks, 124-apartment audits for price/PDF/floorplan image/room list, recent inquiry mail status, and a cache-clear action for WordPress cache/transients/Elementor/Autoptimize/LiteSpeed action hook. Verified PHP syntax locally and remotely, activated the plugin with WP-CLI, and ran the first live audit successfully: public pages `5/5`, properties `124/124`, property issues `0`, queued mail `0`. Live backup directory: `/home/harmath2/codex-backups/harmat-site-maintenance-0.1.0-20260608`.
+- Deployed `harmat-local-assistant` v0.3.0 as a sales-conversion assistant: added 10 quick buttons, Magyar/中文/English mode, 3-5 real apartment recommendation cards from the existing apartment knowledge base, offer-request and viewing-request flows, sales-office actions, financing/CSOK disclaimer, construction/opening FAQ, human handoff buttons, CRM lead metadata for Harmat asszisztens source/UTM/conversation summary, nonce validation, rate limiting, honeypot handling, duplicate throttling, sanitized input, and lightweight assistant event tracking. Verified local and remote PHP syntax, flushed WordPress cache/transients/LiteSpeed action, and tested logged-out REST calls for Hungarian, Chinese, and English recommendations plus Hungarian offer and appointment flows without creating test leads. Live rollback backups: `/home/harmath2/codex-backups/local-assistant-0.3.0-20260609-232527` and `/home/harmath2/codex-backups/local-assistant-0.3.0-hotfix-20260609-232819`.
+- Deployed `harmat-local-assistant` v0.3.1 to synchronize terrace/garden data into the AI apartment knowledge base from live `property_land_area` values. The KB now has outdoor metadata for all 124 apartments: 28 ground-floor `garden_m2` records and 96 upper-floor `terrace_m2`/`balcony_m2` records, plus localized outdoor labels. The assistant now recognizes `kert/kertes` garden searches, keeps garden recommendations to real ground-floor units, keeps large-terrace recommendations to upper-floor terrace/balcony units, prioritizes larger outdoor spaces, and shows `Kert / terasz` or `Terasz / erkély` area in recommendation lines, cards, and single-apartment answers. Verified local and remote PHP syntax, remote JSON count/stats, flushed WordPress cache/transients/LiteSpeed action, and tested logged-out AI calls for `Kertes lakást keresek`, `Nagy teraszos lakást keresek`, and `A1-F-L2 ára` without creating test leads. Live rollback backup: `/home/harmath2/codex-backups/local-assistant-outdoor-0.3.1-20260609-234036`.
+- Deployed `harmat-sales-manager` v1.6.48 for CRM dashboard deepening: supervisor dashboard now shows conversion metrics from visitor -> inquiry -> follow-up -> viewing -> reservation -> contract -> deal, plus a sales performance table by internal salesperson with leads, follow-ups, viewings, offers, reservations, contracts, deals, conversion rate, response time, and commission estimate. Offer inquiry records now surface UTM/source/landing/referrer/GDPR/AI assistant metadata in customer detail, closed-customer profiles show a source and needs profile, and duplicate customer warnings compare phone, email, and similar names while excluding the current deal's own source record. Automatic tasks now include offer-sent 3-day follow-up, tomorrow appointment reminders, and 7-day inactive customer prompts. Activity log now records sales exports plus private-portal login/logout events. Verified local and remote PHP syntax, confirmed live plugin version `1.6.48`, checked `/sales/` stays noindex and auth-gated while logged out, and flushed WordPress/transient/LiteSpeed cache. Live rollback backup: `/home/harmath2/codex-backups/sales-crm-dashboard-1.6.48-20260610-000019`.
+- Deployed `harmat-legal-documents` v0.1.4 for the lawyer/legal case workflow: available apartments without buyer/CRM no longer start a legal case and show `Még nincs ügyvédi ügy. Az ügyvédi folyamat foglalás vagy szerződéses szakasz után indul.` Legal cases can only be saved/uploaded for reserved/contract/closed/payment-follow-up contexts, cases now bind deal/property/customer/CRM/sales-owner/lawyer-owner fields, legal statuses and document checklist statuses were expanded to the requested Hungarian workflow, document uploads are versioned without overwriting previous files, archive keeps files in the protected store, document review status logs reviewer/date, legal tasks now include missing documents, draft/client/signing/payment deadlines, and signed cases sync base contract/payment tracking data back to sales while property status changes remain suggestions for supervisor confirmation. Disabled the live `codex_textscan_20260605073350_lawyer` test account by removing legal role/caps and randomizing password; no `ugyved@example.com` lawyer account was found. Verified local and remote PHP syntax, live plugin version `0.1.4`, logged-out `/lawyer/` and `/sales/?view=legal` noindex/auth behavior, old legal status terms absent from the live plugin file, and A1-1-L1 as an available/no-CRM sample returns no active legal case. Live rollback backup: `/home/harmath2/codex-backups/legal-documents-0.1.4-20260610-002150`.
+- Ran a live temporary legal-workflow test without changing public apartment status: inserted a temporary reserved deal for A1-1-L1 directly into the private CRM data, confirmed the lawyer module started an `Új ügy`, saved a signed legal case with zero missing checklist items, verified signed status synced `contract_status=signed`, generated two payment-plan rows and payment schedule text, wrote only a suggested reserved property status while leaving public `property_status` and `property_under_offer` unchanged, simulated two protected document versions where v1 became inactive and v2 stayed active/accepted with reviewer timestamp, and confirmed legal tasks included deadline/payment due items. Cleaned all temporary deal/case/document/file records and restored the suggested-status meta. Test backup: `/home/harmath2/codex-backups/legal-workflow-test-20260610-003145`.
+
+- Deployed `/lakaskereso/` total-price sorting: `harmat-lakaskereso-redesign` v1.1.7 adds a compact `Vételár szerint` control with lowest-price and highest-price ordering while keeping the single sqm-price range slider. `harmat-performance-guard` v1.3.21 was updated so its backup smart-search sorter respects the same total-price order. Verified local and remote PHP syntax, purged WordPress/transient/LiteSpeed caches, checked logged-out source for the new sort control, browser-tested low-to-high and high-to-low ordering, and confirmed desktop plus 390px mobile have no horizontal overflow. Live rollback backup: `/home/harmath2/codex-backups/lakaskereso-price-sort-20260610-071315`.
+- Tested public offer/appointment submissions without changing code: verified the homepage `Ajánlatkérés`/appointment modal opens, the A1-1-L2 property `Ajánlatot kérek` button opens the form and pre-fills apartment, price, and property URL, then submitted three Codex test leads through the public fast-offer path for homepage appointment, property offer, and property appointment. All three records entered `harmat_offer_lead` with CRM codes and `mail_status=sent`; sales and customer mail timestamps were present with no recorded errors. Permanently deleted the three `codex.*@example.com` test leads afterward and confirmed no remaining Codex test inquiry records.
+
 ## Do Not Assume
 
 - Do not assume public prices are visible or final.
@@ -148,3 +179,150 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 - Do not assume agent/client/sales portals share login logic.
 - Do not expose lawyer documents, buyer identities, or deal amounts on public pages.
 - Do not assume cached browser output reflects current live code.
+
+## 2026-06-10 - Portal app build pass
+- Reworked the Harmat App Portal MU plugin into a mobile-first portal app entry at `/app/`, with Hungarian and Chinese copy, role-based entry cards, quick actions, demo preview, install prompt, manifest, service worker, and dynamic SVG icon endpoint.
+- Aligned Android WebView shell naming/versioning for the portal app direction (`0.5.0-portal-app`, versionCode 6) and kept the start URL pointed at `/app/?wp_lang=hu_HU&source=android_app`.
+- No live WordPress deployment or Android build verification was run in this pass.
+
+## 2026-06-10 - Portal app live deployment
+- Deployed Harmat App Portal v0.5.0 to live /app/ by replacing wp-content/mu-plugins/harmat-app-portal.php only.
+- Live rollback backup: $backupDir.
+- Flushed WordPress object/transient cache and attempted LiteSpeed purge. No page smoke verification was run in this pass.
+
+
+## 2026-06-10 - Portal app polish 0.5.1
+- Polished the portal app experience: Android WebView user agent/version moved to `0.5.1-portal-polish`, Android bottom navigation labels were aligned to Hungarian (`Portál`, `Lakások`, `Választó`, `AI`, `Fiók`), and the Android app entry keeps `/app/?wp_lang=hu_HU&source=android_app`.
+- Updated the web portal app so `source=android_app` hides the in-page PWA dock and adds top spacing for the Android status bar, preventing duplicate bottom navigation and status-bar overlap in the native shell.
+- Bumped Harmat App Portal to v0.5.1 and service worker cache to `harmat-app-portal-v10`. Android rebuild/reinstall verification was not run in this pass.
+
+## 2026-06-10 - Portal app polish live deployment
+- Deployed Harmat App Portal v0.5.1 to live /app/ by replacing wp-content/mu-plugins/harmat-app-portal.php only.
+- Live rollback backup: $backupDir.
+- Flushed WordPress object/transient cache. Android APK was not rebuilt/reinstalled in this deployment step.
+
+
+## 2026-06-10 - Offline floorplan portal app draft
+- Implemented the local draft for an offline-first app home and floorplan catalog: `/app/` now has a prominent offline floorplan showcase, `/app/floorplans/` renders a mobile-first floorplan catalog from live property data, and the service worker cache version moved to `harmat-app-portal-v11` with floorplan image assets queued for caching.
+- Updated Android app navigation so `Lakások` opens `/app/floorplans/?wp_lang=hu_HU&source=android_app`, `/app/floorplans` resolves to the native `Lakások` nav state, and the Android preview version moved to `0.5.3-offline-floorplans` / versionCode 9.
+- This pass is local only. Live deployment, PHP syntax validation, Android rebuild/reinstall, and emulator verification have not been run yet.
+
+## 2026-06-10 - Offline floorplan portal live deployment
+- Deployed Harmat App Portal v0.5.2 to live /app/ and added /app/floorplans/ as the mobile offline floorplan catalog route.
+- Live rollback backup: $backupDir.
+- Ran local and remote PHP syntax checks, then flushed WordPress object/transient cache. Android APK rebuild/reinstall handled separately.
+
+
+## 2026-06-10 - Android app home layout polish
+- Deployed a compact Android-app-only home layout for /app/?source=android_app: reduced hero height, hidden the three setup badges in native app mode, and moved the offline floorplan entry higher on the first screen.
+- Live rollback backup: $backupDir.
+- Ran local and remote PHP syntax checks and flushed WordPress object/transient cache.
+
+
+## 2026-06-10 - Offline floorplan app emulator verification
+- Rebuilt and installed Android preview `0.5.3-offline-floorplans` / versionCode 9 on `HarmatPixel35` (`emulator-5554`).
+- Verified the compact Android app home layout loads from live `/app/?wp_lang=hu_HU&source=android_app`, shows the offline floorplan entry in the first screen flow, and keeps the native bottom navigation in Hungarian.
+- Verified tapping native `Lakások` opens live `/app/floorplans/?wp_lang=hu_HU&source=android_app`, renders the `Offline alaprajztár` page with real floorplan images and room filters, and highlights the native `Lakások` tab. Crash buffer was empty.
+- Verification screenshots: `android/harmat-app/harmat-portal-home-compact-053.png` and `android/harmat-app/harmat-portal-floorplans-compact-053.png`.
+
+## 2026-06-10 - Portal app comfort optimization draft
+- Locally optimized the portal app comfort layer: Android app mode now prioritizes the offline floorplan catalog in the hero actions, hides the PWA install button inside the native shell, tightens the first-screen layout, and keeps a secondary detailed-search action.
+- Updated floorplan offline caching so the service worker no longer blocks installation by downloading all floorplan images; `/app/floorplans/` now caches floorplan images in small background batches with visible progress and completion copy.
+- Updated Android preview to `0.5.4-comfort` / versionCode 10 and fixed the native AI tab URL to use `/?hm_assistant=open&source=android_app`.
+- This pass is local only. PHP syntax validation, live deployment, Android rebuild/reinstall, and emulator verification have not been run yet.
+
+## 2026-06-10 - App hero slogan live deployment
+- Deployed Harmat App Portal v0.5.4 so the native app first screen leads with the Harmat marketing slogan instead of utility-copy: Hungarian Otthon, ahol jó megérkezni and Chinese Harmat 22，回家是一件轻松的事.
+- Live rollback backup: $backupDir.
+- Ran local and remote PHP syntax checks and flushed WordPress object/transient cache before preparing the Samsung test APK.
+
+
+## 2026-06-10 - Samsung test APK build
+- Built Android debug APK  .5.4-comfort / versionCode 10 for Samsung sideload testing.
+- Output APK: ndroid/harmat-app/dist/Harmat22-portal-0.5.4-comfort-debug.apk.
+- This is a debug-signed preview package with applicationId hu.harmat22.app.preview; not a Play Store/release-signed build.
+
+
+## 2026-06-10 - Preloaded offline APK build
+- Built Android debug APK  .6.0-preloaded / versionCode 11 with local offline app entry at ile:///android_asset/offline/index.html and local floorplan catalog at ile:///android_asset/offline/floorplans.html.
+- Embedded 124 floorplan images plus data/floorplans.json into Android assets so Samsung test users can open the app and browse floorplans without first downloading them from the website.
+- Output APK: ndroid/harmat-app/dist/Harmat22-portal-0.6.0-preloaded-debug.apk. Embedded floorplan image bytes: 10542882.
+- This remains a debug-signed preview package with applicationId hu.harmat22.app.preview.
+
+
+## 2026-06-10 - Android APP offline layout fix
+- Fixed bundled Android offline home/floorplan experience for the preloaded Harmat Lakopark portal APK.
+- Removed duplicated in-page bottom navigation from offline pages so only the native app navigation remains.
+- Reworked offline home as a compact Harmat promotional first screen with preloaded floorplan messaging.
+- Reworked offline floorplan page to load bundled `floorplans.js` directly instead of `fetch(data/floorplans.json)`, improving `file:///android_asset/` reliability.
+- Updated Android shell to hide the progress layer immediately for local asset pages and changed the network error copy to Hungarian.
+- Built debug preview APK: `android/harmat-app/dist/Harmat22-portal-0.6.1-preloaded-layout-debug.apk`.
+
+## 2026-06-10 - Android emulator visual QA polish
+- Ran the preloaded Android APK through emulator QA on `emulator-5554` at 1080x2400.
+- Captured visual QA screenshots for home and offline floorplans.
+- Fixed floorplans page looking like a web page by removing default link styling from the app header.
+- Changed offline floorplan filters from clipped horizontal pills to a two-row mobile grid.
+- Replaced the home `0 letöltés` stat with clearer `offline mód` messaging.
+- Updated Android system bars to use dark status/navigation icons on the light Harmat background.
+- Built debug preview APK: `android/harmat-app/dist/Harmat22-portal-0.6.3-systembar-polish-debug.apk`.
+- Emulator screenshots: `android/harmat-app/harmat-qa-0.6.3-home.png`, `android/harmat-app/harmat-qa-0.6.3-floorplans.png`.
+
+## 2026-06-10 - A block bruto price verification PDF
+- Converted the provided `harmat营销台账.xls` to a local temporary XLSX copy for reading without modifying the source file.
+- Used sheet `预购`, column `含税金额（Ft） brutto` as the final gross sales price for 124 apartments.
+- Matched all 124 marketing ledger apartment IDs to bundled floorplan assets; no missing prices or images.
+- Calculated Ft/m² as gross price divided by the ledger `销售面积` value.
+- Generated a 124-page verification PDF with one apartment floorplan and price panel per page: `outputs/pricing_pdf/Harmat22_A_tomb_124_lakas_ar_ellenorzes_brutto.pdf`.
+- Summary: sales area `8380.08 m²`, gross total `11036072250 Ft`, weighted average `1316941.16 Ft/m²`.
+
+## 2026-06-10 - Website apartment price and floorplan PDF update
+- User confirmed the gross price verification PDF and clarified APP should be ignored for this step.
+- Updated website pricing scope only: no Android/APP data or APK rebuild was performed.
+- Generated 124 individual one-page floorplan PDFs with the approved latest gross price and Ft/m² unit price.
+- Updated local website assistant apartment KB prices from the approved marketing ledger `含税金额（Ft） brutto` values.
+- Deployed live website changes via SSH/Paramiko.
+- Live backup directory: `/home/harmath2/codex-backups/site-prices-floorplans-20260610-213156`.
+- Live update result: 124 property price metas updated, 124 existing floorplan PDFs backed up, 124 new priced floorplan PDFs uploaded, 0 missing posts, 0 missing PDFs.
+- Cleared WordPress/SuperCache/Autoptimize caches after deployment.
+
+## 2026-06-10 - Combined priced floorplan print PDF
+- Combined the 124 individual priced apartment floorplan PDFs into one print-ready PDF.
+- Output: `outputs/pricing_pdf/Harmat22_A_tomb_124_lakas_arazott_alaprajzok_nyomtatas.pdf`.
+- Resulting PDF contains 124 pages, one priced floorplan per apartment.
+
+## 2026-06-10 - Harmat22 website floorplan price PDFs safe price block
+- Updated the original-layout floorplan PDFs again using the confirmed gross prices from `harmat营销台账.xls`.
+- Added `Négyzetméterár` / Ft/m² inside the original price area with a tighter safe layout so the new text does not cover footer text, logo, or floorplan labels.
+- Generated the combined 124-page print review PDF: `outputs/pricing_pdf/Harmat22_A_tomb_124_lakas_eredeti_alaprajz_uj_arakkal_nyomtatas_SAFE.pdf`.
+- Rendered sample `a1-1-l2-cn-floorplan.pdf` with Poppler to visually check the safe price block placement.
+- Uploaded 124 safe original-layout PDFs to live WordPress uploads `/wp-content/uploads/2026/05`.
+- Server rollback backup: `/home/harmath2/codex-backups/fix-safe-price-block-floorplans-20260610-215355/current-live-pdfs`.
+
+## 2026-06-10 - Harmat22 safe floorplan PDF audit
+- Audited the 124 safe original-layout floorplan PDFs against the confirmed ledger gross prices and calculated Ft/m² values.
+- Initial plain text extraction reported 14 false positives because Poppler also read hidden old price text underneath the white price patch.
+- Re-ran a coordinate/font-height filtered PDF text audit against the visible generated price text: 124/124 matched, 0 mismatches.
+- Ran Poppler visual diff against original PDF backups, allowing changes only in the safe price block envelope: 0 outside-area pixel changes, 0 visual overlap risks.
+- Confirmed live WordPress uploaded PDFs match local safe PDFs by sha256: 124/124 matched.
+- Manual Poppler sample checks included `A1-1-L8` and max-price unit `A4-3-L3`; both showed no visible text overlap.
+- Audit artifacts are in `outputs/pricing_pdf/audit_safe_price_block/`.
+
+## 2026-06-11 - Harmat22 AI smart sales assistant upgrade
+- Strengthened the Harmat local assistant for common real-estate sales conversations.
+- Added buyer-profile follow-up logic for vague purchase/recommendation requests: own-use vs investment, budget, rooms, area, parking/storage, floor, balcony/terrace/garden.
+- Added multi-unit comparison handling for 2-4 apartment codes, comparing total price, sales area, Ft/m², floor, status, and own-use vs investment interpretation.
+- Expanded FAQ training content with buyer profiling, unit comparison guidance, and a 30-question real-estate sales regression bank.
+- Added `harmat_ai_sales_test_questions.json` under the assistant data directory for future QA/regression testing.
+- Updated live files: `wp-content/plugins/harmat-local-assistant/harmat-local-assistant.php`, `wp-content/plugins/harmat-local-assistant/data/harmat_ai_faq_responses.md`, and `wp-content/plugins/harmat-local-assistant/data/harmat_ai_sales_test_questions.json`.
+- Server rollback backup: `/home/harmath2/codex-backups/ai-smart-sales-upgrade-20260611-033216`.
+
+## 2026-06-11 - Harmat22 AI sales QA and targeted fixes
+- Ran the 30-question Harmat AI real-estate sales regression test set against the live assistant endpoint.
+- Initial full run found two real routing issues: balcony/terrace area calculation questions were treated as terrace unit searches, and viewing appointment requests did not consistently ask for contact/time details.
+- Added pre-search priority handling for area calculation, reservation/deposit, and viewing appointment requests in `harmat-local-assistant.php`.
+- Verified PHP syntax locally with `php -l` before upload.
+- Uploaded the fixed assistant PHP file and cleared cache.
+- Public endpoint testing triggered temporary 429 rate limiting; follow-up verification was run from the server with page nonce/cookies and Unicode-safe test payloads.
+- Key retest passed for: balcony area calculation, reservation/deposit, viewing appointment, nearby buses, nearby schools, and multi-unit comparison (`A1-1-L8` vs `A4-3-L3`).
+- Server rollback backup for the fix: `/home/harmath2/codex-backups/ai-sales-test-fixes-20260611-034346`.
