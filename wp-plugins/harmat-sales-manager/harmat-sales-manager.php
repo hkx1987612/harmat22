@@ -8395,15 +8395,24 @@ final class Harmat_Sales_Manager {
         echo '</section></section></details>';
     }
 
+    private function sales_inquiries_page_text($lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $texts = json_decode('{"zh":{"summary_total":"\u6c47\u603b\u8bb0\u5f55","current":"\u5f53\u524d\u663e\u793a","title":"\u8be2\u4ef7\u6c47\u603b","intro":"\u7edf\u4e00\u67e5\u770b\u7f51\u7ad9\u8be2\u4ef7\u3001\u7ecf\u7eaa\u4eba\u8be2\u4ef7\u548c\u81ea\u6765\u8be2\u4ef7\uff1b\u4e3b\u7ba1\u6307\u6d3e\u540e\uff0c\u9500\u552e\u53ef\u76f4\u63a5\u751f\u6210\u8ddf\u5355\u3002","search_placeholder":"\u641c\u7d22\u5ba2\u6237\u3001\u90ae\u7bb1\u3001\u7535\u8bdd\u3001\u623f\u53f7\u3001\u9500\u552e","all_sources":"\u5168\u90e8\u6765\u6e90","search":"\u641c\u7d22","staff_notice":"\u53ea\u663e\u793a\u4e3b\u7ba1\u5df2\u7ecf\u6307\u6d3e\u7ed9\u4f60\u7684\u8be2\u4ef7\uff0c\u6216\u4f60\u81ea\u5df1\u7ef4\u62a4\u7684\u5ba2\u6237\u3002\u751f\u6210\u8ddf\u5355\u540e\uff0c\u4f1a\u8fdb\u5165\u4f60\u7684\u9500\u552e\u8ddf\u5355\u5217\u8868\u3002","empty":"\u5f53\u524d\u7b5b\u9009\u6761\u4ef6\u4e0b\u6ca1\u6709\u627e\u5230\u8be2\u4ef7\u8bb0\u5f55\u3002","time":{"title":"\u65f6\u95f4\u7b5b\u9009","desc":"\u6309\u63d0\u4ea4\u65f6\u95f4\u6392\u5e8f\u6216\u7b5b\u9009\u65e5\u671f\u8303\u56f4\u3002","newest":"\u6700\u65b0\u5728\u524d","oldest":"\u6700\u65e7\u5728\u524d","from":"\u5f00\u59cb\u65e5\u671f","to":"\u7ed3\u675f\u65e5\u671f","clear":"\u6e05\u9664"},"headers":["\u6765\u6e90","\u63d0\u4ea4/\u767b\u8bb0\u65f6\u95f4","\u5ba2\u6237","\u623f\u53f7","\u8054\u7cfb\u65b9\u5f0f","\u72b6\u6001/\u90ae\u4ef6","\u8ddf\u8fdb\u9500\u552e","\u7559\u8a00/\u5165\u53e3","\u64cd\u4f5c"],"row":{"unassigned":"\u672a\u6307\u6d3e","converted":"\u5df2\u751f\u6210\u8ddf\u5355","assigned_prefix":"\u5df2\u6307\u6d3e\uff1a","website_form":"\u7f51\u7ad9\u8868\u5355 #","client_file":"\u5ba2\u6237\u6863\u6848 #","broker_prefix":"\u7ecf\u7eaa\u4eba\uff1a","empty_client":"\u672a\u586b\u5199","no_property":"\u6682\u672a\u6307\u5b9a","linked_deal":"\u5df2\u751f\u6210\u8ddf\u5355\uff1a","assign":"\u6307\u6d3e","view_deal":"\u67e5\u770b\u8ddf\u5355","create_deal":"\u4e00\u952e\u751f\u6210\u8ddf\u5355","create_hint":"\u81ea\u52a8\u5e26\u5165\u5ba2\u6237\u3001\u8054\u7cfb\u65b9\u5f0f\u3001\u623f\u53f7\u548c\u7559\u8a00","edit_client":"\u7f16\u8f91\u5ba2\u6237","delete":"\u5220\u9664","delete_inquiry_confirm":"\u786e\u5b9a\u5220\u9664\u8fd9\u4e2a\u7f51\u7ad9\u8be2\u4ef7\u8bb0\u5f55\u5417\uff1f","delete_lead_confirm":"\u786e\u5b9a\u5220\u9664\u8fd9\u4e2a\u5ba2\u6237\u8ddf\u8fdb\u8bb0\u5f55\u5417\uff1f"}},"hu":{"summary_total":"\u00d6sszes rekord","current":"Jelenlegi lista","title":"\u00c9rdekl\u0151d\u00e9sek \u00f6sszes\u00edt\u00e9se","intro":"Weboldali, k\u00f6zvet\u00edt\u0151i \u00e9s saj\u00e1t \u00e9rdekl\u0151d\u00e9sek egys\u00e9ges \u00e1ttekint\u00e9se; vezet\u0151i kioszt\u00e1s ut\u00e1n az \u00e9rt\u00e9kes\u00edt\u0151 k\u00f6zvetlen\u00fcl \u00fcgyet hozhat l\u00e9tre.","search_placeholder":"\u00dcgyf\u00e9l, e-mail, telefon, lak\u00e1s, \u00e9rt\u00e9kes\u00edt\u0151","all_sources":"Minden forr\u00e1s","search":"Keres\u00e9s","staff_notice":"Csak a vezet\u0151 \u00e1ltal \u00d6nnek kiosztott \u00e9rdekl\u0151d\u00e9sek \u00e9s a saj\u00e1t \u00fcgyfelek l\u00e1tszanak. \u00dcgy l\u00e9trehoz\u00e1sa ut\u00e1n a rekord a saj\u00e1t \u00e9rt\u00e9kes\u00edt\u00e9si \u00fcgyek k\u00f6z\u00e9 ker\u00fcl.","empty":"A jelenlegi sz\u0171r\u00e9s mellett nincs \u00e9rdekl\u0151d\u00e9si rekord.","time":{"title":"Id\u0151sz\u0171r\u00e9s","desc":"Rendez\u00e9s \u00e9s d\u00e1tumtartom\u00e1ny a bek\u00fcld\u00e9si id\u0151 alapj\u00e1n.","newest":"Leg\u00fajabb","oldest":"Legr\u00e9gebbi","from":"Kezd\u0151 d\u00e1tum","to":"Z\u00e1r\u00f3 d\u00e1tum","clear":"T\u00f6rl\u00e9s"},"headers":["Forr\u00e1s","Bek\u00fcld\u00e9s / r\u00f6gz\u00edt\u00e9s ideje","\u00dcgyf\u00e9l","Lak\u00e1s","El\u00e9rhet\u0151s\u00e9g","St\u00e1tusz / e-mail","K\u00f6vet\u0151 \u00e9rt\u00e9kes\u00edt\u0151","\u00dczenet / bel\u00e9p\u00e9s","M\u0171velet"],"row":{"unassigned":"Nincs kiosztva","converted":"\u00dcgy l\u00e9trehozva","assigned_prefix":"Kiosztva: ","website_form":"Weboldali \u0171rlap #","client_file":"\u00dcgyf\u00e9lakta #","broker_prefix":"K\u00f6zvet\u00edt\u0151: ","empty_client":"Nincs megadva","no_property":"Nincs megadva","linked_deal":"L\u00e9trehozott \u00fcgy: ","assign":"Kioszt\u00e1s","view_deal":"\u00dcgy megnyit\u00e1sa","create_deal":"\u00dcgy l\u00e9trehoz\u00e1sa","create_hint":"\u00dcgyf\u00e9l, el\u00e9rhet\u0151s\u00e9g, lak\u00e1s \u00e9s \u00fczenet automatikusan beker\u00fcl","edit_client":"\u00dcgyf\u00e9l szerkeszt\u00e9se","delete":"T\u00f6rl\u00e9s","delete_inquiry_confirm":"Biztosan t\u00f6rli ezt a weboldali \u00e9rdekl\u0151d\u00e9st?","delete_lead_confirm":"Biztosan t\u00f6rli ezt az \u00fcgyf\u00e9lk\u00f6vet\u00e9si rekordot?"}}}', true);
+        return $texts[$lang] ?? $texts['zh'];
+    }
+
     private function render_sales_portal_inquiries() {
+        $lang = $this->active_sales_language();
+        $text = $this->sales_inquiries_page_text($lang);
         $search = isset($_GET['sales_search']) ? sanitize_text_field(wp_unslash($_GET['sales_search'])) : '';
         $source_filter = isset($_GET['inquiry_source']) ? sanitize_key(wp_unslash($_GET['inquiry_source'])) : '';
-        $source_options = $this->deal_source_options();
+        $source_options = $this->deal_source_options($lang);
         if ($source_filter && !isset($source_options[$source_filter])) {
             $source_filter = '';
         }
-        $rows = $this->sales_inquiry_summary_rows($search, $source_filter);
-        $all_rows = $this->sales_inquiry_summary_rows('', '');
+        $rows = $this->sales_inquiry_summary_rows($search, $source_filter, $lang);
+        $all_rows = $this->sales_inquiry_summary_rows('', '', $lang);
         $can_manage = $this->is_sales_manager_user();
         $counts = array_fill_keys(array_keys($source_options), 0);
         foreach ($all_rows as $row) {
@@ -8414,60 +8423,49 @@ final class Harmat_Sales_Manager {
         }
 
         echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact">';
-        echo '<article><small>汇总记录</small><strong>' . count($all_rows) . '</strong></article>';
+        echo '<article><small>' . esc_html($text['summary_total']) . '</small><strong>' . count($all_rows) . '</strong></article>';
         foreach ($source_options as $value => $label) {
             echo '<article><small>' . esc_html($label) . '</small><strong>' . (int) ($counts[$value] ?? 0) . '</strong></article>';
         }
-        echo '<article><small>当前显示</small><strong>' . count($rows) . '</strong></article>';
+        echo '<article><small>' . esc_html($text['current']) . '</small><strong>' . count($rows) . '</strong></article>';
         echo '</section>';
 
         echo '<section class="harmat-sales-panel">';
-        echo '<div class="harmat-sales-panel-head"><div><h2>询价汇总</h2><p>统一查看网站询价、经纪人询价和自来询价；主管指派后，销售可直接生成跟单。</p></div>';
-        echo '<form method="get" class="harmat-sales-search harmat-sales-inquiry-search"><input type="hidden" name="view" value="inquiries"><input name="sales_search" value="' . esc_attr($search) . '" placeholder="搜索客户、邮箱、电话、房号、销售"><select name="inquiry_source"><option value="">全部来源</option>';
+        echo '<div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['title']) . '</h2><p>' . esc_html($text['intro']) . '</p></div>';
+        echo '<form method="get" class="harmat-sales-search harmat-sales-inquiry-search"><input type="hidden" name="view" value="inquiries"><input name="sales_search" value="' . esc_attr($search) . '" placeholder="' . esc_attr($text['search_placeholder']) . '"><select name="inquiry_source"><option value="">' . esc_html($text['all_sources']) . '</option>';
         foreach ($source_options as $value => $label) {
             echo '<option value="' . esc_attr($value) . '"' . selected($source_filter, $value, false) . '>' . esc_html($label) . '</option>';
         }
-        echo '</select><button>搜索</button></form></div>';
+        echo '</select><button>' . esc_html($text['search']) . '</button></form></div>';
         if (!$can_manage) {
-            echo '<div class="harmat-sales-notice">这里只显示主管已经指派给你的询价，或你自己维护的客户。生成跟单后，会进入你的销售跟单列表。</div>';
+            echo '<div class="harmat-sales-notice">' . esc_html($text['staff_notice']) . '</div>';
         }
 
         if (!$rows) {
-            echo '<div class="harmat-sales-empty">当前筛选条件下没有找到询价记录。</div></section>';
+            echo '<div class="harmat-sales-empty">' . esc_html($text['empty']) . '</div></section>';
             return;
         }
 
-        $inquiry_time_lang = $this->active_sales_language();
-        $inquiry_time_labels = $inquiry_time_lang === 'hu' ? array(
-            'title' => json_decode('"Id\\u0151sz\\u0171r\\u00e9s"'),
-            'desc' => json_decode('"Rendez\\u00e9s \\u00e9s d\\u00e1tumtartom\\u00e1ny a bek\\u00fcld\\u00e9si id\\u0151 alapj\\u00e1n."'),
-            'newest' => json_decode('"Leg\\u00fajabb"'),
-            'oldest' => json_decode('"Legr\\u00e9gebbi"'),
-            'from' => json_decode('"Kezd\\u0151 d\\u00e1tum"'),
-            'to' => json_decode('"Z\\u00e1r\\u00f3 d\\u00e1tum"'),
-            'clear' => json_decode('"T\\u00f6rl\\u00e9s"'),
-        ) : array(
-            'title' => json_decode('"\\u65f6\\u95f4\\u7b5b\\u9009"'),
-            'desc' => json_decode('"\\u6309\\u63d0\\u4ea4\\u65f6\\u95f4\\u6392\\u5e8f\\u6216\\u7b5b\\u9009\\u65e5\\u671f\\u8303\\u56f4\\u3002"'),
-            'newest' => json_decode('"\\u6700\\u65b0\\u5728\\u524d"'),
-            'oldest' => json_decode('"\\u6700\\u65e7\\u5728\\u524d"'),
-            'from' => json_decode('"\\u5f00\\u59cb\\u65e5\\u671f"'),
-            'to' => json_decode('"\\u7ed3\\u675f\\u65e5\\u671f"'),
-            'clear' => json_decode('"\\u6e05\\u9664"'),
-        );
+        $inquiry_time_labels = $text['time'];
         echo '<div class="harmat-sales-inquiry-tools" data-harmat-inquiry-tools="1"><div class="harmat-sales-inquiry-tools-copy"><strong>' . esc_html($inquiry_time_labels['title']) . '</strong><span>' . esc_html($inquiry_time_labels['desc']) . '</span></div><div class="harmat-sales-inquiry-tools-controls"><button type="button" class="is-active" data-harmat-inquiry-sort="desc">' . esc_html($inquiry_time_labels['newest']) . '</button><button type="button" data-harmat-inquiry-sort="asc">' . esc_html($inquiry_time_labels['oldest']) . '</button><label><span>' . esc_html($inquiry_time_labels['from']) . '</span><input type="date" data-harmat-inquiry-from></label><label><span>' . esc_html($inquiry_time_labels['to']) . '</span><input type="date" data-harmat-inquiry-to></label><button type="button" data-harmat-inquiry-clear="1">' . esc_html($inquiry_time_labels['clear']) . '</button></div></div><script>(function(){function parseDate(row){var cell=row.cells&&row.cells[1]?row.cells[1].innerText:"";var m=cell.match(/(\\d{4})-(\\d{2})-(\\d{2})\\s+(\\d{2}):(\\d{2})/);if(!m){return {time:0,day:""};}return {time:new Date(m[1]+"-"+m[2]+"-"+m[3]+"T"+m[4]+":"+m[5]+":00").getTime(),day:m[1]+"-"+m[2]+"-"+m[3]};}function init(){document.querySelectorAll("[data-harmat-inquiry-tools]").forEach(function(tools){var wrap=tools.nextElementSibling;while(wrap&&(!wrap.classList||!wrap.classList.contains("harmat-sales-table-wrap"))){wrap=wrap.nextElementSibling;}var table=wrap?wrap.querySelector(".harmat-sales-inquiry-table"):null;if(!table||!table.tBodies.length){return;}var tbody=table.tBodies[0];var rows=Array.prototype.slice.call(tbody.rows);var sort="desc";function apply(){var from=tools.querySelector("[data-harmat-inquiry-from]").value;var to=tools.querySelector("[data-harmat-inquiry-to]").value;rows.sort(function(a,b){var da=parseDate(a).time;var db=parseDate(b).time;return sort==="asc"?da-db:db-da;});rows.forEach(function(row){var d=parseDate(row);var show=(!from||d.day>=from)&&(!to||d.day<=to);row.style.display=show?"":"none";tbody.appendChild(row);});}tools.querySelectorAll("[data-harmat-inquiry-sort]").forEach(function(btn){btn.addEventListener("click",function(){sort=btn.getAttribute("data-harmat-inquiry-sort");tools.querySelectorAll("[data-harmat-inquiry-sort]").forEach(function(x){x.classList.toggle("is-active",x===btn);});apply();});});tools.querySelectorAll("input[type=date]").forEach(function(input){input.addEventListener("change",apply);});var clear=tools.querySelector("[data-harmat-inquiry-clear]");if(clear){clear.addEventListener("click",function(){tools.querySelectorAll("input[type=date]").forEach(function(input){input.value="";});apply();});}apply();});}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}else{init();}})();</script>';
-        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-inquiry-table"><thead><tr><th>来源</th><th>提交/登记时间</th><th>客户</th><th>房号</th><th>联系方式</th><th>状态/邮件</th><th>跟进销售</th><th>留言/入口</th><th>操作</th></tr></thead><tbody>';
+        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-inquiry-table"><thead><tr>';
+        foreach ($text['headers'] as $header) {
+            echo '<th>' . esc_html($header) . '</th>';
+        }
+        echo '</tr></thead><tbody>';
         foreach ($rows as $row) {
-            $this->render_sales_portal_inquiry_summary_row($row);
+            $this->render_sales_portal_inquiry_summary_row($row, $text);
         }
         echo '</tbody></table></div></section>';
     }
 
-    private function sales_inquiry_summary_rows($search = '', $source_filter = '') {
+    private function sales_inquiry_summary_rows($search = '', $source_filter = '', $lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
         $rows = array();
         $can_manage = $this->is_sales_manager_user();
         $current_user_id = get_current_user_id();
-        $source_options = $this->deal_source_options();
+        $source_options = $this->deal_source_options($lang);
         $visible_deals = $this->visible_deals($this->get_deals());
 
         foreach ($this->get_offer_inquiry_posts(120) as $inquiry_post) {
@@ -8507,7 +8505,7 @@ final class Harmat_Sales_Manager {
         foreach ($this->visible_leads($this->get_leads()) as $lead) {
             $source = $this->lead_source_type($lead);
             $property_title = !empty($lead['property_id']) ? get_the_title((int) $lead['property_id']) : '';
-            $status_options = $this->lead_status_options();
+            $status_options = $this->lead_status_options($lang);
             $status_key = isset($status_options[$lead['status'] ?? '']) ? ($lead['status'] ?? '') : 'new';
             $linked_deal = $this->find_deal_by_lead_id((int) ($lead['id'] ?? 0), $visible_deals);
             $broker_id = (int) ($lead['broker_id'] ?? 0);
@@ -8525,7 +8523,7 @@ final class Harmat_Sales_Manager {
                 'id' => (int) ($lead['id'] ?? 0),
                 'lead' => $lead,
                 'source' => $source,
-                'source_label' => $this->lead_source_label($lead),
+                'source_label' => $this->lead_source_label($lead, $lang),
                 'date' => $this->format_lead_datetime($lead['created_at'] ?? ''),
                 'sort' => !empty($lead['created_at']) ? (strtotime((string) $lead['created_at']) ?: 0) : 0,
                 'client' => $lead['client_name'] ?? '',
@@ -8582,35 +8580,37 @@ final class Harmat_Sales_Manager {
         return strpos($this->normalize_sales_filter_text($haystack), $this->normalize_sales_filter_text($search)) !== false;
     }
 
-    private function render_sales_portal_inquiry_summary_row($row) {
+    private function render_sales_portal_inquiry_summary_row($row, $text = null) {
+        $text = is_array($text) ? $text : $this->sales_inquiries_page_text();
+        $row_text = $text['row'];
         $kind = (string) ($row['kind'] ?? '');
         $id = (int) ($row['id'] ?? 0);
         $assigned_sales_id = (int) ($row['assigned_sales_id'] ?? 0);
         $source = (string) ($row['source'] ?? 'walkin');
         $linked_deal = !empty($row['linked_deal']) && is_array($row['linked_deal']) ? $row['linked_deal'] : null;
         $assignment_class = 'unassigned';
-        $assignment_label = '未指派';
+        $assignment_label = $row_text['unassigned'];
         if ($linked_deal) {
             $assignment_class = 'converted';
-            $assignment_label = '已生成跟单';
+            $assignment_label = $row_text['converted'];
         } elseif ($assigned_sales_id) {
             $assignment_class = 'assigned';
-            $assignment_label = '已指派：' . $this->assigned_sales_label($assigned_sales_id);
+            $assignment_label = $row_text['assigned_prefix'] . $this->assigned_sales_label($assigned_sales_id);
         }
 
         echo '<tr>';
-        echo '<td><span class="harmat-sales-pill harmat-sales-source-' . esc_attr($source) . '">' . esc_html($row['source_label'] ?? '-') . '</span><small>' . esc_html($kind === 'website' ? '网站表单 #' . $id : '客户档案 #' . $id) . '</small>';
+        echo '<td><span class="harmat-sales-pill harmat-sales-source-' . esc_attr($source) . '">' . esc_html($row['source_label'] ?? '-') . '</span><small>' . esc_html(($kind === 'website' ? $row_text['website_form'] : $row_text['client_file']) . $id) . '</small>';
         if ($source === 'broker' && !empty($row['broker_label'])) {
-            echo '<small>经纪人：' . esc_html($row['broker_label']) . '</small>';
+            echo '<small>' . esc_html($row_text['broker_prefix'] . $row['broker_label']) . '</small>';
         }
         echo '</td>';
         echo '<td><strong>' . esc_html($row['date'] ?? '-') . '</strong></td>';
-        echo '<td><strong>' . esc_html($row['client'] ?: '未填写') . '</strong></td>';
+        echo '<td><strong>' . esc_html($row['client'] ?: $row_text['empty_client']) . '</strong></td>';
         echo '<td>';
         if (!empty($row['property']) && !empty($row['property_url'])) {
             echo '<a href="' . esc_url($row['property_url']) . '" target="_blank" rel="noopener">' . esc_html($row['property']) . '</a>';
         } else {
-            echo esc_html($row['property'] ?: '暂未指定');
+            echo esc_html($row['property'] ?: $row_text['no_property']);
         }
         if (!empty($row['property_info']) && $row['property_info'] !== $row['property']) {
             echo '<small>' . esc_html($row['property_info']) . '</small>';
@@ -8619,7 +8619,7 @@ final class Harmat_Sales_Manager {
         echo '<td><span>' . esc_html($row['phone'] ?: '-') . '</span><small>' . esc_html($row['email'] ?: '-') . '</small></td>';
         echo '<td>' . esc_html($row['status'] ?: '-');
         if ($linked_deal) {
-            echo '<small>已生成跟单：' . esc_html($linked_deal['crm_code'] ?? ('#' . (int) ($linked_deal['id'] ?? 0))) . '</small>';
+            echo '<small>' . esc_html($row_text['linked_deal'] . ($linked_deal['crm_code'] ?? ('#' . (int) ($linked_deal['id'] ?? 0)))) . '</small>';
         }
         echo '</td>';
         echo '<td>';
@@ -8635,20 +8635,20 @@ final class Harmat_Sales_Manager {
                 echo '<input type="hidden" name="return_to" value="sales_inquiries">';
                 echo '<input type="hidden" name="lead_id" value="' . esc_attr($id) . '">';
             }
-            $this->render_assigned_sales_select('assigned_sales_id', $assigned_sales_id);
-            echo '<button>指派</button></form>';
+            $this->render_assigned_sales_select('assigned_sales_id', $assigned_sales_id, true, $row_text['unassigned']);
+            echo '<button>' . esc_html($row_text['assign']) . '</button></form>';
         } else {
-            echo esc_html($this->assigned_sales_label($assigned_sales_id));
+            echo esc_html($assigned_sales_id ? $this->assigned_sales_label($assigned_sales_id) : $row_text['unassigned']);
         }
         echo '<small><span class="harmat-sales-assignment-state harmat-sales-assignment-' . esc_attr($assignment_class) . '">' . esc_html($assignment_label) . '</span></small>';
         echo '</td>';
         echo '<td class="harmat-sales-note-cell">' . esc_html($row['message'] ?: '-') . '</td>';
-        echo '<td class="harmat-sales-actions"><a class="' . esc_attr($linked_deal ? 'harmat-sales-secondary-action' : 'harmat-sales-primary-action') . '" href="' . esc_url($row['deal_url']) . '">' . esc_html($linked_deal ? '查看跟单' : '一键生成跟单') . '</a>';
+        echo '<td class="harmat-sales-actions"><a class="' . esc_attr($linked_deal ? 'harmat-sales-secondary-action' : 'harmat-sales-primary-action') . '" href="' . esc_url($row['deal_url']) . '">' . esc_html($linked_deal ? $row_text['view_deal'] : $row_text['create_deal']) . '</a>';
         if (!$linked_deal) {
-            echo '<small>自动带入客户、联系方式、房号和留言</small>';
+            echo '<small>' . esc_html($row_text['create_hint']) . '</small>';
         }
         if (!empty($row['edit_url'])) {
-            echo '<a href="' . esc_url($row['edit_url']) . '">编辑客户</a>';
+            echo '<a href="' . esc_url($row['edit_url']) . '">' . esc_html($row_text['edit_client']) . '</a>';
         }
         $can_delete_row = $kind === 'website'
             ? $this->can_delete_inquiry_record($id)
@@ -8659,7 +8659,7 @@ final class Harmat_Sales_Manager {
                 wp_nonce_field('harmat_sales_action_delete_inquiry');
                 echo '<input type="hidden" name="harmat_sales_action" value="delete_inquiry">';
                 echo '<input type="hidden" name="inquiry_id" value="' . esc_attr($id) . '">';
-                echo '<button onclick="return confirm(\'确定删除这个网站询价记录吗？\')">删除</button>';
+                echo '<button onclick="return confirm(\'' . esc_js($row_text['delete_inquiry_confirm']) . '\')">' . esc_html($row_text['delete']) . '</button>';
                 echo '</form>';
             } else {
                 echo '<form method="post">';
@@ -8667,7 +8667,7 @@ final class Harmat_Sales_Manager {
                 echo '<input type="hidden" name="harmat_sales_action" value="delete_lead">';
                 echo '<input type="hidden" name="return_to" value="sales_inquiries">';
                 echo '<input type="hidden" name="lead_id" value="' . esc_attr($id) . '">';
-                echo '<button onclick="return confirm(\'确定删除这个客户跟进记录吗？\')">删除</button>';
+                echo '<button onclick="return confirm(\'' . esc_js($row_text['delete_lead_confirm']) . '\')">' . esc_html($row_text['delete']) . '</button>';
                 echo '</form>';
             }
         }
@@ -14797,11 +14797,12 @@ final class Harmat_Sales_Manager {
         foreach ($this->visible_deals($this->get_deals()) as $deal) {
             $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
             $deal_url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) $deal['id']));
+            $next_step_label = $this->sales_deal_next_step_label($deal['next_step'] ?? '');
             if (!empty($deal['next_followup'])) {
                 $tasks[] = $this->make_sales_task(
                     $deal['next_followup'],
                     $task_text['type_deal'],
-                    $deal['next_step'] ?: $task_text['follow_deal'],
+                    $next_step_label ?: $task_text['follow_deal'],
                     $deal['client_name'] ?? '',
                     $property_title,
                     $deal_url
@@ -14866,10 +14867,11 @@ final class Harmat_Sales_Manager {
                     continue;
                 }
                 $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+                $next_step_label = $this->sales_deal_next_step_label($deal['next_step'] ?? '');
                 $tasks[] = $this->make_sales_task(
                     $deal['next_followup'],
                     $task_text['type_customer'],
-                    $deal['next_step'] ?: $task_text['maintain_customer'],
+                    $next_step_label ?: $task_text['maintain_customer'],
                     $deal['client_name'] ?? '',
                     $property_title,
                     $this->sales_portal_url(array('view' => 'customers', 'customer_id' => (int) $deal['id']))
