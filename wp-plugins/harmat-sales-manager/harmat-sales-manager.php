@@ -13070,9 +13070,36 @@ final class Harmat_Sales_Manager {
         echo '</div></section>';
     }
 
+    private function sales_legal_page_text($section, $lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        switch ((string) $section) {
+            case 'general':
+                $texts = json_decode('{"zh":{"no_permission_title":"\u6743\u9650\u4e0d\u8db3","no_permission_intro":"\u5f8b\u5e08\u8d44\u6599\u540c\u6b65\u9875\u4ec5\u5bf9\u4e3b\u7ba1\u6216\u6388\u6743\u8d26\u53f7\u5f00\u653e\u3002"},"hu":{"no_permission_title":"Nincs jogosults\u00e1g","no_permission_intro":"Az \u00fcgyv\u00e9di adatszinkron csak vezet\u0151i vagy enged\u00e9lyezett fi\u00f3kkal \u00e9rhet\u0151 el."}}', true);
+                break;
+            case 'list':
+                $texts = json_decode('{"zh":{"eyebrow":"\u5f8b\u5e08\u540c\u6b65","title":"\u5f8b\u5e08\u8d44\u6599\u540c\u6b65","intro":"\u5f8b\u5e08\u53ef\u4ee5\u76f4\u63a5\u67e5\u770b\u6210\u4ea4\u5ba2\u6237\u7684\u5408\u540c\u8d44\u6599\u3001\u8eab\u4efd\u4fe1\u606f\u548c\u9500\u552e\u4e0a\u4f20\u9644\u4ef6\u3002","empty":"\u6682\u65e0\u53ef\u540c\u6b65\u7684\u6210\u4ea4\u6216\u8ddf\u5355\u8bb0\u5f55\u3002","headers":["\u5ba2\u6237","\u623f\u53f7","\u8d44\u6599\u5b8c\u6574\u5ea6","\u5df2\u786e\u8ba4","\u9644\u4ef6","\u72b6\u6001","\u64cd\u4f5c"],"missing_suffix":" \u9879\u5f85\u8865\u5145","open":"\u67e5\u770b\u540c\u6b65\u8d44\u6599"},"hu":{"eyebrow":"\u00dcgyv\u00e9di szinkron","title":"\u00dcgyv\u00e9di adatszinkron","intro":"Az \u00fcgyv\u00e9d k\u00f6zvetlen\u00fcl \u00e1ttekintheti a lez\u00e1rt \u00fcgyfelek szerz\u0151d\u00e9ses adatait, szem\u00e9lyes adatait \u00e9s az \u00e9rt\u00e9kes\u00edt\u00e9s \u00e1ltal felt\u00f6lt\u00f6tt mell\u00e9kleteket.","empty":"Nincs szinkroniz\u00e1lhat\u00f3 lez\u00e1rt \u00fcgy vagy \u00e9rt\u00e9kes\u00edt\u00e9si \u00fcgy.","headers":["\u00dcgyf\u00e9l","Lak\u00e1s","Adatok teljess\u00e9ge","Meger\u0151s\u00edtve","Mell\u00e9kletek","\u00c1llapot","M\u0171velet"],"missing_suffix":" hi\u00e1nyz\u00f3 t\u00e9tel","open":"Szinkronadatok megnyit\u00e1sa"}}', true);
+                break;
+            case 'detail':
+                $texts = json_decode('{"zh":{"eyebrow":"\u5f8b\u5e08\u540c\u6b65","title_prefix":"\u5f8b\u5e08\u8d44\u6599\u540c\u6b65\uff1a","intro":"\u8fd9\u91cc\u6c47\u603b\u5ba2\u6237\u6863\u6848\u3001\u6210\u4ea4\u8ddf\u5355\u548c\u9500\u552e\u4e0a\u4f20\u8d44\u6599\uff0c\u5f8b\u5e08\u53ef\u76f4\u63a5\u7528\u4e8e\u51c6\u5907\u4e70\u5356\u5408\u540c\u3002","back":"\u8fd4\u56de\u5217\u8868","edit_deal":"\u7f16\u8f91\u8ddf\u5355","customer_profile":"\u5ba2\u6237\u6863\u6848","complete":"\u8d44\u6599\u5b8c\u6574\u5ea6","missing_suffix":" \u9879\u5f85\u8865\u5145","confirmed":"\u5df2\u786e\u8ba4","confirmed_hint":"\u5f8b\u5e08\u53ef\u4f18\u5148\u67e5\u770b","attachments":"\u9644\u4ef6","attachments_hint":"\u8bc1\u4ef6\u3001\u7a0e\u5361\u3001\u5730\u5740\u8bc1\u660e","deal_status":"\u8ddf\u5355\u72b6\u6001","client":"\u5ba2\u6237","property":"\u623f\u53f7","phone":"\u7535\u8bdd","email":"\u90ae\u7bb1","assigned_sales":"\u8ddf\u8fdb\u9500\u552e","broker":"\u7ecf\u7eaa\u4eba"},"hu":{"eyebrow":"\u00dcgyv\u00e9di szinkron","title_prefix":"\u00dcgyv\u00e9di adatszinkron: ","intro":"Itt egy helyen l\u00e1that\u00f3 az \u00fcgyf\u00e9lakta, a lez\u00e1rt \u00fcgy \u00e9s az \u00e9rt\u00e9kes\u00edt\u00e9s \u00e1ltal felt\u00f6lt\u00f6tt anyagok; az \u00fcgyv\u00e9d ezek alapj\u00e1n el\u0151k\u00e9sz\u00edtheti az ad\u00e1sv\u00e9teli szerz\u0151d\u00e9st.","back":"Vissza a list\u00e1hoz","edit_deal":"\u00dcgy szerkeszt\u00e9se","customer_profile":"\u00dcgyf\u00e9lakta","complete":"Adatok teljess\u00e9ge","missing_suffix":" hi\u00e1nyz\u00f3 t\u00e9tel","confirmed":"Meger\u0151s\u00edtve","confirmed_hint":"Az \u00fcgyv\u00e9d ezt ellen\u0151rizheti el\u0151sz\u00f6r","attachments":"Mell\u00e9kletek","attachments_hint":"Okm\u00e1ny, ad\u00f3k\u00e1rtya, lakc\u00edmigazol\u00e1s","deal_status":"\u00dcgy \u00e1llapota","client":"\u00dcgyf\u00e9l","property":"Lak\u00e1s","phone":"Telefon","email":"E-mail","assigned_sales":"K\u00f6vet\u0151 \u00e9rt\u00e9kes\u00edt\u0151","broker":"K\u00f6zvet\u00edt\u0151"}}', true);
+                break;
+            case 'materials':
+                $texts = json_decode('{"zh":{"eyebrow":"\u9644\u4ef6","title":"\u5ba2\u6237\u4e0a\u4f20\u548c\u5185\u90e8\u9644\u4ef6","intro":"\u8fd9\u91cc\u663e\u793a\u9500\u552e\u5df2\u6536\u5230\u7684\u5ba2\u6237\u6750\u6599\u3002\u5f8b\u5e08\u53ef\u4ee5\u6839\u636e\u9644\u4ef6\u548c\u5907\u6ce8\u51c6\u5907\u6587\u4ef6\u3002","empty":"\u6682\u65e0\u9644\u4ef6\u3002","headers":["\u8d44\u6599","\u53ef\u89c1\u6027","\u5907\u6ce8","\u4e0a\u4f20\u65f6\u95f4","\u64cd\u4f5c"],"fallback_title":"\u9644\u4ef6","customer_visible":"\u5ba2\u6237\u53ef\u89c1","internal_visible":"\u5185\u90e8\u53ef\u89c1","open":"\u6253\u5f00\u9644\u4ef6","no_file":"\u65e0\u6587\u4ef6"},"hu":{"eyebrow":"Mell\u00e9kletek","title":"\u00dcgyf\u00e9l- \u00e9s bels\u0151 mell\u00e9kletek","intro":"Itt l\u00e1that\u00f3k az \u00e9rt\u00e9kes\u00edt\u00e9s \u00e1ltal be\u00e9rkezett \u00fcgyf\u00e9lanyagok. Az \u00fcgyv\u00e9d a mell\u00e9kletek \u00e9s megjegyz\u00e9sek alapj\u00e1n k\u00e9sz\u00edtheti el a dokumentumokat.","empty":"Nincs mell\u00e9klet.","headers":["Dokumentum","L\u00e1that\u00f3s\u00e1g","Megjegyz\u00e9s","Felt\u00f6lt\u00e9s ideje","M\u0171velet"],"fallback_title":"Mell\u00e9klet","customer_visible":"\u00dcgyf\u00e9l sz\u00e1m\u00e1ra l\u00e1that\u00f3","internal_visible":"Bels\u0151","open":"Mell\u00e9klet megnyit\u00e1sa","no_file":"Nincs f\u00e1jl"}}', true);
+                break;
+            default:
+                return array();
+        }
+        return $texts[$lang] ?? $texts['zh'];
+    }
+
     function render_sales_portal_legal() {
+        $lang = $this->active_sales_language();
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $general_text = $this->sales_legal_page_text('general', $lang);
+        $list_text = $this->sales_legal_page_text('list', $lang);
+
         if (!$this->is_sales_manager_user()) {
-            echo '<section class="harmat-sales-card"><h2>权限不足</h2><p>律师资料同步页仅对主管或授权账号开放。</p></section>';
+            echo '<section class="harmat-sales-card"><h2>' . esc_html($general_text['no_permission_title']) . '</h2><p>' . esc_html($general_text['no_permission_intro']) . '</p></section>';
             return;
         }
 
@@ -13094,38 +13121,43 @@ final class Harmat_Sales_Manager {
         }
 
         if ($selected_deal) {
-            $this->render_sales_legal_customer_sync($selected_deal, $deals);
+            $this->render_sales_legal_customer_sync($selected_deal, $deals, $lang);
             return;
         }
 
         echo '<section class="harmat-sales-card harmat-sales-legal-list">';
-        echo '<div class="harmat-sales-section-head"><div><span class="eyebrow">Legal sync</span><h2>律师资料同步</h2><p>律师可以直接查看成交客户的合同资料、身份信息和销售上传附件。</p></div></div>';
+        echo '<div class="harmat-sales-section-head"><div><span class="eyebrow">' . esc_html($list_text['eyebrow']) . '</span><h2>' . esc_html($list_text['title']) . '</h2><p>' . esc_html($list_text['intro']) . '</p></div></div>';
 
         if (!$deals) {
-            echo '<p class="harmat-sales-muted">暂无可同步的成交或跟单记录。</p>';
+            echo '<p class="harmat-sales-muted">' . esc_html($list_text['empty']) . '</p>';
             echo '</section>';
             return;
         }
 
+        $headers = $list_text['headers'] ?? array();
         echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table"><thead><tr>';
-        echo '<th>客户</th><th>房号</th><th>资料完整度</th><th>已确认</th><th>附件</th><th>状态</th><th>操作</th>';
+        foreach ($headers as $header) {
+            echo '<th>' . esc_html($header) . '</th>';
+        }
         echo '</tr></thead><tbody>';
 
+        $stage_options = $this->deal_stage_options($lang);
         foreach ($deals as $deal) {
             $summary = $this->sales_legal_doc_summary($deal);
             $deal_id = (int) ($deal['id'] ?? 0);
             $client_name = $deal['client_name'] ?? $deal['customer_name'] ?? $deal['lead_name'] ?? '-';
             $property = $deal['property_code'] ?? $deal['property_title'] ?? $deal['apartment'] ?? '-';
-            $status = $deal['status_label'] ?? $deal['deal_status'] ?? $deal['status'] ?? '-';
-            $url = $this->sales_portal_url(array('view' => 'legal', 'deal_id' => $deal_id));
+            $stage_key = $this->normalize_deal_stage_key($deal['stage'] ?? ($deal['deal_status'] ?? ($deal['status'] ?? '')));
+            $status = $stage_key && isset($stage_options[$stage_key]) ? $stage_options[$stage_key] : ($deal['status_label'] ?? $deal['deal_status'] ?? $deal['status'] ?? '-');
+            $url = $this->sales_portal_url(array('view' => 'legal', 'deal_id' => $deal_id, 'sales_lang' => $lang));
             echo '<tr>';
             echo '<td><strong>' . esc_html($client_name) . '</strong><br><span class="harmat-sales-muted">#' . esc_html((string) $deal_id) . '</span></td>';
             echo '<td>' . esc_html($property) . '</td>';
-            echo '<td><strong>' . esc_html((string) $summary['filled']) . ' / ' . esc_html((string) $summary['total']) . '</strong><br><span class="harmat-sales-muted">' . esc_html((string) $summary['missing']) . ' 项待补充</span></td>';
+            echo '<td><strong>' . esc_html((string) $summary['filled']) . ' / ' . esc_html((string) $summary['total']) . '</strong><br><span class="harmat-sales-muted">' . esc_html((string) $summary['missing'] . $list_text['missing_suffix']) . '</span></td>';
             echo '<td>' . esc_html((string) $summary['verified']) . '</td>';
             echo '<td>' . esc_html((string) $summary['attachments']) . '</td>';
             echo '<td>' . esc_html($status) . '</td>';
-            echo '<td><a class="button button-primary" href="' . esc_url($url) . '">查看同步资料</a></td>';
+            echo '<td><a class="button button-primary" href="' . esc_url($url) . '">' . esc_html($list_text['open']) . '</a></td>';
             echo '</tr>';
         }
 
@@ -13133,49 +13165,56 @@ final class Harmat_Sales_Manager {
         echo '</section>';
     }
 
-    function render_sales_legal_customer_sync($deal, $deals = array()) {
+    function render_sales_legal_customer_sync($deal, $deals = array(), $lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $text = $this->sales_legal_page_text('detail', $lang);
         $deal_id = (int) ($deal['id'] ?? 0);
         $summary = $this->sales_legal_doc_summary($deal);
         $client_name = $deal['client_name'] ?? $deal['customer_name'] ?? $deal['lead_name'] ?? '-';
         $property = $deal['property_code'] ?? $deal['property_title'] ?? $deal['apartment'] ?? '-';
-        $status = $deal['status_label'] ?? $deal['deal_status'] ?? $deal['status'] ?? '-';
+        $stage_options = $this->deal_stage_options($lang);
+        $stage_key = $this->normalize_deal_stage_key($deal['stage'] ?? ($deal['deal_status'] ?? ($deal['status'] ?? '')));
+        $status = $stage_key && isset($stage_options[$stage_key]) ? $stage_options[$stage_key] : ($deal['status_label'] ?? $deal['deal_status'] ?? $deal['status'] ?? '-');
         $phone = $deal['phone'] ?? $deal['client_phone'] ?? $deal['customer_phone'] ?? '-';
         $email = $deal['email'] ?? $deal['client_email'] ?? $deal['customer_email'] ?? '-';
-        $assigned = $deal['assigned_sales_name'] ?? $deal['sales_name'] ?? '-';
+        $assigned = $this->assigned_sales_label((int) ($deal['assigned_sales_id'] ?? 0));
+        if ($assigned === '') {
+            $assigned = $deal['assigned_sales_name'] ?? $deal['sales_name'] ?? '-';
+        }
         $broker = $deal['broker_name'] ?? '-';
-        $back_url = $this->sales_portal_url(array('view' => 'legal'));
-        $deal_url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => $deal_id));
-        $print_lang = $this->active_sales_language();
-        $print_url = $this->sales_portal_url(array('view' => 'deals', 'customer_info_pdf' => $deal_id, 'sales_lang' => $print_lang, '_wpnonce' => wp_create_nonce('harmat_customer_info_pdf_' . $deal_id)));
+        $back_url = $this->sales_portal_url(array('view' => 'legal', 'sales_lang' => $lang));
+        $deal_url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => $deal_id, 'sales_lang' => $lang));
+        $print_url = $this->sales_portal_url(array('view' => 'deals', 'customer_info_pdf' => $deal_id, 'sales_lang' => $lang, '_wpnonce' => wp_create_nonce('harmat_customer_info_pdf_' . $deal_id)));
         $client_id = (int) ($deal['client_id'] ?? $deal['customer_id'] ?? $deal['lead_id'] ?? 0);
-        $client_url = $client_id > 0 ? $this->sales_portal_url(array('view' => 'clients', 'edit_lead' => $client_id)) : '';
+        $client_url = $client_id > 0 ? $this->sales_portal_url(array('view' => 'clients', 'edit_lead' => $client_id, 'sales_lang' => $lang)) : '';
 
         echo '<section class="harmat-sales-card harmat-sales-legal-detail">';
-        echo '<div class="harmat-sales-section-head"><div><span class="eyebrow">Legal sync</span><h2>律师资料同步：' . esc_html($client_name) . '</h2><p>这里汇总客户档案、成交跟单和销售上传资料，律师可直接用于准备买卖合同。</p></div><div class="harmat-sales-actions"><a class="button" href="' . esc_url($back_url) . '">返回列表</a><a class="button button-primary" href="' . esc_url($deal_url) . '">编辑跟单</a>';
+        echo '<div class="harmat-sales-section-head"><div><span class="eyebrow">' . esc_html($text['eyebrow']) . '</span><h2>' . esc_html($text['title_prefix'] . $client_name) . '</h2><p>' . esc_html($text['intro']) . '</p></div><div class="harmat-sales-actions"><a class="button" href="' . esc_url($back_url) . '">' . esc_html($text['back']) . '</a><a class="button button-primary" href="' . esc_url($deal_url) . '">' . esc_html($text['edit_deal']) . '</a>';
         if ($client_url) {
-            echo '<a class="button" href="' . esc_url($client_url) . '">客户档案</a>';
+            echo '<a class="button" href="' . esc_url($client_url) . '">' . esc_html($text['customer_profile']) . '</a>';
         }
         echo '</div></div>';
 
         echo '<div class="harmat-sales-kpi-grid">';
-        echo '<article><span>资料完整度</span><strong>' . esc_html((string) $summary['filled']) . ' / ' . esc_html((string) $summary['total']) . '</strong><small>' . esc_html((string) $summary['missing']) . ' 项待补充</small></article>';
-        echo '<article><span>已确认</span><strong>' . esc_html((string) $summary['verified']) . '</strong><small>律师可优先查看</small></article>';
-        echo '<article><span>附件</span><strong>' . esc_html((string) $summary['attachments']) . '</strong><small>证件、税卡、地址证明</small></article>';
-        echo '<article><span>跟单状态</span><strong>' . esc_html($status) . '</strong><small>' . esc_html($property) . '</small></article>';
+        echo '<article><span>' . esc_html($text['complete']) . '</span><strong>' . esc_html((string) $summary['filled']) . ' / ' . esc_html((string) $summary['total']) . '</strong><small>' . esc_html((string) $summary['missing'] . $text['missing_suffix']) . '</small></article>';
+        echo '<article><span>' . esc_html($text['confirmed']) . '</span><strong>' . esc_html((string) $summary['verified']) . '</strong><small>' . esc_html($text['confirmed_hint']) . '</small></article>';
+        echo '<article><span>' . esc_html($text['attachments']) . '</span><strong>' . esc_html((string) $summary['attachments']) . '</strong><small>' . esc_html($text['attachments_hint']) . '</small></article>';
+        echo '<article><span>' . esc_html($text['deal_status']) . '</span><strong>' . esc_html($status) . '</strong><small>' . esc_html($property) . '</small></article>';
         echo '</div>';
 
         echo '<div class="harmat-sales-info-grid">';
-        echo '<p><span>客户</span><strong>' . esc_html($client_name) . '</strong></p>';
-        echo '<p><span>房号</span><strong>' . esc_html($property) . '</strong></p>';
-        echo '<p><span>电话</span><strong>' . esc_html($phone) . '</strong></p>';
-        echo '<p><span>邮箱</span><strong>' . esc_html($email) . '</strong></p>';
-        echo '<p><span>负责销售</span><strong>' . esc_html($assigned) . '</strong></p>';
-        echo '<p><span>经纪人</span><strong>' . esc_html($broker) . '</strong></p>';
+        echo '<p><span>' . esc_html($text['client']) . '</span><strong>' . esc_html($client_name) . '</strong></p>';
+        echo '<p><span>' . esc_html($text['property']) . '</span><strong>' . esc_html($property) . '</strong></p>';
+        echo '<p><span>' . esc_html($text['phone']) . '</span><strong>' . esc_html($phone) . '</strong></p>';
+        echo '<p><span>' . esc_html($text['email']) . '</span><strong>' . esc_html($email) . '</strong></p>';
+        echo '<p><span>' . esc_html($text['assigned_sales']) . '</span><strong>' . esc_html($assigned) . '</strong></p>';
+        echo '<p><span>' . esc_html($text['broker']) . '</span><strong>' . esc_html($broker) . '</strong></p>';
         echo '</div>';
         echo '</section>';
 
-        $this->render_sales_customer_document_checklist($deal);
-        $this->render_sales_legal_materials($deal);
+        $this->render_sales_customer_document_checklist($deal, $lang);
+        $this->render_sales_legal_materials($deal, $lang);
     }
 
     function sales_legal_doc_summary($deal) {
@@ -13188,6 +13227,8 @@ final class Harmat_Sales_Manager {
             'attachments' => 0,
         );
 
+        $filled_statuses = array('uploaded', 'review', 'confirmed', 'not_needed', 'received', 'verified', 'not_required');
+        $verified_statuses = array('confirmed', 'verified');
         foreach ($rows as $row) {
             $status = (string) ($row['status'] ?? 'missing');
             $value = trim(wp_strip_all_tags((string) ($row['value'] ?? '')));
@@ -13195,10 +13236,10 @@ final class Harmat_Sales_Manager {
             if ($has_attachment) {
                 $summary['attachments']++;
             }
-            if ($status === 'verified') {
+            if (in_array($status, $verified_statuses, true)) {
                 $summary['verified']++;
             }
-            if ($value !== '' || $has_attachment || in_array($status, array('received', 'verified', 'not_required'), true)) {
+            if ($value !== '' || $has_attachment || in_array($status, $filled_statuses, true)) {
                 $summary['filled']++;
             } else {
                 $summary['missing']++;
@@ -13208,43 +13249,50 @@ final class Harmat_Sales_Manager {
         return $summary;
     }
 
-    function render_sales_legal_materials($deal) {
+    function render_sales_legal_materials($deal, $lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $text = $this->sales_legal_page_text('materials', $lang);
         $materials = $this->deal_customer_materials($deal, false);
         echo '<section class="harmat-sales-card harmat-sales-legal-materials">';
-        echo '<div class="harmat-sales-section-head"><div><span class="eyebrow">Attachments</span><h2>客户上传和内部附件</h2><p>这里显示销售已收到的客户材料。律师可以根据附件和备注准备文件。</p></div></div>';
+        echo '<div class="harmat-sales-section-head"><div><span class="eyebrow">' . esc_html($text['eyebrow']) . '</span><h2>' . esc_html($text['title']) . '</h2><p>' . esc_html($text['intro']) . '</p></div></div>';
 
         if (empty($materials)) {
-            echo '<p class="harmat-sales-muted">暂无附件。</p>';
+            echo '<p class="harmat-sales-muted">' . esc_html($text['empty']) . '</p>';
             echo '</section>';
             return;
         }
 
-        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table"><thead><tr><th>资料</th><th>可见性</th><th>备注</th><th>上传时间</th><th>操作</th></tr></thead><tbody>';
+        $headers = $text['headers'] ?? array();
+        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table"><thead><tr>';
+        foreach ($headers as $header) {
+            echo '<th>' . esc_html($header) . '</th>';
+        }
+        echo '</tr></thead><tbody>';
         foreach ($materials as $material) {
-            $title = $material['title'] ?? $material['name'] ?? '附件';
+            $title = $material['title'] ?? $material['name'] ?? $text['fallback_title'];
             $visibility = $material['visibility'] ?? 'internal';
             $note = $material['note'] ?? $material['description'] ?? '';
             $uploaded_at = $material['uploaded_at'] ?? $material['created_at'] ?? '';
             $url = '';
-            if (!empty($material['download_url'])) {
+            if (!empty($material['attachment_id'])) {
+                $url = $this->customer_material_download_url((int) $material['attachment_id'], (int) ($deal['id'] ?? 0));
+            } elseif (!empty($material['download_url'])) {
                 $url = $material['download_url'];
             } elseif (!empty($material['url'])) {
                 $url = $material['url'];
-            } elseif (!empty($material['attachment_id'])) {
-                $url = wp_get_attachment_url((int) $material['attachment_id']);
             }
             echo '<tr>';
             echo '<td><strong>' . esc_html($title) . '</strong></td>';
-            echo '<td>' . esc_html($visibility === 'customer' ? '客户可见' : '内部可见') . '</td>';
+            echo '<td>' . esc_html($visibility === 'customer' ? $text['customer_visible'] : $text['internal_visible']) . '</td>';
             echo '<td>' . esc_html($note ?: '-') . '</td>';
             echo '<td>' . esc_html($uploaded_at ?: '-') . '</td>';
-            echo '<td>' . ($url ? '<a class="button" href="' . esc_url($url) . '" target="_blank" rel="noopener">打开附件</a>' : '<span class="harmat-sales-muted">无文件</span>') . '</td>';
+            echo '<td>' . ($url ? '<a class="button" href="' . esc_url($url) . '" target="_blank" rel="noopener">' . esc_html($text['open']) . '</a>' : '<span class="harmat-sales-muted">' . esc_html($text['no_file']) . '</span>') . '</td>';
             echo '</tr>';
         }
         echo '</tbody></table></div>';
         echo '</section>';
     }
-
 
     private function render_sales_portal_inquiry_row($post_id) {
         $data = $this->offer_inquiry_data($post_id);
@@ -15621,29 +15669,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function customer_document_status_labels($lang) {
-        $labels = array(
-            'hu' => array(
-                'missing' => 'Hiányzik',
-                'uploaded' => 'Feltöltve',
-                'review' => 'Ellenőrzés alatt',
-                'confirmed' => 'Jóváhagyva',
-                'not_needed' => 'Nem szükséges',
-            ),
-            'en' => array(
-                'missing' => 'Missing',
-                'uploaded' => 'Uploaded',
-                'review' => 'Under review',
-                'confirmed' => 'Confirmed',
-                'not_needed' => 'Not required',
-            ),
-            'zh' => array(
-                'missing' => '未收到',
-                'uploaded' => '已上传',
-                'review' => '待确认',
-                'confirmed' => '已确认',
-                'not_needed' => '不需要',
-            ),
-        );
+        $labels = json_decode('{"hu":{"missing":"Hi\u00e1nyzik","uploaded":"Felt\u00f6ltve","review":"Ellen\u0151rz\u00e9s alatt","confirmed":"J\u00f3v\u00e1hagyva","not_needed":"Nem sz\u00fcks\u00e9ges","received":"Be\u00e9rkezett","verified":"Ellen\u0151rizve","not_required":"Nem sz\u00fcks\u00e9ges"},"en":{"missing":"Missing","uploaded":"Uploaded","review":"Under review","confirmed":"Confirmed","not_needed":"Not required","received":"Received","verified":"Verified","not_required":"Not required"},"zh":{"missing":"\u672a\u6536\u5230","uploaded":"\u5df2\u4e0a\u4f20","review":"\u5f85\u786e\u8ba4","confirmed":"\u5df2\u786e\u8ba4","not_needed":"\u4e0d\u9700\u8981","received":"\u5df2\u6536\u5230","verified":"\u5df2\u786e\u8ba4","not_required":"\u4e0d\u9700\u8981"}}', true);
         return $labels[$lang] ?? $labels['hu'];
     }
 
