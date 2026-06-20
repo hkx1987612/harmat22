@@ -4070,10 +4070,10 @@ final class Harmat_Sales_Manager {
         $payment_received_total = (int) $deposit + (int) $payment_received;
         $payment_status = $this->infer_payment_status($amount, $payment_received_total, $payment_due_date, $payment_status);
         if (!$payment_plan_items) {
-            $payment_plan_items = $this->auto_payment_plan_items($payment_method, $amount, $deposit, $payment_due_date, $expected_close, $payment_received);
+            $payment_plan_items = $this->auto_payment_plan_items($payment_method, $amount, $deposit, $payment_due_date, $expected_close, $payment_received, $this->active_sales_language());
         }
         if ($payment_schedule === '' && $payment_plan_items) {
-            $payment_schedule = $this->payment_plan_schedule_text($payment_plan_items);
+            $payment_schedule = $this->payment_plan_schedule_text($payment_plan_items, $this->active_sales_language());
         }
 
         if (!$deal_id) {
@@ -6033,7 +6033,7 @@ final class Harmat_Sales_Manager {
             '二级销售维护客户联系、销售阶段、下次跟进、下一步动作和备注。' => 'Az értékesítő az ügyfélkapcsolatot, értékesítési fázist, következő kapcsolatfelvételt, következő lépést és megjegyzést kezeli.',
             '二级销售模式' => 'Értékesítői mód',
             '金额、付款方式、付款计划、合同状态、客户账号、佣金和房源状态由主管确认；这里不会开放这些关键字段。' => 'Az összeg, fizetési mód, fizetési terv, szerződésstátusz, ügyfélfiók, jutalék és lakásstátusz vezetői jóváhagyású; ezek a kulcsmezők itt nem szerkeszthetők.',
-            '' . esc_html($text['editor']['cancel']) . '' => 'Szerkesztés megszakítása',
+            json_decode('"\u53d6\u6d88\u7f16\u8f91"') => json_decode('"Szerkeszt\u00e9s megszak\u00edt\u00e1sa"'),
             '销售阶段' => 'Értékesítési fázis',
             '建议每个客户都落到一个明确阶段，下一步动作必须清楚。' => 'Minden ügyfél kerüljön egyértelmű fázisba, és legyen világos a következő teendő.',
             '销售跟单列表' => 'Értékesítési ügyek listája',
@@ -6502,6 +6502,7 @@ final class Harmat_Sales_Manager {
             '价格' => 'Ár',
         );
 
+        unset($map['']);
         uksort($map, function($a, $b) {
             return strlen($b) - strlen($a);
         });
@@ -6758,6 +6759,7 @@ final class Harmat_Sales_Manager {
             json_decode('"\u7535\u8bdd"') => json_decode('"Telefonsz\u00e1m"'),
             json_decode('"\u4e70\u65b9"') => json_decode('"Vev\u0151"'),
         );
+        unset($extra_map['']);
         uksort($extra_map, function($a, $b) {
             return strlen($b) - strlen($a);
         });
@@ -7282,8 +7284,9 @@ final class Harmat_Sales_Manager {
             echo '<th>备注</th>';
         }
         echo '</tr></thead><tbody>';
+        $lang = $this->current_portal_language('agent') === 'hu' ? 'hu' : 'zh';
         foreach ($commission_deals as $deal) {
-            $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+            $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
             $status = $deal['commission_status'] ?: 'scheduled';
             $statuses = $this->commission_status_options();
             echo '<tr>';
@@ -8369,7 +8372,7 @@ final class Harmat_Sales_Manager {
                 $stage_options = $this->deal_stage_options($dashboard_lang);
                 $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
                 $deal_url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) ($deal['id'] ?? 0)));
-                $deal_property = $deal['property_id'] ? get_the_title((int) $deal['property_id']) : $dashboard_text['fallback']['unassigned'];
+                $deal_property = $deal['property_id'] ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $dashboard_lang) : $dashboard_text['fallback']['unassigned'];
                 $deal_next = !empty($deal['next_step']) ? $this->sales_deal_next_step_label($deal['next_step'], $dashboard_lang) : $this->format_followup_datetime($deal['next_followup'] ?? '');
                 echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($deal_url) . '"><header><strong>' . esc_html($deal['client_name'] ?: $dashboard_text['fallback']['unnamed']) . '</strong><span class="harmat-sales-pill harmat-sales-deal-' . esc_attr($stage) . '">' . esc_html($stage_options[$stage]) . '</span></header><p>' . esc_html($deal_property) . '</p><small>' . esc_html($deal_next ?: $dashboard_text['fallback']['not_set']) . '</small></a>';
             }
@@ -8387,7 +8390,7 @@ final class Harmat_Sales_Manager {
                 $status = isset($status_options[$lead['status']]) ? $lead['status'] : 'new';
                 $days_left = $this->lead_protection_days_left($lead);
                 $lead_url = $this->sales_portal_url(array('view' => 'clients', 'edit_lead' => (int) ($lead['id'] ?? 0)));
-                $lead_property = $lead['property_id'] ? get_the_title((int) $lead['property_id']) : $dashboard_text['fallback']['unassigned'];
+                $lead_property = $lead['property_id'] ? $this->sales_display_value(get_the_title((int) $lead['property_id']), $dashboard_lang) : $dashboard_text['fallback']['unassigned'];
                 echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($lead_url) . '"><header><strong>' . esc_html($lead['client_name'] ?: $dashboard_text['fallback']['unnamed']) . '</strong><span class="harmat-sales-pill">' . esc_html($status_options[$status]) . '</span></header><p>' . esc_html($lead_property) . '</p><small>' . esc_html($days_left > 0 ? $client_text['row'][1] . $days_left . $client_text['row'][2] : $client_text['row'][3]) . '</small></a>';
             }
             echo '</div>';
@@ -8605,15 +8608,15 @@ final class Harmat_Sales_Manager {
         }
         echo '</td>';
         echo '<td><strong>' . esc_html($row['date'] ?? '-') . '</strong></td>';
-        echo '<td><strong>' . esc_html($row['client'] ?: $row_text['empty_client']) . '</strong></td>';
+        echo '<td><strong>' . esc_html($this->sales_display_value($row['client'] ?: $row_text['empty_client'])) . '</strong></td>';
         echo '<td>';
         if (!empty($row['property']) && !empty($row['property_url'])) {
-            echo '<a href="' . esc_url($row['property_url']) . '" target="_blank" rel="noopener">' . esc_html($row['property']) . '</a>';
+            echo '<a href="' . esc_url($row['property_url']) . '" target="_blank" rel="noopener">' . esc_html($this->sales_display_value($row['property'])) . '</a>';
         } else {
-            echo esc_html($row['property'] ?: $row_text['no_property']);
+            echo esc_html($this->sales_display_value($row['property'] ?: $row_text['no_property']));
         }
         if (!empty($row['property_info']) && $row['property_info'] !== $row['property']) {
-            echo '<small>' . esc_html($row['property_info']) . '</small>';
+            echo '<small>' . esc_html($this->sales_display_value($row['property_info'])) . '</small>';
         }
         echo '</td>';
         echo '<td><span>' . esc_html($row['phone'] ?: '-') . '</span><small>' . esc_html($row['email'] ?: '-') . '</small></td>';
@@ -8744,6 +8747,28 @@ final class Harmat_Sales_Manager {
         echo '</tbody></table></div></section>';
     }
 
+    private function sales_display_value($value, $lang = null) {
+        $value = (string) $value;
+        if ($value === '') {
+            return $value;
+        }
+
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        if ($lang !== 'hu') {
+            return $value;
+        }
+
+        $map = json_decode('{"Szoba\u53f7\u5f85\u5b9a":"Lak\u00e1ssz\u00e1m nincs megadva","Lak\u00e1s\u5f85\u9009":"Nincs kiv\u00e1lasztott lak\u00e1s","\u672a\u77e5":"Ismeretlen","\u623f\u6e90\u5f85\u9009":"Nincs kiv\u00e1lasztott lak\u00e1s","\u623f\u95f4\u53f7\u5f85\u5b9a":"Lak\u00e1ssz\u00e1m nincs megadva","\u623f\u53f7\u5f85\u5b9a":"Lak\u00e1ssz\u00e1m nincs megadva","\u53f7\u5f85\u5b9a":"sz\u00e1m nincs megadva","\u5f85\u9009":"nincs kiv\u00e1lasztva"}', true);
+        foreach ($map as $from => $to) {
+            $value = str_replace($from, $to, $value);
+        }
+
+        $unit = json_decode('"\u5957"');
+        return preg_replace_callback('/(\\d+)\\s*' . preg_quote($unit, '/') . '/u', function($matches) {
+            return $matches[1] . ' db';
+        }, $value);
+    }
+
     private function render_sales_activity_log_row($row) {
         $text = $this->sales_activity_text();
         $source_options = $this->deal_source_options();
@@ -8753,8 +8778,8 @@ final class Harmat_Sales_Manager {
         $object_type = (string) ($row['object_type'] ?? '');
         $object_id = (int) ($row['object_id'] ?? 0);
         $object_label = $this->sales_activity_object_label($object_type);
-        $client = (string) ($row['client_name'] ?? '');
-        $property = (string) ($row['property_title'] ?? '');
+        $client = $this->sales_display_value((string) ($row['client_name'] ?? ''));
+        $property = $this->sales_display_value((string) ($row['property_title'] ?? ''));
         $crm_code = (string) ($row['crm_code'] ?? '');
 
         echo '<tr>';
@@ -8765,8 +8790,35 @@ final class Harmat_Sales_Manager {
         echo '<td><strong>' . esc_html($client ?: '-') . '</strong><small>' . esc_html(trim(($property ?: '-') . ($crm_code ? ' / ' . $crm_code : ''))) . '</small></td>';
         echo '<td>' . esc_html($source_label) . '</td>';
         echo '<td>' . esc_html($assigned_sales_id ? $this->assigned_sales_label($assigned_sales_id) : '-') . '</td>';
-        echo '<td class="harmat-sales-note-cell">' . esc_html($row['summary'] ?: '-') . '</td>';
+        echo '<td class="harmat-sales-note-cell">' . esc_html($this->sales_activity_summary_display($row['summary'] ?? '') ?: '-') . '</td>';
         echo '</tr>';
+    }
+
+    private function sales_activity_summary_display($summary, $lang = null) {
+        $summary = trim((string) $summary);
+        if ($summary === '') {
+            return '';
+        }
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        if ($lang !== 'hu') {
+            $zh_exact = json_decode('{"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s":"\u767b\u5f55\u9500\u552e\u7aef","\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s":"\u9000\u51fa\u9500\u552e\u7aef","CRM / portal bejelentkez\u00e9s":"\u767b\u5f55 CRM / portal","Fizet\u00e9si \u00f6sszes\u00edt\u0151 export CSV":"\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b CSV","Fizet\u00e9si \u00fctemez\u00e9s export CSV":"\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export Excel":"\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c Excel","M\u0171veleti napl\u00f3 export CSV":"\u5bfc\u51fa\u52a8\u4f5c\u8bb0\u5f55 CSV"}', true);
+            return $zh_exact[$summary] ?? $summary;
+        }
+
+        $exact = json_decode('{"\u767b\u5f55\u9500\u552e\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s","\u9000\u51fa\u9500\u552e\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s","\u767b\u5f55\u00c9rt\u00e9kes\u00edt\u0151\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s","Kil\u00e9p\u00e9s\u00c9rt\u00e9kes\u00edt\u0151\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s","\u767b\u5f55 CRM / portal":"CRM / portal bejelentkez\u00e9s","\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b CSV":"Fizet\u00e9si \u00f6sszes\u00edt\u0151 export CSV","\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV":"Fizet\u00e9si \u00fctemez\u00e9s export CSV","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c Excel":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export Excel","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c XLSX":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export XLSX","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c CSV":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export CSV","\u5bfc\u51fa\u52a8\u4f5c\u8bb0\u5f55 CSV":"M\u0171veleti napl\u00f3 export CSV"}', true);
+        if (isset($exact[$summary])) {
+            return $exact[$summary];
+        }
+
+        $prefixes = json_decode('[["\u65b0\u589e\u5ba2\u6237\u8ddf\u8fdb\uff1a","\u00daj \u00fcgyf\u00e9lk\u00f6vet\u00e9s: "],["\u4fdd\u5b58\u5ba2\u6237\u8ddf\u8fdb\uff1a","\u00dcgyf\u00e9lk\u00f6vet\u00e9s ment\u00e9se: "],["\u5220\u9664\u5ba2\u6237\u8ddf\u8fdb\uff1a","\u00dcgyf\u00e9lk\u00f6vet\u00e9s t\u00f6rl\u00e9se: "],["\u5220\u9664\u7f51\u7ad9\u8be2\u4ef7\uff1a","Weboldali \u00e9rdekl\u0151d\u00e9s t\u00f6rl\u00e9se: "],["\u6307\u6d3e\u7f51\u7ad9\u8be2\u4ef7\u7ed9\uff1a","Weboldali \u00e9rdekl\u0151d\u00e9s kiosztva: "],["\u6307\u6d3e\u5ba2\u6237\u8ddf\u8fdb\u7ed9\uff1a","\u00dcgyf\u00e9lk\u00f6vet\u00e9s kiosztva: "],["\u6307\u6d3e\u9500\u552e\u8ddf\u5355\u7ed9\uff1a","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgy kiosztva: "],["\u751f\u6210\u9500\u552e\u8ddf\u5355\uff1a","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgy l\u00e9trehoz\u00e1sa: "],["\u4fdd\u5b58\u9500\u552e\u8ddf\u5355\uff1a","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgy ment\u00e9se: "],["\u5220\u9664\u9500\u552e\u8ddf\u5355\uff1a","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgy t\u00f6rl\u00e9se: "],["\u7ef4\u62a4\u6210\u4ea4\u5ba2\u6237\u6863\u6848\uff1a","Lez\u00e1rt \u00fcgyf\u00e9lakta karbantart\u00e1sa: "]]', true);
+        foreach ($prefixes as $pair) {
+            $prefix = (string) ($pair[0] ?? '');
+            if ($prefix !== '' && strncmp($summary, $prefix, strlen($prefix)) === 0) {
+                return (string) ($pair[1] ?? '') . $this->sales_display_value(trim(substr($summary, strlen($prefix))), $lang);
+            }
+        }
+
+        return $this->sales_display_value($summary, $lang);
     }
 
     private function filter_sales_activity_log($filters) {
@@ -8787,7 +8839,7 @@ final class Harmat_Sales_Manager {
                 $haystack = implode(' ', array(
                     $row['user_label'] ?? '',
                     $this->sales_activity_action_label($row['action'] ?? ''),
-                    $row['summary'] ?? '',
+                    $this->sales_activity_summary_display($row['summary'] ?? ''),
                     $row['client_name'] ?? '',
                     $row['property_title'] ?? '',
                     $row['crm_code'] ?? '',
@@ -9425,7 +9477,7 @@ final class Harmat_Sales_Manager {
                 $row['crm_code'] ?? '',
                 !empty($row['source_type']) && isset($source_options[$row['source_type']]) ? $source_options[$row['source_type']] : ($row['source_type'] ?? ''),
                 $this->assigned_sales_label((int) ($row['assigned_sales_id'] ?? 0)),
-                $row['summary'] ?? '',
+                $this->sales_activity_summary_display($row['summary'] ?? ''),
             ));
         }
         fclose($out);
@@ -9893,7 +9945,7 @@ final class Harmat_Sales_Manager {
         }
         echo '</select></label>';
         if ($can_manage) {
-        echo '<label class="harmat-sales-form-wide">' . esc_html($text['editor']['payment_schedule']) . '<textarea name="deal_payment_schedule" rows="3" placeholder="' . esc_attr($text['editor']['payment_schedule_ph']) . '">' . esc_textarea($form['payment_schedule']) . '</textarea></label>';
+        echo '<label class="harmat-sales-form-wide">' . esc_html($text['editor']['payment_schedule']) . '<textarea name="deal_payment_schedule" rows="3" placeholder="' . esc_attr($text['editor']['payment_schedule_ph']) . '">' . esc_textarea($this->payment_schedule_display($form['payment_schedule'], $this->active_sales_language())) . '</textarea></label>';
         $this->render_deal_payment_plan_editor($form, $text);
         }
         $this->render_deal_document_checklist_editor($form);
@@ -10008,9 +10060,12 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_deal_stage_board_card($deal) {
+        $lang = $this->active_sales_language();
+        $fallbacks = json_decode('{"zh":{"no_client":"\u672a\u586b\u5199\u5ba2\u6237","no_property":"\u672a\u6307\u5b9a\u623f\u6e90","no_amount":"\u91d1\u989d\u672a\u586b\u5199"},"hu":{"no_client":"Nincs \u00fcgyf\u00e9l megadva","no_property":"Nincs lak\u00e1s megadva","no_amount":"Nincs \u00f6sszeg megadva"}}', true);
+        $fallback = $fallbacks[$lang === 'hu' ? 'hu' : 'zh'];
         $stage_options = $this->deal_stage_options();
         $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $followup_meta = $this->sales_deal_followup_meta($deal);
         $amount = (int) ($deal['amount'] ?? 0);
         $url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) ($deal['id'] ?? 0)));
@@ -10018,10 +10073,10 @@ final class Harmat_Sales_Manager {
 
         echo '<a class="harmat-sales-stage-card harmat-sales-stage-card-' . esc_attr($stage) . '" href="' . esc_url($url) . '">';
         echo '<small>' . esc_html($deal['crm_code'] ?? '-') . '</small>';
-        echo '<strong>' . esc_html($deal['client_name'] ?: '未填写客户') . '</strong>';
-        echo '<span>' . esc_html($property_title ?: '未指定房源') . '</span>';
+        echo '<strong>' . esc_html($this->sales_display_value($deal['client_name'] ?: $fallback['no_client'], $lang)) . '</strong>';
+        echo '<span>' . esc_html($property_title ?: $fallback['no_property']) . '</span>';
         echo '<em class="harmat-sales-task-pill harmat-sales-task-' . esc_attr($followup_meta['class']) . '">' . esc_html($next_text) . '</em>';
-        echo '<b>' . esc_html($amount > 0 ? $this->format_money($amount) . ' Ft' : '金额未填写') . '</b>';
+        echo '<b>' . esc_html($amount > 0 ? $this->format_money($amount) . ' Ft' : $fallback['no_amount']) . '</b>';
         echo '</a>';
     }
 
@@ -10580,11 +10635,12 @@ final class Harmat_Sales_Manager {
         foreach ($rows as $index => $row) {
             $row_amount = isset($row['amount']) ? (int) preg_replace('/[^\d]/', '', (string) $row['amount']) : 0;
             $row_percent = isset($row['percent']) ? (string) $row['percent'] : '';
+            $row_label = $this->payment_plan_label_display($row['label'] ?? '', $this->active_sales_language());
             if ($row_percent === '' && $deal_amount > 0 && $row_amount > 0) {
                 $row_percent = rtrim(rtrim(number_format(($row_amount / $deal_amount) * 100, 2, '.', ''), '0'), '.');
             }
             echo '<tr>';
-            echo '<td><input name="payment_plan_items[' . esc_attr($index) . '][label]" value="' . esc_attr($row['label'] ?? '') . '" placeholder="' . esc_attr($plan_text['label_ph']) . '" data-harmat-plan-label></td>';
+            echo '<td><input name="payment_plan_items[' . esc_attr($index) . '][label]" value="' . esc_attr($row_label) . '" placeholder="' . esc_attr($plan_text['label_ph']) . '" data-harmat-plan-label></td>';
             echo '<td><input name="payment_plan_items[' . esc_attr($index) . '][percent]" value="' . esc_attr($row_percent) . '" inputmode="decimal" placeholder="%" data-harmat-plan-percent></td>';
             echo '<td><input name="payment_plan_items[' . esc_attr($index) . '][amount]" value="' . esc_attr($row['amount'] ?? '') . '" inputmode="numeric" placeholder="' . esc_attr($plan_text['amount_ph']) . '" data-harmat-plan-amount></td>';
             echo '<td><input type="date" name="payment_plan_items[' . esc_attr($index) . '][due_date]" value="' . esc_attr($row['due_date'] ?? '') . '" data-harmat-plan-due></td>';
@@ -11138,8 +11194,8 @@ final class Harmat_Sales_Manager {
         }
 
         $client_name = $deal['client_name'] ?? $deal['customer_name'] ?? $deal['lead_name'] ?? '-';
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
-        $property = $property_title ?: ($deal['property_code'] ?? $deal['property_title'] ?? $deal['apartment'] ?? '-');
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
+        $property = $this->sales_display_value($property_title ?: ($deal['property_code'] ?? $deal['property_title'] ?? $deal['apartment'] ?? '-'), $lang);
         $phone = $deal['phone'] ?? $deal['client_phone'] ?? $deal['customer_phone'] ?? '-';
         $email = $deal['email'] ?? $deal['client_email'] ?? $deal['customer_email'] ?? '-';
         $stage_options = $this->deal_stage_options($lang);
@@ -11177,7 +11233,7 @@ final class Harmat_Sales_Manager {
         $add_deal_row($txt['expected_close'], $deal['expected_close'] ?? '');
         $add_deal_row($txt['contract_status'], !empty($deal['contract_status']) && isset($contract_options[$deal['contract_status']]) ? $contract_options[$deal['contract_status']] : '');
         $add_deal_row($txt['next_followup'], $this->format_followup_datetime($deal['next_followup'] ?? ''));
-        $add_deal_row($txt['next_step'], $deal['next_step'] ?? '');
+        $add_deal_row($txt['next_step'], $this->sales_deal_next_step_label($deal['next_step'] ?? '', $lang));
         $add_deal_row($txt['source'], $source_options[$source_type] ?? '');
         $add_deal_row($txt['assigned_sales'], $assigned_sales);
         $add_deal_row($txt['broker'], $broker_user ? $broker_user->display_name : '');
@@ -11248,7 +11304,7 @@ final class Harmat_Sales_Manager {
         $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $this->deal_payment_received_total($deal), $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
         $source_type = isset($source_options[$deal['source_type'] ?? '']) ? (string) ($deal['source_type'] ?? '') : 'walkin';
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $assigned_sales = !empty($deal['assigned_sales_id']) ? $this->assigned_sales_label((int) $deal['assigned_sales_id']) : '';
         $empty = $txt['empty'];
         $money = function($value) {
@@ -11278,7 +11334,7 @@ final class Harmat_Sales_Manager {
         $add_row($txt['payment_method'], !empty($deal['payment_method']) && isset($payment_options[$deal['payment_method']]) ? $payment_options[$deal['payment_method']] : '', 'payment');
         $add_row($txt['payment_status'], $payment_statuses[$payment_status] ?? '', 'payment');
         $add_row($txt['payment_due'], $deal['payment_due_date'] ?? '', 'payment');
-        $add_row($txt['payment_schedule'], $deal['payment_schedule'] ?? '', 'long');
+        $add_row($txt['payment_schedule'], $this->payment_schedule_display($deal['payment_schedule'] ?? '', $lang), 'long');
         $add_row($txt['contract_status'], !empty($deal['contract_status']) && isset($contract_options[$deal['contract_status']]) ? $contract_options[$deal['contract_status']] : '', 'payment');
         $add_row($txt['note'], $deal['note'] ?? '', 'long');
 
@@ -11323,6 +11379,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_commissions() {
+        $lang = $this->active_sales_language();
         $text = $this->sales_commissions_page_text();
         $deals = $this->broker_commission_deals(0);
         $total = $this->sum_commissions($deals);
@@ -11357,7 +11414,7 @@ final class Harmat_Sales_Manager {
         }
         echo '</tr></thead><tbody>';
         foreach ($deals as $deal) {
-            $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+            $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
             $broker = !empty($deal['broker_id']) ? get_userdata((int) $deal['broker_id']) : null;
             $status = $deal['commission_status'] ?: 'scheduled';
             echo '<tr>';
@@ -11548,7 +11605,7 @@ final class Harmat_Sales_Manager {
         }
         echo '<th>' . esc_html($customer_tail_headers['closed']) . '</th><th>' . esc_html($customer_tail_headers['action']) . '</th></tr></thead><tbody>';
         foreach ($deals as $deal) {
-            $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+            $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
             $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
             $broker = !empty($deal['broker_id']) ? get_userdata((int) $deal['broker_id']) : null;
             $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $this->deal_payment_received_total($deal), $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
@@ -11560,7 +11617,7 @@ final class Harmat_Sales_Manager {
             $commission_status = $deal['commission_status'] ?: 'scheduled';
             $next_step_label = $this->sales_deal_next_step_label($deal['next_step'] ?? '', $lang);
             echo '<tr>';
-            echo '<td><strong>' . esc_html($deal['client_name'] ?: $customer_row_text['no_client']) . '</strong><small>CRM: ' . esc_html($deal['crm_code'] ?? '-') . '</small><small>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</small></td>';
+            echo '<td><strong>' . esc_html($this->sales_display_value($deal['client_name'] ?: $customer_row_text['no_client'], $lang)) . '</strong><small>CRM: ' . esc_html($deal['crm_code'] ?? '-') . '</small><small>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</small></td>';
             echo '<td><strong>' . ($property_url ? '<a href="' . esc_url($property_url) . '" target="_blank" rel="noopener">' . esc_html($property_title ?: '-') . '</a>' : esc_html($property_title ?: '-')) . '</strong><small>' . esc_html(!empty($deal['deposit']) ? $customer_row_text['deposit'] . $this->format_money($deal['deposit']) . ' Ft' : $customer_row_text['deposit_missing']) . '</small></td>';
             echo '<td>' . esc_html($this->assigned_sales_label((int) ($deal['assigned_sales_id'] ?? 0))) . '</td>';
             echo '<td>' . esc_html($broker ? $broker->display_name : '-') . '</td>';
@@ -11854,7 +11911,8 @@ final class Harmat_Sales_Manager {
 
         $payment_options = $this->payment_method_options($lang);
         $contract_options = $this->contract_status_options($lang);
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $lang = $this->active_sales_language();
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
         $lead = !empty($deal['lead_id']) ? ($this->get_leads()[(int) $deal['lead_id']] ?? null) : null;
         $inquiry = !empty($deal['inquiry_id']) ? $this->offer_inquiry_data((int) $deal['inquiry_id']) : null;
@@ -11891,7 +11949,7 @@ final class Harmat_Sales_Manager {
         echo '<div><dt>' . esc_html($text['payment_status']) . '</dt><dd>' . esc_html($payment_statuses[$payment_status] ?? '-') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['payment_due']) . '</dt><dd>' . esc_html($deal['payment_due_date'] ?: '-') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['contract_status']) . '</dt><dd>' . esc_html(!empty($deal['contract_status']) && isset($contract_options[$deal['contract_status']]) ? $contract_options[$deal['contract_status']] : '-') . '</dd></div>';
-        echo '<div class="harmat-sales-detail-wide"><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($deal['payment_schedule'] ?: '-')) . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($this->payment_schedule_display($deal['payment_schedule'] ?: '-', $lang))) . '</dd></div>';
         echo '</dl></section>';
         $this->render_sales_customer_document_checklist($deal, $lang);
 
@@ -12075,7 +12133,7 @@ final class Harmat_Sales_Manager {
         echo '<div><dt>' . esc_html($text['deposit']) . '</dt><dd>' . esc_html(!empty($deal['deposit']) ? $this->format_money($deal['deposit']) . ' Ft' : '-') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['received']) . '</dt><dd>' . esc_html($this->format_money($this->deal_payment_received_total($deal)) . ' Ft') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['balance']) . '</dt><dd>' . esc_html($this->format_money($this->deal_payment_balance($deal)) . ' Ft') . '</dd></div>';
-        echo '<div class="harmat-sales-detail-wide"><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($deal['payment_schedule'] ?: '-')) . '</dd></div>';
+        echo '<div class="harmat-sales-detail-wide"><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($this->payment_schedule_display($deal['payment_schedule'] ?: '-', $lang))) . '</dd></div>';
         echo '<div class="harmat-sales-detail-wide"><dt>' . esc_html($text['handover']) . '</dt><dd>' . nl2br(esc_html($deal['handover_note'] ?: '-')) . '</dd></div>';
         echo '<div class="harmat-sales-detail-wide"><dt>' . esc_html($text['aftercare']) . '</dt><dd>' . nl2br(esc_html($deal['aftercare_note'] ?: '-')) . '</dd></div>';
         echo '</dl></div>';
@@ -12389,7 +12447,9 @@ final class Harmat_Sales_Manager {
         return $texts[$lang] ?? $texts['hu'];
     }
 
-    private function customer_portal_next_payment($deal, $text) {
+    private function customer_portal_next_payment($deal, $text, $lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->current_portal_language('client') : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
         $items = $this->payment_plan_display_items($deal);
         $next = null;
 
@@ -12431,13 +12491,14 @@ final class Harmat_Sales_Manager {
         }
 
         return array(
-            'label' => $next['label'] ?: $text['schedule'],
+            'label' => $this->payment_plan_label_display($next['label'] ?? '', $lang) ?: $text['schedule'],
             'detail' => $detail ? implode(' · ', $detail) : '-',
         );
     }
 
     private function render_customer_app_home($deal, $text, $property_title, $payment_label, $contract_label, $payment_percent, $materials_count) {
-        $next_payment = $this->customer_portal_next_payment($deal, $text);
+        $lang = $this->current_portal_language('client') === 'hu' ? 'hu' : 'zh';
+        $next_payment = $this->customer_portal_next_payment($deal, $text, $lang);
         $cards = array(
             array('index' => '01', 'href' => '#harmat-customer-apartment', 'label' => $text['quick_apartment'], 'meta' => $property_title ?: '-'),
             array('index' => '02', 'href' => '#harmat-customer-payment', 'label' => $text['quick_payment'], 'meta' => $next_payment['label']),
@@ -12463,6 +12524,7 @@ final class Harmat_Sales_Manager {
 
     private function render_customer_payment_plan($deal, $text) {
         $items = $this->payment_plan_display_items($deal);
+        $lang = $this->current_portal_language('client') === 'hu' ? 'hu' : 'zh';
         echo '<section class="harmat-customer-payment-plan" aria-label="' . esc_attr($text['payment_plan_title']) . '">';
         if (!$items) {
             echo '<article><strong>' . esc_html($text['payment_plan_empty']) . '</strong></article>';
@@ -12473,9 +12535,10 @@ final class Harmat_Sales_Manager {
         foreach ($items as $item) {
             $status = sanitize_key($item['status'] ?? '');
             $amount = (int) preg_replace('/[^\d]/', '', (string) ($item['amount'] ?? ''));
+            $label = $this->payment_plan_label_display($item['label'] ?? '', $lang) ?: $text['schedule'];
             echo '<article class="harmat-customer-plan-' . esc_attr($status ?: 'not_started') . '">';
             echo '<small>' . esc_html($text['status'] . ': ' . ($text['plan_statuses'][$status] ?? ($status ?: '-'))) . '</small>';
-            echo '<strong>' . esc_html((string) ($item['label'] ?? $text['schedule'])) . '</strong>';
+            echo '<strong>' . esc_html($label) . '</strong>';
             echo '<span>' . esc_html($text['amount_label'] . ': ' . ($amount ? $this->format_money($amount) . ' Ft' : '-')) . '</span>';
             echo '<span>' . esc_html($text['due_label'] . ': ' . ((string) ($item['due_date'] ?? '') ?: '-')) . '</span>';
             echo '</article>';
@@ -12587,7 +12650,7 @@ final class Harmat_Sales_Manager {
         echo '<div><dt>' . esc_html($text['paid']) . '</dt><dd>' . esc_html($this->format_money($this->deal_payment_received_total($deal)) . ' Ft') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['balance']) . '</dt><dd>' . esc_html($this->format_money($this->deal_payment_balance($deal)) . ' Ft') . '</dd></div>';
         echo '<div><dt>' . esc_html($text['due_date']) . '</dt><dd>' . esc_html($deal['payment_due_date'] ?: '-') . '</dd></div>';
-        echo '<div><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($deal['payment_schedule'] ?: '-')) . '</dd></div>';
+        echo '<div><dt>' . esc_html($text['schedule']) . '</dt><dd>' . nl2br(esc_html($this->payment_schedule_display($deal['payment_schedule'] ?: '-', $lang))) . '</dd></div>';
         echo '</dl><h3 class="harmat-customer-subtitle">' . esc_html($text['payment_plan_title']) . '</h3>';
         $this->render_customer_payment_plan($deal, $text);
         echo '</div>';
@@ -12635,6 +12698,9 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_brokers() {
+        $lang = $this->active_sales_language() === 'hu' ? 'hu' : 'zh';
+        $account_texts = json_decode('{"zh":{"email":"\u90ae\u7bb1","phone":"\u7535\u8bdd"},"hu":{"email":"E-mail","phone":"Telefon"}}', true);
+        $account_text = $account_texts[$lang] ?? $account_texts['zh'];
         $users = get_users(array(
             'role__in' => array(self::ROLE_MANAGER, self::ROLE_SALES, self::ROLE_BROKER),
             'orderby' => 'registered',
@@ -12666,8 +12732,8 @@ final class Harmat_Sales_Manager {
         echo '<input type="hidden" name="return_to" value="sales_brokers">';
         echo '<label>用户名<input required name="user_login" placeholder="agent01" pattern="[A-Za-z0-9_-]+" title="只能使用英文字母、数字、下划线或短横线"></label>';
         echo '<label>显示名称<input name="display_name" placeholder="经纪人姓名"></label>';
-        echo '<label>' . esc_html($text['editor']['email']) . '<input required type="email" name="user_email" placeholder="name@company.hu"></label>';
-        echo '<label>' . esc_html($text['editor']['phone']) . '<input name="user_phone" placeholder="+36 30 ..."></label>';
+        echo '<label>' . esc_html($account_text['email']) . '<input required type="email" name="user_email" placeholder="name@company.hu"></label>';
+        echo '<label>' . esc_html($account_text['phone']) . '<input name="user_phone" placeholder="+36 30 ..."></label>';
         echo '<label>默认佣金比例 %<input name="user_commission_rate" inputmode="decimal" placeholder="例如 1.5"></label>';
         echo '<label>角色<select name="new_role">';
         echo '<option value="' . esc_attr(self::ROLE_SALES) . '">销售</option>';
@@ -12812,37 +12878,52 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_properties() {
+        $lang = $this->active_sales_language();
+        $text = $this->sales_property_page_texts($lang);
         $properties = $this->get_properties();
         $filters = $this->sales_property_filters();
         $filter_options = $this->sales_property_filter_options($properties);
         $filtered_properties = $this->filter_sales_properties($properties, $filters);
         $status_counts = $this->sales_property_status_counts($properties);
         $can_manage = $this->is_sales_manager_user();
-        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>房源库存</h2><p>' . esc_html($can_manage ? '来自统一房源销售数据，可快速核对并维护状态、面积和价格显示。' : '销售可查看统一房源库存，价格和状态修改由主管执行。') . '</p></div><a href="' . esc_url(home_url('/lakaskereso/')) . '" target="_blank" rel="noopener">打开公开房源</a></div>';
+        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['title']) . '</h2><p>' . esc_html($can_manage ? $text['manager_intro'] : $text['staff_intro']) . '</p></div><a href="' . esc_url(home_url('/lakaskereso/')) . '" target="_blank" rel="noopener">' . esc_html($text['public_link']) . '</a></div>';
         if (!$properties) {
-            echo '<div class="harmat-sales-empty">暂无房源。</div></section>';
+            echo '<div class="harmat-sales-empty">' . esc_html($text['empty_all']) . '</div></section>';
             return;
         }
 
         $this->render_sales_property_filters($filters, count($properties), count($filtered_properties), $filter_options, $status_counts);
         if (!$filtered_properties) {
-            echo '<div class="harmat-sales-empty">当前筛选条件下没有房源。</div></section>';
+            echo '<div class="harmat-sales-empty">' . esc_html($text['empty_filtered']) . '</div></section>';
             return;
         }
 
-        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-property-table"><thead><tr><th>房号</th><th>状态</th><th>楼栋</th><th>楼层</th><th>房间</th><th>销售面积</th><th>露台/花园</th><th>总价 HUF</th><th>前端价格</th><th>备注</th><th>链接</th><th>操作</th></tr></thead><tbody>';
+        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-property-table"><thead><tr>';
+        foreach ($text['columns'] as $column_label) {
+            echo '<th>' . esc_html($column_label) . '</th>';
+        }
+        echo '</tr></thead><tbody>';
         foreach ($filtered_properties as $property) {
             $this->render_sales_portal_property_row($property);
         }
         echo '</tbody></table></div></section>';
     }
 
+    private function sales_property_page_texts($lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $texts = json_decode('{"zh":{"title":"\u623f\u6e90\u5e93\u5b58","manager_intro":"\u6765\u81ea\u7edf\u4e00\u623f\u6e90\u9500\u552e\u6570\u636e\uff0c\u53ef\u5feb\u901f\u6838\u5bf9\u5e76\u7ef4\u62a4\u72b6\u6001\u3001\u9762\u79ef\u548c\u4ef7\u683c\u663e\u793a\u3002","staff_intro":"\u9500\u552e\u53ef\u67e5\u770b\u7edf\u4e00\u623f\u6e90\u5e93\u5b58\uff0c\u4ef7\u683c\u548c\u72b6\u6001\u4fee\u6539\u7531\u4e3b\u7ba1\u6267\u884c\u3002","public_link":"\u6253\u5f00\u516c\u5f00\u623f\u6e90","empty_all":"\u6682\u65e0\u623f\u6e90\u3002","empty_filtered":"\u5f53\u524d\u7b5b\u9009\u6761\u4ef6\u4e0b\u6ca1\u6709\u623f\u6e90\u3002","tabs":{"all":"\u5168\u90e8","current":"\u5728\u552e","reserved":"\u5df2\u9884\u8ba2","sold":"\u5df2\u51fa\u552e"},"search_label":"\u641c\u7d22","placeholder":"\u623f\u53f7 / \u697c\u680b / \u697c\u5c42 / \u5907\u6ce8","status":"\u72b6\u6001","all_status":"\u5168\u90e8\u72b6\u6001","building":"\u697c\u680b","all_buildings":"\u5168\u90e8\u697c\u680b","floor":"\u697c\u5c42","all_floors":"\u5168\u90e8\u697c\u5c42","rooms":"\u623f\u95f4","all_rooms":"\u5168\u90e8\u623f\u95f4","min_area":"\u6700\u5c0f\u9762\u79ef m\u00b2","min_area_placeholder":"\u4f8b\u5982 60","min_price":"\u6700\u4f4e\u91d1\u989d HUF","min_price_placeholder":"\u4f8b\u5982 80000000","max_price":"\u6700\u9ad8\u91d1\u989d HUF","max_price_placeholder":"\u4f8b\u5982 120000000","front_price":"\u524d\u7aef\u4ef7\u683c","all":"\u5168\u90e8","show_price":"\u663e\u793a\u4ef7\u683c","hide_price":"\u9690\u85cf/\u5f85\u8bae","filter":"\u7b5b\u9009","clear":"\u6e05\u9664","total":"\u5168\u90e8\u623f\u6e90\uff1a","matched":"\u5339\u914d\u7ed3\u679c\uff1a","unit":" \u5957","area_basis":"\u9762\u79ef\u53e3\u5f84\uff1a\u9500\u552e\u9762\u79ef","price_basis":"\u91d1\u989d\u53e3\u5f84\uff1a\u540e\u53f0\u603b\u4ef7 HUF","columns":["\u623f\u53f7","\u72b6\u6001","\u697c\u680b","\u697c\u5c42","\u623f\u95f4","\u9500\u552e\u9762\u79ef","\u9732\u53f0/\u82b1\u56ed","\u603b\u4ef7 HUF","\u524d\u7aef\u4ef7\u683c","\u5907\u6ce8","\u94fe\u63a5","\u64cd\u4f5c"]},"hu":{"title":"Lak\u00e1sk\u00e9szlet","manager_intro":"Egys\u00e9ges lak\u00e1s\u00e9rt\u00e9kes\u00edt\u00e9si adatok alapj\u00e1n gyorsan ellen\u0151rizhet\u0151 \u00e9s karbantarthat\u00f3 a st\u00e1tusz, a ter\u00fclet \u00e9s az \u00e1rmegjelen\u00edt\u00e9s.","staff_intro":"Az \u00e9rt\u00e9kes\u00edt\u0151k l\u00e1thatj\u00e1k a k\u00f6z\u00f6s lak\u00e1sk\u00e9szletet; az \u00e1rakat \u00e9s st\u00e1tuszt a vezet\u0151 kezeli.","public_link":"Nyilv\u00e1nos lak\u00e1skeres\u0151","empty_all":"Nincs lak\u00e1sadat.","empty_filtered":"A jelenlegi sz\u0171r\u00e9sre nincs tal\u00e1lat.","tabs":{"all":"Mind","current":"El\u00e9rhet\u0151","reserved":"Foglalva","sold":"Eladva"},"search_label":"Keres\u00e9s","placeholder":"Lak\u00e1ssz\u00e1m / \u00e9p\u00fclet / emelet / megjegyz\u00e9s","status":"St\u00e1tusz","all_status":"Minden st\u00e1tusz","building":"\u00c9p\u00fclet","all_buildings":"Minden \u00e9p\u00fclet","floor":"Emelet","all_floors":"Minden emelet","rooms":"Szob\u00e1k","all_rooms":"Minden szoba","min_area":"Min. ter\u00fclet m\u00b2","min_area_placeholder":"pl. 60","min_price":"Min. \u00f6sszeg HUF","min_price_placeholder":"pl. 80000000","max_price":"Max. \u00f6sszeg HUF","max_price_placeholder":"pl. 120000000","front_price":"Nyilv\u00e1nos \u00e1r","all":"Mind","show_price":"\u00c1r mutat\u00e1sa","hide_price":"Rejtett / egyeztet\u00e9s","filter":"Sz\u0171r\u00e9s","clear":"T\u00f6rl\u00e9s","total":"\u00d6sszes lak\u00e1s:","matched":"Tal\u00e1latok:","unit":" db","area_basis":"Ter\u00fclet: \u00e9rt\u00e9kes\u00edt\u00e9si ter\u00fclet","price_basis":"\u00d6sszeg: bels\u0151 teljes \u00e1r HUF","columns":["Lak\u00e1s","St\u00e1tusz","\u00c9p\u00fclet","Emelet","Szob\u00e1k","\u00c9rt\u00e9kes\u00edt\u00e9si ter\u00fclet","Terasz / kert","Teljes \u00e1r HUF","Nyilv\u00e1nos \u00e1r","Megjegyz\u00e9s","Link","M\u0171velet"]}}', true);
+        return $texts[$lang] ?? $texts['zh'];
+    }
+
     private function render_sales_property_filters($filters, $total_count, $filtered_count, $filter_options, $status_counts) {
+        $lang = $this->active_sales_language();
+        $text = $this->sales_property_page_texts($lang);
         $status_tabs = array(
-            '' => '全部',
-            'current' => '在售',
-            'reserved' => '已预订',
-            'sold' => '已出售',
+            '' => $text['tabs']['all'],
+            'current' => $text['tabs']['current'],
+            'reserved' => $text['tabs']['reserved'],
+            'sold' => $text['tabs']['sold'],
         );
         echo '<div class="harmat-sales-status-tabs">';
         foreach ($status_tabs as $status => $label) {
@@ -12853,34 +12934,34 @@ final class Harmat_Sales_Manager {
         echo '</div>';
         echo '<form method="get" class="harmat-sales-filter-grid harmat-sales-property-filter">';
         echo '<input type="hidden" name="view" value="properties">';
-        echo '<label class="harmat-sales-filter-search">搜索<input name="property_search" value="' . esc_attr($filters['search']) . '" placeholder="房号 / 楼栋 / 楼层 / 备注"></label>';
-        echo '<label>状态<select name="property_status"><option value="">全部状态</option>';
-        foreach ($this->status_options() as $value => $label) {
+        echo '<label class="harmat-sales-filter-search">' . esc_html($text['search_label']) . '<input name="property_search" value="' . esc_attr($filters['search']) . '" placeholder="' . esc_attr($text['placeholder']) . '"></label>';
+        echo '<label>' . esc_html($text['status']) . '<select name="property_status"><option value="">' . esc_html($text['all_status']) . '</option>';
+        foreach ($this->status_options($lang) as $value => $label) {
             echo '<option value="' . esc_attr($value) . '"' . selected($filters['status'], $value, false) . '>' . esc_html($label) . '</option>';
         }
         echo '</select></label>';
-        echo '<label>楼栋<select name="property_building"><option value="">全部楼栋</option>';
+        echo '<label>' . esc_html($text['building']) . '<select name="property_building"><option value="">' . esc_html($text['all_buildings']) . '</option>';
         foreach ($filter_options['buildings'] as $building) {
             echo '<option value="' . esc_attr($building) . '"' . selected($filters['building'], $building, false) . '>' . esc_html($building) . '</option>';
         }
         echo '</select></label>';
-        echo '<label>楼层<select name="property_floor"><option value="">全部楼层</option>';
+        echo '<label>' . esc_html($text['floor']) . '<select name="property_floor"><option value="">' . esc_html($text['all_floors']) . '</option>';
         foreach ($filter_options['floors'] as $floor) {
             echo '<option value="' . esc_attr($floor) . '"' . selected($filters['floor'], $floor, false) . '>' . esc_html($floor) . '</option>';
         }
         echo '</select></label>';
-        echo '<label>房间<select name="property_rooms"><option value="">全部房间</option>';
+        echo '<label>' . esc_html($text['rooms']) . '<select name="property_rooms"><option value="">' . esc_html($text['all_rooms']) . '</option>';
         foreach ($filter_options['rooms'] as $rooms) {
             echo '<option value="' . esc_attr($rooms) . '"' . selected($filters['rooms'], $rooms, false) . '>' . esc_html($rooms) . '</option>';
         }
         echo '</select></label>';
-        echo '<label>最小面积 m²<input name="property_min_area" value="' . esc_attr($filters['min_area']) . '" inputmode="decimal" placeholder="例如 60"></label>';
-        echo '<label>最低金额 HUF<input name="property_min_price" value="' . esc_attr($filters['min_price']) . '" inputmode="numeric" placeholder="例如 80000000"></label>';
-        echo '<label>最高金额 HUF<input name="property_max_price" value="' . esc_attr($filters['max_price']) . '" inputmode="numeric" placeholder="例如 120000000"></label>';
-        echo '<label>前端价格<select name="property_price_visibility"><option value="">全部</option><option value="show"' . selected($filters['price_visibility'], 'show', false) . '>显示价格</option><option value="hide"' . selected($filters['price_visibility'], 'hide', false) . '>隐藏/待议</option></select></label>';
-        echo '<div class="harmat-sales-filter-actions"><button>筛选</button><a href="' . esc_url($this->sales_portal_url(array('view' => 'properties'))) . '">清除</a></div>';
+        echo '<label>' . esc_html($text['min_area']) . '<input name="property_min_area" value="' . esc_attr($filters['min_area']) . '" inputmode="decimal" placeholder="' . esc_attr($text['min_area_placeholder']) . '"></label>';
+        echo '<label>' . esc_html($text['min_price']) . '<input name="property_min_price" value="' . esc_attr($filters['min_price']) . '" inputmode="numeric" placeholder="' . esc_attr($text['min_price_placeholder']) . '"></label>';
+        echo '<label>' . esc_html($text['max_price']) . '<input name="property_max_price" value="' . esc_attr($filters['max_price']) . '" inputmode="numeric" placeholder="' . esc_attr($text['max_price_placeholder']) . '"></label>';
+        echo '<label>' . esc_html($text['front_price']) . '<select name="property_price_visibility"><option value="">' . esc_html($text['all']) . '</option><option value="show"' . selected($filters['price_visibility'], 'show', false) . '>' . esc_html($text['show_price']) . '</option><option value="hide"' . selected($filters['price_visibility'], 'hide', false) . '>' . esc_html($text['hide_price']) . '</option></select></label>';
+        echo '<div class="harmat-sales-filter-actions"><button>' . esc_html($text['filter']) . '</button><a href="' . esc_url($this->sales_portal_url(array('view' => 'properties'))) . '">' . esc_html($text['clear']) . '</a></div>';
         echo '</form>';
-        echo '<div class="harmat-agent-property-toolbar"><span>全部房源：<strong>' . esc_html((string) $total_count) . '</strong> 套</span><span>匹配结果：<strong>' . esc_html((string) $filtered_count) . '</strong> 套</span><span>面积口径：销售面积</span><span>金额口径：后台总价 HUF</span></div>';
+        echo '<div class="harmat-agent-property-toolbar"><span>' . esc_html($text['total']) . '<strong>' . esc_html((string) $total_count) . '</strong>' . esc_html($text['unit']) . '</span><span>' . esc_html($text['matched']) . '<strong>' . esc_html((string) $filtered_count) . '</strong>' . esc_html($text['unit']) . '</span><span>' . esc_html($text['area_basis']) . '</span><span>' . esc_html($text['price_basis']) . '</span></div>';
     }
 
     private function sales_property_filters() {
@@ -13054,22 +13135,28 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_links() {
-        $links = array(
-            array('销售管理独立页', home_url('/sales/'), '日常查看销售数据使用这个入口'),
-            array('经纪人入口', home_url('/agent/'), '经纪人登记客户、查看客户保护'),
-            array('客户入口', home_url('/client/'), '客户登录入口'),
-            array('网站登录页', home_url('/belepes/'), '公开登录页面'),
-            array('公开房源搜索', home_url('/lakaskereso/'), '客户看到的房源列表'),
-            array('律师资料同步页', $this->sales_portal_url(array('view' => 'legal')), '成交客户合同资料，附件和客户档案同步状态'),
+        $lang = $this->active_sales_language() === 'hu' ? 'hu' : 'zh';
+        $texts = json_decode('{"zh":{"title":"\u5e38\u7528\u767b\u5f55\u5165\u53e3","intro":"\u8fd9\u4e9b\u94fe\u63a5\u53ef\u4ee5\u590d\u5236\u4fdd\u5b58\uff0c\u786e\u8ba4\u4e0d\u540c\u89d2\u8272\u4ece\u54ea\u91cc\u8fdb\u5165\u3002","links":[["\u9500\u552e\u7ba1\u7406\u72ec\u7acb\u9875","sales","\u65e5\u5e38\u67e5\u770b\u9500\u552e\u6570\u636e\u4f7f\u7528\u8fd9\u4e2a\u5165\u53e3"],["\u7ecf\u7eaa\u4eba\u5165\u53e3","agent","\u7ecf\u7eaa\u4eba\u767b\u8bb0\u5ba2\u6237\u3001\u67e5\u770b\u5ba2\u6237\u4fdd\u62a4"],["\u5ba2\u6237\u5165\u53e3","client","\u5ba2\u6237\u767b\u5f55\u5165\u53e3"],["\u7f51\u7ad9\u767b\u5f55\u9875","login","\u516c\u5f00\u767b\u5f55\u9875\u9762"],["\u516c\u5f00\u623f\u6e90\u641c\u7d22","search","\u5ba2\u6237\u770b\u5230\u7684\u623f\u6e90\u5217\u8868"],["\u5f8b\u5e08\u8d44\u6599\u540c\u6b65\u9875","legal","\u6210\u4ea4\u5ba2\u6237\u5408\u540c\u8d44\u6599\uff0c\u9644\u4ef6\u548c\u5ba2\u6237\u6863\u6848\u540c\u6b65\u72b6\u6001"]],"admin":["\u540e\u53f0\u5907\u7528\u5165\u53e3","admin","\u9700\u8981\u9ad8\u7ea7\u7ef4\u62a4\u65f6\u518d\u8fdb\u5165\u540e\u53f0"]},"hu":{"title":"Gyakori bel\u00e9p\u00e9si pontok","intro":"Ezek a linkek menthet\u0151k vagy tov\u00e1bb\u00edthat\u00f3k; seg\u00edtenek ellen\u0151rizni, melyik szerep melyik fel\u00fcletet haszn\u00e1lja.","links":[["\u00c9rt\u00e9kes\u00edt\u00e9si fel\u00fclet","sales","Napi \u00e9rt\u00e9kes\u00edt\u00e9si adatok \u00e9s \u00fcgykezel\u00e9s."],["K\u00f6zvet\u00edt\u0151i fel\u00fclet","agent","K\u00f6zvet\u00edt\u0151k \u00fcgyf\u00e9lr\u00f6gz\u00edt\u00e9se \u00e9s \u00fcgyf\u00e9lv\u00e9delem."],["\u00dcgyf\u00e9lk\u00f6zpont","client","\u00dcgyf\u00e9l bel\u00e9p\u00e9si fel\u00fclete."],["Weboldali bel\u00e9p\u00e9s","login","Nyilv\u00e1nos bejelentkez\u00e9si oldal."],["Nyilv\u00e1nos lak\u00e1skeres\u0151","search","Az \u00fcgyfelek \u00e1ltal l\u00e1tott lak\u00e1slista."],["\u00dcgyv\u00e9di adatszinkron","legal","Lez\u00e1rt \u00fcgyfelek szerz\u0151d\u00e9ses adatai, mell\u00e9kletei \u00e9s \u00fcgyf\u00e9lakta-st\u00e1tusza."]],"admin":["Admin tartal\u00e9k bel\u00e9p\u00e9s","admin","Csak halad\u00f3 karbantart\u00e1shoz."]}}', true);
+        $text = $texts[$lang] ?? $texts['zh'];
+        $link_urls = array(
+            'sales' => home_url('/sales/'),
+            'agent' => home_url('/agent/'),
+            'client' => home_url('/client/'),
+            'login' => home_url('/belepes/'),
+            'search' => home_url('/lakaskereso/'),
+            'legal' => $this->sales_portal_url(array('view' => 'legal')),
+            'admin' => home_url('/sales-admin/'),
         );
+        $links = $text['links'];
         if ($this->is_sales_manager_user()) {
-            $links[] = array('后台备用入口', home_url('/sales-admin/'), '需要高级维护时再进入后台');
+            $links[] = $text['admin'];
         }
 
-        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>常用登录入口</h2><p>这些链接可以复制保存，确认不同角色从哪里进入。</p></div></div>';
+        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['title']) . '</h2><p>' . esc_html($text['intro']) . '</p></div></div>';
         echo '<div class="harmat-sales-link-grid">';
         foreach ($links as $link) {
-            echo '<a href="' . esc_url($link[1]) . '" target="_blank" rel="noopener"><strong>' . esc_html($link[0]) . '</strong><code>' . esc_html($link[1]) . '</code><span>' . esc_html($link[2]) . '</span></a>';
+            $url = $link_urls[$link[1]] ?? home_url('/');
+            echo '<a href="' . esc_url($url) . '" target="_blank" rel="noopener"><strong>' . esc_html($link[0]) . '</strong><code>' . esc_html($url) . '</code><span>' . esc_html($link[2]) . '</span></a>';
         }
         echo '</div></section>';
     }
@@ -13335,6 +13422,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_deal_row($deal, $show_commission_column = true, $text = null) {
+        $lang = $this->active_sales_language();
         $text = $text ?: $this->sales_deals_page_text($this->active_sales_language());
         $stage_options = $text['options']['stage'];
         $payment_options = $text['options']['payment_method'];
@@ -13342,7 +13430,7 @@ final class Harmat_Sales_Manager {
         $contract_options = $text['options']['contract_status'];
         $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $this->deal_payment_received_total($deal), $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
         $assigned_sales_id = (int) ($deal['assigned_sales_id'] ?? 0);
         $source_options = $text['options']['source'];
@@ -13352,9 +13440,10 @@ final class Harmat_Sales_Manager {
         if ($source_type === 'website' && !empty($deal['inquiry_id'])) {
             $source_label .= ' #' . (int) $deal['inquiry_id'];
         }
+        $next_step_label = $this->sales_deal_next_step_label($deal['next_step'] ?? '', $this->active_sales_language());
 
         echo '<tr>';
-        echo '<td><strong>' . esc_html($deal['client_name'] ?: $text['row']['no_client']) . '</strong><small>CRM: ' . esc_html($deal['crm_code'] ?? '-') . '</small><small>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</small></td>';
+        echo '<td><strong>' . esc_html($this->sales_display_value($deal['client_name'] ?: $text['row']['no_client'], $lang)) . '</strong><small>CRM: ' . esc_html($deal['crm_code'] ?? '-') . '</small><small>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</small></td>';
         echo '<td>';
         if ($property_title && $property_url) {
             echo '<a href="' . esc_url($property_url) . '" target="_blank" rel="noopener">' . esc_html($property_title) . '</a>';
@@ -13374,7 +13463,7 @@ final class Harmat_Sales_Manager {
             }
         }
         echo '<td><span>' . esc_html(!empty($deal['payment_method']) && isset($payment_options[$deal['payment_method']]) ? $payment_options[$deal['payment_method']] : '-') . '</span><small>' . esc_html($payment_statuses[$payment_status] ?? '-') . ' / ' . esc_html(!empty($deal['contract_status']) && isset($contract_options[$deal['contract_status']]) ? $contract_options[$deal['contract_status']] : '-') . '</small></td>';
-        echo '<td><span>' . esc_html($deal['next_step'] ?: '-') . '</span><small>' . esc_html($this->format_followup_datetime($deal['next_followup'] ?? '')) . '</small></td>';
+        echo '<td><span>' . esc_html($next_step_label ?: '-') . '</span><small>' . esc_html($this->format_followup_datetime($deal['next_followup'] ?? '')) . '</small></td>';
         echo '<td>';
         if ($this->is_sales_manager_user()) {
             echo '<form method="post" class="harmat-sales-inline-form harmat-sales-assign-form">';
@@ -13408,6 +13497,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_deal_focus_item($deal, $show_commission_column = true, $text = null) {
+        $lang = $this->active_sales_language();
         $text = $text ?: $this->sales_deals_page_text($this->active_sales_language());
         $stage_options = $text['options']['stage'];
         $payment_options = $text['options']['payment_method'];
@@ -13415,7 +13505,7 @@ final class Harmat_Sales_Manager {
         $contract_options = $text['options']['contract_status'];
         $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $this->deal_payment_received_total($deal), $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
         $assigned_sales_id = (int) ($deal['assigned_sales_id'] ?? 0);
         $source_options = $text['options']['source'];
@@ -13435,10 +13525,11 @@ final class Harmat_Sales_Manager {
         $commission_label = $commission_amount ? $this->format_money($commission_amount) . ' Ft' : '-';
         $commission_meta = ($deal['commission_rate'] ? $deal['commission_rate'] . '%' : $text['row']['fixed_rate_missing']) . ' / ' . ($deal['commission_due_date'] ?: '-') . ' / ' . ($commission_statuses[$commission_status] ?? $commission_status);
         $unit_items = $this->sales_deal_unit_summary($deal);
+        $next_step_label = $this->sales_deal_next_step_label($deal['next_step'] ?? '', $this->active_sales_language());
 
         echo '<article class="harmat-sales-deal-focus-item">';
         echo '<div class="harmat-sales-deal-focus-main">';
-        echo '<div class="harmat-sales-deal-focus-client"><strong>' . esc_html($deal['client_name'] ?: $text['row']['no_client']) . '</strong><small>CRM: ' . esc_html($deal['crm_code'] ?? '-') . '</small><small>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</small></div>';
+        echo '<div class="harmat-sales-deal-focus-client"><strong>' . esc_html($this->sales_display_value($deal['client_name'] ?: $text['row']['no_client'], $lang)) . '</strong><small>CRM: ' . esc_html($deal['crm_code'] ?? '-') . '</small><small>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</small></div>';
         echo '<div class="harmat-sales-deal-focus-property"><b>';
         if ($property_title && $property_url) {
             echo '<a href="' . esc_url($property_url) . '" target="_blank" rel="noopener">' . esc_html($property_title) . '</a>';
@@ -13447,11 +13538,11 @@ final class Harmat_Sales_Manager {
         }
         echo '</b><small>' . esc_html($source_label) . '</small>';
         if ($unit_items) {
-            echo '<small class="harmat-sales-deal-units">' . esc_html(implode(' / ', $unit_items)) . '</small>';
+            echo '<small class="harmat-sales-deal-units">' . esc_html($this->sales_display_value(implode(' / ', $unit_items), $lang)) . '</small>';
         }
         echo '</div>';
         echo '<div class="harmat-sales-deal-focus-stage"><span class="harmat-sales-pill harmat-sales-deal-' . esc_attr($stage) . '">' . esc_html($stage_options[$stage] ?? $stage) . '</span><small>' . esc_html($this->format_followup_datetime($deal['next_followup'] ?? '') ?: '-') . '</small></div>';
-        echo '<div class="harmat-sales-deal-focus-next"><b>' . esc_html($deal['next_step'] ?: '-') . '</b><small>' . esc_html($text['row']['updated']) . esc_html($this->format_lead_datetime($deal['updated_at'] ?? '') ?: '-') . '</small></div>';
+        echo '<div class="harmat-sales-deal-focus-next"><b>' . esc_html($next_step_label ?: '-') . '</b><small>' . esc_html($text['row']['updated']) . esc_html($this->format_lead_datetime($deal['updated_at'] ?? '') ?: '-') . '</small></div>';
         $owner_state_class = $assigned_sales_id ? 'harmat-sales-owner-assigned' : 'harmat-sales-owner-unassigned';
         echo '<div class="harmat-sales-deal-focus-owner ' . esc_attr($owner_state_class) . '">';
         if ($this->is_sales_manager_user()) {
@@ -13497,6 +13588,7 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_deal_card($deal, $text = null) {
+        $lang = $this->active_sales_language();
         $text = $text ?: $this->sales_deals_page_text($this->active_sales_language());
         $stage_options = $text['options']['stage'];
         $payment_options = $text['options']['payment_method'];
@@ -13505,7 +13597,7 @@ final class Harmat_Sales_Manager {
         $source_options = $text['options']['source'];
         $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
         $payment_status = $this->infer_payment_status($deal['amount'] ?? '', $this->deal_payment_received_total($deal), $deal['payment_due_date'] ?? '', $deal['payment_status'] ?? '');
-        $property_title = !empty($deal['property_id']) ? get_the_title((int) $deal['property_id']) : '';
+        $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $property_url = !empty($deal['property_id']) ? get_permalink((int) $deal['property_id']) : '';
         $assigned_sales_id = (int) ($deal['assigned_sales_id'] ?? 0);
         $source_type = isset($source_options[$deal['source_type'] ?? '']) ? ($deal['source_type'] ?? '') : 'walkin';
@@ -13520,9 +13612,10 @@ final class Harmat_Sales_Manager {
         $followup_meta = $this->sales_deal_followup_meta($deal);
         $followup_class = $followup_meta['class'];
         $followup_label = $followup_meta['label'];
+        $next_step_label = $this->sales_deal_next_step_label($deal['next_step'] ?? '', $this->active_sales_language());
 
         echo '<article class="harmat-sales-deal-card harmat-sales-deal-card-' . esc_attr($stage) . '">';
-        echo '<header><div><small>CRM ' . esc_html($deal['crm_code'] ?? '-') . '</small><h3>' . esc_html($deal['client_name'] ?: $text['row']['no_client']) . '</h3><span>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</span></div><span class="harmat-sales-pill harmat-sales-deal-' . esc_attr($stage) . '">' . esc_html($stage_options[$stage] ?? $stage) . '</span></header>';
+        echo '<header><div><small>CRM ' . esc_html($deal['crm_code'] ?? '-') . '</small><h3>' . esc_html($this->sales_display_value($deal['client_name'] ?: $text['row']['no_client'], $lang)) . '</h3><span>' . esc_html($deal['phone'] ?: ($deal['email'] ?: '-')) . '</span></div><span class="harmat-sales-pill harmat-sales-deal-' . esc_attr($stage) . '">' . esc_html($stage_options[$stage] ?? $stage) . '</span></header>';
         echo '<div class="harmat-sales-deal-card-property">';
         if ($property_title && $property_url) {
             echo '<a href="' . esc_url($property_url) . '" target="_blank" rel="noopener">' . esc_html($property_title) . '</a>';
@@ -13543,7 +13636,7 @@ final class Harmat_Sales_Manager {
         if (isset($text['followup'][$followup_class])) {
             $followup_label = $text['followup'][$followup_class];
         }
-        echo '<div class="harmat-sales-deal-card-next"><small>' . esc_html($text['row']['next']) . '</small><strong>' . esc_html($deal['next_step'] ?: '-') . '</strong><span class="harmat-sales-task-pill harmat-sales-task-' . esc_attr($followup_class) . '">' . esc_html($next_followup ? $next_followup . ' / ' . $followup_label : $followup_label) . '</span></div>';
+        echo '<div class="harmat-sales-deal-card-next"><small>' . esc_html($text['row']['next']) . '</small><strong>' . esc_html($next_step_label ?: '-') . '</strong><span class="harmat-sales-task-pill harmat-sales-task-' . esc_attr($followup_class) . '">' . esc_html($next_followup ? $next_followup . ' / ' . $followup_label : $followup_label) . '</span></div>';
         echo '<footer><span>' . esc_html($text['row']['updated']) . esc_html($this->format_lead_datetime($deal['updated_at'] ?? '') ?: '-') . '</span><div><a href="' . esc_url($this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) $deal['id']))) . '">' . esc_html($text['row']['edit']) . '</a>';
         if ($this->can_view_customer_profile($deal)) {
             echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'customers', 'customer_id' => (int) $deal['id']))) . '">' . esc_html($text['row']['profile']) . '</a>';
@@ -13569,12 +13662,12 @@ final class Harmat_Sales_Manager {
         $assigned_sales_label = $assigned_sales_id ? $this->assigned_sales_label($assigned_sales_id) : $text['row'][14];
         $days_left = $this->lead_protection_days_left($lead);
         $protection_class = $days_left > 0 ? 'active' : 'expired';
-        $property_title = $lead['property_id'] ? get_the_title((int) $lead['property_id']) : '';
+        $property_title = $lead['property_id'] ? $this->sales_display_value(get_the_title((int) $lead['property_id'])) : '';
         $property_url = $lead['property_id'] ? get_permalink((int) $lead['property_id']) : '';
         $source_type = $this->lead_source_type($lead);
         $source_label = $text['source'][$source_type] ?? $text['source']['walkin'];
 
-        echo '<tr><td><strong>' . esc_html($lead['client_name']) . '</strong><small>' . esc_html($source_label) . '</small><small>' . esc_html($lead['phone'] ?: '-') . '</small><small>' . esc_html($lead['email'] ?: '-') . '</small></td><td>';
+        echo '<tr><td><strong>' . esc_html($this->sales_display_value($lead['client_name'])) . '</strong><small>' . esc_html($source_label) . '</small><small>' . esc_html($lead['phone'] ?: '-') . '</small><small>' . esc_html($lead['email'] ?: '-') . '</small></td><td>';
         echo ($property_title && $property_url) ? '<a href="' . esc_url($property_url) . '" target="_blank" rel="noopener">' . esc_html($property_title) . '</a>' : esc_html($text['row'][0]);
         echo '<small><span class="harmat-sales-pill">' . esc_html($status_options[$status]) . '</span></small>';
         echo '<small><span class="harmat-sales-protection harmat-sales-protection-' . esc_attr($protection_class) . '">' . esc_html($days_left > 0 ? $text['row'][1] . $days_left . $text['row'][2] : $text['row'][3]) . '</span></small></td><td>';
@@ -13606,7 +13699,7 @@ final class Harmat_Sales_Manager {
     private function render_sales_portal_property_row($property) {
         $post_id = (int) $property->ID;
         $status = $this->sales_status($post_id);
-        $status_options = $this->status_options();
+        $status_options = $this->status_options($this->active_sales_language());
         $price = (int) get_post_meta($post_id, 'property_price', true);
         $hide_price = get_post_meta($post_id, '_harmat_hide_front_price', true) === 'yes';
         $sales_area = $this->get_sales_area($post_id);
@@ -13614,7 +13707,7 @@ final class Harmat_Sales_Manager {
         $note = get_post_meta($post_id, '_harmat_sales_note', true);
         $form_id = 'harmat-sales-property-' . $post_id;
         $can_manage = $this->is_sales_manager_user();
-        $front_price = ($hide_price || !$price) ? 'Ár egyeztetés alapján' : $this->format_money($price) . ' Ft';
+        $front_price = ($hide_price || !$price) ? ($this->active_sales_language() === 'hu' ? json_decode('"\\u00c1r egyeztet\\u00e9s alapj\\u00e1n"') : json_decode('"\\u4ef7\\u683c\\u5f85\\u8bae"')) : $this->format_money($price) . ' Ft';
 
         echo '<tr>';
         echo '<td><strong>' . esc_html(get_the_title($post_id)) . '</strong>';
@@ -13656,6 +13749,9 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_trash() {
+        $lang = $this->active_sales_language() === 'hu' ? 'hu' : 'zh';
+        $texts = json_decode('{"zh":{"title":"\u5220\u9664\u56de\u6536\u7ad9","intro":"\u8bef\u5220\u6216\u91cd\u590d\u8bb0\u5f55\u4f1a\u5148\u8fdb\u5165\u8fd9\u91cc\u3002\u6062\u590d\u540e\u56de\u5230\u539f\u4e1a\u52a1\u5217\u8868\uff1b\u6c38\u4e45\u5220\u9664\u53ea\u5efa\u8bae\u5728\u786e\u8ba4\u65e0\u7528\u540e\u7531\u4e3b\u7ba1\u64cd\u4f5c\u3002","empty":"\u5f53\u524d\u56de\u6536\u7ad9\u4e3a\u7a7a\u3002","headers":["\u7c7b\u578b","\u8bb0\u5f55","\u623f\u6e90/CRM","\u8d1f\u8d23\u4eba","\u5220\u9664\u65f6\u95f4","\u5220\u9664\u4eba","\u64cd\u4f5c"],"types":{"lead":"\u5ba2\u6237\u8ddf\u8fdb","deal":"\u9500\u552e\u8ddf\u5355","inquiry":"\u7f51\u7ad9\u8be2\u4ef7"},"no_client":"\u672a\u586b\u5199","restore":"\u6062\u590d","purge":"\u6c38\u4e45\u5220\u9664","purge_confirm":"\u786e\u5b9a\u6c38\u4e45\u5220\u9664\u8fd9\u6761\u8bb0\u5f55\u5417\uff1f\u6b64\u64cd\u4f5c\u4e0d\u53ef\u6062\u590d\u3002"},"hu":{"title":"T\u00f6rl\u00e9si lomt\u00e1r","intro":"A t\u00e9vesen t\u00f6r\u00f6lt vagy duplik\u00e1lt rekordok ide ker\u00fclnek. Vissza\u00e1ll\u00edt\u00e1s ut\u00e1n az eredeti \u00fczleti list\u00e1ba ker\u00fclnek vissza; v\u00e9gleges t\u00f6rl\u00e9st csak vezet\u0151i ellen\u0151rz\u00e9s ut\u00e1n \u00e9rdemes haszn\u00e1lni.","empty":"A lomt\u00e1r jelenleg \u00fcres.","headers":["T\u00edpus","Rekord","Lak\u00e1s / CRM","Felel\u0151s","T\u00f6rl\u00e9s ideje","T\u00f6r\u00f6lte","M\u0171velet"],"types":{"lead":"\u00dcgyf\u00e9lk\u00f6vet\u00e9s","deal":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgy","inquiry":"Weboldali \u00e9rdekl\u0151d\u00e9s"},"no_client":"Nincs megadva","restore":"Vissza\u00e1ll\u00edt\u00e1s","purge":"V\u00e9gleges t\u00f6rl\u00e9s","purge_confirm":"Biztosan v\u00e9glegesen t\u00f6rli ezt a rekordot? Ez a m\u0171velet nem vonhat\u00f3 vissza."}}', true);
+        $text = $texts[$lang] ?? $texts['zh'];
         $rows = array();
         foreach ($this->get_sales_trash() as $item) {
             if (!$this->can_view_sales_trash_item($item)) {
@@ -13717,20 +13813,24 @@ final class Harmat_Sales_Manager {
         });
 
         echo '<section class="harmat-sales-panel">';
-        echo '<div class="harmat-sales-panel-head"><div><h2>删除回收站</h2><p>误删或重复记录会先进入这里。恢复后回到原业务列表；永久删除只建议在确认无用后由主管操作。</p></div><strong>' . esc_html((string) count($rows)) . '</strong></div>';
+        echo '<div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['title']) . '</h2><p>' . esc_html($text['intro']) . '</p></div><strong>' . esc_html((string) count($rows)) . '</strong></div>';
         if (!$rows) {
-            echo '<div class="harmat-sales-empty">当前回收站为空。</div></section>';
+            echo '<div class="harmat-sales-empty">' . esc_html($text['empty']) . '</div></section>';
             return;
         }
 
-        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-trash-table"><thead><tr><th>类型</th><th>记录</th><th>房源/CRM</th><th>负责人</th><th>删除时间</th><th>删除人</th><th>操作</th></tr></thead><tbody>';
+        echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-trash-table"><thead><tr>';
+        foreach ($text['headers'] as $header) {
+            echo '<th>' . esc_html($header) . '</th>';
+        }
+        echo '</tr></thead><tbody>';
         foreach ($rows as $row) {
             $deleted_user = !empty($row['deleted_by']) ? get_userdata((int) $row['deleted_by']) : null;
-            $type_labels = array('lead' => '客户跟进', 'deal' => '销售跟单', 'inquiry' => '网站询价');
+            $type_labels = $text['types'];
             echo '<tr>';
             echo '<td><span class="harmat-sales-pill">' . esc_html($type_labels[$row['type']] ?? $row['type']) . '</span><small>#' . esc_html((string) $row['original_id']) . '</small></td>';
-            echo '<td><strong>' . esc_html($row['client'] ?: '未填写') . '</strong><small>' . esc_html($row['contact'] ?: '-') . '</small></td>';
-            echo '<td><strong>' . esc_html($row['property'] ?: '-') . '</strong><small>' . esc_html($row['crm'] ?: '-') . '</small></td>';
+            echo '<td><strong>' . esc_html($this->sales_display_value($row['client'] ?: $text['no_client'], $lang)) . '</strong><small>' . esc_html($row['contact'] ?: '-') . '</small></td>';
+            echo '<td><strong>' . esc_html($this->sales_display_value($row['property'] ?: '-', $lang)) . '</strong><small>' . esc_html($row['crm'] ?: '-') . '</small></td>';
             echo '<td>' . esc_html($this->assigned_sales_label((int) ($row['assigned_sales_id'] ?? 0))) . '</td>';
             echo '<td>' . esc_html($this->format_lead_datetime($row['deleted_at'] ?? '')) . '</td>';
             echo '<td>' . esc_html($deleted_user ? ($deleted_user->display_name ?: $deleted_user->user_login) : '-') . '</td>';
@@ -13745,7 +13845,7 @@ final class Harmat_Sales_Manager {
                 } else {
                     echo '<input type="hidden" name="trash_id" value="' . esc_attr($row['trash_id']) . '">';
                 }
-                echo '<button type="submit">恢复</button>';
+                echo '<button type="submit">' . esc_html($text['restore']) . '</button>';
                 echo '</form>';
             }
             if (!empty($row['can_purge'])) {
@@ -13758,7 +13858,7 @@ final class Harmat_Sales_Manager {
                 } else {
                     echo '<input type="hidden" name="trash_id" value="' . esc_attr($row['trash_id']) . '">';
                 }
-                echo '<button type="submit" onclick="return confirm(\'确定永久删除这条记录吗？此操作不可恢复。\')">永久删除</button>';
+                echo '<button type="submit" onclick="return confirm(\'' . esc_js($text['purge_confirm']) . '\')">' . esc_html($text['purge']) . '</button>';
                 echo '</form>';
             }
             echo '</td>';
@@ -14691,7 +14791,8 @@ final class Harmat_Sales_Manager {
             if (!in_array($status, array('reserved', 'sold'), true)) {
                 continue;
             }
-            $this->add_registered_property_item($items, $property_id, '房源库存', '', $this->status_options()[$status] ?? $status, $this->sales_portal_url(array('view' => 'properties', 'sales_search' => get_the_title($property_id))));
+            $property_status_options = $this->status_options($this->active_sales_language());
+            $this->add_registered_property_item($items, $property_id, '房源库存', '', $property_status_options[$status] ?? $status, $this->sales_portal_url(array('view' => 'properties', 'sales_search' => get_the_title($property_id))));
         }
 
         return array_values($items);
@@ -14954,7 +15055,7 @@ final class Harmat_Sales_Manager {
                 if (!$due_date || $balance <= 0 || $status === 'paid') {
                     continue;
                 }
-                $label = trim((string) ($payment_item['label'] ?? ''));
+                $label = $this->payment_plan_label_display(trim((string) ($payment_item['label'] ?? '')));
                 $tasks[] = $this->make_sales_task(
                     $due_date,
                     $task_text['type_payment'],
@@ -15057,9 +15158,9 @@ final class Harmat_Sales_Manager {
             'date' => $this->format_task_datetime($date),
             'timestamp' => $timestamp,
             'type' => $type,
-            'title' => $title,
-            'client' => $client,
-            'property' => $property,
+            'title' => $this->sales_display_value($title),
+            'client' => $this->sales_display_value($client),
+            'property' => $this->sales_display_value($property),
             'url' => $url,
             'urgency' => $urgency,
             'urgency_key' => $urgency_key,
@@ -15117,12 +15218,13 @@ final class Harmat_Sales_Manager {
         );
     }
 
-    private function auto_payment_plan_items($payment_method, $amount, $deposit = '', $payment_due_date = '', $expected_close = '', $payment_received = '') {
+    private function auto_payment_plan_items($payment_method, $amount, $deposit = '', $payment_due_date = '', $expected_close = '', $payment_received = '', $lang = null) {
         $total = (int) preg_replace('/[^\d]/', '', (string) $amount);
         if ($total <= 0) {
             return array();
         }
 
+        $label_text = $this->payment_plan_template_labels($lang);
         $deposit = min($total, (int) preg_replace('/[^\d]/', '', (string) $deposit));
         $payment_received_total = (int) preg_replace('/[^\d]/', '', (string) $payment_received);
         $remaining_paid = min($total, $deposit + $payment_received_total);
@@ -15175,44 +15277,51 @@ final class Harmat_Sales_Manager {
 
         if ($payment_method === 'full') {
             $add_template(array(
-                array('label' => 'Előleg 25%', 'percent' => '25', 'due_date' => $expected_close),
-                array('label' => 'Végső részlet 75% - 2026.12.31-ig', 'percent' => '75', 'due_date' => $year_end_due_date),
+                array('label' => $label_text['advance_25'], 'percent' => '25', 'due_date' => $expected_close),
+                array('label' => $label_text['final_75'], 'percent' => '75', 'due_date' => $year_end_due_date),
             ));
         } elseif ($payment_method === 'half_half') {
             $add_template(array(
-                array('label' => 'Előleg 25%', 'percent' => '25', 'due_date' => $expected_close),
-                array('label' => 'Második részlet 25% - 2026.12.31-ig', 'percent' => '25', 'due_date' => $year_end_due_date),
-                array('label' => 'Végső részlet 50% - 2027.06.01-ig', 'percent' => '50', 'due_date' => $next_june_due_date),
+                array('label' => $label_text['advance_25'], 'percent' => '25', 'due_date' => $expected_close),
+                array('label' => $label_text['second_25_2026'], 'percent' => '25', 'due_date' => $year_end_due_date),
+                array('label' => $label_text['final_50_2027'], 'percent' => '50', 'due_date' => $next_june_due_date),
             ));
         } elseif ($payment_method === 'installment') {
             $add_template(array(
-                array('label' => 'Foglaló 10%', 'percent' => '10', 'due_date' => $expected_close),
-                array('label' => 'Előleg 15% - a foglalóval együtt az első fizetés', 'percent' => '15', 'due_date' => $expected_close),
-                array('label' => 'Második részlet 25% - szerkezetkész állapot után', 'percent' => '25', 'due_date' => ''),
-                array('label' => 'Harmadik részlet 25% - belsőépítészeti munkák kezdetekor', 'percent' => '25', 'due_date' => ''),
-                array('label' => 'Negyedik részlet 20% - a lakás elkészültéről szóló értesítés után', 'percent' => '20', 'due_date' => ''),
-                array('label' => 'Végső részlet 5% - kulcsátadáskor', 'percent' => '5', 'due_date' => ''),
+                array('label' => $label_text['deposit_10'], 'percent' => '10', 'due_date' => $expected_close),
+                array('label' => $label_text['advance_15'], 'percent' => '15', 'due_date' => $expected_close),
+                array('label' => $label_text['second_25_structure'], 'percent' => '25', 'due_date' => ''),
+                array('label' => $label_text['third_25_interior'], 'percent' => '25', 'due_date' => ''),
+                array('label' => $label_text['fourth_20_notice'], 'percent' => '20', 'due_date' => ''),
+                array('label' => $label_text['final_5_handover'], 'percent' => '5', 'due_date' => ''),
             ));
         } else {
             if ($deposit > 0) {
                 $deposit_percent = $percent_value($deposit);
-                $add_item('Foglaló', $deposit, $expected_close, $deposit_percent);
+                $add_item($label_text['deposit'], $deposit, $expected_close, $deposit_percent);
             }
             $balance_percent = $deposit > 0 ? rtrim(rtrim(number_format(max(0, 100 - (float) $percent_value($deposit)), 2, '.', ''), '0'), '.') : '100';
-            $add_item('Hátralék', $total - $deposit, $payment_due_date, $balance_percent);
+            $add_item($label_text['balance'], $total - $deposit, $payment_due_date, $balance_percent);
         }
 
         return $this->sanitize_payment_plan_items($items);
     }
 
-    private function payment_plan_schedule_text($items) {
+    private function payment_plan_schedule_text($items, $lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $text = $lang === 'hu'
+            ? array('paid' => json_decode('"befizetve: "'), 'due' => json_decode('"hat\u00e1rid\u0151: "'))
+            : array('paid' => json_decode('"\u5df2\u4ed8\uff1a"'), 'due' => json_decode('"\u622a\u6b62\u65e5\uff1a"'));
+        $fallback = $this->payment_plan_template_labels($lang)['default_node'];
         $lines = array();
         foreach ($items as $item) {
             $percent = !empty($item['percent']) ? ' (' . $item['percent'] . '%)' : '';
             $amount = !empty($item['amount']) ? $this->format_money($item['amount']) . ' Ft' : '-';
             $due = !empty($item['due_date']) ? $item['due_date'] : '-';
-            $paid = !empty($item['paid_amount']) ? ', befizetve: ' . $this->format_money($item['paid_amount']) . ' Ft' : '';
-            $lines[] = trim(($item['label'] ?: 'Fizetési ütem') . $percent . ': ' . $amount . ', határidő: ' . $due . $paid);
+            $paid = !empty($item['paid_amount']) ? ', ' . $text['paid'] . $this->format_money($item['paid_amount']) . ' Ft' : '';
+            $label = $this->payment_plan_label_display($item['label'] ?? '', $lang) ?: $fallback;
+            $lines[] = trim($label . $percent . ': ' . $amount . ', ' . $text['due'] . $due . $paid);
         }
         return implode("\n", $lines);
     }
@@ -15298,7 +15407,8 @@ final class Harmat_Sales_Manager {
                 $deal['deposit'] ?? '',
                 $deal['payment_due_date'] ?? '',
                 $deal['expected_close'] ?? '',
-                $deal['payment_received'] ?? ''
+                $deal['payment_received'] ?? '',
+                $this->active_sales_language()
             );
         }
         if (!$rows) {
@@ -15315,7 +15425,7 @@ final class Harmat_Sales_Manager {
             };
             if ($deposit !== '') {
                 $rows[] = array(
-                    'label' => 'Foglaló',
+                    'label' => $this->payment_plan_template_labels($this->active_sales_language())['deposit'],
                     'percent' => $percent_from_amount($deposit),
                     'amount' => $deposit,
                     'due_date' => $deal['expected_close'] ?? '',
@@ -15327,7 +15437,7 @@ final class Harmat_Sales_Manager {
             if ($amount !== '') {
                 $balance = max(0, (int) $amount - (int) $deposit);
                 $rows[] = array(
-                    'label' => 'Hátralék',
+                    'label' => $this->payment_plan_template_labels($this->active_sales_language())['balance'],
                     'percent' => $percent_from_amount($balance),
                     'amount' => $balance ? (string) $balance : '',
                     'due_date' => $deal['payment_due_date'] ?? '',
@@ -15363,6 +15473,48 @@ final class Harmat_Sales_Manager {
         }));
     }
 
+    private function payment_plan_template_labels($lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $labels = json_decode('{"zh":{"advance_25":"\u9996\u4ed8\u6b3e 25%","final_75":"\u5c3e\u6b3e 75% - 2026.12.31\u524d","second_25_2026":"\u7b2c\u4e8c\u7b14 25% - 2026.12.31\u524d","final_50_2027":"\u5c3e\u6b3e 50% - 2027.06.01\u524d","deposit_10":"\u5b9a\u91d1 10%","advance_15":"\u9996\u4ed8\u6b3e 15% - \u4e0e\u5b9a\u91d1\u540c\u6b21\u652f\u4ed8","second_25_structure":"\u7b2c\u4e8c\u671f 25% - \u7ed3\u6784\u5b8c\u6210\u540e","third_25_interior":"\u7b2c\u4e09\u671f 25% - \u5ba4\u5185\u5de5\u7a0b\u5f00\u59cb\u65f6","fourth_20_notice":"\u7b2c\u56db\u671f 20% - \u623f\u5c4b\u5b8c\u5de5\u901a\u77e5\u540e","final_5_handover":"\u5c3e\u6b3e 5% - \u4ea4\u94a5\u5319\u65f6","deposit":"\u5b9a\u91d1","balance":"\u5c3e\u6b3e","default_node":"\u4ed8\u6b3e\u8282\u70b9"},"hu":{"advance_25":"El\u0151leg 25%","final_75":"V\u00e9gs\u0151 r\u00e9szlet 75% - 2026.12.31-ig","second_25_2026":"M\u00e1sodik r\u00e9szlet 25% - 2026.12.31-ig","final_50_2027":"V\u00e9gs\u0151 r\u00e9szlet 50% - 2027.06.01-ig","deposit_10":"Foglal\u00f3 10%","advance_15":"El\u0151leg 15% - a foglal\u00f3val egy\u00fctt az els\u0151 fizet\u00e9s","second_25_structure":"M\u00e1sodik r\u00e9szlet 25% - szerkezetk\u00e9sz \u00e1llapot ut\u00e1n","third_25_interior":"Harmadik r\u00e9szlet 25% - bels\u0151\u00e9p\u00edt\u00e9szeti munk\u00e1k kezdetekor","fourth_20_notice":"Negyedik r\u00e9szlet 20% - a lak\u00e1s elk\u00e9sz\u00fclt\u00e9r\u0151l sz\u00f3l\u00f3 \u00e9rtes\u00edt\u00e9s ut\u00e1n","final_5_handover":"V\u00e9gs\u0151 r\u00e9szlet 5% - kulcs\u00e1tad\u00e1skor","deposit":"Foglal\u00f3","balance":"H\u00e1tral\u00e9k","default_node":"Fizet\u00e9si \u00fctem"}}', true);
+        return $labels[$lang] ?? $labels['zh'];
+    }
+
+    private function payment_plan_label_display($label, $lang = null) {
+        $label = trim((string) $label);
+        if ($label === '') {
+            return '';
+        }
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $maps = json_decode('{"zh":{"El\u0151leg 25%":"\u9996\u4ed8\u6b3e 25%","V\u00e9gs\u0151 r\u00e9szlet 75% - 2026.12.31-ig":"\u5c3e\u6b3e 75% - 2026.12.31\u524d","M\u00e1sodik r\u00e9szlet 25% - 2026.12.31-ig":"\u7b2c\u4e8c\u7b14 25% - 2026.12.31\u524d","V\u00e9gs\u0151 r\u00e9szlet 50% - 2027.06.01-ig":"\u5c3e\u6b3e 50% - 2027.06.01\u524d","Foglal\u00f3 10%":"\u5b9a\u91d1 10%","El\u0151leg 15% - a foglal\u00f3val egy\u00fctt az els\u0151 fizet\u00e9s":"\u9996\u4ed8\u6b3e 15% - \u4e0e\u5b9a\u91d1\u540c\u6b21\u652f\u4ed8","M\u00e1sodik r\u00e9szlet 25% - szerkezetk\u00e9sz \u00e1llapot ut\u00e1n":"\u7b2c\u4e8c\u671f 25% - \u7ed3\u6784\u5b8c\u6210\u540e","Harmadik r\u00e9szlet 25% - bels\u0151\u00e9p\u00edt\u00e9szeti munk\u00e1k kezdetekor":"\u7b2c\u4e09\u671f 25% - \u5ba4\u5185\u5de5\u7a0b\u5f00\u59cb\u65f6","Negyedik r\u00e9szlet 20% - a lak\u00e1s elk\u00e9sz\u00fclt\u00e9r\u0151l sz\u00f3l\u00f3 \u00e9rtes\u00edt\u00e9s ut\u00e1n":"\u7b2c\u56db\u671f 20% - \u623f\u5c4b\u5b8c\u5de5\u901a\u77e5\u540e","V\u00e9gs\u0151 r\u00e9szlet 5% - kulcs\u00e1tad\u00e1skor":"\u5c3e\u6b3e 5% - \u4ea4\u94a5\u5319\u65f6","Foglal\u00f3":"\u5b9a\u91d1","H\u00e1tral\u00e9k":"\u5c3e\u6b3e","Fizet\u00e9si \u00fctem":"\u4ed8\u6b3e\u8282\u70b9"},"hu":{"\u9996\u4ed8\u6b3e 25%":"El\u0151leg 25%","\u5c3e\u6b3e 75% - 2026.12.31\u524d":"V\u00e9gs\u0151 r\u00e9szlet 75% - 2026.12.31-ig","\u7b2c\u4e8c\u7b14 25% - 2026.12.31\u524d":"M\u00e1sodik r\u00e9szlet 25% - 2026.12.31-ig","\u5c3e\u6b3e 50% - 2027.06.01\u524d":"V\u00e9gs\u0151 r\u00e9szlet 50% - 2027.06.01-ig","\u5b9a\u91d1 10%":"Foglal\u00f3 10%","\u9996\u4ed8\u6b3e 15% - \u4e0e\u5b9a\u91d1\u540c\u6b21\u652f\u4ed8":"El\u0151leg 15% - a foglal\u00f3val egy\u00fctt az els\u0151 fizet\u00e9s","\u7b2c\u4e8c\u671f 25% - \u7ed3\u6784\u5b8c\u6210\u540e":"M\u00e1sodik r\u00e9szlet 25% - szerkezetk\u00e9sz \u00e1llapot ut\u00e1n","\u7b2c\u4e09\u671f 25% - \u5ba4\u5185\u5de5\u7a0b\u5f00\u59cb\u65f6":"Harmadik r\u00e9szlet 25% - bels\u0151\u00e9p\u00edt\u00e9szeti munk\u00e1k kezdetekor","\u7b2c\u56db\u671f 20% - \u623f\u5c4b\u5b8c\u5de5\u901a\u77e5\u540e":"Negyedik r\u00e9szlet 20% - a lak\u00e1s elk\u00e9sz\u00fclt\u00e9r\u0151l sz\u00f3l\u00f3 \u00e9rtes\u00edt\u00e9s ut\u00e1n","\u5c3e\u6b3e 5% - \u4ea4\u94a5\u5319\u65f6":"V\u00e9gs\u0151 r\u00e9szlet 5% - kulcs\u00e1tad\u00e1skor","\u5b9a\u91d1":"Foglal\u00f3","\u5c3e\u6b3e":"H\u00e1tral\u00e9k","\u4ed8\u6b3e\u8282\u70b9":"Fizet\u00e9si \u00fctem"}}', true);
+        return $maps[$lang][$label] ?? $label;
+    }
+
+    private function payment_schedule_display($schedule, $lang = null) {
+        $schedule = trim((string) $schedule);
+        if ($schedule === '') {
+            return '';
+        }
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $phrases = $lang === 'hu'
+            ? json_decode('{"\u622a\u6b62\u65e5\uff1a":"hat\u00e1rid\u0151: ","\u5df2\u4ed8\uff1a":"befizetve: "}', true)
+            : json_decode('{"hat\u00e1rid\u0151: ":"\u622a\u6b62\u65e5\uff1a","befizetve: ":"\u5df2\u4ed8\uff1a"}', true);
+        $lines = preg_split('/\r\n|\r|\n/', $schedule);
+        $display_lines = array();
+        foreach ($lines as $line) {
+            $line = (string) $line;
+            $parts = explode(':', $line, 2);
+            if (count($parts) === 2) {
+                $parts[0] = $this->payment_plan_label_display(trim($parts[0]), $lang);
+                $line = $parts[0] . ':' . $parts[1];
+            }
+            $display_lines[] = strtr($line, $phrases);
+        }
+        return implode("\n", $display_lines);
+    }
+
     private function deal_next_payment_item($deal) {
         $items = $this->payment_plan_display_items($deal);
         if (!$items) {
@@ -15393,7 +15545,7 @@ final class Harmat_Sales_Manager {
             }
             $candidates[] = array(
                 'index' => (int) $index,
-                'label' => (string) ($item['label'] ?? (json_decode('"\\u4ed8\\u6b3e\\u8282\\u70b9 "') . ((int) $index + 1))),
+                'label' => $this->payment_plan_label_display((string) ($item['label'] ?? (json_decode('"\\u4ed8\\u6b3e\\u8282\\u70b9 "') . ((int) $index + 1)))),
                 'amount' => $amount,
                 'paid_amount' => $paid_amount,
                 'remaining' => $remaining,
@@ -15496,17 +15648,17 @@ final class Harmat_Sales_Manager {
             'intro' => json_decode('"\\u4ee5\\u4e0b\\u662f\\u63a5\\u4e0b\\u6765\\u9700\\u8981\\u5173\\u6ce8\\u7684\\u4ed8\\u6b3e\\u8282\\u70b9\\u3002"'),
             'empty' => json_decode('"\\u6682\\u65e0\\u8fd1\\u671f\\u4ed8\\u6b3e\\u5230\\u671f\\u3002"'),
             'client' => json_decode('"\\u5ba2\\u6237"'),
-            'property' => json_decode('"\\u5ba2\\u6237"'),
-            'node' => json_decode('"\\u5ba2\\u6237"'),
-            'amount' => json_decode('"\\u5ba2\\u6237"'),
-            'remaining' => json_decode('"\\u5ba2\\u6237"'),
+            'property' => json_decode('"\\u623f\\u6e90"'),
+            'node' => json_decode('"\\u4ed8\\u6b3e\\u8282\\u70b9"'),
+            'amount' => json_decode('"\\u5e94\\u4ed8\\u91d1\\u989d"'),
+            'remaining' => json_decode('"\\u5f85\\u4ed8\\u91d1\\u989d"'),
             'due' => json_decode('"\\u5f85\\u4ed8\\u6b3e"'),
-            'status' => json_decode('"\\u5ba2\\u6237"'),
-            'action' => json_decode('"\\u5ba2\\u6237"'),
-            'open' => json_decode('"\\u5ba2\\u6237"'),
+            'status' => json_decode('"\\u72b6\\u6001"'),
+            'action' => json_decode('"\\u64cd\\u4f5c"'),
+            'open' => json_decode('"\\u6253\\u5f00"'),
             'no_client' => json_decode('"\\u672a\\u586b\\u5ba2\\u6237"'),
-            'no_property' => json_decode('"\\u672a\\u586b\\u5ba2\\u6237"'),
-            'statuses' => array('pending' => json_decode('"\\u5f85\\u4ed8\\u6b3e"'), 'partial' => json_decode('"\\u90e8\\u5206\\u5df2\\u4ed8"'), 'overdue' => json_decode('"\\u5f85\\u4ed8\\u6b3e"'), 'paid' => json_decode('"\\u5f85\\u4ed8\\u6b3e"')),
+            'no_property' => json_decode('"\\u672a\\u9009\\u623f\\u6e90"'),
+            'statuses' => array('pending' => json_decode('"\\u5f85\\u4ed8\\u6b3e"'), 'partial' => json_decode('"\\u90e8\\u5206\\u5df2\\u4ed8"'), 'overdue' => json_decode('"\\u5df2\\u903e\\u671f"'), 'paid' => json_decode('"\\u5df2\\u4ed8\\u6e05"')),
         );
         $title = $title ?: $text['title'];
         $intro = $intro ?: $text['intro'];
@@ -15561,7 +15713,7 @@ final class Harmat_Sales_Manager {
         echo '<div class="harmat-sales-payment-timeline-list">';
 
         foreach ($items as $index => $item) {
-            $label = (string) ($item['label'] ?? ($text['node'] . ((int) $index + 1)));
+            $label = $this->payment_plan_label_display((string) ($item['label'] ?? ($text['node'] . ((int) $index + 1))), $lang);
             $item_amount = (int) preg_replace('/[^\d]/', '', (string) ($item['amount'] ?? ''));
             $paid_amount = (int) preg_replace('/[^\d]/', '', (string) ($item['paid_amount'] ?? ''));
             $due_date = (string) ($item['due_date'] ?? '');
@@ -16384,7 +16536,7 @@ final class Harmat_Sales_Manager {
             }
         }
 
-        $keyword_map = json_decode('{"send_offer":["\u53d1\u9001\u62a5\u4ef7","\u53d1\u62a5\u4ef7","\u62a5\u4ef7","quote","sendoffer","ajanlat","aj\u00e1nlat","ajanlatkuldese","aj\u00e1nlatk\u00fcld\u00e9se"],"schedule_viewing":["\u9884\u7ea6\u770b\u623f","\u7ea6\u770b\u623f","\u770b\u623f","viewing","visit","appointment","megtekint","latogat","l\u00e1togat","idopont","id\u0151pont"],"viewing_followup":["\u770b\u623f\u540e","\u56de\u8bbf","followup","visszahivas","visszah\u00edv\u00e1s"],"price_discussion":["\u4ef7\u683c\u6c9f\u901a","\u8c08\u4ef7","\u4ef7\u683c","price","aregyeztetes","\u00e1regyeztet\u00e9s"],"confirm_deposit":["\u786e\u8ba4\u5b9a\u91d1","\u5b9a\u91d1","deposit","foglal","foglal\u00f3"],"prepare_contract":["\u51c6\u5907\u5408\u540c","\u5408\u540c","contract","szerzodes","szerz\u0151d\u00e9s"],"confirm_payment":["\u786e\u8ba4\u4ed8\u6b3e","\u63d0\u9192\u4ed8\u6b3e","\u4ed8\u6b3e","payment","fizetes","fizet\u00e9s"],"collect_customer_info":["\u8865\u5145\u5ba2\u6237\u8d44\u6599","\u8865\u4ea4\u8d44\u6599","\u8d44\u6599","document","adat","potlas","p\u00f3tl\u00e1s"],"wait_customer":["\u7b49\u5f85\u5ba2\u6237\u56de\u590d","\u7b49\u5f85","\u5ba2\u6237\u56de\u590d","waiting","valasz","v\u00e1lasz"],"pause_followup":["\u6682\u7f13\u8ddf\u8fdb","\u6682\u7f13","pause","szunet","sz\u00fcnet"]}', true);
+        $keyword_map = json_decode('{"send_offer":["\u53d1\u9001\u62a5\u4ef7","\u53d1\u62a5\u4ef7","\u62a5\u4ef7","\u53d1\u9001\u623f\u4ef7","\u623f\u4ef7","quote","sendoffer","ajanlat","aj\u00e1nlat","ajanlatkuldese","aj\u00e1nlatk\u00fcld\u00e9se"],"schedule_viewing":["\u9884\u7ea6\u770b\u623f","\u7ea6\u770b\u623f","\u770b\u623f","viewing","visit","appointment","megtekint","latogat","l\u00e1togat","idopont","id\u0151pont"],"viewing_followup":["\u770b\u623f\u540e","\u56de\u8bbf","followup","visszahivas","visszah\u00edv\u00e1s"],"price_discussion":["\u4ef7\u683c\u6c9f\u901a","\u8c08\u4ef7","\u4ef7\u683c","price","aregyeztetes","\u00e1regyeztet\u00e9s"],"confirm_deposit":["\u786e\u8ba4\u5b9a\u91d1","\u5b9a\u91d1","deposit","foglal","foglal\u00f3"],"prepare_contract":["\u51c6\u5907\u5408\u540c","\u5408\u540c","contract","szerzodes","szerz\u0151d\u00e9s"],"confirm_payment":["\u786e\u8ba4\u4ed8\u6b3e","\u63d0\u9192\u4ed8\u6b3e","\u4ed8\u6b3e","payment","fizetes","fizet\u00e9s"],"collect_customer_info":["\u8865\u5145\u5ba2\u6237\u8d44\u6599","\u8865\u4ea4\u8d44\u6599","\u8d44\u6599","document","adat","potlas","p\u00f3tl\u00e1s"],"wait_customer":["\u7b49\u5f85\u5ba2\u6237\u56de\u590d","\u7b49\u5f85","\u5ba2\u6237\u56de\u590d","waiting","valasz","v\u00e1lasz"],"pause_followup":["\u6682\u7f13\u8ddf\u8fdb","\u6682\u7f13","pause","szunet","sz\u00fcnet"]}', true);
         foreach ($keyword_map as $key => $keywords) {
             foreach ($keywords as $keyword) {
                 $keyword = $this->sales_deal_next_step_compare_value($keyword);
@@ -16406,7 +16558,7 @@ final class Harmat_Sales_Manager {
         $lang = $lang === 'hu' ? 'hu' : 'zh';
         $key = $this->normalize_sales_deal_next_step_key($raw);
         $options = $this->sales_deal_next_step_options($lang);
-        return $key && isset($options[$key]) ? $options[$key] : $raw;
+        return $key && isset($options[$key]) ? $options[$key] : $this->sales_display_value($raw, $lang);
     }
 
     private function deal_is_appointment_data($stage, $next_step) {
@@ -16763,7 +16915,21 @@ final class Harmat_Sales_Manager {
         return 'current';
     }
 
-    private function status_options() {
+    private function status_options($lang = null) {
+        if ($lang === 'zh') {
+            return array(
+                'current' => json_decode('"\u5728\u552e"'),
+                'reserved' => json_decode('"\u5df2\u9884\u8ba2"'),
+                'sold' => json_decode('"\u5df2\u51fa\u552e"'),
+            );
+        }
+        if ($lang === 'hu') {
+            return array(
+                'current' => json_decode('"El\u00e9rhet\u0151"'),
+                'reserved' => json_decode('"Foglalva"'),
+                'sold' => json_decode('"Eladva"'),
+            );
+        }
         return array(
             'current' => '在售 / Elérhető',
             'reserved' => '已预订 / Foglalva',
@@ -16925,14 +17091,68 @@ final class Harmat_Sales_Manager {
                 noClient: "Nincs \u00fcgyf\u00e9l megadva",
                 registered: "M\u00e1r r\u00f6gz\u00edtve",
                 propertyLocked: "Ez a lak\u00e1s m\u00e1r r\u00f6gz\u00edtve vagy z\u00e1rolva van:",
-                propertyConfirm: "K\u00e9rj\u00fck, egyeztessen a vezet\u0151vel. Biztosan ezt a lak\u00e1st v\u00e1lasztja?"
+                propertyConfirm: "K\u00e9rj\u00fck, egyeztessen a vezet\u0151vel. Biztosan ezt a lak\u00e1st v\u00e1lasztja?",
+                planWaiting: "Kit\u00f6lt\u00e9sre v\u00e1r",
+                planNeedAmount: "El\u0151bb adja meg a v\u00e9tel\u00e1rat",
+                planNeedRows: "Adja meg a fizet\u00e9si \u00fctemeket",
+                planBalanced: "\u00d6sszeg egyezik",
+                planMissing: "Hi\u00e1nyzik ",
+                planExtra: "T\u00f6bblet ",
+                paymentTemplates: {
+                    full: [
+                        { label: "El\u0151leg 25%", percent: "25", due: "expected" },
+                        { label: "V\u00e9gs\u0151 r\u00e9szlet 75% - 2026.12.31-ig", percent: "75", due: "yearEnd" }
+                    ],
+                    half_half: [
+                        { label: "El\u0151leg 25%", percent: "25", due: "expected" },
+                        { label: "M\u00e1sodik r\u00e9szlet 25% - 2026.12.31-ig", percent: "25", due: "yearEnd" },
+                        { label: "V\u00e9gs\u0151 r\u00e9szlet 50% - 2027.06.01-ig", percent: "50", due: "nextJune" }
+                    ],
+                    installment: [
+                        { label: "Foglal\u00f3 10%", percent: "10", due: "expected" },
+                        { label: "El\u0151leg 15% - a foglal\u00f3val egy\u00fctt az els\u0151 fizet\u00e9s", percent: "15", due: "expected" },
+                        { label: "M\u00e1sodik r\u00e9szlet 25% - szerkezetk\u00e9sz \u00e1llapot ut\u00e1n", percent: "25" },
+                        { label: "Harmadik r\u00e9szlet 25% - bels\u0151\u00e9p\u00edt\u00e9szeti munk\u00e1k kezdetekor", percent: "25" },
+                        { label: "Negyedik r\u00e9szlet 20% - a lak\u00e1s elk\u00e9sz\u00fclt\u00e9r\u0151l sz\u00f3l\u00f3 \u00e9rtes\u00edt\u00e9s ut\u00e1n", percent: "20" },
+                        { label: "V\u00e9gs\u0151 r\u00e9szlet 5% - kulcs\u00e1tad\u00e1skor", percent: "5" }
+                    ],
+                    deposit: "Foglal\u00f3",
+                    balance: "H\u00e1tral\u00e9k"
+                }
             } : {
                 duplicateIntro: "\u5df2\u6709\u76f8\u5173\u8bb0\u5f55\uff0c\u8bf7\u786e\u8ba4\u662f\u5426\u4ecd\u9700\u65b0\u5efa\u6216\u4fdd\u5b58\u9500\u552e\u8ddf\u5355\uff1a",
                 duplicateTail: "\u5982\u679c\u8fd9\u4e9b\u8bb0\u5f55\u4e0d\u662f\u5f53\u524d\u9500\u552e\u8ddf\u5355\u7684\u6765\u6e90\uff0c\u8bf7\u786e\u8ba4\u540e\u518d\u4fdd\u5b58\u3002",
                 noClient: "\u672a\u586b\u5199\u5ba2\u6237",
                 registered: "\u5df2\u767b\u8bb0",
                 propertyLocked: "\u8fd9\u5957\u623f\u6e90\u5df2\u7ecf\u88ab\u767b\u8bb0\u6216\u9501\u5b9a\uff1a",
-                propertyConfirm: "\u8bf7\u5148\u8054\u7cfb\u4e3b\u7ba1\u786e\u8ba4\uff0c\u662f\u5426\u4ecd\u7136\u9009\u62e9\u8fd9\u5957\u623f\uff1f"
+                propertyConfirm: "\u8bf7\u5148\u8054\u7cfb\u4e3b\u7ba1\u786e\u8ba4\uff0c\u662f\u5426\u4ecd\u7136\u9009\u62e9\u8fd9\u5957\u623f\uff1f",
+                planWaiting: "\u5f85\u586b\u5199",
+                planNeedAmount: "\u8bf7\u5148\u586b\u5199\u6210\u4ea4\u91d1\u989d",
+                planNeedRows: "\u8bf7\u586b\u5199\u4ed8\u6b3e\u8282\u70b9",
+                planBalanced: "\u91d1\u989d\u4e00\u81f4",
+                planMissing: "\u5dee\u989d ",
+                planExtra: "\u8d85\u51fa ",
+                paymentTemplates: {
+                    full: [
+                        { label: "\u9996\u4ed8\u6b3e 25%", percent: "25", due: "expected" },
+                        { label: "\u5c3e\u6b3e 75% - 2026.12.31\u524d", percent: "75", due: "yearEnd" }
+                    ],
+                    half_half: [
+                        { label: "\u9996\u4ed8\u6b3e 25%", percent: "25", due: "expected" },
+                        { label: "\u7b2c\u4e8c\u7b14 25% - 2026.12.31\u524d", percent: "25", due: "yearEnd" },
+                        { label: "\u5c3e\u6b3e 50% - 2027.06.01\u524d", percent: "50", due: "nextJune" }
+                    ],
+                    installment: [
+                        { label: "\u5b9a\u91d1 10%", percent: "10", due: "expected" },
+                        { label: "\u9996\u4ed8\u6b3e 15% - \u4e0e\u5b9a\u91d1\u540c\u6b21\u652f\u4ed8", percent: "15", due: "expected" },
+                        { label: "\u7b2c\u4e8c\u671f 25% - \u7ed3\u6784\u5b8c\u6210\u540e", percent: "25" },
+                        { label: "\u7b2c\u4e09\u671f 25% - \u5ba4\u5185\u5de5\u7a0b\u5f00\u59cb\u65f6", percent: "25" },
+                        { label: "\u7b2c\u56db\u671f 20% - \u623f\u5c4b\u5b8c\u5de5\u901a\u77e5\u540e", percent: "20" },
+                        { label: "\u5c3e\u6b3e 5% - \u4ea4\u94a5\u5319\u65f6", percent: "5" }
+                    ],
+                    deposit: "\u5b9a\u91d1",
+                    balance: "\u5c3e\u6b3e"
+                }
             };
 
             function toNumber(value) {
@@ -17046,18 +17266,18 @@ final class Harmat_Sales_Manager {
                     var hasPlan = planTotal > 0 || planPercentTotal > 0;
                     var isBalanced = total > 0 && hasPlan && Math.abs(delta) <= 1;
                     var isWarning = total > 0 && hasPlan && Math.abs(delta) > 1;
-                    var statusText = "Kitöltésre vár";
+                    var statusText = salesCopy.planWaiting;
 
                     if (total <= 0) {
-                        statusText = "Előbb adja meg a vételárat";
+                        statusText = salesCopy.planNeedAmount;
                     } else if (!hasPlan) {
-                        statusText = "Adja meg a fizetési ütemeket";
+                        statusText = salesCopy.planNeedRows;
                     } else if (isBalanced) {
-                        statusText = "Összeg egyezik";
+                        statusText = salesCopy.planBalanced;
                     } else if (delta > 0) {
-                        statusText = "Hiányzik " + money(delta) + " HUF";
+                        statusText = salesCopy.planMissing + money(delta) + " HUF";
                     } else {
-                        statusText = "Többlet " + money(Math.abs(delta)) + " HUF";
+                        statusText = salesCopy.planExtra + money(Math.abs(delta)) + " HUF";
                     }
 
                     setSummaryValue("[data-harmat-summary-total]", total > 0 ? money(total) + " HUF" : "-");
@@ -17148,30 +17368,13 @@ final class Harmat_Sales_Manager {
                 }
 
                 function paymentTemplate(selectedMethod) {
-                    if (selectedMethod === "full") {
-                        return [
-                            { label: "Előleg 25%", percent: "25", dueDate: expectedCloseDate },
-                            { label: "Végső részlet 75% - 2026.12.31-ig", percent: "75", dueDate: yearEndDueDate }
-                        ];
-                    }
-                    if (selectedMethod === "half_half") {
-                        return [
-                            { label: "Előleg 25%", percent: "25", dueDate: expectedCloseDate },
-                            { label: "Második részlet 25% - 2026.12.31-ig", percent: "25", dueDate: yearEndDueDate },
-                            { label: "Végső részlet 50% - 2027.06.01-ig", percent: "50", dueDate: nextJuneDueDate }
-                        ];
-                    }
-                    if (selectedMethod === "installment") {
-                        return [
-                            { label: "Foglaló 10%", percent: "10", dueDate: expectedCloseDate },
-                            { label: "Előleg 15% - a foglalóval együtt az első fizetés", percent: "15", dueDate: expectedCloseDate },
-                            { label: "Második részlet 25% - szerkezetkész állapot után", percent: "25", dueDate: "" },
-                            { label: "Harmadik részlet 25% - belsőépítészeti munkák kezdetekor", percent: "25", dueDate: "" },
-                            { label: "Negyedik részlet 20% - a lakás elkészültéről szóló értesítés után", percent: "20", dueDate: "" },
-                            { label: "Végső részlet 5% - kulcsátadáskor", percent: "5", dueDate: "" }
-                        ];
-                    }
-                    return [];
+                    return (salesCopy.paymentTemplates[selectedMethod] || []).map(function(row) {
+                        return {
+                            label: row.label,
+                            percent: row.percent,
+                            dueDate: row.due === "yearEnd" ? yearEndDueDate : (row.due === "nextJune" ? nextJuneDueDate : (row.due === "expected" ? expectedCloseDate : ""))
+                        };
+                    });
                 }
 
                 if (total > 0 && (changedMethod || planIsEmpty())) {
@@ -17180,8 +17383,8 @@ final class Harmat_Sales_Manager {
                         applyTemplate(template);
                     } else if (deposit > 0 && planIsEmpty()) {
                         var depositPercent = percentFromAmount(deposit);
-                        setRow(0, "Foglaló", deposit, expectedCloseDate, depositPercent);
-                        setRow(1, "Hátralék", total - deposit, finalDueDate, Math.max(0, 100 - depositPercent));
+                        setRow(0, salesCopy.paymentTemplates.deposit, deposit, expectedCloseDate, depositPercent);
+                        setRow(1, salesCopy.paymentTemplates.balance, total - deposit, finalDueDate, Math.max(0, 100 - depositPercent));
                     }
                 }
 
@@ -17585,12 +17788,12 @@ JS;
 .harmat-sales-inquiry-tools-controls label,.harmat-sales-inquiry-tools-controls button{width:100%!important}
 }
 /* End inquiry one-screen compact view */.harmat-sales-inquiry-table .harmat-sales-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;width:116px;max-width:116px}.harmat-sales-inquiry-table .harmat-sales-actions a,.harmat-sales-inquiry-table .harmat-sales-actions button{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:32px;padding:6px 7px!important;border-radius:9px;font-size:11px!important;line-height:1.15;white-space:normal;text-align:center;box-sizing:border-box}.harmat-sales-client-table{min-width:1120px}.harmat-sales-client-table td:nth-child(1){min-width:180px}.harmat-sales-client-table td:nth-child(2){min-width:180px}.harmat-sales-client-table td:nth-child(3){min-width:210px}.harmat-sales-client-table td:nth-child(4){min-width:220px}.harmat-sales-client-table .harmat-sales-inline-form{margin-top:8px}.harmat-sales-deal-table{min-width:1420px}.harmat-sales-task-table{min-width:1050px}.harmat-sales-payment-table{min-width:1200px}.harmat-sales-commission-table{min-width:1280px}.harmat-sales-property-table{min-width:1420px}.harmat-sales-trash-table{min-width:1050px}.harmat-sales-pill,.harmat-sales-protection,.harmat-sales-assignment-state{display:inline-flex!important;width:max-content;max-width:190px;padding:6px 10px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px;font-weight:900;line-height:1.25;white-space:normal}.harmat-sales-assignment-unassigned{background:#eceff1;color:#687178}.harmat-sales-assignment-assigned{background:#fff2cf;color:#8a5a18}.harmat-sales-assignment-converted{background:#eef8f1;color:#1f7a4d}.harmat-sales-property-reserved,.harmat-sales-deal-reserved,.harmat-sales-deal-contract,.harmat-sales-payment-partial,.harmat-sales-task-today,.harmat-sales-commission-scheduled,.harmat-sales-due-today,.harmat-sales-due-week{background:#fff2cf;color:#8a5a18}.harmat-sales-property-sold,.harmat-sales-deal-lost,.harmat-sales-payment-not_started,.harmat-sales-commission-pending,.harmat-sales-due-none{background:#eceff1;color:#687178}.harmat-sales-deal-contacted,.harmat-sales-deal-viewing,.harmat-sales-task-upcoming,.harmat-sales-due-month,.harmat-sales-due-future{background:#edf6ff;color:#145f94}.harmat-sales-deal-negotiation{background:#fff6e5;color:#8a5a18}.harmat-sales-deal-closed,.harmat-sales-payment-paid,.harmat-sales-commission-paid,.harmat-sales-due-paid{background:#eef8f1;color:#1f7a4d}.harmat-sales-payment-overdue,.harmat-sales-task-overdue,.harmat-sales-commission-withheld,.harmat-sales-due-overdue{background:#fff1f0;color:#b42318}.harmat-sales-protection-active{background:#fff2cf;color:#8a5a18}.harmat-sales-protection-expired{background:#eceff1;color:#687178}.harmat-sales-note-cell{max-width:300px;color:#5d6670;overflow-wrap:anywhere}
-        .harmat-sales-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.harmat-sales-form label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.05em}.harmat-sales-form input,.harmat-sales-form select,.harmat-sales-form textarea,.harmat-sales-search input,.harmat-sales-search select{width:100%;min-height:42px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-file-field{position:relative}.harmat-sales-file-field input[type=file]{position:absolute;left:-9999px;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;opacity:0}.harmat-sales-material-file-picker{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;min-height:42px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;padding:6px;cursor:pointer}.harmat-sales-material-file-picker strong{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:0 12px;border-radius:8px;background:#253137;color:#fff;font-size:12px;font-weight:900;letter-spacing:0;white-space:nowrap}.harmat-sales-material-file-picker em{font-style:normal;color:#687178;font-size:12px;font-weight:800;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.harmat-sales-material-file-picker em.has-file{color:#253137}.harmat-sales-source-broker,.harmat-sales-source-website{display:none}.harmat-sales-check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px;color:#253137;font-size:13px;letter-spacing:0}.harmat-sales-check input{width:auto;min-height:0}.harmat-sales-form-wide,.harmat-sales-form-actions{grid-column:1/-1}.harmat-sales-form-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.harmat-sales-form button,.harmat-sales-search button,.harmat-sales-inline-form button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff;font-weight:900;letter-spacing:.08em;cursor:pointer}.harmat-sales-form-actions a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-feedback-print-link,.harmat-sales-form-actions a.harmat-sales-feedback-print-link,.harmat-sales-panel-head a.harmat-sales-feedback-print-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:1px solid #102633;border-radius:12px;background:#102633;color:#fff!important;font-weight:900;letter-spacing:.03em;text-decoration:none;box-shadow:0 10px 22px rgba(16,38,51,.14);white-space:nowrap}.harmat-sales-disabled-button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#eceff1;color:#687178;font-weight:900;letter-spacing:.08em;cursor:not-allowed}.harmat-sales-live-duplicate{display:grid;gap:8px;padding:13px 14px;border:1px solid #f5b5af;border-left:4px solid #b42318;border-radius:12px;background:#fff1f0;color:#b42318}.harmat-sales-live-duplicate[hidden]{display:none!important}.harmat-sales-live-duplicate strong{font-size:15px}.harmat-sales-live-duplicate span{color:#7a2a22;font-size:13px;font-weight:800}.harmat-sales-live-duplicate div{display:flex;flex-wrap:wrap;gap:8px}.harmat-sales-live-duplicate a{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:9px;background:#fff;color:#b42318;font-size:12px;font-weight:900;text-decoration:none}
+        .harmat-sales-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}.harmat-sales-form>*{min-width:0}.harmat-sales-form label{display:grid;gap:6px;min-width:0;color:#9a6b27;font-size:12px;font-weight:900;letter-spacing:.05em}.harmat-sales-form input,.harmat-sales-form select,.harmat-sales-form textarea,.harmat-sales-search input,.harmat-sales-search select{width:100%;min-width:0;min-height:42px;padding:10px 12px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-file-field{position:relative}.harmat-sales-file-field input[type=file]{position:absolute;left:-9999px;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;opacity:0}.harmat-sales-material-file-picker{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:center;min-height:42px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;padding:6px;cursor:pointer}.harmat-sales-material-file-picker strong{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:0 12px;border-radius:8px;background:#253137;color:#fff;font-size:12px;font-weight:900;letter-spacing:0;white-space:nowrap}.harmat-sales-material-file-picker em{font-style:normal;color:#687178;font-size:12px;font-weight:800;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.harmat-sales-material-file-picker em.has-file{color:#253137}.harmat-sales-source-broker,.harmat-sales-source-website{display:none}.harmat-sales-check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px;color:#253137;font-size:13px;letter-spacing:0}.harmat-sales-check input{width:auto;min-height:0}.harmat-sales-form-wide,.harmat-sales-form-actions{grid-column:1/-1}.harmat-sales-form-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.harmat-sales-form button,.harmat-sales-search button,.harmat-sales-inline-form button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#a8762d;color:#fff;font-weight:900;letter-spacing:.08em;cursor:pointer}.harmat-sales-form-actions a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-feedback-print-link,.harmat-sales-form-actions a.harmat-sales-feedback-print-link,.harmat-sales-panel-head a.harmat-sales-feedback-print-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:1px solid #102633;border-radius:12px;background:#102633;color:#fff!important;font-weight:900;letter-spacing:.03em;text-decoration:none;box-shadow:0 10px 22px rgba(16,38,51,.14);white-space:nowrap}.harmat-sales-disabled-button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:#eceff1;color:#687178;font-weight:900;letter-spacing:.08em;cursor:not-allowed}.harmat-sales-live-duplicate{display:grid;gap:8px;padding:13px 14px;border:1px solid #f5b5af;border-left:4px solid #b42318;border-radius:12px;background:#fff1f0;color:#b42318}.harmat-sales-live-duplicate[hidden]{display:none!important}.harmat-sales-live-duplicate strong{font-size:15px}.harmat-sales-live-duplicate span{color:#7a2a22;font-size:13px;font-weight:800}.harmat-sales-live-duplicate div{display:flex;flex-wrap:wrap;gap:8px}.harmat-sales-live-duplicate a{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:9px;background:#fff;color:#b42318;font-size:12px;font-weight:900;text-decoration:none}
         .harmat-sales-readonly-input,.harmat-sales-form input[readonly]{background:#f1eee8!important;color:#5d6670}.harmat-sales-deal-editor{display:block;margin-bottom:0}.harmat-sales-deal-editor .harmat-sales-form{grid-template-columns:repeat(3,minmax(0,1fr))}.harmat-sales-deal-editor summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border:1px solid #ead8b8;border-radius:16px;background:#fff;box-shadow:0 12px 28px rgba(70,54,28,.06);cursor:pointer}.harmat-sales-deal-editor summary strong{color:#253137;font-size:16px}.harmat-sales-deal-editor summary span{color:#6f7780;font-size:13px}.harmat-sales-deal-editor[open] summary{margin-bottom:12px}.harmat-sales-deal-stage-panel .harmat-sales-stage-list{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}.harmat-sales-filter-panel{padding-bottom:18px}.harmat-sales-filter-grid{display:grid;grid-template-columns:1.4fr repeat(7,minmax(126px,1fr)) auto;gap:10px;align-items:end}.harmat-sales-property-filter{grid-template-columns:1.4fr repeat(8,minmax(118px,1fr)) auto}.harmat-sales-customer-filter{grid-template-columns:1.4fr repeat(5,minmax(128px,1fr)) auto}.harmat-sales-filter-summary{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}.harmat-sales-filter-summary span,.harmat-sales-filter-summary strong{display:inline-flex;align-items:center;min-height:32px;padding:0 10px;border-radius:999px;background:#fffaf3;border:1px solid #ead8b8;color:#253137;font-size:12px;font-weight:900}.harmat-sales-filter-summary span{color:#9a6b27;background:#fff}.harmat-sales-status-tabs,.harmat-agent-status-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}.harmat-sales-status-tabs a,.harmat-agent-status-tabs a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:10px 14px;border:1px solid #ead8b8;border-radius:14px;background:#fffaf3;color:#253137;text-decoration:none}.harmat-sales-status-tabs span,.harmat-agent-status-tabs span{font-size:13px;font-weight:900;color:#9a6b27}.harmat-sales-status-tabs strong,.harmat-agent-status-tabs strong{font-size:22px;color:#253137}.harmat-sales-status-tabs a.is-active,.harmat-agent-status-tabs a.is-active{border-color:#a8762d;background:#a8762d;color:#fff}.harmat-sales-status-tabs a.is-active span,.harmat-sales-status-tabs a.is-active strong,.harmat-agent-status-tabs a.is-active span,.harmat-agent-status-tabs a.is-active strong{color:#fff}.harmat-sales-filter-grid label{display:grid;gap:6px;color:#9a6b27;font-size:12px;font-weight:900}.harmat-sales-filter-grid input,.harmat-sales-filter-grid select{width:100%;min-height:42px;padding:9px 11px;border:1px solid #e3cfad;border-radius:10px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-filter-actions{display:flex;gap:8px;align-items:center}.harmat-sales-filter-actions button,.harmat-sales-filter-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 14px;border-radius:10px;font-weight:900;text-decoration:none}.harmat-sales-filter-actions button{border:0;background:#a8762d;color:#fff;cursor:pointer}.harmat-sales-filter-actions a{border:1px solid #a8762d;color:#a8762d;background:#fff}.harmat-sales-plan-percent{display:block;margin-top:4px;color:#1f7a4d;font-size:12px;font-weight:900}.harmat-sales-payment-percent-note{margin:10px 0 0;color:#5d6670;font-size:13px;font-weight:800}
         .harmat-sales-search{display:flex;gap:8px;align-items:center}.harmat-sales-search input{min-width:260px}.harmat-sales-rule-list,.harmat-sales-stage-list{display:grid;gap:12px}.harmat-sales-rule-list span,.harmat-sales-stage-list a{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;text-decoration:none}.harmat-sales-stage-list a:hover{border-color:#a8762d;box-shadow:0 8px 20px rgba(70,54,28,.07)}.harmat-sales-rule-list strong,.harmat-sales-stage-list strong{color:#9a6b27}.harmat-sales-rule-list b,.harmat-sales-stage-list b{color:#253137;font-size:20px}.harmat-sales-link-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.harmat-sales-link-grid a{display:grid;gap:7px;padding:15px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;text-decoration:none}.harmat-sales-link-grid strong{color:#253137}.harmat-sales-link-grid code{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a8762d;background:#fff;padding:6px 8px;border-radius:8px}.harmat-sales-link-grid span{color:#6f7780;font-size:13px}
         .harmat-sales-client-workspace{grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr)}.harmat-sales-client-table{min-width:1180px}.harmat-sales-client-table td:first-child{min-width:220px}.harmat-sales-client-table td:nth-child(2){min-width:190px}.harmat-sales-client-table td:nth-child(6){min-width:240px}.harmat-sales-client-table .harmat-sales-actions{min-width:190px}.harmat-sales-customer-table{min-width:1920px}.harmat-sales-head-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}.harmat-sales-customer-profile-grid{align-items:start}.harmat-sales-customer-detail{display:grid;gap:14px}.harmat-sales-customer-detail section{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-detail h3,.harmat-sales-customer-ledger h3{margin:0 0 12px;color:#a8762d;font-size:14px;letter-spacing:.08em}.harmat-sales-customer-detail dl,.harmat-sales-customer-ledger dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0}.harmat-sales-customer-detail div,.harmat-sales-customer-ledger div{padding:10px;border-radius:10px;background:#fff}.harmat-sales-customer-detail dt,.harmat-sales-customer-ledger dt{color:#6f7780;font-size:12px;font-weight:900}.harmat-sales-customer-detail dd,.harmat-sales-customer-ledger dd{margin:5px 0 0;color:#253137;font-weight:800;overflow-wrap:anywhere}.harmat-sales-customer-flow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.harmat-sales-customer-flow article{display:grid;gap:7px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-customer-flow small{color:#a8762d;font-weight:900;letter-spacing:.06em}.harmat-sales-customer-flow strong{color:#253137;font-size:20px;overflow-wrap:anywhere}.harmat-sales-customer-flow .harmat-sales-pill{margin-top:2px}.harmat-sales-customer-ledger{padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-form{margin-bottom:16px}.harmat-sales-material-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-material-list article{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8}.harmat-sales-material-list strong{color:#253137}.harmat-sales-material-list small{color:#6f7780}.harmat-sales-material-list p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-material-list a{color:#a8762d;font-weight:900;text-decoration:none}.harmat-sales-material-actions{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:2px}.harmat-sales-material-actions form{margin:0}.harmat-sales-material-actions button{min-height:34px;padding:0 10px;border:1px solid #d92d20;border-radius:9px;background:#fff;color:#b42318;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.harmat-sales-request-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.harmat-sales-request-card{display:grid;gap:8px;padding:14px;border-radius:14px;background:#fffaf3;border:1px solid #ead8b8;border-left:4px solid #a8762d}.harmat-sales-request-card header{display:flex;justify-content:space-between;gap:10px;align-items:center}.harmat-sales-request-card header span{color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.06em}.harmat-sales-request-card header b{padding:5px 9px;border-radius:999px;background:#eef8f1;color:#1f7a4d;font-size:12px}.harmat-sales-request-card strong{color:#253137;font-size:16px}.harmat-sales-request-card small{color:#6f7780;line-height:1.4}.harmat-sales-request-card p{margin:0;color:#5d6670;line-height:1.55}.harmat-sales-detail-wide{grid-column:1/-1}
         .harmat-sales-actions{min-width:190px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.harmat-sales-actions form{display:inline-flex;margin:0}.harmat-sales-actions a,.harmat-sales-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border:1px solid #d8bd8f;border-radius:12px;background:#fff;color:#9a6b27;font:inherit;font-size:12px;font-weight:900;text-decoration:none;cursor:pointer;box-shadow:0 8px 18px rgba(70,54,28,.05);transition:transform .15s ease,box-shadow .15s ease,background .15s ease,border-color .15s ease}.harmat-sales-actions a:hover,.harmat-sales-actions button:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(70,54,28,.1)}.harmat-sales-actions a:first-child,.harmat-sales-actions a.harmat-sales-primary-action{background:#a8762d;color:#fff;border-color:#a8762d}.harmat-sales-actions a.harmat-sales-secondary-action,.harmat-sales-actions a:nth-child(n+2){background:#fffaf3;color:#253137;border-color:#ead8b8}.harmat-sales-actions button{border-color:#f2b8b5;background:#fff7f7;color:#b42318;box-shadow:none}.harmat-sales-inline-form{display:flex;gap:6px;align-items:center}.harmat-sales-inline-form select{min-width:150px;min-height:34px;padding:6px 8px;border:1px solid #e3cfad;border-radius:8px;background:#fffaf3;color:#253137}.harmat-sales-inline-form button{min-height:34px;padding:0 10px;border:1px solid #a8762d;border-radius:8px;background:#fff;color:#a8762d;font-weight:900;cursor:pointer}.harmat-sales-empty{padding:24px;border:1px dashed #d4bea0;border-radius:16px;color:#6f7780;background:#fffaf3}.harmat-sales-doc-board{padding:18px!important;border:1px solid #ead8b8!important;border-radius:20px!important;background:linear-gradient(135deg,#fffaf3,#fff)!important;box-shadow:0 14px 34px rgba(70,54,28,.06)}.harmat-sales-doc-board-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px}.harmat-sales-doc-board-head h3{margin:0 0 5px!important;color:#253137!important;font-size:20px!important}.harmat-sales-doc-board-head p{margin:0!important;color:#5d6670!important;line-height:1.55}.harmat-sales-doc-board-head>span{display:inline-flex;align-items:center;min-height:32px;padding:0 11px;border-radius:999px;background:#253137;color:#fff;font-size:12px;font-weight:900;white-space:nowrap}.harmat-sales-doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.harmat-sales-doc-card{display:grid;gap:13px;padding:15px;border:1px solid #ead8b8;border-left:5px solid #d4bea0;border-radius:18px;background:#fff;box-shadow:0 10px 26px rgba(70,54,28,.05)}.harmat-sales-doc-card-uploaded,.harmat-sales-doc-card-review{border-left-color:#c48a2c}.harmat-sales-doc-card-confirmed{border-left-color:#1f7a4d}.harmat-sales-doc-card-missing{border-left-color:#d92d20}.harmat-sales-doc-card header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.harmat-sales-doc-card header small,.harmat-sales-doc-controls span,.harmat-sales-doc-value span,.harmat-sales-doc-note span,.harmat-sales-doc-current small,.harmat-sales-doc-empty small{display:block;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.harmat-sales-doc-card header strong{display:block;margin-top:4px;color:#253137;font-size:15px;line-height:1.3}.harmat-sales-doc-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}.harmat-sales-doc-controls label:not(.harmat-sales-doc-toggle),.harmat-sales-doc-value,.harmat-sales-doc-note{display:grid;gap:6px}.harmat-sales-doc-controls select,.harmat-sales-doc-value input,.harmat-sales-doc-note textarea{width:100%;border:1px solid #e3cfad;border-radius:12px;background:#fffaf3;color:#253137;font:inherit}.harmat-sales-doc-controls select,.harmat-sales-doc-value input{min-height:42px;padding:8px 11px}.harmat-sales-doc-note textarea{min-height:74px;padding:10px 11px;resize:vertical}.harmat-sales-doc-value input{background:#fff;border-color:#d4bea0;font-weight:800}.harmat-sales-doc-toggle,.harmat-sales-doc-delete{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid #ead8b8;background:#fffaf3;color:#253137;font-size:12px;font-weight:900;white-space:nowrap}.harmat-sales-doc-toggle input,.harmat-sales-doc-delete input{width:16px;height:16px}.harmat-sales-doc-file{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:stretch}.harmat-sales-doc-current,.harmat-sales-doc-empty{display:grid;gap:5px;min-height:70px;padding:11px 12px;border:1px dashed #d4bea0;border-radius:14px;background:#fffaf3}.harmat-sales-doc-current a,.harmat-sales-file-link{display:inline-flex;width:max-content;max-width:100%;align-items:center;justify-content:center;min-height:32px;padding:0 10px;border-radius:9px;background:#a8762d;color:#fff!important;font-size:12px;font-weight:900;text-decoration:none;overflow:hidden;text-overflow:ellipsis}.harmat-sales-doc-current em,.harmat-sales-doc-empty em{color:#6f7780;font-size:11px;font-style:normal}.harmat-sales-doc-empty strong{color:#8a9299;font-size:13px}.harmat-sales-file-upload{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:126px;min-height:70px;padding:0 14px;border-radius:14px;background:#253137;color:#fff;font-size:12px;font-weight:900;letter-spacing:.05em;text-align:center;cursor:pointer;overflow:hidden}.harmat-sales-file-upload input{position:absolute;inset:0;opacity:0;cursor:pointer}.harmat-sales-doc-delete{grid-column:1/-1;color:#b42318;background:#fff7f7;border-color:#f2b8b5}.harmat-sales-doc-board-note,.harmat-sales-helper{margin:12px 0 0!important;color:#5d6670!important;font-size:13px!important;line-height:1.55!important}.harmat-sales-document-sync-table small{display:block;margin-top:5px;color:#6f7780;font-size:11px}.harmat-sales-muted{color:#8a9299;font-weight:800}.harmat-sales-doc-missing{background:#fff1f0;color:#b42318}.harmat-sales-doc-uploaded,.harmat-sales-doc-review{background:#fff2cf;color:#8a5a18}.harmat-sales-doc-confirmed{background:#eef8f1;color:#1f7a4d}.harmat-sales-doc-not_needed{background:#eceff1;color:#687178}@media(max-width:1100px){.harmat-sales-doc-grid{grid-template-columns:1fr}.harmat-sales-doc-file{grid-template-columns:1fr}.harmat-sales-file-upload{min-height:48px}}
-        @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer,.harmat-sales-funnel-rules{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-command-center,.harmat-sales-command-grid,.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-payment-timeline-summary,.harmat-sales-timeline-item p,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip,.harmat-sales-traffic-grid,.harmat-sales-traffic-strip,.harmat-sales-task-filter,.harmat-sales-task-card,.harmat-sales-funnel-grid,.harmat-sales-conversion-grid,.harmat-sales-duplicate-list{grid-template-columns:1fr}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}.harmat-sales-task-card a{width:100%}}
+        @media(max-width:1000px){.harmat-sales-portal-shell{width:min(100% - 20px,760px);padding-top:14px}.harmat-sales-portal-hero,.harmat-sales-panel-head,.harmat-sales-deal-card header,.harmat-sales-deal-card footer,.harmat-sales-funnel-rules{display:grid}.harmat-sales-portal-hero h1{font-size:31px}.harmat-sales-user{border-radius:16px;flex-wrap:wrap}.harmat-sales-nav a:last-child{margin-left:0}.harmat-sales-command-center,.harmat-sales-command-grid,.harmat-sales-kpis,.harmat-sales-kpis-compact,.harmat-sales-split,.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form,.harmat-sales-filter-grid,.harmat-sales-status-tabs,.harmat-agent-status-tabs,.harmat-agent-property-search,.harmat-sales-payment-summary,.harmat-sales-payment-timeline-summary,.harmat-sales-timeline-item p,.harmat-sales-followup-summary,.harmat-sales-deal-card-grid,.harmat-sales-deal-card-metrics,.harmat-sales-permission-strip,.harmat-sales-traffic-grid,.harmat-sales-traffic-strip,.harmat-sales-task-filter,.harmat-sales-task-card,.harmat-sales-funnel-grid,.harmat-sales-conversion-grid,.harmat-sales-duplicate-list{grid-template-columns:1fr}.harmat-sales-form,.harmat-sales-deal-editor .harmat-sales-form{grid-template-columns:minmax(0,1fr)!important}.harmat-sales-panel{padding:16px}.harmat-sales-search{display:grid}.harmat-sales-table{min-width:980px}.harmat-sales-plan-table{min-width:1120px}.harmat-sales-deal-card footer a{margin:6px 6px 0 0}.harmat-sales-task-card a{width:100%}}
 
         body.harmat-sales-portal-body[lang="hu-HU"] .harmat-sales-table th,
         body.harmat-sales-portal-body[lang="hu-HU"] .harmat-sales-table td,
