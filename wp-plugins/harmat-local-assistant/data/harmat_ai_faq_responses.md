@@ -120,7 +120,9 @@ A Harmat Lakópark új építésű projekt Budapest X. kerületében, ezért bef
 
 推荐回答：
 
-A fizetési ütemezés és szerződéses feltételek az értékesítési folyamat részei, ezért pontos választ az értékesítési csapat tud adni. Ha megadja elérhetőségét, kollégánk visszahívja és ismerteti az aktuális lehetőségeket.
+A fizetési ütemezést az értékesítés és a szerződés rögzíti. A jelenlegi projektmérföldkövek: szerződéskötés: a tényleges aláírás napja; szerkezetkész / tetőszint: 2027. május; belső munkák: 2027. szeptember; műszaki átadás / ellenőrzés: 2028. március; várható átadás: 2028. június. A pontos fizetési arányok, határidők és feltételek mindig a kiválasztott lakás ajánlatában és a szerződésben kerülnek megerősítésre.
+
+中文参考：签订合同：按实际签约日期；封顶：2027年5月；室内装修：2027年9月；技术验房：2028年3月；交付：2028年6月。具体付款比例和条件以所选房源报价及正式合同为准。
 
 ## 16. 可以预约看房或咨询吗？
 
@@ -128,7 +130,7 @@ A fizetési ütemezés és szerződéses feltételek az értékesítési folyama
 
 推荐回答：
 
-Szívesen segítek időpontot kérni. Kérem, adja meg a nevét, telefonszámát, e-mail címét, valamint hogy milyen lakást keres: hány szoba, körülbelüli árkeret, saját célra vagy befektetésre. Az értékesítési csapat elérhetősége: ertekesites@harmat22.hu, +36-30-641-03-58.
+Szívesen segítek időpontot kérni. Kérem, adja meg a nevét, telefonszámát, e-mail címét, valamint hogy milyen lakást keres: hány szoba, körülbelüli árkeret, saját célra vagy befektetésre. Az értékesítési csapat elérhetősége: ertekesites@harmat22.hu, +36300733375.
 
 ## 17. 我是外国人/华人，可以买吗？
 
@@ -160,4 +162,28 @@ Segítek szűkíteni. Kérem, válaszoljon erre a néhány kérdésre: hány fő
 
 推荐回答：
 
-Erre jelenleg nincs biztos információm az adatbázisban, és nem szeretnék pontatlan választ adni. Kérem, vegye fel a kapcsolatot az értékesítési csapattal az ertekesites@harmat22.hu címen vagy a +36-30-641-03-58 telefonszámon.
+Erre jelenleg nincs biztos információm az adatbázisban, és nem szeretnék pontatlan választ adni. Kérem, vegye fel a kapcsolatot az értékesítési csapattal az ertekesites@harmat22.hu címen vagy a +36300733375 telefonszámon.
+
+## 21. Kozeli buszjaratok
+
+Ugyfel kerdezheti: Milyen buszok vannak a kozelben?
+
+Ajanlott valasz:
+
+A Harmat utca 22. kb. 1000 m-es körzetében a nyilvános térképadatok alapján több buszjárat érhető el. A környéken megjelenő járatok közé tartozik: 85, 85E, 95, 161, 161A, 161E, 162, 168E, 169E, 185, 195, 217, 261E, 262. Közeli megállók például: Kápolna tér, Óhegy park, Szent László Gimnázium, Kada utca / Harmat utca, Kőér utca. Menetrendhez és aktuális tereléshez mindig a BudapestGO/BKK adatait érdemes ellenőrizni.
+
+## 22. Kozeli iskolak
+
+Ugyfel kerdezheti: Van iskola a kozelben?
+
+Ajanlott valasz:
+
+A környéken több oktatási intézmény található. Kb. 1-1,2 km-en belül nyilvános térképadatok alapján például: Janikovszky Éva Általános Iskola, Harmat Általános Iskola, Pannonhalmi Béla Baptista Általános Iskola, BGSZC Giorgio Perlasca Vendéglátóipari Technikum és Szakképző Iskola, Bercsényi Miklós Élelmiszeripari Szakképző Iskola, Kőbányai Szent László Gimnázium. Beiratkozási körzetet és aktuális férőhelyet mindig az adott intézmény vagy az önkormányzat erősíti meg.
+
+## 23. Aralku vagy kedvezmeny
+
+Ugyfel kerdezheti: Lehet alkudni? Van kedvezmeny?
+
+Ajanlott valasz:
+
+Az asszisztens nem ígérhet kedvezményt vagy egyedi alkut. Ha az árkeret szűk, először érdemes megadni a maximum keretet, szobaszámot, minimális alapterületet és azt, hogy saját használatra vagy befektetésre keres. Ez alapján az aktuális listából konkrét lakásokat lehet ajánlani, a végleges feltételeket pedig az értékesítés erősíti meg.

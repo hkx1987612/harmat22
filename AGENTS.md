@@ -11,7 +11,7 @@ Use ASCII in internal notes when possible. Public Hungarian website text must ke
 - Domain: https://harmat22.hu
 - Address: 1105 Budapest, Harmat utca 22.
 - Main sales email: ertekesites@harmat22.hu
-- Main sales phone: +36-30-641-03-58
+- Main sales phone: +36300733375
 
 ## Required Working Rules
 

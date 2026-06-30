@@ -720,14 +720,14 @@ final class Harmat_Sales_Manager {
         $export = isset($_GET['sales_export']) ? sanitize_key(wp_unslash($_GET['sales_export'])) : '';
         if ($export === 'payments_summary') {
             check_admin_referer('harmat_sales_export_payments_summary');
-            $this->log_sales_activity('export_payments_summary', 'export', 0, '导出付款汇总 CSV');
-            $this->export_sales_payments_summary_csv();
+            $this->log_sales_activity('export_payments_summary', 'export', 0, '导出付款汇总 XLSX');
+            $this->export_sales_payments_summary_xlsx();
             return;
         }
         if ($export === 'payments_plan') {
             check_admin_referer('harmat_sales_export_payments_plan');
-            $this->log_sales_activity('export_payments_plan', 'export', 0, '导出付款节点 CSV');
-            $this->export_sales_payments_plan_csv();
+            $this->log_sales_activity('export_payments_plan', 'export', 0, '导出付款节点 XLSX');
+            $this->export_sales_payments_plan_xlsx();
             return;
         }
         if ($export === 'deals_table') {
@@ -2020,6 +2020,15 @@ final class Harmat_Sales_Manager {
         $this->capture_cf7_offer_inquiry($contact_form, 'failed');
     }
 
+    private function technical_document_url() {
+        return home_url('/wp-content/uploads/2026/06/harmat-lakopark-muszaki-leiras.pdf');
+    }
+
+    private function u($escaped) {
+        $decoded = json_decode('"' . (string) $escaped . '"');
+        return is_string($decoded) ? $decoded : (string) $escaped;
+    }
+
     public function send_public_offer_mail($post_id) {
         $post_id = absint($post_id);
         if (!$post_id || get_post_type($post_id) !== 'harmat_offer_lead') {
@@ -2077,11 +2086,22 @@ final class Harmat_Sales_Manager {
                 'Árinformáció' => $data['price'],
                 'Időpont' => trim($data['date'] . ' ' . $data['time']),
                 'Azonosító' => $crm,
+                $this->u('M\u0171szaki le\u00edr\u00e1s') => $this->technical_document_url(),
             );
             $customer_sent = wp_mail(
                 $email,
                 'Harmat Lakópark - ajánlatkérés visszaigazolása',
-                $this->offer_mail_template('Köszönjük érdeklődését', $customer_rows, 'Értékesítési csapatunk hamarosan felveszi Önnel a kapcsolatot.'),
+                $this->offer_mail_template(
+                    'Köszönjük érdeklődését',
+                    $customer_rows,
+                    'Értékesítési csapatunk hamarosan felveszi Önnel a kapcsolatot.',
+                    array(
+                        array(
+                            'label' => $this->u('M\u0171szaki le\u00edr\u00e1s megnyit\u00e1sa'),
+                            'url' => $this->technical_document_url(),
+                        ),
+                    )
+                ),
                 array('Content-Type: text/html; charset=UTF-8')
             );
             if ($customer_sent) {
@@ -2237,7 +2257,7 @@ final class Harmat_Sales_Manager {
         return true;
     }
 
-    private function offer_mail_template($title, $rows, $lead) {
+    private function offer_mail_template($title, $rows, $lead, $actions = array()) {
         $html = '<div style="font-family:Arial,sans-serif;color:#253137;background:#fbf5e8;padding:24px">';
         $html .= '<div style="max-width:680px;margin:auto;background:#fffaf3;border:1px solid #ead8b8;padding:24px">';
         $html .= '<h1 style="font-family:Georgia,serif;font-weight:400;color:#253137;margin:0 0 10px">' . esc_html($title) . '</h1>';
@@ -2247,7 +2267,18 @@ final class Harmat_Sales_Manager {
             $value = (string) $value;
             $html .= '<tr><td style="width:34%;padding:10px;border-top:1px solid #ead8b8;color:#a8762d;font-weight:bold">' . esc_html($label) . '</td><td style="padding:10px;border-top:1px solid #ead8b8">' . (strpos($value, '<br') !== false ? $value : esc_html($value)) . '</td></tr>';
         }
-        $html .= '</table></div></div>';
+        $html .= '</table>';
+        if (is_array($actions) && $actions) {
+            $html .= '<div style="margin-top:20px">';
+            foreach ($actions as $action) {
+                if (empty($action['url']) || empty($action['label'])) {
+                    continue;
+                }
+                $html .= '<a href="' . esc_url($action['url']) . '" target="_blank" rel="noopener" style="display:inline-block;margin:0 10px 10px 0;padding:12px 18px;border-radius:999px;background:#253137;color:#fff;text-decoration:none;font-weight:bold">' . esc_html($action['label']) . '</a>';
+            }
+            $html .= '</div>';
+        }
+        $html .= '</div></div>';
         return $html;
     }
 
@@ -5981,8 +6012,10 @@ final class Harmat_Sales_Manager {
             '未收总额' => 'Hátralék',
             '逾期' => 'Lejárt',
             '已收齐' => 'Kifizetve',
-            '导出汇总 CSV' => 'Összesítő CSV export',
-            '导出付款节点 CSV' => 'Fizetési ütemezés CSV export',
+            '导出汇总 CSV' => 'Összesítő XLSX export',
+            '导出付款节点 CSV' => 'Fizetési ütemezés XLSX export',
+            '导出汇总 XLSX' => 'Összesítő XLSX export',
+            '导出付款节点 XLSX' => 'Fizetési ütemezés XLSX export',
             '按销售跟单汇总应收、已收、未收和付款状态。' => 'Értékesítési ügyenként összesíti a követelést, a beérkezett összeget, a hátralékot és a fizetési státuszt.',
             '暂无付款记录。销售跟单填写金额后会进入付款跟踪。' => 'Nincs fizetési rekord. Az ügy összege után megjelenik a fizetéskövetésben.',
             '应收' => 'Követelés',
@@ -8801,11 +8834,11 @@ final class Harmat_Sales_Manager {
         }
         $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
         if ($lang !== 'hu') {
-            $zh_exact = json_decode('{"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s":"\u767b\u5f55\u9500\u552e\u7aef","\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s":"\u9000\u51fa\u9500\u552e\u7aef","CRM / portal bejelentkez\u00e9s":"\u767b\u5f55 CRM / portal","Fizet\u00e9si \u00f6sszes\u00edt\u0151 export CSV":"\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b CSV","Fizet\u00e9si \u00fctemez\u00e9s export CSV":"\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export Excel":"\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c Excel","M\u0171veleti napl\u00f3 export CSV":"\u5bfc\u51fa\u52a8\u4f5c\u8bb0\u5f55 CSV"}', true);
+            $zh_exact = json_decode('{"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s":"\u767b\u5f55\u9500\u552e\u7aef","\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s":"\u9000\u51fa\u9500\u552e\u7aef","CRM / portal bejelentkez\u00e9s":"\u767b\u5f55 CRM / portal","Fizet\u00e9si \u00f6sszes\u00edt\u0151 export CSV":"\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b CSV","Fizet\u00e9si \u00f6sszes\u00edt\u0151 export XLSX":"\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b XLSX","Fizet\u00e9si \u00fctemez\u00e9s export CSV":"\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV","Fizet\u00e9si \u00fctemez\u00e9s export XLSX":"\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 XLSX","\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export Excel":"\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c Excel","M\u0171veleti napl\u00f3 export CSV":"\u5bfc\u51fa\u52a8\u4f5c\u8bb0\u5f55 CSV"}', true);
             return $zh_exact[$summary] ?? $summary;
         }
 
-        $exact = json_decode('{"\u767b\u5f55\u9500\u552e\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s","\u9000\u51fa\u9500\u552e\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s","\u767b\u5f55\u00c9rt\u00e9kes\u00edt\u0151\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s","Kil\u00e9p\u00e9s\u00c9rt\u00e9kes\u00edt\u0151\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s","\u767b\u5f55 CRM / portal":"CRM / portal bejelentkez\u00e9s","\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b CSV":"Fizet\u00e9si \u00f6sszes\u00edt\u0151 export CSV","\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV":"Fizet\u00e9si \u00fctemez\u00e9s export CSV","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c Excel":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export Excel","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c XLSX":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export XLSX","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c CSV":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export CSV","\u5bfc\u51fa\u52a8\u4f5c\u8bb0\u5f55 CSV":"M\u0171veleti napl\u00f3 export CSV"}', true);
+        $exact = json_decode('{"\u767b\u5f55\u9500\u552e\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s","\u9000\u51fa\u9500\u552e\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s","\u767b\u5f55\u00c9rt\u00e9kes\u00edt\u0151\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l bejelentkez\u00e9s","Kil\u00e9p\u00e9s\u00c9rt\u00e9kes\u00edt\u0151\u7aef":"\u00c9rt\u00e9kes\u00edt\u00e9si port\u00e1l kijelentkez\u00e9s","\u767b\u5f55 CRM / portal":"CRM / portal bejelentkez\u00e9s","\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b CSV":"Fizet\u00e9si \u00f6sszes\u00edt\u0151 export CSV","\u5bfc\u51fa\u4ed8\u6b3e\u6c47\u603b XLSX":"Fizet\u00e9si \u00f6sszes\u00edt\u0151 export XLSX","\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV":"Fizet\u00e9si \u00fctemez\u00e9s export CSV","\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 XLSX":"Fizet\u00e9si \u00fctemez\u00e9s export XLSX","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c Excel":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export Excel","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c XLSX":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export XLSX","\u5bfc\u51fa\u9500\u552e\u8ddf\u5355\u8868\u683c CSV":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgylista export CSV","\u5bfc\u51fa\u52a8\u4f5c\u8bb0\u5f55 CSV":"M\u0171veleti napl\u00f3 export CSV"}', true);
         if (isset($exact[$summary])) {
             return $exact[$summary];
         }
@@ -9228,7 +9261,7 @@ final class Harmat_Sales_Manager {
     private function sales_payments_page_text($lang = null) {
         $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
         $lang = $lang === 'hu' ? 'hu' : 'zh';
-        $texts = json_decode('{"zh":{"kpis":["\u5e94\u6536\u603b\u989d","\u5df2\u6536\u603b\u989d","\u672a\u6536\u603b\u989d","\u903e\u671f","\u5df2\u6536\u9f50"],"title":"\u4ed8\u6b3e\u8ddf\u8e2a","intro":"\u6309\u9500\u552e\u8ddf\u5355\u6c47\u603b\u5e94\u6536\u3001\u5df2\u6536\u3001\u672a\u6536\u548c\u4ed8\u6b3e\u72b6\u6001\u3002","export_summary":"\u5bfc\u51fa\u6c47\u603b CSV","export_plan":"\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 CSV","empty":"\u6682\u65e0\u4ed8\u6b3e\u8bb0\u5f55\u3002\u9500\u552e\u8ddf\u5355\u586b\u5199\u91d1\u989d\u540e\u4f1a\u8fdb\u5165\u4ed8\u6b3e\u8ddf\u8e2a\u3002","headers":["\u5ba2\u6237","\u623f\u6e90","\u5e94\u6536","\u5df2\u6536","\u672a\u6536","\u4ed8\u6b3e\u65b9\u5f0f","\u4e0b\u4e00\u7b14","\u4ed8\u6b3e\u72b6\u6001","\u622a\u6b62\u65e5","\u5408\u540c","\u64cd\u4f5c"],"unnamed":"\u672a\u586b\u5199","remaining":"\u5f85\u6536","edit":"\u7f16\u8f91"},"hu":{"kpis":["Teljes k\u00f6vetel\u00e9s","Be\u00e9rkezett \u00f6sszeg","H\u00e1tral\u00e9k","Lej\u00e1rt","Kifizetve"],"title":"Fizet\u00e9sk\u00f6vet\u00e9s","intro":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgyenk\u00e9nt \u00f6sszes\u00edti a k\u00f6vetel\u00e9st, a be\u00e9rkezett \u00f6sszeget, a h\u00e1tral\u00e9kot \u00e9s a fizet\u00e9si \u00e1llapotot.","export_summary":"\u00d6sszes\u00edt\u0151 CSV","export_plan":"Fizet\u00e9si \u00fctemez\u00e9s CSV","empty":"Nincs fizet\u00e9si rekord. Az \u00e9rt\u00e9kes\u00edt\u00e9si \u00fcgy \u00f6sszeg\u00e9nek kit\u00f6lt\u00e9se ut\u00e1n jelenik meg itt.","headers":["\u00dcgyf\u00e9l","Lak\u00e1s","K\u00f6vetel\u00e9s","Be\u00e9rkezett","H\u00e1tral\u00e9k","Fizet\u00e9si m\u00f3d","K\u00f6vetkez\u0151 t\u00e9tel","Fizet\u00e9si \u00e1llapot","Hat\u00e1rid\u0151","Szerz\u0151d\u00e9s","M\u0171velet"],"unnamed":"Nincs megadva","remaining":"H\u00e1tral\u00e9k","edit":"Szerkeszt\u00e9s"}}', true);
+        $texts = json_decode('{"zh":{"kpis":["\u5e94\u6536\u603b\u989d","\u5df2\u6536\u603b\u989d","\u672a\u6536\u603b\u989d","\u903e\u671f","\u5df2\u6536\u9f50"],"title":"\u4ed8\u6b3e\u8ddf\u8e2a","intro":"\u6309\u9500\u552e\u8ddf\u5355\u6c47\u603b\u5e94\u6536\u3001\u5df2\u6536\u3001\u672a\u6536\u548c\u4ed8\u6b3e\u72b6\u6001\u3002","export_summary":"\u5bfc\u51fa\u6c47\u603b XLSX","export_plan":"\u5bfc\u51fa\u4ed8\u6b3e\u8282\u70b9 XLSX","empty":"\u6682\u65e0\u4ed8\u6b3e\u8bb0\u5f55\u3002\u9500\u552e\u8ddf\u5355\u586b\u5199\u91d1\u989d\u540e\u4f1a\u8fdb\u5165\u4ed8\u6b3e\u8ddf\u8e2a\u3002","headers":["\u5ba2\u6237","\u623f\u6e90","\u5e94\u6536","\u5df2\u6536","\u672a\u6536","\u4ed8\u6b3e\u65b9\u5f0f","\u4e0b\u4e00\u7b14","\u4ed8\u6b3e\u72b6\u6001","\u622a\u6b62\u65e5","\u5408\u540c","\u64cd\u4f5c"],"unnamed":"\u672a\u586b\u5199","remaining":"\u5f85\u6536","edit":"\u7f16\u8f91"},"hu":{"kpis":["Teljes k\u00f6vetel\u00e9s","Be\u00e9rkezett \u00f6sszeg","H\u00e1tral\u00e9k","Lej\u00e1rt","Kifizetve"],"title":"Fizet\u00e9sk\u00f6vet\u00e9s","intro":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgyenk\u00e9nt \u00f6sszes\u00edti a k\u00f6vetel\u00e9st, a be\u00e9rkezett \u00f6sszeget, a h\u00e1tral\u00e9kot \u00e9s a fizet\u00e9si \u00e1llapotot.","export_summary":"\u00d6sszes\u00edt\u0151 XLSX","export_plan":"Fizet\u00e9si \u00fctemez\u00e9s XLSX","empty":"Nincs fizet\u00e9si rekord. Az \u00e9rt\u00e9kes\u00edt\u00e9si \u00fcgy \u00f6sszeg\u00e9nek kit\u00f6lt\u00e9se ut\u00e1n jelenik meg itt.","headers":["\u00dcgyf\u00e9l","Lak\u00e1s","K\u00f6vetel\u00e9s","Be\u00e9rkezett","H\u00e1tral\u00e9k","Fizet\u00e9si m\u00f3d","K\u00f6vetkez\u0151 t\u00e9tel","Fizet\u00e9si \u00e1llapot","Hat\u00e1rid\u0151","Szerz\u0151d\u00e9s","M\u0171velet"],"unnamed":"Nincs megadva","remaining":"H\u00e1tral\u00e9k","edit":"Szerkeszt\u00e9s"}}', true);
         return $texts[$lang] ?? $texts['zh'];
     }
 
@@ -9302,11 +9335,10 @@ final class Harmat_Sales_Manager {
         echo '</tbody></table></div></section>';
     }
 
-    private function export_sales_payments_summary_csv() {
+    private function export_sales_payments_summary_xlsx() {
         $deals = $this->sort_payment_deals($this->payment_deals());
-        $this->start_sales_csv_download('harmat-payments-summary-' . current_time('Ymd') . '.csv');
-        $out = fopen('php://output', 'w');
-        $this->put_sales_csv_row($out, array('CRM', '客户姓名', '电话', 'E-mail', '房号', '成交金额 HUF', '定金 HUF', '已收 HUF', '未收 HUF', '付款方式', '付款状态', '付款截止日', '合同状态', '销售阶段', '来源', '经纪人', '预计/成交日期', '下次跟进', '下一步', '付款计划', '销售备注', '更新时间'));
+        $rows = array();
+        $rows[] = array('CRM', '客户姓名', '电话', 'E-mail', '房号', '成交金额 HUF', '定金 HUF', '已收 HUF', '未收 HUF', '付款方式', '付款状态', '付款截止日', '合同状态', '销售阶段', '来源', '经纪人', '预计/成交日期', '下次跟进', '下一步', '付款计划', '销售备注', '更新时间');
 
         $payment_options = $this->payment_method_options();
         $payment_statuses = $this->payment_status_options();
@@ -9323,7 +9355,7 @@ final class Harmat_Sales_Manager {
             if ($payment_schedule === '') {
                 $payment_schedule = $this->payment_plan_schedule_text($this->payment_plan_display_items($deal));
             }
-            $this->put_sales_csv_row($out, array(
+            $rows[] = array(
                 $deal['crm_code'] ?? '',
                 $deal['client_name'] ?? '',
                 $deal['phone'] ?? '',
@@ -9346,16 +9378,15 @@ final class Harmat_Sales_Manager {
                 $payment_schedule,
                 $deal['note'] ?? '',
                 $deal['updated_at'] ?? '',
-            ));
+            );
         }
-        fclose($out);
+        $this->download_sales_xlsx('harmat-payments-summary-' . current_time('Ymd') . '.xlsx', $rows, 'Payments Summary');
     }
 
-    private function export_sales_payments_plan_csv() {
+    private function export_sales_payments_plan_xlsx() {
         $deals = $this->sort_payment_deals($this->payment_deals());
-        $this->start_sales_csv_download('harmat-payment-plan-' . current_time('Ymd') . '.csv');
-        $out = fopen('php://output', 'w');
-        $this->put_sales_csv_row($out, array('CRM', '客户姓名', '房号', '付款节点', '比例 %', '应付金额 HUF', '已付金额 HUF', '未付金额 HUF', '截止日期', '节点状态', '节点备注', '成交金额 HUF', '付款方式', '整体付款状态', '合同状态', '下一步', '更新时间'));
+        $rows = array();
+        $rows[] = array('CRM', '客户姓名', '房号', '付款节点', '比例 %', '应付金额 HUF', '已付金额 HUF', '未付金额 HUF', '截止日期', '节点状态', '节点备注', '成交金额 HUF', '付款方式', '整体付款状态', '合同状态', '下一步', '更新时间');
 
         $payment_options = $this->payment_method_options();
         $payment_statuses = $this->payment_status_options();
@@ -9380,7 +9411,7 @@ final class Harmat_Sales_Manager {
                 $item_amount = (int) ($item['amount'] ?? 0);
                 $item_paid = (int) ($item['paid_amount'] ?? 0);
                 $item_status = $item['status'] ?? '';
-                $this->put_sales_csv_row($out, array(
+                $rows[] = array(
                     $deal['crm_code'] ?? '',
                     $deal['client_name'] ?? '',
                     $property_title,
@@ -9398,10 +9429,10 @@ final class Harmat_Sales_Manager {
                     !empty($deal['contract_status']) && isset($contract_options[$deal['contract_status']]) ? $contract_options[$deal['contract_status']] : '',
                     $deal['next_step'] ?? '',
                     $deal['updated_at'] ?? '',
-                ));
+                );
             }
         }
-        fclose($out);
+        $this->download_sales_xlsx('harmat-payment-plan-' . current_time('Ymd') . '.xlsx', $rows, 'Payment Plan');
     }
 
     private function export_sales_deals_table_excel() {
@@ -9812,9 +9843,11 @@ final class Harmat_Sales_Manager {
         echo '<section class="harmat-sales-deal-workspace">';
         echo '<details id="harmat-sales-deal-editor" class="harmat-sales-deal-editor"' . ($editor_open ? ' open' : '') . '><summary><strong>' . esc_html($form['id'] ? $text['editor']['title_edit'] : $text['editor']['title_new']) . '</strong><span>' . esc_html($editor_open ? $text['editor']['summary_edit'] : $text['editor']['summary_closed']) . '</span></summary>';
         echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($form['id'] ? $text['editor']['title_edit'] : $text['editor']['title_new']) . '</h2><p>' . esc_html($can_manage ? $text['editor']['intro_manager'] : $text['editor']['intro_staff']) . '</p></div>';
+        echo '<div class="harmat-sales-head-actions"><a class="harmat-sales-technical-doc-link" target="_blank" rel="noopener" href="' . esc_url($this->technical_document_url()) . '">' . esc_html($this->u('M\u0171szaki le\u00edr\u00e1s')) . '</a>';
         if ($deal_feedback_url && $deal_feedback_text) {
-            echo '<div class="harmat-sales-head-actions"><a class="harmat-sales-feedback-print-link" target="_blank" rel="noopener" href="' . esc_url($deal_feedback_url) . '">' . esc_html($deal_feedback_text['button']) . '</a></div>';
+            echo '<a class="harmat-sales-feedback-print-link" target="_blank" rel="noopener" href="' . esc_url($deal_feedback_url) . '">' . esc_html($deal_feedback_text['button']) . '</a>';
         }
+        echo '</div>';
         echo '</div>';
         if (!$can_manage) {
             echo '<div class="harmat-sales-staff-guard"><strong>' . esc_html($text['editor']['staff_guard_title']) . '</strong><span>' . esc_html($text['editor']['staff_guard_text']) . '</span></div>';
@@ -10948,7 +10981,7 @@ final class Harmat_Sales_Manager {
         $project_name = is_string($project_name) ? $project_name : 'Harmat Lakopark';
         $company_name = json_decode('"Cooperation Power Kft."');
         $company_name = is_string($company_name) ? $company_name : 'Cooperation Power Kft.';
-        $sales_phone = '+36-30-641-03-58';
+        $sales_phone = '+36300733375';
         $sales_email = self::SALES_REMINDER_EMAIL;
         $brand_meta = trim($company_name . ' · ' . $sales_phone . ' · ' . $sales_email);
         $logo_url = $this->sales_print_logo_url();

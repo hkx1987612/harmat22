@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Harmat Homepage Energy Grade
- * Description: Polishes the homepage project summary and adds the approved A+ energy grade.
+ * Description: Polishes the homepage project summary and adds the approved A energy grade.
  * Version: 1.1.2
  */
 
@@ -37,8 +37,8 @@ function harmat_home_energy_grade_source($html) {
     }
 
     $replacements = array(
-        '<div class="harmat-about-meta-item"><span>M\\u0171szaki tartalom</span><strong>Hamarosan</strong></div>' => '<div class="harmat-about-meta-item"><span>Energetikai besorol\\u00e1s</span><strong>A+</strong></div>',
-        '<div class="harmat-about-meta-item"><span>Műszaki tartalom</span><strong>Hamarosan</strong></div>' => '<div class="harmat-about-meta-item"><span>Energetikai besorolás</span><strong>A+</strong></div>',
+        '<div class="harmat-about-meta-item"><span>M\\u0171szaki tartalom</span><strong>Hamarosan</strong></div>' => '<div class="harmat-about-meta-item"><span>Energetikai besorol\\u00e1s</span><strong>A</strong></div>',
+        '<div class="harmat-about-meta-item"><span>Műszaki tartalom</span><strong>Hamarosan</strong></div>' => '<div class="harmat-about-meta-item"><span>Energetikai besorolás</span><strong>A</strong></div>',
         '<p>Modern \\u00faj \\u00e9p\\u00edt\\u00e9s\\u0171 otthonok Budapest X. ker\\u00fclet\\u00e9ben, z\\u00f6ld k\\u00f6rnyezetben, mindennapi szolg\\u00e1ltat\\u00e1sokhoz \\u00e9s k\\u00f6zleked\\u00e9shez k\\u00f6zel.</p>' => '<p>' . harmat_home_energy_grade_project_intro_escaped() . '</p>',
         '<p>Modern \\u00faj \\u00e9p\\u00edt\\u00e9s\\u0171 otthonok Budapest X. ker\\u00fclet\\u00e9ben.</p>' => '<p>' . harmat_home_energy_grade_project_intro_escaped() . '</p>',
         '<p>Modern új építésű otthonok Budapest X. kerületében, zöld környezetben, mindennapi szolgáltatásokhoz és közlekedéshez közel.</p>' => '<p>' . harmat_home_energy_grade_project_intro() . '</p>',
@@ -145,7 +145,7 @@ function harmat_home_energy_grade_script() {
     var metaItems = section.querySelectorAll('.harmat-about-meta-item');
     if (metaItems.length > 1) {
       setText(metaItems[1].querySelector('span'), 'Energetikai besorolás');
-      setText(metaItems[1].querySelector('strong'), 'A+');
+      setText(metaItems[1].querySelector('strong'), 'A');
     }
 
     var badges = section.querySelector('.harmat-visual-badges');

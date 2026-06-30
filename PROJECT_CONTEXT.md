@@ -16,7 +16,7 @@ The website should feel like a real premium residential project site, not a temp
 - Area: Budapest X. kerulet
 - Developer / investor shown on site: Cooperation Power Kft.
 - Main contact: ertekesites@harmat22.hu
-- Main phone: +36-30-641-03-58
+- Main phone: +36300733375
 - Sales launch / opening date: 2026-06-12
 - Expected first-phase handover: 2028 Q2
 - Current sales note: gardens attached to ground-floor apartments are included as a gift; exact garden size, use details, and contractual wording must be confirmed by sales for the selected apartment.

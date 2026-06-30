@@ -2923,7 +2923,7 @@ function harmat_perf_contact_showroom_markup() {
                     </div>
                     <div>
                         <span>Telefon</span>
-                        <strong><a href="tel:+36306410358">+36-30-641-03-58</a></strong>
+                        <strong><a href="tel:+36300733375">+36300733375</a></strong>
                     </div>
                     <div>
                         <span>E-mail</span>
@@ -3423,6 +3423,7 @@ remove_action('wp_head', 'harmat_perf_contact_showroom_styles', 84);
 
 function harmat_perf_contact_scene_markup() {
     $base = content_url('/uploads/2026/05/contact-showroom/');
+    $advisor_photo = content_url('/uploads/2026/06/sales-advisors/julia-wirth.jpg');
     $maps_url = 'https://www.google.com/maps/search/?api=1&query=1105%20Budapest%2C%20Harmat%20utca%2022';
 
     ob_start();
@@ -3449,6 +3450,15 @@ function harmat_perf_contact_scene_markup() {
                 <span class="hc-card-kicker">Kapcsolat</span>
                 <h2>V&aacute;rjuk &Ouml;nt a Harmat utca 22. alatt</h2>
 
+                <div class="hc-sales-advisor">
+                    <img src="<?php echo esc_url($advisor_photo); ?>" alt="J&uacute;lia Wirth - Harmat Lak&oacute;park &eacute;rt&eacute;kes&iacute;t&eacute;s" loading="lazy" decoding="async">
+                    <div>
+                        <span>&Eacute;rt&eacute;kes&iacute;t&eacute;si tan&aacute;csad&oacute;</span>
+                        <strong>J&uacute;lia Wirth</strong>
+                        <a href="tel:+36300733375">+36300733375</a>
+                    </div>
+                </div>
+
                 <div class="hc-contact-list">
                     <div class="hc-contact-row">
                         <span>C&iacute;m</span>
@@ -3456,7 +3466,7 @@ function harmat_perf_contact_scene_markup() {
                     </div>
                     <div class="hc-contact-row">
                         <span>Telefon</span>
-                        <strong><a href="tel:+36306410358">+36-30-641-03-58</a></strong>
+                        <strong><a href="tel:+36300733375">+36300733375</a></strong>
                     </div>
                     <div class="hc-contact-row">
                         <span>E-mail</span>
@@ -3694,6 +3704,50 @@ function harmat_perf_contact_scene_styles() {
             letter-spacing: 0;
             overflow-wrap: anywhere;
         }
+        .hc-sales-advisor {
+            display: grid;
+            grid-template-columns: 78px minmax(0, 1fr);
+            gap: 15px;
+            align-items: center;
+            padding: 2px 0 18px;
+            border-bottom: 1px solid rgba(151, 105, 37, .16);
+        }
+        .hc-sales-advisor img {
+            display: block;
+            width: 78px;
+            height: 78px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 253, 248, .95);
+            box-shadow: 0 12px 28px rgba(31, 43, 47, .14);
+        }
+        .hc-sales-advisor span {
+            display: block;
+            margin-bottom: 5px;
+            color: #9b6a24;
+            font-size: 11px;
+            font-weight: 900;
+            line-height: 1.25;
+            letter-spacing: 0;
+            text-transform: uppercase;
+        }
+        .hc-sales-advisor strong {
+            display: block;
+            color: #1f3037;
+            font-size: 22px;
+            font-weight: 900;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+        .hc-sales-advisor a {
+            display: inline-block;
+            margin-top: 6px;
+            color: #16826f;
+            font-size: 14px;
+            font-weight: 900;
+            line-height: 1.35;
+            text-decoration: none;
+        }
         .hc-contact-list {
             display: grid;
             gap: 12px;
@@ -3878,6 +3932,17 @@ function harmat_perf_contact_scene_styles() {
             .hc-contact-card h2 {
                 font-size: 26px;
             }
+            .hc-sales-advisor {
+                grid-template-columns: 66px minmax(0, 1fr);
+                gap: 12px;
+            }
+            .hc-sales-advisor img {
+                width: 66px;
+                height: 66px;
+            }
+            .hc-sales-advisor strong {
+                font-size: 20px;
+            }
             .hc-actions {
                 grid-template-columns: 1fr;
             }
@@ -3988,12 +4053,12 @@ function harmat_perf_services_page_markup() {
                     <ul>
                         <li>T&aacute;gas terek, nagy erk&eacute;lyek</li>
                         <li>Kellemes, klimatiz&aacute;lt l&eacute;gt&eacute;r</li>
-                        <li>H&#337;v&eacute;d&#337; &uuml;vegez&eacute;s</li>
+                        <li>H&#337;v&eacute;d&#337; &uuml;vegez&eacute;s &eacute;s hat&eacute;kony h&#337;szigetel&eacute;s</li>
                         <li>Saj&aacute;t csomagfelad&oacute;- &eacute;s k&eacute;zbes&iacute;t&#337; pont</li>
                     </ul>
                     <ul>
                         <li>Energiatakar&eacute;kos h&#337;szivatty&uacute;s rendszer</li>
-                        <li>Hat&eacute;kony h&#337;szigetel&eacute;s</li>
+                        <li>Az els&#337; &uuml;temben 124 lifttel megk&ouml;zel&iacute;thet&#337; lak&aacute;s &eacute;p&uuml;l.</li>
                         <li>Korszer&#369; t&eacute;glafalszerkezet</li>
                         <li>Parkos&iacute;tott z&ouml;ldtet&#337;</li>
                     </ul>
@@ -5241,7 +5306,7 @@ function harmat_perf_seo_context() {
     if (is_page(array('kapcsolat', 'elerhetosegeink')) || in_array($path, array('kapcsolat', 'elerhetosegeink'), true)) {
         return array(
             'title' => harmat_perf_text('El&eacute;rhet&#337;s&eacute;gek &eacute;s &eacute;rt&eacute;kes&iacute;t&eacute;si iroda | Harmat Lak&oacute;park'),
-            'description' => harmat_perf_text('Harmat Lak&oacute;park &eacute;rt&eacute;kes&iacute;t&eacute;si iroda &eacute;s projektbemutat&oacute;. C&iacute;m: 1105 Budapest, Harmat utca 22. Telefon: +36-30-641-03-58.'),
+            'description' => harmat_perf_text('Harmat Lak&oacute;park &eacute;rt&eacute;kes&iacute;t&eacute;si iroda &eacute;s projektbemutat&oacute;. C&iacute;m: 1105 Budapest, Harmat utca 22. Telefon: +36300733375.'),
         );
     }
 
@@ -5321,7 +5386,7 @@ function harmat_perf_home_structured_data() {
                 'logo' => $logo,
                 'contactPoint' => array(
                     '@type' => 'ContactPoint',
-                    'telephone' => '+36-30-641-03-58',
+                    'telephone' => '+36300733375',
                     'email' => 'ertekesites@harmat22.hu',
                     'contactType' => 'sales',
                     'areaServed' => 'HU',

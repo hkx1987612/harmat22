@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Local Assistant
  * Plugin URI: https://harmat22.hu
  * Description: Local knowledge-base assistant for Harmat Lakópark apartment questions, prices, FAQ, and sales handoff.
- * Version: 0.3.1
+ * Version: 0.3.3
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -47,10 +47,10 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.3.1';
+    const VERSION = '0.3.3';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
-    const CONTACT_PHONE = '+36-30-641-03-58';
+    const CONTACT_PHONE = '+36300733375';
 
     private static $apartments = null;
 
@@ -139,8 +139,8 @@ final class Harmat_Local_Assistant {
         $name = sanitize_text_field((string) $request->get_param('name'));
         $phone = sanitize_text_field((string) $request->get_param('phone'));
         $email = sanitize_email((string) $request->get_param('email'));
-        $message = sanitize_textarea_field((string) $request->get_param('message'));
-        $context = sanitize_textarea_field((string) $request->get_param('context'));
+        $message = $this->limit_text(sanitize_textarea_field((string) $request->get_param('message')), 200);
+        $context = $this->limit_text(sanitize_textarea_field((string) $request->get_param('context')), 2000);
         $page = esc_url_raw((string) $request->get_param('page'));
         $intent = sanitize_key((string) $request->get_param('intent'));
         $interested_unit = sanitize_text_field((string) $request->get_param('interested_unit'));
@@ -148,7 +148,7 @@ final class Harmat_Local_Assistant {
         $budget_range = sanitize_text_field((string) $request->get_param('budget_range'));
         $preferred_contact_time = sanitize_text_field((string) $request->get_param('preferred_contact_time'));
         $preferred_room_count = sanitize_text_field((string) $request->get_param('preferred_room_count'));
-        $conversation_summary = sanitize_textarea_field((string) $request->get_param('conversation_summary'));
+        $conversation_summary = $this->limit_text(sanitize_textarea_field((string) $request->get_param('conversation_summary')), 5000);
         $utm = $this->sanitize_utm($request->get_param('utm'));
 
         if ($name === '' || ($phone === '' && $email === '')) {
@@ -164,36 +164,28 @@ final class Harmat_Local_Assistant {
         }
         set_transient($rate_key, 1, 10 * MINUTE_IN_SECONDS);
 
-        $stored_message = trim($message);
-        if ($stored_message === '') {
-            $stored_message = $this->by_lang($lang, 'AI asszisztensbol emberi visszahivast kert.', '客户通过 AI 客服请求人工跟进。', 'Customer requested human follow-up from the AI assistant.');
+        $customer_message = trim($message);
+        if ($customer_message === '') {
+            $customer_message = $this->by_lang($lang, 'AI asszisztensbol emberi visszahivast kert.', '客户通过 AI 客服请求人工跟进。', 'Customer requested human follow-up from the AI assistant.');
         }
-        if ($context !== '') {
-            $stored_message .= "\n\nAI context:\n" . $context;
-        }
-        if ($conversation_summary !== '') {
-            $stored_message .= "\n\nConversation summary:\n" . $conversation_summary;
-        }
+
+        $ai_lead_details = array();
         if ($interested_unit !== '' || $apartment_type !== '' || $budget_range !== '' || $preferred_room_count !== '' || $preferred_contact_time !== '') {
-            $stored_message .= "\n\nLead details:";
             if ($interested_unit !== '') {
-                $stored_message .= "\nInterested unit: " . $interested_unit;
+                $ai_lead_details['interested_unit'] = $interested_unit;
             }
             if ($apartment_type !== '') {
-                $stored_message .= "\nApartment type: " . $apartment_type;
+                $ai_lead_details['apartment_type'] = $apartment_type;
             }
             if ($budget_range !== '') {
-                $stored_message .= "\nBudget range: " . $budget_range;
+                $ai_lead_details['budget_range'] = $budget_range;
             }
             if ($preferred_room_count !== '') {
-                $stored_message .= "\nPreferred room count: " . $preferred_room_count;
+                $ai_lead_details['preferred_room_count'] = $preferred_room_count;
             }
             if ($preferred_contact_time !== '') {
-                $stored_message .= "\nPreferred contact time: " . $preferred_contact_time;
+                $ai_lead_details['preferred_contact_time'] = $preferred_contact_time;
             }
-        }
-        if ($page !== '') {
-            $stored_message .= "\n\nOldal: " . $page;
         }
 
         $posted = array(
@@ -202,7 +194,7 @@ final class Harmat_Local_Assistant {
             'your-phone' => $phone,
             'your-date' => '',
             'your-time' => '',
-            'your-message' => $stored_message,
+            'your-message' => $customer_message,
             'selected-building' => '',
             'selected-floor' => '',
             'selected-apartment' => $interested_unit,
@@ -227,7 +219,7 @@ final class Harmat_Local_Assistant {
             'post_type' => 'harmat_offer_lead',
             'post_status' => 'private',
             'post_title' => 'AI: ' . $name . ' - ' . current_time('ymd-His'),
-            'post_content' => $stored_message,
+            'post_content' => $customer_message,
         ), true);
 
         if (is_wp_error($post_id) || !$post_id) {
@@ -257,7 +249,21 @@ final class Harmat_Local_Assistant {
         ));
         update_post_meta($post_id, '_harmat_offer_source_page', $page);
         update_post_meta($post_id, '_harmat_offer_utm', $utm);
+        update_post_meta($post_id, '_harmat_offer_ai_context', $context);
+        update_post_meta($post_id, '_harmat_offer_ai_lead_details', $ai_lead_details);
         update_post_meta($post_id, '_harmat_offer_conversation_summary', $conversation_summary);
+        update_post_meta($post_id, '_harmat_offer_crm_summary', $this->build_crm_summary(array(
+            'lang' => $lang,
+            'intent' => $intent,
+            'message' => $customer_message,
+            'context' => $context,
+            'conversation_summary' => $conversation_summary,
+            'interested_unit' => $interested_unit,
+            'apartment_type' => $apartment_type,
+            'budget_range' => $budget_range,
+            'preferred_room_count' => $preferred_room_count,
+            'preferred_contact_time' => $preferred_contact_time,
+        )));
         update_post_meta($post_id, '_harmat_offer_preferred_room_count', $preferred_room_count);
         update_post_meta($post_id, '_harmat_offer_preferred_contact_time', $preferred_contact_time);
 
@@ -265,7 +271,7 @@ final class Harmat_Local_Assistant {
             wp_schedule_single_event(time() + 1, 'harmat_sales_public_offer_mail', array((int) $post_id));
             spawn_cron(time());
         } else {
-            wp_mail(self::CONTACT_EMAIL, 'Harmat AI - ugyfel visszahivast ker', $stored_message . "\n\nNev: " . $name . "\nTelefon: " . $phone . "\nE-mail: " . $email, array('Content-Type: text/plain; charset=UTF-8'));
+            wp_mail(self::CONTACT_EMAIL, 'Harmat AI - ugyfel visszahivast ker', $customer_message . "\n\nNev: " . $name . "\nTelefon: " . $phone . "\nE-mail: " . $email, array('Content-Type: text/plain; charset=UTF-8'));
         }
 
         $this->track_event($intent === 'appointment' ? 'appointment_submitted' : 'offer_request_submitted', array('lang' => $lang, 'lead_id' => (int) $post_id));
@@ -380,7 +386,7 @@ final class Harmat_Local_Assistant {
             width: min(390px, calc(100vw - 24px));
             max-height: min(690px, calc(100vh - 108px));
             display: none;
-            grid-template-rows: auto minmax(0, 1fr) auto;
+            grid-template-rows: auto minmax(0, 1fr) auto auto auto;
             overflow: hidden;
             border: 1px solid rgba(154, 106, 42, .28);
             border-radius: 8px;
@@ -433,19 +439,24 @@ final class Harmat_Local_Assistant {
             line-height: 1;
           }
           .harmat-local-ai-body {
+            min-height: 0;
             overflow: auto;
             padding: 14px;
             display: grid;
+            align-content: start;
             gap: 10px;
             background: #fffaf2;
           }
           .harmat-local-ai-msg {
-            max-width: 92%;
-            padding: 11px 12px;
+            max-width: 94%;
+            padding: 12px 13px;
             border-radius: 8px;
-            font: 500 14px/1.48 Montserrat, Arial, sans-serif;
+            font: 500 14px/1.58 Montserrat, Arial, sans-serif;
             white-space: pre-wrap;
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            word-break: normal;
+            hyphens: auto;
+            text-align: left;
           }
           .harmat-local-ai-msg.bot { justify-self: start; background: #fff; border: 1px solid #eadcc7; }
           .harmat-local-ai-msg.user { justify-self: end; background: #9a6a2a; color: #fff; }
@@ -531,7 +542,7 @@ final class Harmat_Local_Assistant {
             cursor: pointer;
           }
           .harmat-local-ai-handoff small { color: #1f7a4d; font-size: 11px; line-height: 1.35; }
-          .harmat-local-ai-suggestions { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 12px; background: #fffaf2; }
+          .harmat-local-ai-suggestions { display: flex; flex-wrap: wrap; gap: 7px; max-height: 82px; overflow: auto; padding: 0 14px 12px; background: #fffaf2; border-top: 1px solid rgba(234, 220, 199, .55); }
           .harmat-local-ai-suggestions button {
             min-height: 31px;
             padding: 0 10px;
@@ -578,7 +589,8 @@ final class Harmat_Local_Assistant {
           }
           @media (max-width: 520px) {
             .harmat-local-ai-launch { right: 12px; bottom: 12px; padding-right: 14px; }
-            .harmat-local-ai-panel { right: 12px; bottom: 68px; max-height: calc(100vh - 86px); }
+            .harmat-local-ai-panel { right: 12px; bottom: 68px; max-height: calc(100vh - 86px); grid-template-rows: auto minmax(0, 1fr) auto auto auto; }
+            .harmat-local-ai-suggestions { max-height: 68px; }
             .harmat-local-ai-handoff-grid { grid-template-columns: 1fr; }
           }
         </style>
@@ -631,10 +643,10 @@ final class Harmat_Local_Assistant {
           var input = null;
           var suggestions = null;
           var conversation = [];
-          var defaultQuickButtons = {
-            hu: ['Milyen lakások érhetők el?', '2 szobás lakást keresek', 'Kertes lakást keresek', 'Nagy teraszos lakást keresek', 'Árajánlatot kérek', 'Időpontot foglalok', 'Hol található a bemutatóiroda?', 'Mikor várható az átadás?', 'Finanszírozás / CSOK érdekel', 'Kapcsolat az értékesítéssel'],
-            zh: ['有哪些房源可选？', '我要找两房', '我要带花园的房源', '我要大露台房源', '我要报价', '预约看房', '销售办公室在哪里？', '什么时候交付？', '贷款 / CSOK 咨询', '联系销售'],
-            en: ['What apartments are available?', 'I am looking for a 2-room apartment', 'I am looking for a garden apartment', 'I am looking for a large terrace apartment', 'Request an offer', 'Book a viewing', 'Where is the sales office?', 'When is handover expected?', 'Financing / CSOK', 'Contact sales']
+            var defaultQuickButtons = {
+            hu: ['2 szobás lakást keresek', 'Kertes lakást keresek', 'Nagy teraszos lakást keresek', 'Közlekedés és buszok', 'Közeli iskolák', 'Fizetési ütemezés', 'Árajánlatot kérek', 'Időpontot foglalok', 'Hol található a bemutatóiroda?', 'Finanszírozás / CSOK érdekel'],
+            zh: ['我要找两房', '我要带花园的房源', '我要大露台户型', '周边公交线路', '附近学校', '付款节点', '我要报价', '预约看房', '销售办公室在哪里？', '贷款 / CSOK 咨询'],
+            en: ['I am looking for a 2-room apartment', 'I am looking for a garden apartment', 'I am looking for a large terrace apartment', 'Nearby bus routes', 'Nearby schools', 'Payment schedule', 'Request an offer', 'Book a viewing', 'Where is the sales office?', 'Financing / CSOK']
           };
           var introText = {
             hu: 'Üdvözlöm! Automatizált Harmat asszisztensként segítek lakást keresni, ajánlatot kérni vagy időpontot indítani. Kérdezhet árakról, szobaszámról, alapterületről, vásárlási folyamatról vagy konkrét lakásról, például A1-F-L1. A válaszok tájékoztató jellegűek, a végleges adatokat az értékesítés erősíti meg.',
@@ -792,7 +804,7 @@ final class Harmat_Local_Assistant {
                 '<input name="budget_range" autocomplete="off" placeholder="' + esc(handoff.budget_placeholder || 'Árkeret') + '">' +
                 '<input name="preferred_contact_time" autocomplete="off" placeholder="' + esc(handoff.time_placeholder || 'Mikor hívjuk?') + '">' +
               '</div>' +
-              '<textarea name="message" maxlength="500" placeholder="' + esc(handoff.message_placeholder || 'Uzenet') + '"></textarea>' +
+              '<textarea name="message" maxlength="200" placeholder="' + esc(handoff.message_placeholder || 'Uzenet') + '"></textarea>' +
               '<input name="company_url" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true">' +
               '<label><input type="checkbox" name="privacy" required> <span>' + esc(handoff.privacy || '') + '</span></label>' +
               '<button type="submit">' + esc(handoff.button || 'Kuldes') + '</button>' +
@@ -873,7 +885,7 @@ final class Harmat_Local_Assistant {
             var name = (handoffForm.querySelector('[name="name"]') || {}).value || '';
             var phone = (handoffForm.querySelector('[name="phone"]') || {}).value || '';
             var email = (handoffForm.querySelector('[name="email"]') || {}).value || '';
-            var message = (handoffForm.querySelector('[name="message"]') || {}).value || '';
+            var message = ((handoffForm.querySelector('[name="message"]') || {}).value || '').slice(0, 200);
             var company = (handoffForm.querySelector('[name="company_url"]') || {}).value || '';
             var interestedUnit = (handoffForm.querySelector('[name="interested_unit"]') || {}).value || '';
             var roomCount = (handoffForm.querySelector('[name="preferred_room_count"]') || {}).value || '';
@@ -979,6 +991,12 @@ final class Harmat_Local_Assistant {
         return in_array($path, array('sales', 'agent', 'client', 'customer', 'ugyfel', 'sales-admin'), true);
     }
 
+    private function limit_text($text, $max_chars) {
+        $text = trim((string) $text);
+        $max_chars = max(1, (int) $max_chars);
+        return mb_substr($text, 0, $max_chars, 'UTF-8');
+    }
+
     private function answer_message($message, $lang) {
         $normalized = $this->normalize($message);
         $apartments = $this->apartments();
@@ -988,6 +1006,17 @@ final class Harmat_Local_Assistant {
 
         $code = $this->extract_apartment_code($message);
         $intent = $this->classify_intent($message, $normalized, $filters, $profile, $code);
+        if ($this->is_technical_document_question($normalized)) {
+            return $this->response(
+                $this->technical_document_answer($lang),
+                array(),
+                $lang,
+                null,
+                $this->technical_document_actions($lang),
+                'technical_document_opened',
+                'technical_document'
+            );
+        }
         if ($code) {
             $apartment = $this->find_apartment($code, $apartments);
             if ($apartment) {
@@ -1218,7 +1247,7 @@ final class Harmat_Local_Assistant {
         $this->add_intent_score($scores, 'availability', $normalized, array('elerheto', 'elerhetoseg', 'foglalhato', 'szabad', 'available', 'availability', 'reserve', 'reservation', 'status', 'sold', '可售', '还有吗', '能预订', '预订', '保留', '状态', '卖掉', '已售'), 5);
         $this->add_intent_score($scores, 'floorplan', $normalized, array('alaprajz', 'floorplan', 'floor plan', 'layout', 'pdf', 'virtualis', 'lakasvalaszto', '户型图', '平面图', '虚拟选房', '房源详情'), 5);
         $this->add_intent_score($scores, 'appointment', $normalized, array('idopont', 'megtekintes', 'ajanlatkeres', 'ajanlat', 'contact', 'appointment', 'visit', 'viewing', 'quote', 'offer', '预约', '看房', '联系', '报价', '询价'), 6);
-        $this->add_intent_score($scores, 'payment', $normalized, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'payment', 'pay', 'installment', 'schedule', '付款', '付款方式', '怎么付款', '分期', '全款', '首付', '50-50'), 5);
+        $this->add_intent_score($scores, 'payment', $normalized, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'fizetesi merfoldko', 'merfoldko', 'payment', 'pay', 'installment', 'schedule', 'milestone', '付款', '付款方式', '付款节点', '资金节点', '工程节点', '怎么付款', '分期', '全款', '首付', '50-50'), 5);
         $this->add_intent_score($scores, 'loan', $normalized, array('finanszirozas', 'finanszírozás', 'hitel', 'bank', 'loan', 'mortgage', 'financing', '贷款', '按揭', '银行贷款', '融资'), 7);
         $this->add_intent_score($scores, 'subsidy', $normalized, array('csok', 'tamogatas', 'subsidy', '补贴', '政府补贴', '家庭补贴'), 7);
         $this->add_intent_score($scores, 'discount', $normalized, array('engedmeny', 'kedvezmeny', 'akcio', 'alku', 'discount', 'promotion', 'negotiate', '优惠', '折扣', '砍价', '讲价', '便宜点', '特价'), 8);
@@ -1235,6 +1264,13 @@ final class Harmat_Local_Assistant {
         $this->add_intent_score($scores, 'process', $normalized, array('vasarlas menete', 'vasarlasi folyamat', 'hogyan tudok vasarolni', 'buying process', 'purchase process', 'how to buy', 'next step', '买房流程', '购买流程', '怎么买', '下一步', '购买步骤', '流程'), 5);
         $this->add_intent_score($scores, 'help', $normalized, array('mit tudsz', 'miben segitesz', 'segitseg', 'help', 'what can you do', 'assistant', '你能做什么', '你会什么', '怎么使用', '客服'), 5);
         $this->add_intent_score($scores, 'location', $normalized, array('hol', 'talalhato', 'cim', 'address', 'where', '位置', '地址'), 5);
+
+        if ($this->is_payment_schedule_question($normalized)) {
+            $scores['payment'] += 12;
+        }
+        if ($this->is_tax_vat_question($normalized)) {
+            $scores['legal'] += 12;
+        }
 
         arsort($scores);
         $intent = (string) key($scores);
@@ -1260,6 +1296,30 @@ final class Harmat_Local_Assistant {
         return in_array($intent, array('appointment', 'payment', 'loan', 'subsidy', 'discount', 'legal', 'surroundings', 'pet', 'garden', 'opening', 'handover', 'project_count', 'parking', 'technical', 'developer', 'process', 'help', 'location'), true);
     }
 
+    private function is_transport_question($text) {
+        return $this->has_any($text, array('kozlekedes', 'busz', 'autobusz', 'jarat', 'megallo', 'bkk', 'budapestgo', 'transport', 'bus', 'public transport', 'bus route', 'bus stop', '交通', '公交', '公交车', '巴士', '线路', '几路', '车站'));
+    }
+
+    private function is_education_question($text) {
+        return $this->has_any($text, array('iskola', 'altalanos iskola', 'gimnazium', 'technikum', 'ovoda', 'bolcsode', 'education', 'school', 'primary school', 'secondary school', 'kindergarten', '学校', '小学', '中学', '高中', '幼儿园', '教育'));
+    }
+
+    private function transport_answer($lang) {
+        return $this->by_lang($lang,
+            'A Harmat utca 22. kb. 1000 m-es körzetében a nyilvános térképadatok alapján több buszjárat érhető el. A környéken megjelenő járatok közé tartozik: 85, 85E, 95, 161, 161A, 161E, 162, 168E, 169E, 185, 195, 217, 261E, 262, valamint éjszakai/távolsági jellegű vonalak is előfordulhatnak. Közeli megállók például: Kápolna tér, Óhegy park, Szent László Gimnázium, Kada utca / Harmat utca, Kőér utca. Menetrendhez és aktuális tereléshez mindig a BudapestGO/BKK adatait érdemes ellenőrizni.',
+            'Harmat utca 22 周边约 1000 米范围内，公开地图数据显示有多条公交线路可用。周边常见线路包括：85、85E、95、161、161A、161E、162、168E、169E、185、195、217、261E、262，也可能有夜间/郊区线路。附近站点包括：Kápolna tér、Óhegy park、Szent László Gimnázium、Kada utca / Harmat utca、Kőér utca。具体到站时间和临时改线建议以 BudapestGO/BKK 为准。',
+            'Within roughly 1000 m of Harmat utca 22, public map data shows several bus routes nearby, including 85, 85E, 95, 161, 161A, 161E, 162, 168E, 169E, 185, 195, 217, 261E and 262, with some night/suburban services also appearing nearby. Nearby stops include Kápolna tér, Óhegy park, Szent László Gimnázium, Kada utca / Harmat utca and Kőér utca. Please check BudapestGO/BKK for live timetables and diversions.'
+        );
+    }
+
+    private function education_answer($lang) {
+        return $this->by_lang($lang,
+            'A környéken több oktatási intézmény található. Kb. 1-1,2 km-en belül nyilvános térképadatok alapján például: Janikovszky Éva Általános Iskola, Harmat Általános Iskola, Pannonhalmi Béla Baptista Általános Iskola, BGSZC Giorgio Perlasca Vendéglátóipari Technikum és Szakképző Iskola, Bercsényi Miklós Élelmiszeripari Szakképző Iskola, valamint Kőbányai Szent László Gimnázium kicsit távolabb. Óvoda/bölcsőde oldalról például Kiskakas Óvoda, Apró csodák Bölcsőde és Kőbányai Kincskeresők Óvoda szerepel a környéken. Beiratkozási körzetet és aktuális férőhelyet mindig az adott intézmény vagy az önkormányzat erősíti meg.',
+            '周边有多个教育配套。公开地图数据显示，约 1-1.2 公里内可关注：Janikovszky Éva Általános Iskola、Harmat Általános Iskola、Pannonhalmi Béla Baptista Általános Iskola、BGSZC Giorgio Perlasca 技术/职业学校、Bercsényi Miklós 职业学校，以及距离稍远的 Kőbányai Szent László Gimnázium。幼儿园/托育方面有 Kiskakas Óvoda、Apró csodák Bölcsőde、Kőbányai Kincskeresők Óvoda 等。入学片区、学位和当年政策需以学校或市政部门最新确认为准。',
+            'There are several education facilities nearby. Public map data shows, within roughly 1-1.2 km, Janikovszky Éva Primary School, Harmat Primary School, Pannonhalmi Béla Baptist Primary School, BGSZC Giorgio Perlasca vocational/technical school, Bercsényi Miklós vocational school, and Kőbányai Szent László Gimnázium slightly farther away. For kindergarten/nursery, examples include Kiskakas Óvoda, Apró csodák Bölcsőde and Kőbányai Kincskeresők Óvoda. Catchment area and availability should be confirmed with the institution or municipality.'
+        );
+    }
+
     private function faq_answer_by_intent($intent, $lang) {
         switch ($intent) {
             case 'discount':
@@ -1279,16 +1339,12 @@ final class Harmat_Local_Assistant {
             case 'subsidy':
                 return $this->financing_answer($lang);
             case 'payment':
-                return $this->by_lang($lang,
-                    'A fizetési lehetőségeket az értékesítési csapat erősíti meg a kiválasztott lakás és vevői helyzet alapján. Egyeztethető irány lehet teljes fizetés, 50%-50% ütemezés vagy részletfizetési ütemezés; a végleges dátumokat és arányokat a szerződés rögzíti.',
-                    '付款方式需要销售团队根据具体房号和客户情况确认。通常可沟通方向包括全款、50%-50% 付款或分期付款；最终付款日期和比例以正式合同为准。',
-                    'Payment options must be confirmed by sales for the selected apartment and buyer situation. Possible directions include full payment, 50%-50% payment or a staged schedule; final dates and percentages are contractual.'
-                );
+                return $this->payment_schedule_answer($lang);
             case 'appointment':
                 return $this->by_lang($lang,
-                    'Szívesen segítünk ajánlatot vagy időpontot kérni. A gyors egyeztetéshez érdemes megadni: név, telefon vagy e-mail, kiválasztott lakáskód, szobaszám, árkeret és kívánt időpont. Elérhetőség: ertekesites@harmat22.hu, +36-30-641-03-58.',
-                    '可以预约看房或索取报价。为了销售更快回复，建议留下：姓名、电话或邮箱、目标房号、房间数、预算和方便的时间。联系方式：ertekesites@harmat22.hu，+36-30-641-03-58。',
-                    'We can help start an offer request or viewing appointment. For a faster reply, please provide: name, phone or email, target apartment code, room count, budget and preferred time. Contact: ertekesites@harmat22.hu, +36-30-641-03-58.'
+                    'Szívesen segítünk ajánlatot vagy időpontot kérni. A gyors egyeztetéshez érdemes megadni: név, telefon vagy e-mail, kiválasztott lakáskód, szobaszám, árkeret és kívánt időpont. Elérhetőség: ertekesites@harmat22.hu, +36300733375.',
+                    '可以预约看房或索取报价。为了销售更快回复，建议留下：姓名、电话或邮箱、目标房号、房间数、预算和方便的时间。联系方式：ertekesites@harmat22.hu，+36300733375。',
+                    'We can help start an offer request or viewing appointment. For a faster reply, please provide: name, phone or email, target apartment code, room count, budget and preferred time. Contact: ertekesites@harmat22.hu, +36300733375.'
                 );
         }
 
@@ -1296,6 +1352,18 @@ final class Harmat_Local_Assistant {
     }
 
     private function faq_answer($text, $lang, $intent = null) {
+        if ($this->is_transport_question($text)) {
+            return $this->transport_answer($lang);
+        }
+        if ($this->is_education_question($text)) {
+            return $this->education_answer($lang);
+        }
+        if ($this->is_payment_schedule_question($text)) {
+            return $this->payment_schedule_answer($lang);
+        }
+        if ($this->is_tax_vat_question($text)) {
+            return $this->tax_vat_answer($lang);
+        }
         $priority = $this->faq_answer_by_intent($intent, $lang);
         if ($priority !== null) {
             return $priority;
@@ -1303,9 +1371,9 @@ final class Harmat_Local_Assistant {
 
         if ($this->has_any($text, array('nyitvatart', 'nyitva', 'hetfo', 'pentek', 'szombat', 'vasarnap', 'hetveg', 'opening hour', 'opening hours', 'weekend', 'open on', 'hours', '营业', '营业时间', '开门', '周末', '上班时间'))) {
             return $this->by_lang($lang,
-                'Az értékesítési iroda hétfőtől péntekig 09:00-17:00 között érhető el. Szombaton és vasárnap zárva tart. Időpont egyeztetéshez írjon az ertekesites@harmat22.hu címre vagy hívja a +36-30-641-03-58 számot.',
-                '销售办公室营业时间：星期一至星期五 09:00-17:00，星期六和星期天不营业。如需预约看房，可以联系 ertekesites@harmat22.hu 或 +36-30-641-03-58。',
-                'The sales office is available Monday to Friday, 09:00-17:00. It is closed on Saturday and Sunday. For a viewing appointment, contact ertekesites@harmat22.hu or +36-30-641-03-58.'
+                'Az értékesítési iroda hétfőtől péntekig 09:00-17:00 között érhető el. Szombaton és vasárnap zárva tart. Időpont egyeztetéshez írjon az ertekesites@harmat22.hu címre vagy hívja a +36300733375 számot.',
+                '销售办公室营业时间：星期一至星期五 09:00-17:00，星期六和星期天不营业。如需预约看房，可以联系 ertekesites@harmat22.hu 或 +36300733375。',
+                'The sales office is available Monday to Friday, 09:00-17:00. It is closed on Saturday and Sunday. For a viewing appointment, contact ertekesites@harmat22.hu or +36300733375.'
             );
         }
 
@@ -1432,12 +1500,9 @@ final class Harmat_Local_Assistant {
             return $this->opening_construction_answer($lang);
         }
 
-        if ($this->has_any($text, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'payment', 'pay', 'installment', 'schedule', '付款', '付款方式', '怎么付款', '分期', '全款', '首付', '50-50'))) {
-            return $this->by_lang($lang,
-                'A fizetési lehetőségekről az értékesítési csapat ad pontos tájékoztatást. Jelenleg egyeztethető irány lehet a teljes fizetés, az 50%-50% ütemezés vagy más részletfizetési ütemezés. A végleges fizetési határidőket és feltételeket mindig a szerződés rögzíti.',
-                '付款方式需要由销售团队按房号和客户情况确认。通常可以沟通的方向包括全款、50%-50% 节奏，或其他分期付款安排；最终付款节点和条件以正式合同为准。',
-                'Payment options should be confirmed by the sales team for the selected apartment and buyer situation. Possible discussion points may include full payment, a 50%-50% schedule, or another staged payment plan. Final dates and terms are contractual.'
-            );
+        if ($this->has_any($text, array('fizetes', 'fizetesi', 'utemezes', 'reszlet', 'teljes fizetes', 'fizetesi merfoldko', 'merfoldko', 'payment', 'pay', 'installment', 'schedule', 'milestone', '付款', '付款方式', '付款节点', '资金节点', '工程节点', '怎么付款', '分期', '全款', '首付', '50-50'))) {
+            return $this->payment_schedule_answer($lang);
+
         }
 
         if ($this->has_any($text, array('hany lakas', 'osszesen', 'darab', 'how many', '多少套', '几套'))) {
@@ -1466,9 +1531,9 @@ final class Harmat_Local_Assistant {
 
         if ($this->has_any($text, array('idopont', 'megtekintes', 'ajanlat', 'ajanlatkeres', 'contact', 'appointment', 'visit', 'viewing', 'quote', 'offer', '预约', '看房', '联系', '报价', '询价'))) {
             return $this->by_lang($lang,
-                'Szívesen segítünk ajánlatot vagy időpontot kérni. A gyors egyeztetéshez érdemes megadni: név, telefon vagy e-mail, kiválasztott lakáskód, szobaszám, árkeret és kívánt időpont. Elérhetőség: ertekesites@harmat22.hu, +36-30-641-03-58.',
-                '可以预约看房或索取报价。为了销售更快回复，建议留下：姓名、电话或邮箱、目标房号、房间数、预算和方便的时间。联系方式：ertekesites@harmat22.hu，+36-30-641-03-58。',
-                'We can help start an offer request or viewing appointment. For a faster reply, please provide: name, phone or email, target apartment code, room count, budget and preferred time. Contact: ertekesites@harmat22.hu, +36-30-641-03-58.'
+                'Szívesen segítünk ajánlatot vagy időpontot kérni. A gyors egyeztetéshez érdemes megadni: név, telefon vagy e-mail, kiválasztott lakáskód, szobaszám, árkeret és kívánt időpont. Elérhetőség: ertekesites@harmat22.hu, +36300733375.',
+                '可以预约看房或索取报价。为了销售更快回复，建议留下：姓名、电话或邮箱、目标房号、房间数、预算和方便的时间。联系方式：ertekesites@harmat22.hu，+36300733375。',
+                'We can help start an offer request or viewing appointment. For a faster reply, please provide: name, phone or email, target apartment code, room count, budget and preferred time. Contact: ertekesites@harmat22.hu, +36300733375.'
             );
         }
 
@@ -1481,6 +1546,41 @@ final class Harmat_Local_Assistant {
         }
 
         return null;
+    }
+
+    private function technical_document_url() {
+        return home_url('/wp-content/uploads/2026/06/harmat-lakopark-muszaki-leiras.pdf');
+    }
+
+    private function is_technical_document_question($normalized) {
+        if ($this->has_any($normalized, array('muszaki leiras', 'muszaki tartalom', 'muszaki dokumentum', 'technikai leiras', 'energetikai besorolas', 'energiaosztaly', 'energia osztaly', 'energiabesorolas', 'hoszivattyu', 'futes', 'hutes', 'nyilaszarok', 'burkolat', 'padlofutes', 'mennyezeti futes', 'gaz bevezetve', 'lift', 'felvono', 'szemelyfelvono', 'technical specification', 'technical document', 'building specification', 'energy class', 'heating', 'cooling', 'heat pump', 'elevator', 'technical content', $this->u('\u7535\u68af')))) {
+            return true;
+        }
+
+        return $this->has_any($normalized, array('muszaki', 'technical')) && $this->has_any($normalized, array('pdf', 'dokumentum', 'document', 'leiras', 'specification'));
+    }
+
+    private function technical_document_summary_answer($lang) {
+        $url = $this->technical_document_url();
+        $hu = $this->u('A Harmat Lak\u00f3park m\u0171szaki tartalm\u00e1nak f\u0151 pontjai: 1105 Budapest, Harmat utca 22.; tervezett energetikai besorol\u00e1s: A; korszer\u0171 VRF leveg\u0151-v\u00edz h\u0151szivatty\u00fas f\u0171t\u00e9s-h\u0171t\u00e9s; a nappalikban, h\u00e1l\u00f3szob\u00e1kban \u00e9s \u00e9tkez\u0151kben mennyezeti fel\u00fcletf\u0171t\u00e9s-fel\u00fcleth\u0171t\u00e9s; a f\u00fcrd\u0151kben, k\u00f6zleked\u0151kben \u00e9s konyh\u00e1kban padl\u00f3f\u0171t\u00e9s; a lak\u00e1sokba nincs g\u00e1z bevezetve; h\u00e1romr\u00e9teg\u0171 h\u0151szigetel\u0151 \u00fcvegez\u00e9s\u0171 Rehau SYNEGO 80 ny\u00edl\u00e1sz\u00e1r\u00f3k; DELTA SPECIAL70 biztons\u00e1gi bej\u00e1rati ajt\u00f3; lak\u00f3szob\u00e1kban lamin\u00e1lt parketta, vizes helyis\u00e9gekben ker\u00e1mia burkolat; k\u00f6zponti haszn\u00e1lati melegv\u00edz \u00e9s egyedi fogyaszt\u00e1sm\u00e9r\u00e9s; kaputelefon, RJ45 el\u0151k\u00e9sz\u00edt\u00e9s; l\u00e9pcs\u0151h\u00e1zank\u00e9nt 1 db g\u00e9ph\u00e1z n\u00e9lk\u00fcli, ellens\u00falyos, 630 kg teherb\u00edr\u00e1s\u00fa szem\u00e9lyfelvon\u00f3; teremgar\u00e1zs- \u00e9s t\u00e1rol\u00f3lehet\u0151s\u00e9g. A teljes m\u0171szaki le\u00edr\u00e1s PDF-ben: ') . $url . $this->u(' A dokumentum t\u00e1j\u00e9koztat\u00f3 jelleg\u0171; a kiv\u00e1lasztott lak\u00e1s v\u00e9gleges m\u0171szaki \u00e9s szerz\u0151d\u00e9ses felt\u00e9teleit az \u00e9rt\u00e9kes\u00edt\u00e9s \u00e9s a szerz\u0151d\u00e9s r\u00f6gz\u00edti.');
+        $en = 'Main technical points for Harmat Lakopark: 1105 Budapest, Harmat utca 22.; planned energy class: A; modern VRF air-to-water heat-pump heating and cooling; ceiling surface heating/cooling in living rooms, bedrooms and dining areas; underfloor heating in bathrooms, corridors and kitchens; no gas connection inside the apartments; Rehau SYNEGO 80 windows with triple insulating glazing; DELTA SPECIAL70 security entrance door; laminate flooring in living rooms and ceramic tiles in wet rooms; central domestic hot water with individual metering; intercom and RJ45 preparation; one machine-room-less, counterweighted 630 kg passenger elevator per staircase; and garage/storage options. Full Hungarian technical PDF: ' . $url . ' The document is informative; final technical and contractual terms are confirmed by sales and the contract for the selected apartment.';
+
+        return $this->by_lang($lang, $hu, $hu, $en);
+    }
+
+    private function technical_document_answer($lang) {
+        return $this->technical_document_summary_answer($lang);
+    }
+
+    private function technical_document_actions($lang) {
+        return array(
+            array(
+                'label' => $this->u('M\u0171szaki le\u00edr\u00e1s'),
+                'url' => $this->technical_document_url(),
+                'primary' => true,
+                'event' => 'technical_document_opened',
+            ),
+        );
     }
 
     private function is_offer_request($normalized) {
@@ -1515,6 +1615,35 @@ final class Harmat_Local_Assistant {
         );
     }
 
+    private function payment_schedule_answer($lang) {
+        return $this->by_lang($lang,
+            $this->u('T\u00e1j\u00e9koztat\u00f3 fizet\u00e9si \u00fctemez\u00e9s a jelenlegi v\u00e9teli aj\u00e1nlat minta alapj\u00e1n:\n1. V\u00e9teli biztos\u00edt\u00e9k: 1.000.000 Ft, az aj\u00e1nlat al\u00e1\u00edr\u00e1sakor vagy 3 napon bel\u00fcl.\n2. El\u0151szerz\u0151d\u00e9s al\u00e1\u00edr\u00e1s\u00e1t\u00f3l 3 napon bel\u00fcl: a v\u00e9tel\u00e1r 25%-a.\n3. 2026.12.31-ig: 25%.\n4. 2027.03.31-ig: 25%.\n5. 2027.06.30-ig: 20%.\n6. Kulcsrak\u00e9sz \u00e1llapotn\u00e1l: 5%.\n\nProjektid\u0151pontok: szerz\u0151d\u00e9sk\u00f6t\u00e9s 2026. j\u00fanius, szerkezetk\u00e9sz / tet\u0151szint 2027. m\u00e1jus, bels\u0151 munk\u00e1k 2027. szeptember, m\u0171szaki \u00e1tad\u00e1s / ellen\u0151rz\u00e9s 2028. m\u00e1rcius, v\u00e1rhat\u00f3 \u00e1tad\u00e1s 2028. j\u00fanius. A v\u00e9gleges ar\u00e1nyokat \u00e9s hat\u00e1rid\u0151ket mindig az adott lak\u00e1s aj\u00e1nlata \u00e9s a szerz\u0151d\u00e9s r\u00f6gz\u00edti.'),
+            $this->u('\u5f53\u524d\u53ef\u6309\u5f8b\u5e08\u6a21\u677f\u5411\u5ba2\u6237\u8bf4\u660e\u4ed8\u6b3e\u8282\u70b9\uff1a\n1. \u8d2d\u623f\u610f\u5411\u4fdd\u8bc1\u91d1\uff1a1,000,000 Ft\uff0c\u7b7e\u7f72\u610f\u5411\u4e66\u65f6\u6216 3 \u5929\u5185\u652f\u4ed8\u3002\n2. \u7b7e\u8ba2\u9884\u552e\u5408\u540c\u540e 3 \u5929\u5185\uff1a\u623f\u4ef7 25%\u3002\n3. 2026-12-31 \u524d\uff1a25%\u3002\n4. 2027-03-31 \u524d\uff1a25%\u3002\n5. 2027-06-30 \u524d\uff1a20%\u3002\n6. \u8fbe\u5230\u7cbe\u88c5 / \u4ea4\u94a5\u5319\u72b6\u6001\u65f6\uff1a5%\u3002\n\n\u5de5\u7a0b\u65f6\u95f4\u53c2\u8003\uff1a\u7b7e\u8ba2\u5408\u540c 2026 \u5e74 6 \u6708\uff0c\u5c01\u9876 2027 \u5e74 5 \u6708\uff0c\u5ba4\u5185\u5de5\u7a0b 2027 \u5e74 9 \u6708\uff0c\u6280\u672f\u9a8c\u623f 2028 \u5e74 3 \u6708\uff0c\u9884\u8ba1\u4ea4\u4ed8 2028 \u5e74 6 \u6708\u3002\u6700\u7ec8\u6bd4\u4f8b\u548c\u65e5\u671f\u4ee5\u5177\u4f53\u623f\u6e90\u62a5\u4ef7\u53ca\u6b63\u5f0f\u5408\u540c\u4e3a\u51c6\u3002'),
+            $this->u('Indicative payment schedule based on the current purchase-offer template:\n1. Purchase-offer security deposit: 1,000,000 Ft, payable at signing or within 3 days.\n2. Within 3 days after signing the preliminary contract: 25% of the purchase price.\n3. By 2026-12-31: 25%.\n4. By 2027-03-31: 25%.\n5. By 2027-06-30: 20%.\n6. At turnkey condition: 5%.\n\nProject dates for orientation: contract signing June 2026, topping-out / structural stage May 2027, interior works September 2027, technical inspection March 2028, expected handover June 2028. Final percentages and deadlines are confirmed in the selected apartment offer and contract.')
+        );
+    }
+
+    private function tax_vat_answer($lang) {
+        return $this->by_lang($lang,
+            $this->u('\u00c1FA \u00e9s illet\u00e9k t\u00e1j\u00e9koztat\u00f3: a v\u00e9teli aj\u00e1nlat minta szerint a lak\u00e1s \u00e9s a hozz\u00e1 tartoz\u00f3 terasz / erk\u00e9ly \u00c1FA-kulcsa 5%, a t\u00e1rol\u00f3 27%, a g\u00e9pkocsibe\u00e1ll\u00f3 27%. A vagyonszerz\u00e9si illet\u00e9k \u00e1ltal\u00e1nosan az ingatlan(ok) brutt\u00f3 v\u00e9tel\u00e1r\u00e1nak 4%-a lehet; ez nem kedvezm\u00e9ny \u00e9s nem azonos az \u00c1FA-val. A v\u00e9gleges ad\u00f3z\u00e1si, illet\u00e9k- \u00e9s jogi v\u00e1laszt az \u00fcgyv\u00e9d vagy hivatalos tan\u00e1csad\u00f3 er\u0151s\u00edti meg.'),
+            $this->u('\u7a0e\u7387\u8bf4\u660e\uff1a\u6309\u5f8b\u5e08\u6a21\u677f\uff0c\u4f4f\u5b85\u53ca\u5bf9\u5e94\u9732\u53f0 / \u9633\u53f0\u4e3a 5% VAT\uff1b\u50a8\u85cf\u5ba4\u4e3a 27% VAT\uff1b\u8f66\u4f4d\u4e3a 27% VAT\u3002\u6587\u4ef6\u4e2d\u7684 4% \u662f\u8d2d\u7f6e\u7a0e / \u8d22\u4ea7\u53d6\u5f97\u7a0e\u7684\u5e38\u89c1\u53e3\u5f84\uff0c\u4e0d\u662f\u6298\u6263\uff0c\u4e5f\u4e0d\u662f VAT\u3002\u6700\u7ec8\u7a0e\u52a1\u3001\u8d2d\u7f6e\u7a0e\u548c\u6cd5\u5f8b\u89e3\u91ca\u5fc5\u987b\u7531\u5f8b\u5e08\u6216\u6b63\u5f0f\u987e\u95ee\u786e\u8ba4\u3002'),
+            $this->u('Tax and VAT guidance: based on the purchase-offer template, the apartment and its related terrace/balcony use 5% VAT; storage uses 27% VAT; parking space uses 27% VAT. The 4% item in the document is the usual property acquisition duty basis, not a discount and not VAT. Final tax, duty and legal interpretation must be confirmed by the lawyer or an official adviser.')
+        );
+    }
+
+    private function is_payment_schedule_question($text) {
+        return $this->has_any($text, array(
+            'fizetes', 'fizetesi', $this->u('fizet\u00e9s'), $this->u('fizet\u00e9si'), $this->u('\u00fctemez\u00e9s'), 'utemezes', 'reszlet', $this->u('r\u00e9szlet'), 'payment', 'installment', 'schedule', 'milestone',
+            $this->u('\u4ed8\u6b3e'), $this->u('\u4ed8\u6b3e\u8282\u70b9'), $this->u('\u4ed8\u6b3e\u65f6\u95f4'), $this->u('\u600e\u4e48\u4ed8\u6b3e'), $this->u('\u5206\u671f'), $this->u('\u9996\u4ed8'), $this->u('\u7b7e\u8ba2\u5408\u540c'), $this->u('\u8d44\u91d1\u8282\u70b9')
+        ));
+    }
+
+    private function is_tax_vat_question($text) {
+        return $this->has_any($text, array(
+            'afa', $this->u('\u00e1fa'), 'vat', 'ado', $this->u('ad\u00f3'), 'illetek', $this->u('illet\u00e9k'), 'tax', 'duty', '5%', '27%', '4%',
+            $this->u('\u7a0e\u7387'), $this->u('\u7a0e\u8d39'), $this->u('\u7a0e'), $this->u('\u589e\u503c\u7a0e'), $this->u('\u8d2d\u7f6e\u7a0e'), $this->u('\u8d22\u4ea7\u53d6\u5f97\u7a0e'), $this->u('\u5370\u82b1\u7a0e'), $this->u('\u8f66\u4f4d\u7a0e'), $this->u('\u50a8\u85cf\u5ba4\u7a0e')
+        ));
+    }
     private function financing_answer($lang) {
         return $this->by_lang($lang,
             'Finanszírozás, banki hitel vagy CSOK lehetőség iránti érdeklődés esetén az értékesítési csapat segít elindítani az egyeztetést. A finanszírozási információk tájékoztató jellegűek, nem minősülnek pénzügyi tanácsadásnak.',
@@ -1575,7 +1704,7 @@ final class Harmat_Local_Assistant {
             ),
             array(
                 'label' => $this->by_lang($lang, 'Telefonos kapcsolat', '电话联系', 'Call sales'),
-                'url' => 'tel:+36306410358',
+                'url' => 'tel:+36300733375',
                 'event' => 'human_handoff',
             ),
         );
@@ -1590,8 +1719,8 @@ final class Harmat_Local_Assistant {
                 'event' => 'human_handoff',
             ),
             array(
-                'label' => '+36-30-641-03-58',
-                'url' => 'tel:+36306410358',
+                'label' => '+36300733375',
+                'url' => 'tel:+36300733375',
                 'event' => 'human_handoff',
             ),
             array(
@@ -2491,6 +2620,11 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
         return false;
     }
 
+    private function u($escaped) {
+        $decoded = json_decode('"' . (string) $escaped . '"');
+        return is_string($decoded) ? $decoded : (string) $escaped;
+    }
+
     private function by_lang($lang, $hu, $zh, $en) {
         if ($lang === 'zh') {
             return $zh;
@@ -2533,6 +2667,87 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
 
         set_transient($key, $count + 1, $ttl);
         return true;
+    }
+
+    private function build_crm_summary($data) {
+        $data = is_array($data) ? $data : array();
+        $intent = sanitize_key((string) ($data['intent'] ?? ''));
+        $intent_labels = array(
+            'appointment' => '预约看房 / Időpontkérés',
+            'offer' => '报价需求 / Árajánlatkérés',
+            'payment' => '付款咨询 / Fizetési kérdés',
+            'loan' => '贷款/融资咨询 / Finanszírozás',
+            'recommendation' => '选房推荐 / Lakásajánlás',
+            'apartment_search' => '找房需求 / Lakáskeresés',
+        );
+        $lines = array(
+            '来源：Harmat AI 客服',
+            '意向类型：' . ($intent_labels[$intent] ?? ($intent !== '' ? $intent : '未明确')),
+        );
+        $unit = trim((string) ($data['interested_unit'] ?? ''));
+        $type = trim((string) ($data['apartment_type'] ?? ''));
+        $rooms = trim((string) ($data['preferred_room_count'] ?? ''));
+        $budget = trim((string) ($data['budget_range'] ?? ''));
+        $time = trim((string) ($data['preferred_contact_time'] ?? ''));
+        $message = trim((string) ($data['message'] ?? ''));
+        $context = trim((string) ($data['context'] ?? ''));
+        $conversation = trim((string) ($data['conversation_summary'] ?? ''));
+        $all_text = mb_strtolower($message . "\n" . $context . "\n" . $conversation, 'UTF-8');
+
+        if ($unit !== '') {
+            $lines[] = '意向房源：' . $unit;
+        }
+        if ($type !== '') {
+            $lines[] = '户型/类型：' . $type;
+        }
+        if ($rooms !== '') {
+            $lines[] = '房间数偏好：' . $rooms;
+        }
+        if ($budget !== '') {
+            $lines[] = '预算范围：' . $budget;
+        }
+        if ($time !== '') {
+            $lines[] = '偏好联系时间：' . $time;
+        }
+
+        $concerns = array();
+        $checks = array(
+            '价格/付款' => array('价格', '价钱', '预算', '付款', '分期', 'fizet', 'ár', 'payment', 'price'),
+            '贷款/CSOK' => array('贷款', '融资', 'csok', 'hitel', 'bank', 'loan'),
+            '看房预约' => array('预约', '看房', 'időpont', 'megtekint', 'appointment', 'viewing'),
+            '花园/露台' => array('花园', '露台', 'kert', 'teras', 'garden', 'terrace'),
+            '交通/周边' => array('交通', '公交', '学校', '周边', 'közleked', 'iskola', 'nearby', 'transport'),
+            '交付/工期' => array('交付', '封顶', '验房', 'átadás', 'handover', 'delivery'),
+        );
+        foreach ($checks as $label => $needles) {
+            foreach ($needles as $needle) {
+                if ($needle !== '' && mb_strpos($all_text, mb_strtolower($needle, 'UTF-8')) !== false) {
+                    $concerns[] = $label;
+                    break;
+                }
+            }
+        }
+        if ($concerns) {
+            $lines[] = '客户关注点：' . implode('、', array_unique($concerns));
+        }
+
+        if ($conversation !== '') {
+            $lines[] = '聊天摘要：' . mb_substr($conversation, 0, 260, 'UTF-8');
+        } elseif ($message !== '') {
+            $lines[] = '客户留言：' . mb_substr($message, 0, 220, 'UTF-8');
+        }
+
+        $next = '建议销售首次联系后补齐预算、房间数、用途和可联系时间。';
+        if ($unit !== '') {
+            $next = '建议核对 ' . $unit . ' 的状态、价格和可约看时间，并尽快回访。';
+        } elseif ($rooms !== '' || $budget !== '') {
+            $next = '建议按房间数/预算筛选 2-4 套可售房源，发送报价并约看房。';
+        } elseif (in_array('贷款/CSOK', $concerns, true)) {
+            $next = '建议先确认客户自有资金、贷款需求和 CSOK 资格方向，再安排销售/银行顾问跟进。';
+        }
+        $lines[] = '下一步建议：' . $next;
+
+        return $this->limit_text(implode("\n", array_filter($lines)), 1200);
     }
 
     private function sanitize_utm($utm) {
@@ -2664,12 +2879,12 @@ If you are looking for a unit, share room count, budget and whether it is for ow
 
     private function default_suggestions($lang) {
         if ($lang === 'zh') {
-            return array('有哪些房源可选？', '我要找两房', '我要带花园的房源', '我要大露台房源', '我要报价', '预约看房', '销售办公室在哪里？', '什么时候交付？', '贷款 / CSOK 咨询', '联系销售');
+            return array('我要找两房', '我要带花园的房源', '我要大露台户型', '周边公交线路', '附近学校', '付款节点', '我要报价', '预约看房', '销售办公室在哪里？', '贷款 / CSOK 咨询');
         }
         if ($lang === 'en') {
-            return array('What apartments are available?', 'I am looking for a 2-room apartment', 'I am looking for a garden apartment', 'I am looking for a large terrace apartment', 'Request an offer', 'Book a viewing', 'Where is the sales office?', 'When is handover expected?', 'Financing / CSOK', 'Contact sales');
+            return array('I am looking for a 2-room apartment', 'I am looking for a garden apartment', 'I am looking for a large terrace apartment', 'Nearby bus routes', 'Nearby schools', 'Payment schedule', 'Request an offer', 'Book a viewing', 'Where is the sales office?', 'Financing / CSOK');
         }
-        return array('Milyen lakások érhetők el?', '2 szobás lakást keresek', 'Kertes lakást keresek', 'Nagy teraszos lakást keresek', 'Árajánlatot kérek', 'Időpontot foglalok', 'Hol található a bemutatóiroda?', 'Mikor várható az átadás?', 'Finanszírozás / CSOK érdekel', 'Kapcsolat az értékesítéssel');
+        return array('2 szobás lakást keresek', 'Kertes lakást keresek', 'Nagy teraszos lakást keresek', 'Közlekedés és buszok', 'Közeli iskolák', 'Fizetési ütemezés', 'Árajánlatot kérek', 'Időpontot foglalok', 'Hol található a bemutatóiroda?', 'Finanszírozás / CSOK érdekel');
     }
 }
 

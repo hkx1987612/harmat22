@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.7
+ * Version: 1.1.8
  */
 
 if (!defined('ABSPATH')) {
@@ -41,9 +41,11 @@ add_action('wp_enqueue_scripts', function () {
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
-    wp_register_script('harmat-lakas-redesign', false, array(), '1.1.7', true);
-    wp_enqueue_script('harmat-lakas-redesign');
-    wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
+    if (harmat_lakas_redesign_is_page()) {
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.1.8', true);
+        wp_enqueue_script('harmat-lakas-redesign');
+        wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
+    }
 }, 90);
 
 add_action('wp_footer', function () {
@@ -220,7 +222,7 @@ function harmat_lakas_redesign_card_markup($item, $index = 0) {
         data-price="<?php echo esc_attr($hide_price ? '' : (int) ($item['price'] ?? 0)); ?>"
         data-sqm-price="<?php echo esc_attr($sqm_price ?: ''); ?>">
         <a class="hm-lakas-media" href="<?php echo esc_url($url); ?>">
-            <img src="<?php echo esc_url(harmat_lakas_redesign_image($item, $index)); ?>" alt="<?php echo esc_attr($title ?: 'Harmat Lakópark lakás'); ?>" loading="lazy">
+            <img src="<?php echo esc_url(harmat_lakas_redesign_image($item, $index)); ?>" alt="<?php echo esc_attr($title ?: 'Harmat Lakópark lakás'); ?>" loading="lazy" decoding="async">
             <span class="hm-lakas-badge"><?php echo esc_html($title); ?></span>
             <span class="hm-lakas-status"><?php echo esc_html($item['statusLabel'] ?? 'Elérhető'); ?></span>
         </a>
@@ -470,7 +472,7 @@ function harmat_lakas_redesign_render() {
                     data-price="<?php echo esc_attr($hide_price ? '' : (int) ($item['price'] ?? 0)); ?>"
                     data-sqm-price="<?php echo esc_attr($sqm_price ?: ''); ?>">
                     <a class="hm-lakas-media" href="<?php echo esc_url($url); ?>">
-                        <img src="<?php echo esc_url(harmat_lakas_redesign_image($item, $index)); ?>" alt="<?php echo esc_attr($title ?: 'Harmat Lakópark lakás'); ?>" loading="lazy">
+                        <img src="<?php echo esc_url(harmat_lakas_redesign_image($item, $index)); ?>" alt="<?php echo esc_attr($title ?: 'Harmat Lakópark lakás'); ?>" loading="lazy" decoding="async">
                         <span class="hm-lakas-badge"><?php echo esc_html($title); ?></span>
                         <span class="hm-lakas-status"><?php echo esc_html($item['statusLabel'] ?? 'Elérhető'); ?></span>
                     </a>

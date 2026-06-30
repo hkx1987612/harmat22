@@ -40,7 +40,7 @@ function hm_legal_company_20260514() {
         'reg'       => '01-09-307619',
         'email'         => 'ertekesites@harmat22.hu',
         'privacy_email' => 'adatvedelem@harmat22.hu',
-        'phone'         => '+36-30-641-03-58',
+        'phone'         => '+36300733375',
         'website'       => 'https://harmat22.hu/',
         'authority'     => 'Fővárosi Törvényszék Cégbírósága',
     );
