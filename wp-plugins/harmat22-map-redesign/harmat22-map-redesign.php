@@ -25,6 +25,9 @@ final class Harmat22_Map_Redesign {
         if (is_admin()) {
             return;
         }
+        if (is_front_page() || is_home()) {
+            return;
+        }
 
         wp_enqueue_style(
             'harmat22-pannellum',

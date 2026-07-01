@@ -641,3 +641,20 @@
     padding: 36px 24px;
   }
 }
+
+
+/* Mobile 3D comfort tuning: keep the panorama, reduce first-screen weight on small devices. */
+@media (max-width: 980px) {
+  .hi-wrap { padding: 44px 0 54px; }
+  .hi-screen { min-height: 560px; }
+}
+@media (max-width: 640px) {
+  .hi-wrap { width: min(100% - 20px, 760px); padding: 36px 0 46px; }
+  .hi-head { gap: 18px; margin-bottom: 20px; }
+  .hi-title { font-size: 32px; line-height: 1.08; }
+  .hi-lead { font-size: 14px; line-height: 1.65; }
+  .hi-screen { min-height: 470px; }
+  .hi-panel-caption { padding: 14px 16px; }
+  .hi-panel-caption strong { font-size: 21px; }
+  .hi-tabs button { min-height: 44px; padding: 9px 8px; }
+}

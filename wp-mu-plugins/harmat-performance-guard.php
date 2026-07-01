@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.21
+ * Version: 1.3.22
  */
 
 if (!defined('ABSPATH')) {
@@ -126,6 +126,18 @@ function harmat_perf_cleanup_public_source_html($html) {
                 $html
             );
         }
+
+        $html = str_replace(
+            array(
+                harmat_perf_text('H&#337;v&eacute;d&#337; &uuml;vegez&eacute;s'),
+                harmat_perf_text('Hat&eacute;kony h&#337;szigetel&eacute;s'),
+            ),
+            array(
+                harmat_perf_text('H&#337;v&eacute;d&#337; &uuml;vegez&eacute;s &eacute;s hat&eacute;kony h&#337;szigetel&eacute;s'),
+                harmat_perf_text('Minden &eacute;p&uuml;letben lift tal&aacute;lhat&oacute;.'),
+            ),
+            $html
+        );
     }
 
     return $html;
@@ -3423,7 +3435,6 @@ remove_action('wp_head', 'harmat_perf_contact_showroom_styles', 84);
 
 function harmat_perf_contact_scene_markup() {
     $base = content_url('/uploads/2026/05/contact-showroom/');
-    $advisor_photo = content_url('/uploads/2026/06/sales-advisors/julia-wirth.jpg');
     $maps_url = 'https://www.google.com/maps/search/?api=1&query=1105%20Budapest%2C%20Harmat%20utca%2022';
 
     ob_start();
@@ -3449,15 +3460,6 @@ function harmat_perf_contact_scene_markup() {
             <aside class="hc-contact-card" aria-label="Kapcsolati adatok">
                 <span class="hc-card-kicker">Kapcsolat</span>
                 <h2>V&aacute;rjuk &Ouml;nt a Harmat utca 22. alatt</h2>
-
-                <div class="hc-sales-advisor">
-                    <img src="<?php echo esc_url($advisor_photo); ?>" alt="J&uacute;lia Wirth - Harmat Lak&oacute;park &eacute;rt&eacute;kes&iacute;t&eacute;s" loading="lazy" decoding="async">
-                    <div>
-                        <span>&Eacute;rt&eacute;kes&iacute;t&eacute;si tan&aacute;csad&oacute;</span>
-                        <strong>J&uacute;lia Wirth</strong>
-                        <a href="tel:+36300733375">+36300733375</a>
-                    </div>
-                </div>
 
                 <div class="hc-contact-list">
                     <div class="hc-contact-row">
@@ -3704,50 +3706,6 @@ function harmat_perf_contact_scene_styles() {
             letter-spacing: 0;
             overflow-wrap: anywhere;
         }
-        .hc-sales-advisor {
-            display: grid;
-            grid-template-columns: 78px minmax(0, 1fr);
-            gap: 15px;
-            align-items: center;
-            padding: 2px 0 18px;
-            border-bottom: 1px solid rgba(151, 105, 37, .16);
-        }
-        .hc-sales-advisor img {
-            display: block;
-            width: 78px;
-            height: 78px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 253, 248, .95);
-            box-shadow: 0 12px 28px rgba(31, 43, 47, .14);
-        }
-        .hc-sales-advisor span {
-            display: block;
-            margin-bottom: 5px;
-            color: #9b6a24;
-            font-size: 11px;
-            font-weight: 900;
-            line-height: 1.25;
-            letter-spacing: 0;
-            text-transform: uppercase;
-        }
-        .hc-sales-advisor strong {
-            display: block;
-            color: #1f3037;
-            font-size: 22px;
-            font-weight: 900;
-            line-height: 1.2;
-            overflow-wrap: anywhere;
-        }
-        .hc-sales-advisor a {
-            display: inline-block;
-            margin-top: 6px;
-            color: #16826f;
-            font-size: 14px;
-            font-weight: 900;
-            line-height: 1.35;
-            text-decoration: none;
-        }
         .hc-contact-list {
             display: grid;
             gap: 12px;
@@ -3932,17 +3890,6 @@ function harmat_perf_contact_scene_styles() {
             .hc-contact-card h2 {
                 font-size: 26px;
             }
-            .hc-sales-advisor {
-                grid-template-columns: 66px minmax(0, 1fr);
-                gap: 12px;
-            }
-            .hc-sales-advisor img {
-                width: 66px;
-                height: 66px;
-            }
-            .hc-sales-advisor strong {
-                font-size: 20px;
-            }
             .hc-actions {
                 grid-template-columns: 1fr;
             }
@@ -4058,7 +4005,7 @@ function harmat_perf_services_page_markup() {
                     </ul>
                     <ul>
                         <li>Energiatakar&eacute;kos h&#337;szivatty&uacute;s rendszer</li>
-                        <li>Az els&#337; &uuml;temben 124 lifttel megk&ouml;zel&iacute;thet&#337; lak&aacute;s &eacute;p&uuml;l.</li>
+                        <li>Minden &eacute;p&uuml;letben lift tal&aacute;lhat&oacute;.</li>
                         <li>Korszer&#369; t&eacute;glafalszerkezet</li>
                         <li>Parkos&iacute;tott z&ouml;ldtet&#337;</li>
                     </ul>

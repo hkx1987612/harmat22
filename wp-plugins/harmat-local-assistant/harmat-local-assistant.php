@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Local Assistant
  * Plugin URI: https://harmat22.hu
  * Description: Local knowledge-base assistant for Harmat Lakópark apartment questions, prices, FAQ, and sales handoff.
- * Version: 0.3.3
+ * Version: 0.3.4
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -47,7 +47,7 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.3.3';
+    const VERSION = '0.3.4';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
     const CONTACT_PHONE = '+36300733375';
@@ -633,7 +633,7 @@ final class Harmat_Local_Assistant {
           var endpoint = <?php echo wp_json_encode($endpoint); ?>;
           var handoffEndpoint = <?php echo wp_json_encode($handoff_endpoint); ?>;
           var eventEndpoint = <?php echo wp_json_encode($event_endpoint); ?>;
-          var nonce = <?php echo wp_json_encode($nonce); ?>;
+          var nonce = '';
           var currentLang = <?php echo wp_json_encode($page_lang); ?>;
           var panel = null;
           var launch = null;
@@ -685,7 +685,7 @@ final class Harmat_Local_Assistant {
             try {
               fetch(eventEndpoint, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json', 'X-WP-Nonce': nonce},
+                headers: {'Content-Type': 'application/json'},
                 credentials: 'same-origin',
                 body: JSON.stringify({event: name, meta: trackingMeta(meta || {})})
               }).catch(function(){});
@@ -860,8 +860,7 @@ final class Harmat_Local_Assistant {
               var response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'X-WP-Nonce': nonce
+                  'Content-Type': 'application/json'
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({ message: text, lang: currentLang })
@@ -901,8 +900,7 @@ final class Harmat_Local_Assistant {
               var response = await fetch(handoffEndpoint, {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'X-WP-Nonce': nonce
+                  'Content-Type': 'application/json'
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
@@ -1006,6 +1004,17 @@ final class Harmat_Local_Assistant {
 
         $code = $this->extract_apartment_code($message);
         $intent = $this->classify_intent($message, $normalized, $filters, $profile, $code);
+        if ($intent === 'contact') {
+            return $this->response(
+                $this->contact_answer($lang),
+                array(),
+                $lang,
+                null,
+                $this->sales_contact_actions($lang),
+                '',
+                'contact'
+            );
+        }
         if ($this->is_technical_document_question($normalized)) {
             return $this->response(
                 $this->technical_document_answer($lang),
@@ -1230,6 +1239,7 @@ final class Harmat_Local_Assistant {
             'process' => 0,
             'help' => 0,
             'location' => 0,
+            'contact' => 0,
         );
 
         if (!empty($filters['rooms']) || !empty($filters['budget']) || !empty($filters['area']) || !empty($filters['area_min']) || !empty($filters['area_max']) || !empty($filters['building']) || !empty($filters['floor']) || !empty($filters['garden']) || !empty($filters['terrace']) || !empty($filters['cheap']) || !empty($filters['ground_floor'])) {
@@ -1264,6 +1274,7 @@ final class Harmat_Local_Assistant {
         $this->add_intent_score($scores, 'process', $normalized, array('vasarlas menete', 'vasarlasi folyamat', 'hogyan tudok vasarolni', 'buying process', 'purchase process', 'how to buy', 'next step', '买房流程', '购买流程', '怎么买', '下一步', '购买步骤', '流程'), 5);
         $this->add_intent_score($scores, 'help', $normalized, array('mit tudsz', 'miben segitesz', 'segitseg', 'help', 'what can you do', 'assistant', '你能做什么', '你会什么', '怎么使用', '客服'), 5);
         $this->add_intent_score($scores, 'location', $normalized, array('hol', 'talalhato', 'cim', 'address', 'where', '位置', '地址'), 5);
+        $this->add_intent_score($scores, 'contact', $normalized, array('telefon', 'telefonszam', 'phone', 'phone number', 'email', 'e-mail', 'mail', 'elerhet', 'kapcsolat', 'hivhat', 'hivas', 'call sales', 'contact sales', self::CONTACT_PHONE), 9);
 
         if ($this->is_payment_schedule_question($normalized)) {
             $scores['payment'] += 12;
@@ -1728,6 +1739,14 @@ final class Harmat_Local_Assistant {
                 'url' => 'mailto:ertekesites@harmat22.hu',
                 'event' => 'human_handoff',
             ),
+        );
+    }
+
+    private function contact_answer($lang) {
+        return $this->by_lang($lang,
+            $this->u('Az \u00e9rt\u00e9kes\u00edt\u00e9s telefonsz\u00e1ma: ') . self::CONTACT_PHONE . $this->u('. E-mail: ') . self::CONTACT_EMAIL . '.',
+            $this->u('\u9500\u552e\u7535\u8bdd\uff1a') . self::CONTACT_PHONE . $this->u('\u3002\u90ae\u7bb1\uff1a') . self::CONTACT_EMAIL . $this->u('\u3002'),
+            'Sales phone: ' . self::CONTACT_PHONE . '. E-mail: ' . self::CONTACT_EMAIL . '.'
         );
     }
 
@@ -2643,6 +2662,9 @@ Example: \"2-room around 70 million Ft\" or \"3-room for own use with parking\".
 
     private function validate_rest_nonce(WP_REST_Request $request) {
         $nonce = (string) $request->get_header('X-WP-Nonce');
+        if ($nonce === '') {
+            return null;
+        }
         if ($nonce !== '' && wp_verify_nonce($nonce, 'wp_rest')) {
             return null;
         }

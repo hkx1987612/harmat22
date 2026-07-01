@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Header Sales Contact
  * Description: Adds the sales contact avatar next to the homepage offer button.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 if (!defined('ABSPATH')) {
@@ -38,6 +38,16 @@ function harmat_header_sales_contact_assets() {
   body.front-page .harmat-header-sales-target .elementor-button-wrapper {
     flex: 0 0 auto !important;
     width: auto !important;
+  }
+  body.home #masthead #my-sticky-header.elementor-sticky--active,
+  body.home #masthead #my-sticky-header.elementor-sticky--effects,
+  body.front-page #masthead #my-sticky-header.elementor-sticky--active,
+  body.front-page #masthead #my-sticky-header.elementor-sticky--effects {
+    top: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
   }
   .harmat-header-sales-contact {
     display: flex;
@@ -121,7 +131,7 @@ function harmat_header_sales_contact_assets() {
 (function () {
   var avatarUrl = <?php echo wp_json_encode($avatar_url); ?>;
   var phoneHref = 'tel:+36300733375';
-  var phoneText = '+36 30 073 3375';
+  var phoneText = '+36300733375';
 
   function visible(node) {
     if (!node) return false;

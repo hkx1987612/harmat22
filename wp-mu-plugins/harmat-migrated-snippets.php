@@ -2,17 +2,13 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.10.1
+ * Version: 2026.06.08.12
  */
 
 defined('ABSPATH') || exit;
 
 function hm_migrated_is_public_request() {
     if (is_admin() || wp_doing_ajax()) {
-        return false;
-    }
-
-    if ((function_exists('is_robots') && is_robots()) || is_feed() || is_trackback()) {
         return false;
     }
 
@@ -168,9 +164,6 @@ function hm_migrated_property_floorplan_image_from_uploads($title, $floorplan_ur
     $lower = strtolower($title);
     $upper = strtoupper($title);
     $candidates = array(
-        '2026/05/' . $title . '-cn-floorplan-display.jpg',
-        '2026/05/' . $upper . '-cn-floorplan-display.jpg',
-        '2026/05/' . $lower . '-cn-floorplan-display.jpg',
         '2026/05/' . $title . '-cn-floorplan.jpg',
         '2026/05/' . $upper . '-cn-floorplan.jpg',
         '2026/05/' . $lower . '-cn-floorplan.jpg',
@@ -261,6 +254,70 @@ function hm_migrated_find_div_block_end($html, $start) {
     return false;
 }
 
+
+function hm_migrated_extract_property_room_rows_from_text($html, $title) {
+    if (!is_string($html) || $html === '' || !is_string($title) || $title === '') {
+        return array();
+    }
+
+    $text = html_entity_decode(wp_strip_all_tags($html), ENT_QUOTES, 'UTF-8');
+    $text = preg_replace('/\x{00a0}/u', ' ', $text);
+    $text = preg_replace('/[ \t]+/u', ' ', $text);
+    $text = trim($text);
+    $prefix = preg_quote($title, '/');
+    $pattern = '/(' . $prefix . '(?:\/\d{2})?)\s+([^\r\n]+)\s+([0-9]+(?:[\.,][0-9]+)?\s*m(?:\x{00B2}|2)?)/u';
+    if (!preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
+        return array();
+    }
+
+    $rows = array();
+    foreach ($matches as $match) {
+        $rows[] = array(
+            'code' => trim($match[1]),
+            'name' => trim($match[2]),
+            'size' => trim($match[3]),
+        );
+    }
+
+    return $rows;
+}
+
+function hm_migrated_extract_property_room_total_from_text($html) {
+    if (!is_string($html) || $html === '') {
+        return array('', '');
+    }
+
+    $text = html_entity_decode(wp_strip_all_tags($html), ENT_QUOTES, 'UTF-8');
+    $text = preg_replace('/\x{00a0}/u', ' ', $text);
+    $text = preg_replace('/[ \t]+/u', ' ', $text);
+    $lines = preg_split('/\R+/u', $text);
+    if (!is_array($lines)) {
+        return array('', '');
+    }
+
+    $clean = array();
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line !== '') {
+            $clean[] = $line;
+        }
+    }
+
+    $count = count($clean);
+    for ($i = 0; $i < $count - 1; $i++) {
+        if (stripos($clean[$i], '?rt?kes?tett alapter?let') !== false) {
+            $size = $clean[$i + 1];
+            if (preg_match('/^[0-9]+(?:[\.,][0-9]+)?\s*m(?:?|2)?$/iu', $size)) {
+                $size = preg_replace('/\s*m2$/iu', ' m?', $size);
+                $size = preg_replace('/\s*m$/iu', ' m?', $size);
+                return array('?rt?kes?tett alapter?let', $size);
+            }
+        }
+    }
+
+    return array('', '');
+}
+
 function hm_migrated_property_sample_detail_html($source_html, $floorplan_override = '') {
     if (!is_singular('property')) {
         return '';
@@ -295,7 +352,18 @@ function hm_migrated_property_sample_detail_html($source_html, $floorplan_overri
     }
     list($status_label) = hm_migrated_property_status_label($post_id);
     $rows = hm_migrated_extract_property_room_rows($source_html);
+    if (!$rows) {
+        $post_content = (string) get_post_field('post_content', $post_id);
+        $rows = hm_migrated_extract_property_room_rows_from_text($post_content, $title);
+    }
     list($total_label, $total_size) = hm_migrated_extract_property_room_total($source_html);
+    if ($total_label === '' || $total_size === '') {
+        list($total_label, $total_size) = hm_migrated_extract_property_room_total_from_text((string) get_post_field('post_content', $post_id));
+    }
+    if (($total_label === '' || $total_size === '') && $sale_area > 0) {
+        $total_label = html_entity_decode('&Eacute;rt&eacute;kes&iacute;tett alapter&uuml;let', ENT_QUOTES, 'UTF-8');
+        $total_size = hm_migrated_format_square_meter($sale_area);
+    }
     if ($image_url === '' && !$rows) {
         return '';
     }
@@ -329,7 +397,8 @@ function hm_migrated_property_sample_detail_html($source_html, $floorplan_overri
             $html .= '<div class="harmat-property-room-row"><span>' . esc_html($row['code']) . '</span><strong>' . esc_html($row['name']) . '</strong><em>' . esc_html($row['size']) . '</em></div>';
         }
         if ($total_label !== '' && $total_size !== '') {
-            $html .= '<div class="harmat-property-room-total"><span>' . esc_html($total_label) . '</span><strong>' . esc_html($total_size) . '</strong></div>';
+            $safe_total_label = html_entity_decode('&Eacute;rt&eacute;kes&iacute;tett alapter&uuml;let', ENT_QUOTES, 'UTF-8');
+            $html .= '<div class="harmat-property-room-total"><span>' . esc_html($safe_total_label) . '</span><strong>' . esc_html($total_size) . '</strong></div>';
         }
         $html .= '</div></div>';
     }
@@ -440,6 +509,19 @@ function hm_migrated_replace_property_header($html) {
         return substr($html, 0, $old_start) . $card . substr($html, $floorplan_start);
     }
 
+    $sample = hm_migrated_property_sample_detail_html($html, $floorplan_url);
+    if ($sample !== '') {
+        $replacement = $card . $sample;
+        $site_start = strpos($html, '<div class="site-content-contain"');
+        if ($site_start !== false) {
+            $site_open_end = strpos($html, '>', $site_start);
+            $footer_start = $site_open_end === false ? false : strpos($html, '<footer', $site_open_end);
+            if ($site_open_end !== false && $footer_start !== false) {
+                return substr($html, 0, $site_open_end + 1) . $replacement . substr($html, $footer_start);
+            }
+        }
+    }
+
     return $original_html;
 }
 
@@ -515,6 +597,41 @@ function hm_migrated_insert_home_opening_notice($html) {
     }
 
     return $notice . $html;
+}
+
+function hm_migrated_home_partners_html() {
+    $t = function ($text) {
+        return html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+    };
+
+    $cards = array(
+        array(
+            'kicker' => 'Beruh&aacute;z&oacute;',
+            'title' => 'Cooperation Power Kft.',
+            'text' => 'A Harmat Lak&oacute;park fejleszt&eacute;s&eacute;t, szakmai koordin&aacute;ci&oacute;j&aacute;t &eacute;s &eacute;rt&eacute;kes&iacute;t&eacute;si folyamat&aacute;t fogja &ouml;ssze.',
+        ),
+        array(
+            'kicker' => 'Tervez&#337;i partnerek',
+            'title' => 'Avant-Garde &amp; MODUM',
+            'text' => 'K&eacute;t tapasztalt &eacute;p&iacute;t&eacute;szeti partner, Ybl- &eacute;s Pro Architectura d&iacute;jas szakmai h&aacute;tt&eacute;rrel.',
+        ),
+        array(
+            'kicker' => 'Megval&oacute;s&iacute;t&aacute;s',
+            'title' => 'Value4Real Group',
+            'text' => 'Projektfejleszt&eacute;s, gener&aacute;lkivitelez&eacute;s, projektmenedzsment &eacute;s m&#369;szaki ellen&#337;rz&eacute;s szakmai t&aacute;mogat&aacute;sa.',
+        ),
+    );
+
+    $html = '<section class="harmat-home-partners" aria-labelledby="harmat-home-partners-title">';
+    $html .= '<div class="harmat-home-partners-head"><span>' . esc_html($t('A projekt m&ouml;g&ouml;tt')) . '</span><h2 id="harmat-home-partners-title">' . esc_html($t('Szakmai h&aacute;tt&eacute;r')) . '</h2><p>' . esc_html($t('Ismerje meg a Harmat Lak&oacute;park beruh&aacute;z&oacute;j&aacute;t, tervez&#337;i partnereit &eacute;s a megval&oacute;s&iacute;t&aacute;st t&aacute;mogat&oacute; szakmai csapatot.')) . '</p></div>';
+    $html .= '<div class="harmat-home-partners-grid">';
+    foreach ($cards as $card) {
+        $html .= '<article><span>' . esc_html($t($card['kicker'])) . '</span><h3>' . esc_html($t($card['title'])) . '</h3><p>' . esc_html($t($card['text'])) . '</p></article>';
+    }
+    $html .= '</div><a class="harmat-home-partners-link" href="' . esc_url(home_url('/magunkrol/')) . '">' . esc_html($t('R&eacute;szletek a Magunkr&oacute;l oldalon')) . '</a>';
+    $html .= '</section>';
+
+    return $html;
 }
 
 function hm_migrated_home_featured_apartments_items() {
@@ -669,10 +786,13 @@ function hm_migrated_insert_home_featured_apartments($html) {
         return $html;
     }
 
-    $section = hm_migrated_home_featured_apartments_html();
-    if ($section === '') {
+    $featured_section = hm_migrated_home_featured_apartments_html();
+    if ($featured_section === '') {
         return $html;
     }
+
+    $partners_section = strpos($html, 'class="harmat-home-partners"') === false ? hm_migrated_home_partners_html() : '';
+    $section = $partners_section . $featured_section;
 
     $appointment_pos = stripos($html, 'Lakópark-beli lakásaink');
     $gallery_container_pos = stripos($html, 'elementor-element-dff4be8');
@@ -702,6 +822,7 @@ function hm_migrated_clean_footer_html() {
         'Projekt' => array(
             'Főoldal' => home_url('/'),
             'Harmat Lakópark' => home_url('/harmat-lakopark/'),
+            html_entity_decode('Magunkr&oacute;l', ENT_QUOTES, 'UTF-8') => home_url('/magunkrol/'),
             'Környékünk' => home_url('/harmat-lakopark-kornyeke/'),
             'Galéria' => home_url('/galeria/'),
         ),
@@ -709,7 +830,7 @@ function hm_migrated_clean_footer_html() {
             'Lakáskereső' => home_url('/lakaskereso/'),
             'Virtuális lakásválasztó' => home_url('/virtualis-lakasvalaszto/'),
             'Első ütem' => home_url('/virtualis-lakasvalaszto-elso-utem/'),
-            'Összes alaprajz' => home_url('/osszes-alaprajz/'),
+            'Összes alaprajz' => home_url('/lakaskereso/'),
         ),
     );
 
@@ -726,7 +847,7 @@ function hm_migrated_clean_footer_html() {
     $html .= '<section><h2>Jogi / Kapcsolat</h2>';
     $html .= '<p><strong>Harmat Lakópark címe</strong><br>1105 Budapest, Harmat utca 22.</p>';
     $html .= '<p><strong>E-mail</strong><br><a href="mailto:ertekesites@harmat22.hu">ertekesites@harmat22.hu</a></p>';
-    $html .= '<p><strong>Telefon</strong><br><a href="tel:+36306410358">+36-30-641-03-58</a></p>';
+    $html .= '<p><strong>Telefon</strong><br><a href="tel:+36300733375">+36300733375</a></p>';
     $html .= '<nav aria-label="Jogi dokumentumok">';
     foreach (hm_migrated_legal_links() as $label => $url) {
         $html .= '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
@@ -1191,8 +1312,8 @@ function hm_migrated_public_html_cleanup($html) {
         'Harmat lakópark címe' => 'Harmat Lakópark címe',
         'Harmat lakópark környéke' => 'Harmat Lakópark környéke',
         'Gipsz Jakab' => 'Harmat Lakópark értékesítés',
-        '012-888-2222' => '+36-30-641-03-58',
-        '012 888 2222' => '+36-30-641-03-58',
+        '012-888-2222' => '+36300733375',
+        '012 888 2222' => '+36300733375',
         'agent.name@example.com' => 'ertekesites@harmat22.hu',
         'mailto:agent.name@example.com' => 'mailto:ertekesites@harmat22.hu',
         'modumkft@gmail.com' => 'ertekesites@harmat22.hu',
@@ -1260,9 +1381,9 @@ function hm_migrated_public_html_cleanup($html) {
 
     $html = hm_migrated_replace_info_page($html);
 
-    if (is_front_page()) {
-        $html = hm_migrated_insert_home_opening_notice($html);
-        $html = hm_migrated_insert_home_featured_apartments($html);
+    if (false && is_front_page()) {
+        /* disabled during earlier homepage rollback */
+        /* disabled during earlier homepage rollback */
     }
 
     $html = hm_migrated_move_hidden_forms_to_footer($html);
@@ -1485,6 +1606,18 @@ body.dialog-lightbox-body .scrollup,body.dialog-container .scrollup{display:none
 .harmat-home-opening-notice div{display:flex;align-items:center;justify-content:center;gap:12px;min-width:0;text-align:center}
 .harmat-home-opening-notice strong{flex:0 0 auto;color:#987033;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
 .harmat-home-opening-notice span{color:#263135;font-size:13px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;line-height:1.35}
+.harmat-home-partners{max-width:1180px;margin:42px auto 30px;padding:0 24px;font-family:Montserrat,Arial,sans-serif;color:#263135}
+.harmat-home-partners-head{display:grid;grid-template-columns:minmax(240px,.72fr) minmax(0,1.28fr);gap:22px;align-items:end;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid rgba(152,112,51,.18)}
+.harmat-home-partners-head span{display:block;margin-bottom:7px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+.harmat-home-partners-head h2{margin:0;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(30px,4vw,48px);line-height:1.05}
+.harmat-home-partners-head p{margin:0;color:#50585d;font-size:15px;line-height:1.75}
+.harmat-home-partners-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.harmat-home-partners-grid article{position:relative;min-height:168px;padding:22px 20px;border:1px solid rgba(152,112,51,.2);background:linear-gradient(180deg,#fffdf8 0%,#fff7e8 100%);box-shadow:0 16px 36px rgba(38,49,53,.06);overflow:hidden}
+.harmat-home-partners-grid article:before{content:"";position:absolute;left:20px;top:0;width:44px;height:4px;background:#987033}
+.harmat-home-partners-grid span{display:block;margin:8px 0 12px;color:#987033;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+.harmat-home-partners-grid h3{margin:0 0 10px;color:#263135;font-size:20px;font-weight:900;line-height:1.18}
+.harmat-home-partners-grid p{margin:0;color:#50585d;font-size:13px;line-height:1.7}
+.harmat-home-partners-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:14px;padding:0 15px;border:1px solid #987033;background:#fff;color:#987033!important;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase}
 .harmat-home-featured{max-width:1180px;margin:38px auto 46px;padding:0 24px;font-family:Montserrat,Arial,sans-serif;color:#263135}
 .harmat-home-featured-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:18px;border-bottom:1px solid rgba(152,112,51,.18);padding-bottom:16px}
 .harmat-home-featured-head span{display:block;margin-bottom:6px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
@@ -1552,8 +1685,8 @@ body.dialog-lightbox-body .scrollup,body.dialog-container .scrollup{display:none
 .harmat-info-note a,.harmat-build-log-list a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:18px;padding:0 15px;border:1px solid #987033;background:#987033;color:#fff!important;font-size:12px;font-weight:900;text-transform:uppercase;text-decoration:none}
 .harmat-build-log-list{display:grid;gap:16px;margin-top:28px}
 .harmat-build-log-list time{display:block;margin-bottom:8px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
-@media(max-width:900px){.harmat-home-opening-notice{margin:88px 18px 0}.harmat-clean-footer-inner,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-home-featured-grid,.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
-@media(max-width:560px){body:not(.elementor-editor-active) .scrollup{display:none!important}body:not(.elementor-editor-active) .harmat-local-ai-launch{right:12px!important;bottom:max(14px,env(safe-area-inset-bottom,0px) + 14px)!important}body:not(.elementor-editor-active) .harmat-local-ai-panel{right:12px!important;bottom:max(72px,env(safe-area-inset-bottom,0px) + 72px)!important}.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-home-opening-notice{margin:82px 14px 0;padding:12px 14px}.harmat-home-opening-notice div{align-items:flex-start;flex-direction:column;gap:4px;text-align:left}.harmat-home-featured{margin:28px auto 34px;padding:0 16px}.harmat-home-featured-head{display:block}.harmat-home-featured-head a{margin-top:14px;width:100%}.harmat-home-featured-grid{grid-template-columns:1fr}.harmat-home-featured-card dl{grid-template-columns:1fr}.harmat-home-featured-card dl div{border-right:0}.harmat-home-featured-actions{grid-template-columns:1fr}.harmat-project-modern .entry-content,.harmat-info-page .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
+@media(max-width:900px){.harmat-home-opening-notice{margin:88px 18px 0}.harmat-clean-footer-inner,.harmat-home-partners-head,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-home-featured-grid,.harmat-home-partners-grid,.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
+@media(max-width:560px){body:not(.elementor-editor-active) .scrollup{display:none!important}body:not(.elementor-editor-active) .harmat-local-ai-launch{right:12px!important;bottom:max(14px,env(safe-area-inset-bottom,0px) + 14px)!important}body:not(.elementor-editor-active) .harmat-local-ai-panel{right:12px!important;bottom:max(72px,env(safe-area-inset-bottom,0px) + 72px)!important}.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-home-opening-notice{margin:82px 14px 0;padding:12px 14px}.harmat-home-opening-notice div{align-items:flex-start;flex-direction:column;gap:4px;text-align:left}.harmat-home-featured,.harmat-home-partners{margin:28px auto 34px;padding:0 16px}.harmat-home-featured-head{display:block}.harmat-home-featured-head a{margin-top:14px;width:100%}.harmat-home-featured-grid,.harmat-home-partners-grid{grid-template-columns:1fr}.harmat-home-featured-card dl{grid-template-columns:1fr}.harmat-home-featured-card dl div{border-right:0}.harmat-home-featured-actions{grid-template-columns:1fr}.harmat-project-modern .entry-content,.harmat-info-page .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
 </style>
         <?php
     }
@@ -1561,7 +1694,7 @@ body.dialog-lightbox-body .scrollup,body.dialog-container .scrollup{display:none
     if (is_singular('property')) {
         ?>
 <style id="harmat-property-hero-css">
-.harmat-property-hero{max-width:1180px;margin:24px auto 30px;padding:22px 26px;border:1px solid rgba(152,112,51,.22);border-radius:6px;background:#fffaf1;box-shadow:0 18px 44px rgba(40,34,24,.08);font-family:Montserrat,Arial,sans-serif;color:#263135}
+.harmat-property-hero{max-width:1180px;margin:96px auto 30px;padding:22px 26px;border:1px solid rgba(152,112,51,.22);border-radius:6px;background:#fffaf1;box-shadow:0 18px 44px rgba(40,34,24,.08);font-family:Montserrat,Arial,sans-serif;color:#263135}
 .single-property #page-title-bar,.single-property .elementor-element-6e26d68,.single-property .harmat-front-single-title-panel{display:none!important}
 .harmat-property-hero-head{margin-bottom:16px}
 .harmat-property-hero-head span{display:block;margin-bottom:8px;color:#987033;font-size:12px;font-weight:900;text-transform:uppercase}
@@ -1596,16 +1729,16 @@ body.dialog-lightbox-body .scrollup,body.dialog-container .scrollup{display:none
 .single-property .lakas_galeria img{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;object-fit:contain!important;opacity:1!important;position:relative!important;z-index:1!important}
 .single-property .lakas_galeria .gallery-item-overlay,.single-property .lakas_galeria .opal-icon-zoom{display:none!important}
 body.single-property:has(.harmat-property-detail-sample) .elementor-element-03069d8{display:none!important}
-.harmat-property-detail-sample{max-width:1180px;margin:0 auto 58px;padding:0 26px 8px;display:grid;grid-template-columns:minmax(360px,560px) minmax(460px,1fr);gap:26px;align-items:start;font-family:Montserrat,Arial,sans-serif;color:#263135}
-.harmat-property-detail-media,.harmat-property-detail-info,.harmat-property-detail-rooms{background:#fff;border:1px solid rgba(152,112,51,.16);box-shadow:0 18px 44px rgba(40,34,24,.075)}
-.harmat-property-detail-media{padding:26px;background:linear-gradient(180deg,#fffdf8 0%,#fff 100%)}
+.harmat-property-detail-sample{max-width:1180px;margin:0 auto 64px;padding:0 26px 8px;display:grid;grid-template-columns:minmax(470px,1.06fr) minmax(430px,.94fr);gap:20px;align-items:stretch;font-family:Montserrat,Arial,sans-serif;color:#263135}
+.harmat-property-detail-media,.harmat-property-detail-info,.harmat-property-detail-rooms{background:#fff;border:1px solid rgba(152,112,51,.18);box-shadow:0 18px 42px rgba(40,34,24,.065)}
+.harmat-property-detail-media{padding:28px 30px;background:linear-gradient(180deg,#fffdf8 0%,#fff 100%);display:flex;flex-direction:column}
 .harmat-property-detail-info{padding:24px}
-.harmat-property-detail-media-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(152,112,51,.14)}
-.harmat-property-detail-rooms-head{margin:0;padding:22px 24px 15px;border-bottom:1px solid rgba(152,112,51,.14);background:#fffdf8}
+.harmat-property-detail-media-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(152,112,51,.14)}
+.harmat-property-detail-rooms-head{margin:0;padding:24px 26px 16px;border-bottom:1px solid rgba(152,112,51,.14);background:#fffdf8}
 .harmat-property-detail-media-head span,.harmat-property-detail-info>span,.harmat-property-detail-rooms-head span{display:block;margin-bottom:7px;color:#987033;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
 .harmat-property-detail-media-head h2,.harmat-property-detail-info h2,.harmat-property-detail-rooms-head h3{margin:0;color:#263135;font-family:Marcellus,Georgia,serif;font-size:clamp(26px,3vw,38px);line-height:1.05}
-.harmat-property-detail-image{display:flex;align-items:center;justify-content:center;width:100%;max-width:100%;min-height:360px;margin:0 auto;padding:14px;overflow:hidden;border:1px solid rgba(152,112,51,.14);background:#f7f0e2}
-.harmat-property-detail-image img{display:block;width:auto;max-width:100%;height:auto;max-height:min(72vh,720px);object-fit:contain;background:#fff;box-shadow:0 10px 28px rgba(40,34,24,.08)}
+.harmat-property-detail-image{display:flex;align-items:center;justify-content:center;width:100%;max-width:100%;min-height:390px;flex:1;margin:0 auto;padding:14px;overflow:hidden;border:1px solid rgba(152,112,51,.14);background:#f7f0e2}
+.harmat-property-detail-image img{display:block;width:100%;max-width:100%;height:auto;max-height:min(70vh,680px);object-fit:contain;background:#fff;box-shadow:0 10px 28px rgba(40,34,24,.08)}
 .harmat-property-detail-media p,.harmat-property-detail-info p{margin:16px 0 0;color:#5b6267;font-size:14px;line-height:1.65}
 .harmat-property-detail-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:20px 0 0;border-top:1px solid rgba(152,112,51,.16);border-left:1px solid rgba(152,112,51,.16)}
 .harmat-property-detail-facts div{min-height:72px;padding:13px 15px;border-right:1px solid rgba(152,112,51,.16);border-bottom:1px solid rgba(152,112,51,.16);background:#fffaf1}
@@ -1615,16 +1748,16 @@ body.single-property:has(.harmat-property-detail-sample) .elementor-element-0306
 .harmat-property-detail-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 15px;border:1px solid #987033;background:#fff;color:#987033!important;font-size:12px;font-weight:900;text-transform:uppercase;text-decoration:none}
 .harmat-property-detail-actions a.primary{background:#987033;color:#fff!important}
 .harmat-property-detail-rooms{grid-column:auto;padding:0;overflow:hidden}
-.harmat-property-room-table{display:grid;grid-template-columns:1fr;gap:7px;padding:16px}
-.harmat-property-room-row{display:grid;grid-template-columns:98px minmax(0,1fr) 88px;gap:12px;align-items:center;min-height:40px;padding:8px 12px;border:1px solid rgba(152,112,51,.12);background:#fff}
+.harmat-property-room-table{display:grid;grid-template-columns:1fr;gap:6px;padding:15px 14px 14px}
+.harmat-property-room-row{display:grid;grid-template-columns:92px minmax(0,1fr) 82px;gap:10px;align-items:center;min-height:38px;padding:8px 10px;border:1px solid rgba(152,112,51,.12);background:#fff}
 .harmat-property-room-row:nth-child(odd){background:#fffaf1}
 .harmat-property-room-row span{color:#987033;font-size:10px;font-weight:900;letter-spacing:.03em}
 .harmat-property-room-row strong{color:#263135;font-size:14px;font-weight:900}
 .harmat-property-room-row em{color:#263135;font-size:14px;font-style:normal;font-weight:900;text-align:right}
-.harmat-property-room-total{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:6px;padding:15px 16px;background:#987033;color:#fff;box-shadow:0 10px 22px rgba(152,112,51,.18)}
+.harmat-property-room-total{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:8px;padding:17px 16px;background:#987033;color:#fff;box-shadow:0 10px 22px rgba(152,112,51,.18)}
 .harmat-property-room-total span,.harmat-property-room-total strong{font-size:15px;font-weight:900}
-@media(max-width:900px){.harmat-property-hero{margin:20px 18px 28px;padding:20px}.harmat-property-hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-property-hero-actions a{flex:1 1 calc(50% - 10px)}.single-property .elementor-element-03069d8{padding:0 18px 4px!important;margin-bottom:42px!important}.single-property .elementor-element-03069d8>.e-con-inner{grid-template-columns:1fr!important;gap:20px!important}.single-property .lakas_galeria .column-item{max-width:560px!important}.harmat-property-detail-sample{grid-template-columns:1fr;padding:0 18px 4px;margin-bottom:42px}.harmat-property-room-table{grid-template-columns:1fr}}
-@media(max-width:520px){.harmat-property-hero{margin:16px 14px 24px;padding:18px}.single-property .harmat-property-hero-head{align-items:flex-start;flex-direction:column}.single-property .harmat-property-hero-title-status{width:100%;min-width:0}.harmat-property-hero-grid{grid-template-columns:1fr}.harmat-property-hero-grid div{min-height:auto}.harmat-property-hero-actions a{flex-basis:100%}.harmat-property-hero-head h1{font-size:34px}.harmat-property-detail-sample{padding:0 14px 4px}.harmat-property-detail-media,.harmat-property-detail-info,.harmat-property-detail-rooms{padding:18px}.harmat-property-detail-image{min-height:240px;padding:10px}.harmat-property-detail-image img{max-height:68vh}.harmat-property-detail-facts{grid-template-columns:1fr}.harmat-property-detail-actions a{flex:1 1 100%}.harmat-property-room-row{grid-template-columns:1fr;gap:3px}.harmat-property-room-row em{text-align:left}.harmat-property-room-total{align-items:flex-start;flex-direction:column}}
+@media(max-width:900px){.harmat-property-hero{margin:86px 18px 28px;padding:20px}.harmat-property-hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-property-hero-actions a{flex:1 1 calc(50% - 10px)}.single-property .elementor-element-03069d8{padding:0 18px 4px!important;margin-bottom:42px!important}.single-property .elementor-element-03069d8>.e-con-inner{grid-template-columns:1fr!important;gap:20px!important}.single-property .lakas_galeria .column-item{max-width:560px!important}.harmat-property-detail-sample{grid-template-columns:1fr;padding:0 18px 4px;margin-bottom:42px}.harmat-property-room-table{grid-template-columns:1fr}}
+@media(max-width:520px){.harmat-property-hero{margin:82px 14px 24px;padding:18px}.single-property .harmat-property-hero-head{align-items:flex-start;flex-direction:column}.single-property .harmat-property-hero-title-status{width:100%;min-width:0}.harmat-property-hero-grid{grid-template-columns:1fr}.harmat-property-hero-grid div{min-height:auto}.harmat-property-hero-actions a{flex-basis:100%}.harmat-property-hero-head h1{font-size:34px}.harmat-property-detail-sample{padding:0 14px 4px}.harmat-property-detail-media,.harmat-property-detail-info,.harmat-property-detail-rooms{padding:18px}.harmat-property-detail-image{min-height:240px;padding:10px}.harmat-property-detail-image img{max-height:68vh}.harmat-property-detail-facts{grid-template-columns:1fr}.harmat-property-detail-actions a{flex:1 1 100%}.harmat-property-room-row{grid-template-columns:1fr;gap:3px}.harmat-property-room-row em{text-align:left}.harmat-property-room-total{align-items:flex-start;flex-direction:column}}
 </style>
         <?php
     }
@@ -1699,7 +1832,7 @@ add_action('wp_head', function () {
       [/Harmat 22 Lakópark/gi, 'Harmat Lakópark'],
       [/Harmat 22 értékesítés/gi, 'Harmat Lakópark értékesítés'],
       [/Gipsz\s*Jakab/gi, 'Harmat Lakópark értékesítés'],
-      [/012[\s-]*888[\s-]*2222/g, '+36-30-641-03-58'],
+      [/012[\s-]*888[\s-]*2222/g, '+36300733375'],
       [/agent\.name@example\.com/gi, 'ertekesites@harmat22.hu'],
       [/modumkft@gmail\.com/gi, 'ertekesites@harmat22.hu']
     ];
@@ -1998,6 +2131,7 @@ body.harmat-clean-menu-open{overflow:hidden!important}
     { label: [76,97,107,225,115,107,101,114,101,115,337], url: '/lakaskereso/' },
     { label: [86,105,114,116,117,225,108,105,115,32,108,97,107,225,115,118,225,108,97,115,122,116,243], url: '/virtualis-lakasvalaszto/' },
     { label: [72,97,114,109,97,116,32,76,97,107,243,112,97,114,107], url: '/harmat-lakopark/' },
+    { label: [77,97,103,117,110,107,114,243,108], url: '/magunkrol/' },
     { label: [75,246,114,110,121,233,107,252,110,107], url: '/harmat-lakopark-kornyeke/' },
     { label: [71,97,108,233,114,105,97], url: '/galeria/' },
     { label: [69,108,233,114,104,101,116,337,115,233,103,101,107], url: '/elerhetosegeink/' }

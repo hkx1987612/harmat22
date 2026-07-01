@@ -31,6 +31,10 @@ _pydeps/
 __pycache__/
 
 # Generated working folders
+android/
+output/
+outputs/
+tmp/
 work/
 tmp_room_images/
 audit-gallery-images/
@@ -48,3 +52,6 @@ rendered/
 
 # Local backups are kept on this machine, not in GitHub
 backups/
+*.bak_*
+*.disabled-*
+*.tmp-*

@@ -164,26 +164,30 @@ Segítek szűkíteni. Kérem, válaszoljon erre a néhány kérdésre: hány fő
 
 Erre jelenleg nincs biztos információm az adatbázisban, és nem szeretnék pontatlan választ adni. Kérem, vegye fel a kapcsolatot az értékesítési csapattal az ertekesites@harmat22.hu címen vagy a +36300733375 telefonszámon.
 
-## 21. Kozeli buszjaratok
+## 21. ??????
 
-Ugyfel kerdezheti: Milyen buszok vannak a kozelben?
+??????Milyen buszok vannak a közelben? / ????????
 
-Ajanlott valasz:
+?????
 
 A Harmat utca 22. kb. 1000 m-es körzetében a nyilvános térképadatok alapján több buszjárat érhető el. A környéken megjelenő járatok közé tartozik: 85, 85E, 95, 161, 161A, 161E, 162, 168E, 169E, 185, 195, 217, 261E, 262. Közeli megállók például: Kápolna tér, Óhegy park, Szent László Gimnázium, Kada utca / Harmat utca, Kőér utca. Menetrendhez és aktuális tereléshez mindig a BudapestGO/BKK adatait érdemes ellenőrizni.
 
-## 22. Kozeli iskolak
+?????Harmat utca 22 ??? 1000 ????????????? 85?85E?95?161?161A?161E?162?168E?169E?185?195?217?261E?262??????? Kápolna tér?Óhegy park?Szent László Gimnázium?Kada utca / Harmat utca?Kőér utca?????? BudapestGO/BKK ???
 
-Ugyfel kerdezheti: Van iskola a kozelben?
+## 22. ????
 
-Ajanlott valasz:
+??????Van iskola a közelben? / ???????????
+
+?????
 
 A környéken több oktatási intézmény található. Kb. 1-1,2 km-en belül nyilvános térképadatok alapján például: Janikovszky Éva Általános Iskola, Harmat Általános Iskola, Pannonhalmi Béla Baptista Általános Iskola, BGSZC Giorgio Perlasca Vendéglátóipari Technikum és Szakképző Iskola, Bercsényi Miklós Élelmiszeripari Szakképző Iskola, Kőbányai Szent László Gimnázium. Beiratkozási körzetet és aktuális férőhelyet mindig az adott intézmény vagy az önkormányzat erősíti meg.
 
-## 23. Aralku vagy kedvezmeny
+?????????? Janikovszky Éva Általános Iskola?Harmat Általános Iskola?Pannonhalmi Béla Baptista Általános Iskola?BGSZC Giorgio Perlasca ??/?????Bercsényi Miklós ?????Kőbányai Szent László Gimnázium???????????????????????
 
-Ugyfel kerdezheti: Lehet alkudni? Van kedvezmeny?
+## 23. ????????
 
-Ajanlott valasz:
+????????? / ???? / ??? / ???????
+
+?????
 
 Az asszisztens nem ígérhet kedvezményt vagy egyedi alkut. Ha az árkeret szűk, először érdemes megadni a maximum keretet, szobaszámot, minimális alapterületet és azt, hogy saját használatra vagy befektetésre keres. Ez alapján az aktuális listából konkrét lakásokat lehet ajánlani, a végleges feltételeket pedig az értékesítés erősíti meg.

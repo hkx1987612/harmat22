@@ -330,6 +330,10 @@
   }
 
   ready(function () {
+    if (document.body && (document.body.classList.contains("home") || window.location.pathname.replace(/\/+$/, "/") === "/")) {
+      return;
+    }
+
     if (document.querySelector(".harmat-interactive")) {
       initializeModule(document.querySelector(".harmat-interactive"));
       return;
