@@ -12,6 +12,10 @@ function hm_migrated_is_public_request() {
         return false;
     }
 
+    if (is_feed() || is_robots() || is_trackback()) {
+        return false;
+    }
+
     if (hm_migrated_is_portal_request_path()) {
         return false;
     }
