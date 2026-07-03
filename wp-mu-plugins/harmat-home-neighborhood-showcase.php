@@ -1,19 +1,48 @@
 <?php
 /**
  * Plugin Name: Harmat Home Neighborhood Showcase
- * Description: Adds the neighborhood-page preview into the existing homepage environment section.
- * Version: 1.0.0
+ * Description: Adds the full neighborhood interactive presentation into the existing homepage environment section.
+ * Version: 1.1.0
  */
 
 defined('ABSPATH') || exit;
+
+function harmat_home_neighborhood_showcase_assets() {
+    if (is_admin() || !is_front_page()) {
+        return;
+    }
+
+    wp_enqueue_style(
+        'harmat-home-pannellum',
+        'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css',
+        array(),
+        '2.5.6'
+    );
+
+    wp_enqueue_script(
+        'harmat-home-pannellum',
+        'https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js',
+        array(),
+        '2.5.6',
+        true
+    );
+
+    wp_enqueue_style(
+        'harmat-home-map-redesign',
+        content_url('/plugins/harmat22-map-redesign/assets/map-redesign.css'),
+        array('harmat-home-pannellum'),
+        '2.1'
+    );
+}
+add_action('wp_enqueue_scripts', 'harmat_home_neighborhood_showcase_assets', 30);
 
 function harmat_home_neighborhood_showcase_footer() {
     if (is_admin() || !is_front_page()) {
         return;
     }
 
+    $asset_base = trailingslashit(content_url('/plugins/harmat22-map-redesign/assets/harmat-3d/'));
     $neighborhood_url = home_url('/harmat-lakopark-kornyeke/');
-    $apartments_url = home_url('/lakaskereso/');
     ?>
 <style id="harmat-home-neighborhood-showcase-css">
   body.home .elementor-element-f2943fc.harmat-home-neighborhood-section {
@@ -22,313 +51,57 @@ function harmat_home_neighborhood_showcase_footer() {
     background: #f5f2eb !important;
   }
   body.home .elementor-element-f2943fc.harmat-home-neighborhood-section .elementor-container {
-    width: min(1160px, calc(100vw - 36px));
-    max-width: 1160px !important;
+    width: min(1360px, calc(100vw - 36px));
+    max-width: 1360px !important;
   }
   body.home .elementor-element-f2943fc .elementor-heading-title a {
     text-decoration: none !important;
   }
-  body.home .harmat-home-neighborhood-showcase,
-  body.home .harmat-home-neighborhood-showcase * {
-    box-sizing: border-box;
-  }
-  body.home .harmat-home-neighborhood-showcase {
-    display: grid;
-    grid-template-columns: minmax(0, .95fr) minmax(0, 1.25fr);
-    gap: 22px;
+  body.home .elementor-element-f2943fc .elementor-shortcode {
     width: 100%;
+  }
+  body.home .harmat-home-interactive {
     margin-top: 30px;
-    color: #24343a;
-    font-family: Montserrat, Arial, sans-serif;
+    border-radius: 10px;
+    background: transparent;
   }
-  body.home .harmat-home-neighborhood-panel,
-  body.home .harmat-home-neighborhood-map,
-  body.home .harmat-home-neighborhood-card {
-    min-width: 0;
-    border: 1px solid rgba(154, 107, 37, .24);
-    border-radius: 8px;
-    background: rgba(255, 253, 248, .86);
-    box-shadow: 0 16px 38px rgba(38, 49, 55, .08);
+  body.home .harmat-home-interactive .hi-wrap {
+    width: 100%;
+    padding: 0;
   }
-  body.home .harmat-home-neighborhood-panel {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 22px;
-    padding: clamp(24px, 3vw, 34px);
-    border-top: 4px solid #177d69;
+  body.home .harmat-home-interactive .hi-head {
+    margin-bottom: 24px;
   }
-  body.home .harmat-home-neighborhood-eyebrow {
-    display: inline-flex;
-    margin: 0 0 14px;
-    color: #946721;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    line-height: 1.2;
-    text-transform: uppercase;
+  body.home .harmat-home-interactive .hi-console {
+    border-color: rgba(154, 107, 37, .28);
   }
-  body.home .harmat-home-neighborhood-panel h3 {
-    margin: 0;
-    color: #1f3137;
-    font-family: "Marcellus SC", Georgia, serif;
-    font-size: clamp(28px, 3.4vw, 42px);
-    font-weight: 400;
-    line-height: 1.08;
-    text-transform: uppercase;
+  body.home .harmat-home-interactive .hi-panel-caption {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    color: #fff !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .52);
   }
-  body.home .harmat-home-neighborhood-panel p {
-    margin: 16px 0 0;
-    color: #53646a;
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.76;
+  body.home .harmat-home-interactive .hi-panel-caption span {
+    color: rgba(255, 255, 255, .88) !important;
   }
-  body.home .harmat-home-neighborhood-facts {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 22px;
+  body.home .harmat-home-interactive .hi-feature-image::after {
+    content: "Nagy\00EDt\00E1s";
   }
-  body.home .harmat-home-neighborhood-facts span {
-    min-width: 0;
-    padding: 14px 14px 13px;
-    border: 1px solid rgba(23, 125, 105, .16);
-    border-radius: 8px;
-    background: rgba(23, 125, 105, .065);
-  }
-  body.home .harmat-home-neighborhood-facts strong,
-  body.home .harmat-home-neighborhood-facts small {
-    display: block;
-  }
-  body.home .harmat-home-neighborhood-facts strong {
-    color: #14705f;
-    font-size: 18px;
-    font-weight: 900;
-    line-height: 1.15;
-  }
-  body.home .harmat-home-neighborhood-facts small {
-    margin-top: 5px;
-    color: #4f5e64;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1.35;
-  }
-  body.home .harmat-home-neighborhood-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 22px;
-  }
-  body.home .harmat-home-neighborhood-actions a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0 18px;
-    border: 1px solid #9a6b25;
-    border-radius: 6px;
-    color: #8f611f !important;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .06em;
-    line-height: 1.2;
-    text-decoration: none !important;
-    text-transform: uppercase;
-  }
-  body.home .harmat-home-neighborhood-actions a:first-child {
-    border-color: #26383d;
-    background: #26383d;
-    color: #fffdf8 !important;
-  }
-  body.home .harmat-home-neighborhood-visual {
-    display: grid;
-    grid-template-rows: minmax(260px, 1fr) auto;
-    gap: 14px;
-    min-width: 0;
-  }
-  body.home .harmat-home-neighborhood-map {
-    position: relative;
-    min-height: 330px;
-    overflow: hidden;
-    background:
-      linear-gradient(135deg, rgba(23, 125, 105, .13), transparent 38%),
-      linear-gradient(45deg, transparent 0 18%, rgba(255,255,255,.48) 18% 20%, transparent 20% 45%, rgba(255,255,255,.42) 45% 47%, transparent 47%),
-      #dfe8dc;
-  }
-  body.home .harmat-home-neighborhood-map:before,
-  body.home .harmat-home-neighborhood-map:after {
-    content: "";
-    position: absolute;
-    background: rgba(154, 107, 37, .38);
-    transform-origin: center;
-  }
-  body.home .harmat-home-neighborhood-map:before {
-    width: 116%;
-    height: 12px;
-    left: -8%;
-    top: 51%;
-    transform: rotate(-18deg);
-  }
-  body.home .harmat-home-neighborhood-map:after {
-    width: 12px;
-    height: 116%;
-    left: 57%;
-    top: -8%;
-    transform: rotate(24deg);
-  }
-  body.home .harmat-home-neighborhood-ring {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    border: 1px dashed rgba(23, 125, 105, .45);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
-  body.home .harmat-home-neighborhood-ring.is-one {
-    width: 134px;
-    height: 134px;
-  }
-  body.home .harmat-home-neighborhood-ring.is-two {
-    width: 232px;
-    height: 232px;
-  }
-  body.home .harmat-home-neighborhood-ring.is-three {
-    width: 330px;
-    height: 330px;
-  }
-  body.home .harmat-home-neighborhood-home,
-  body.home .harmat-home-neighborhood-pin {
-    position: absolute;
-    z-index: 2;
-    border-radius: 8px;
-    box-shadow: 0 12px 26px rgba(32, 48, 55, .14);
-  }
-  body.home .harmat-home-neighborhood-home {
-    left: 50%;
-    top: 50%;
-    padding: 13px 15px;
-    background: #177d69;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    line-height: 1.2;
-    text-transform: uppercase;
-    transform: translate(-50%, -50%);
-  }
-  body.home .harmat-home-neighborhood-pin {
-    min-width: 120px;
-    padding: 10px 12px;
-    background: rgba(255, 253, 248, .95);
-    color: #29383e;
-    font-size: 12px;
-    font-weight: 900;
-    line-height: 1.28;
-  }
-  body.home .harmat-home-neighborhood-pin strong {
-    display: block;
-    color: #177d69;
-    font-size: 14px;
-    line-height: 1.25;
-  }
-  body.home .harmat-home-neighborhood-pin.is-pet { left: 41%; top: 12%; }
-  body.home .harmat-home-neighborhood-pin.is-park { left: 8%; top: 28%; }
-  body.home .harmat-home-neighborhood-pin.is-school { right: 9%; top: 20%; }
-  body.home .harmat-home-neighborhood-pin.is-transport { left: 44%; bottom: 8%; }
-  body.home .harmat-home-neighborhood-card-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-  }
-  body.home .harmat-home-neighborhood-card {
-    padding: 18px 16px;
-  }
-  body.home .harmat-home-neighborhood-card strong {
-    display: block;
-    color: #93651f;
-    font-size: 12px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-  body.home .harmat-home-neighborhood-card span {
-    display: block;
-    margin-top: 10px;
-    color: #24343a;
-    font-size: 15px;
-    font-weight: 900;
-    line-height: 1.35;
-  }
-  body.home .harmat-home-neighborhood-card small {
-    display: block;
-    margin-top: 8px;
-    color: #647378;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 1.45;
-  }
-  @media (max-width: 980px) {
-    body.home .harmat-home-neighborhood-showcase {
-      grid-template-columns: 1fr;
-    }
-    body.home .harmat-home-neighborhood-visual {
-      grid-template-rows: auto auto;
-    }
+  body.home .harmat-home-interactive .hi-lightbox button {
+    font-family: Arial, sans-serif;
   }
   @media (max-width: 640px) {
     body.home .elementor-element-f2943fc.harmat-home-neighborhood-section .elementor-container {
       width: min(100%, calc(100vw - 22px));
     }
-    body.home .harmat-home-neighborhood-showcase {
-      gap: 14px;
+    body.home .harmat-home-interactive {
       margin-top: 22px;
     }
-    body.home .harmat-home-neighborhood-panel {
-      padding: 23px 20px;
-    }
-    body.home .harmat-home-neighborhood-panel h3 {
-      font-size: 28px;
-    }
-    body.home .harmat-home-neighborhood-panel p {
-      font-size: 14px;
-      line-height: 1.68;
-    }
-    body.home .harmat-home-neighborhood-facts,
-    body.home .harmat-home-neighborhood-card-grid {
-      grid-template-columns: 1fr;
-    }
-    body.home .harmat-home-neighborhood-actions {
-      display: grid;
-      grid-template-columns: 1fr;
-    }
-    body.home .harmat-home-neighborhood-map {
-      min-height: 430px;
-    }
-    body.home .harmat-home-neighborhood-ring.is-three {
-      width: 292px;
-      height: 292px;
-    }
-    body.home .harmat-home-neighborhood-pin {
-      min-width: 106px;
-      padding: 9px 10px;
-      font-size: 11px;
-    }
-    body.home .harmat-home-neighborhood-pin strong {
-      font-size: 13px;
-    }
-    body.home .harmat-home-neighborhood-pin.is-pet {
-      left: 50%;
-      top: 7%;
-      transform: translateX(-50%);
-    }
-    body.home .harmat-home-neighborhood-pin.is-park { left: 6%; top: 23%; }
-    body.home .harmat-home-neighborhood-pin.is-school { right: 6%; top: 24%; }
-    body.home .harmat-home-neighborhood-pin.is-transport {
-      left: 50%;
-      bottom: 7%;
-      transform: translateX(-50%);
+    body.home .harmat-home-interactive .hi-screen {
+      min-height: 520px;
     }
   }
 </style>
@@ -336,47 +109,247 @@ function harmat_home_neighborhood_showcase_footer() {
 (function () {
   if (!document.body || !document.body.classList.contains('home')) return;
 
+  var assetBase = <?php echo wp_json_encode($asset_base); ?>;
   var neighborhoodUrl = <?php echo wp_json_encode($neighborhood_url); ?>;
-  var apartmentsUrl = <?php echo wp_json_encode($apartments_url); ?>;
 
-  function buildShowcase() {
-    return '' +
-      '<div class="harmat-home-neighborhood-showcase" data-harmat-home-neighborhood="1">' +
-        '<div class="harmat-home-neighborhood-panel">' +
-          '<div>' +
-            '<span class="harmat-home-neighborhood-eyebrow">K&ouml;rny&eacute;k&uuml;nk</span>' +
-            '<h3>R&ouml;vid utak, val&oacute;di mindennapi el&#337;ny</h3>' +
-            '<p>A Harmat utca 22. k&ouml;rny&eacute;ke egyszerre ad z&ouml;ldebb lak&oacute;&eacute;rzetet &eacute;s k&ouml;nnyen haszn&aacute;lhat&oacute; v&aacute;rosi kapcsolatokat. Park, kutyafuttat&oacute;, iskola, bev&aacute;s&aacute;rl&aacute;s &eacute;s k&ouml;zleked&eacute;s a mindennapokhoz k&ouml;zel.</p>' +
-            '<div class="harmat-home-neighborhood-facts">' +
-              '<span><strong>kb. 200 m</strong><small>k&ouml;zeli kutyafuttat&oacute;</small></span>' +
-              '<span><strong>kb. 600 m</strong><small>&Oacute;hegy park</small></span>' +
-              '<span><strong>kb. 800 m</strong><small>ker&uuml;leti k&ouml;zpont</small></span>' +
-              '<span><strong>kb. 1,2 km</strong><small>K&#337;b&aacute;nya als&oacute;</small></span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="harmat-home-neighborhood-actions">' +
-            '<a href="' + neighborhoodUrl + '">K&ouml;rny&eacute;k megtekint&eacute;se</a>' +
-            '<a href="' + apartmentsUrl + '">Lak&aacute;sok megtekint&eacute;se</a>' +
-          '</div>' +
-        '</div>' +
-        '<div class="harmat-home-neighborhood-visual">' +
-          '<div class="harmat-home-neighborhood-map" role="img" aria-label="Harmat Lak&oacute;park k&ouml;rny&eacute;ki pontok t&eacute;rk&eacute;pes &aacute;ttekint&eacute;se">' +
-            '<span class="harmat-home-neighborhood-ring is-one"></span>' +
-            '<span class="harmat-home-neighborhood-ring is-two"></span>' +
-            '<span class="harmat-home-neighborhood-ring is-three"></span>' +
-            '<span class="harmat-home-neighborhood-home">Harmat 22</span>' +
-            '<span class="harmat-home-neighborhood-pin is-pet">Kutyafuttat&oacute;<strong>200 m</strong></span>' +
-            '<span class="harmat-home-neighborhood-pin is-park">&Oacute;hegy park<strong>600 m</strong></span>' +
-            '<span class="harmat-home-neighborhood-pin is-school">Gimn&aacute;zium<strong>700 m</strong></span>' +
-            '<span class="harmat-home-neighborhood-pin is-transport">K&#337;b&aacute;nya als&oacute;<strong>1,2 km</strong></span>' +
-          '</div>' +
-          '<div class="harmat-home-neighborhood-card-grid" aria-label="K&ouml;rny&eacute;ki kiemel&eacute;sek">' +
-            '<div class="harmat-home-neighborhood-card"><strong>Z&ouml;ld</strong><span>Park &eacute;s s&eacute;ta</span><small>&Oacute;hegy park, kutyafuttat&oacute; &eacute;s k&ouml;rnyezeti rekre&aacute;ci&oacute;.</small></div>' +
-            '<div class="harmat-home-neighborhood-card"><strong>Csal&aacute;d</strong><span>Iskola k&ouml;zel</span><small>Oktat&aacute;si pontok &eacute;s ker&uuml;leti szolg&aacute;ltat&aacute;sok r&ouml;vid t&aacute;vols&aacute;gon bel&uuml;l.</small></div>' +
-            '<div class="harmat-home-neighborhood-card"><strong>Kapcsolat</strong><span>V&aacute;rosi el&eacute;r&eacute;s</span><small>K&#337;b&aacute;nya als&oacute;, &Ouml;rs vez&eacute;r tere, K&Ouml;KI &eacute;s nagyobb bev&aacute;s&aacute;rl&oacute;pontok.</small></div>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
+  function asset(file) {
+    return assetBase + file;
+  }
+
+  function galleryButton(file, label) {
+    return '<button type="button" data-full="' + asset(file) + '"><img src="' + asset(file) + '" alt="' + label + '" loading="lazy" decoding="async"><span>' + label + '</span></button>';
+  }
+
+  function tabButton(target, label, sub, active) {
+    return '<button class="' + (active ? 'active' : '') + '" type="button" data-target="' + target + '">' + label + '<span>' + sub + '</span></button>';
+  }
+
+  function buildInteractive() {
+    return [
+      '<section class="harmat-interactive harmat-home-interactive" id="harmat-home-3d-tour" data-harmat-home-neighborhood="1">',
+      '  <div class="hi-wrap">',
+      '    <div class="hi-head">',
+      '      <div>',
+      '        <p class="hi-eyebrow">Interakt&iacute;v bemutat&oacute;</p>',
+      '        <h3 class="hi-title">Harmat Lak&oacute;park &eacute;lm&eacute;nyk&ouml;zpont</h3>',
+      '      </div>',
+      '      <p class="hi-lead">Tekintse meg a Harmat Lak&oacute;park l&aacute;tv&aacute;nyterveit, k&ouml;rnyezet&eacute;t &eacute;s bemutat&oacute;anyagait egy &aacute;ttekinthet&#337;, modern fel&uuml;leten.</p>',
+      '    </div>',
+      '    <div class="hi-console" aria-label="Harmat Lak&oacute;park interakt&iacute;v bemutat&oacute;">',
+      '      <div class="hi-screen">',
+      '        <div class="hi-panel active" data-panel="panorama">',
+      '          <div class="hi-pano-wrap">',
+      '            <img class="hi-fallback" src="' + asset('pano_pano_f.jpg') + '" alt="Harmat Lak&oacute;park panor&aacute;ma el&#337;n&eacute;zet" loading="lazy" decoding="async">',
+      '            <div id="harmat-panorama" aria-label="Harmat Lak&oacute;park panor&aacute;m&aacute;s l&aacute;tv&aacute;nyt&eacute;r"></div>',
+      '          </div>',
+      '          <div class="hi-panel-caption"><strong>Panor&aacute;m&aacute;s l&aacute;tv&aacute;nyt&eacute;r</strong><span>H&uacute;zza el a k&eacute;pet, &eacute;s n&eacute;zze k&ouml;rbe a projekt t&eacute;rbeli bemutat&oacute;j&aacute;t.</span></div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="video">',
+      '          <div class="hi-video-grid">',
+      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset('video_swsp_xmsp.jpg') + '"><source src="' + asset('swsp_xmsp.mp4') + '" type="video/mp4"></video><div><strong>Projektbemutat&oacute;</strong><span>A lak&oacute;park elhelyezked&eacute;se, &eacute;p&uuml;lett&ouml;mege &eacute;s k&ouml;rnyezeti kapcsolatai.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset('video_spjs.jpg') + '"><source src="' + asset('spjs.mp4') + '" type="video/mp4"></video><div><strong>L&aacute;tv&aacute;nyvide&oacute;</strong><span>&Aacute;tfog&oacute; k&eacute;pet ad a tervezett lak&oacute;k&ouml;rnyezetr&#337;l &eacute;s a projekt hangulat&aacute;r&oacute;l.</span></div></article>',
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="plans">',
+      '          <div class="hi-split">',
+      '            <div class="hi-copy"><small>Projekt &aacute;ttekint&eacute;s</small><h3>Modern lak&oacute;k&ouml;rnyezet K&#337;b&aacute;ny&aacute;n</h3><p>A Harmat Lak&oacute;park a X. ker&uuml;letben, a Harmat utca 22. sz&aacute;m alatt k&iacute;n&aacute;l &uacute;j &eacute;p&iacute;t&eacute;s&#369; otthonokat &aacute;tgondolt alaprajzokkal, z&ouml;ld k&ouml;rnyezettel &eacute;s k&eacute;nyelmes v&aacute;rosi kapcsolatokkal.</p><div class="hi-stat-row"><span><b>124 lak&aacute;s</b>els&#337; &uuml;tem</span><span><b>Harmat utca 22.</b>Budapest X. ker&uuml;let</span><span><b>Z&ouml;ld k&ouml;rnyezet</b>&eacute;lhet&#337; v&aacute;rosi ritmus</span></div></div>',
+      '            <button class="hi-feature-image" type="button" data-full="' + asset('xgt_8.jpg') + '"><img src="' + asset('xgt_8.jpg') + '" alt="Harmat Lak&oacute;park mad&aacute;rt&aacute;vlati l&aacute;tv&aacute;nyterv" loading="lazy" decoding="async"></button>',
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="gallery">',
+      '          <div class="hi-gallery-grid">',
+      galleryButton('xgt_0.jpg', '&Aacute;ttekint&#337; l&aacute;tv&aacute;ny'),
+      galleryButton('xgt_1.jpg', '&Eacute;p&uuml;lethomlokzat'),
+      galleryButton('xgt_4.jpg', 'Lak&oacute;k&ouml;rnyezeti t&eacute;r'),
+      galleryButton('xgt_8.jpg', 'Mad&aacute;rt&aacute;vlati n&eacute;zet'),
+      galleryButton('xgt_10.jpg', 'Lak&oacute;&eacute;p&uuml;leti r&eacute;szlet'),
+      galleryButton('xgt_5.jpg', 'Kert &eacute;s k&ouml;z&ouml;ss&eacute;gi t&eacute;r'),
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="location">',
+      '          <div class="hi-split">',
+      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset('video_swsp_xmsp.jpg') + '"><img src="' + asset('video_swsp_xmsp.jpg') + '" alt="Harmat Lak&oacute;park k&ouml;rnyezeti &aacute;ttekint&#337;" loading="lazy" decoding="async"></button>',
+      '            <div class="hi-copy"><small>Elhelyezked&eacute;s</small><h3>Otthon, ahol a v&aacute;ros &eacute;s a term&eacute;szet tal&aacute;lkozik</h3><p>A k&ouml;rny&eacute;k mindennapi &eacute;lethez sz&uuml;ks&eacute;ges szolg&aacute;ltat&aacute;sokat, z&ouml;ldter&uuml;leteket &eacute;s j&oacute; v&aacute;rosi kapcsolatokat k&iacute;n&aacute;l. A bemutat&oacute; seg&iacute;t gyorsan &aacute;tl&aacute;tni a lak&oacute;park k&ouml;rnyezet&eacute;t.</p><ul><li>Budapest X. ker&uuml;let, Harmat utca 22.</li><li>K&ouml;zeli bev&aacute;s&aacute;rl&aacute;si, oktat&aacute;si &eacute;s eg&eacute;szs&eacute;g&uuml;gyi lehet&#337;s&eacute;gek</li><li>K&ouml;nnyen &eacute;rtelmezhet&#337; projekt- &eacute;s k&ouml;rnyezetbemutat&oacute;</li></ul></div>',
+      '          </div>',
+      '        </div>',
+      '        <div class="hi-panel" data-panel="notice">',
+      '          <div class="hi-notice"><small>T&aacute;j&eacute;koztat&oacute;</small><h3>Fontos inform&aacute;ci&oacute;k</h3><p>A l&aacute;tv&aacute;nytervek, vide&oacute;k &eacute;s bemutat&oacute;anyagok t&aacute;j&eacute;koztat&oacute; jelleg&#369;ek. Az &aacute;rak, m&#369;szaki tartalom, alapter&uuml;letek, &aacute;tad&aacute;si hat&aacute;rid&#337;k &eacute;s felszerelts&eacute;g minden esetben a hivatalos dokument&aacute;ci&oacute; &eacute;s a szerz&#337;d&eacute;s szerint ir&aacute;nyad&oacute;k.</p><div class="hi-notice-grid"><span>A l&aacute;tv&aacute;nytervek illusztr&aacute;ci&oacute;k</span><span>Az adatok t&aacute;j&eacute;koztat&oacute; jelleg&#369;ek</span><span>A szerz&#337;d&eacute;s az ir&aacute;nyad&oacute;</span></div></div>',
+      '        </div>',
+      '      </div>',
+      '      <div class="hi-dock">',
+      '        <div class="hi-tabs" aria-label="Harmat Lak&oacute;park bemutat&oacute; men&uuml;">',
+      tabButton('panorama', 'Panor&aacute;ma', '360 n&eacute;zet', true),
+      tabButton('video', 'Vide&oacute;k', 'Bemutat&oacute;', false),
+      tabButton('plans', 'Projekt', '&Aacute;ttekint&eacute;s', false),
+      tabButton('gallery', 'Gal&eacute;ria', 'L&aacute;tv&aacute;nytervek', false),
+      tabButton('location', 'K&ouml;rnyezet', 'Lok&aacute;ci&oacute;', false),
+      tabButton('notice', 'T&aacute;j&eacute;koztat&oacute;', 'Fontos', false),
+      '        </div>',
+      '        <div class="hi-actions"><button type="button" data-hi-rotate>Sz&uuml;net</button><button type="button" data-hi-reset>Alaphelyzet</button><button type="button" data-hi-full>Teljes k&eacute;perny&#337;</button></div>',
+      '      </div>',
+      '    </div>',
+      '    <p class="hi-note">Megjegyz&eacute;s: a bemutat&oacute;anyagok t&aacute;j&eacute;koztat&oacute; jelleg&#369;ek, a v&eacute;gleges tartalom a szerz&#337;d&eacute;s &eacute;s a hivatalos dokument&aacute;ci&oacute; szerint ir&aacute;nyad&oacute;.</p>',
+      '    <p class="hi-note"><a href="' + neighborhoodUrl + '">Teljes k&ouml;rny&eacute;k oldal megnyit&aacute;sa</a></p>',
+      '  </div>',
+      '</section>',
+      '<div class="hi-lightbox" aria-hidden="true"><button type="button" aria-label="Bez&aacute;r&aacute;s">&times;</button><img alt=""></div>'
+    ].join('');
+  }
+
+  function initInteractive(root) {
+    if (!root || root.dataset.harmatReady === '1') return;
+    root.dataset.harmatReady = '1';
+
+    var viewerEl = root.querySelector('#harmat-panorama');
+    var fallback = root.querySelector('.hi-fallback');
+    var autoRotate = true;
+    var startPitch = -27;
+    var startYaw = 0;
+    var startHfov = 92;
+    var viewer = null;
+
+    function ensureViewer() {
+      if (viewer || !window.pannellum || !viewerEl) return;
+      try {
+        viewer = window.pannellum.viewer(viewerEl, {
+          type: 'cubemap',
+          cubeMap: [
+            asset('pano_pano_f.jpg'),
+            asset('pano_pano_r.jpg'),
+            asset('pano_pano_b.jpg'),
+            asset('pano_pano_l.jpg'),
+            asset('pano_pano_u.jpg'),
+            asset('pano_pano_d.jpg')
+          ],
+          autoLoad: true,
+          showControls: false,
+          showFullscreenCtrl: false,
+          autoRotate: -1,
+          autoRotateInactivityDelay: 2600,
+          compass: false,
+          hfov: startHfov,
+          pitch: startPitch,
+          yaw: startYaw,
+          minHfov: 44,
+          maxHfov: 112
+        });
+        if (fallback) fallback.style.display = 'none';
+      } catch (error) {
+        if (fallback) fallback.style.display = 'block';
+      }
+    }
+
+    ensureViewer();
+    setTimeout(ensureViewer, 600);
+
+    var tabs = Array.prototype.slice.call(root.querySelectorAll('.hi-tabs button[data-target]'));
+    var panels = Array.prototype.slice.call(root.querySelectorAll('.hi-panel[data-panel]'));
+
+    root.querySelectorAll('.hi-video-card video').forEach(function (video) {
+      function getVideoRate() {
+        var source = video.querySelector('source');
+        var src = ((video.currentSrc || video.getAttribute('src') || '') + ' ' + (source ? source.getAttribute('src') : '')).toLowerCase();
+        return src.indexOf('spjs.mp4') !== -1 ? 1 : 0.25;
+      }
+      function applyVideoRate() {
+        var rate = getVideoRate();
+        video.defaultPlaybackRate = rate;
+        if (Math.abs(video.playbackRate - rate) > 0.01) {
+          video.playbackRate = rate;
+        }
+      }
+      applyVideoRate();
+      video.addEventListener('loadedmetadata', applyVideoRate);
+      video.addEventListener('play', applyVideoRate);
+      video.addEventListener('ratechange', applyVideoRate);
+    });
+
+    function showPanel(name) {
+      panels.forEach(function (panel) {
+        panel.classList.toggle('active', panel.dataset.panel === name);
+      });
+      tabs.forEach(function (tab) {
+        tab.classList.toggle('active', tab.dataset.target === name);
+      });
+      root.querySelectorAll('video').forEach(function (video) {
+        if (name !== 'video') video.pause();
+      });
+      if (viewer && name === 'panorama') {
+        setTimeout(function () { viewer.resize(); }, 80);
+      }
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        showPanel(tab.dataset.target);
+      });
+    });
+
+    var resetBtn = root.querySelector('[data-hi-reset]');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        showPanel('panorama');
+        if (viewer) viewer.lookAt(startPitch, startYaw, startHfov, 900);
+      });
+    }
+
+    var rotateBtn = root.querySelector('[data-hi-rotate]');
+    if (rotateBtn) {
+      rotateBtn.addEventListener('click', function () {
+        if (!viewer) return;
+        showPanel('panorama');
+        autoRotate = !autoRotate;
+        if (autoRotate) {
+          viewer.startAutoRotate(-1);
+          rotateBtn.innerHTML = 'Sz&uuml;net';
+        } else {
+          viewer.stopAutoRotate();
+          rotateBtn.innerHTML = 'Forgat&aacute;s';
+        }
+      });
+    }
+
+    var fullBtn = root.querySelector('[data-hi-full]');
+    if (fullBtn) {
+      fullBtn.addEventListener('click', function () {
+        var el = root.querySelector('.hi-console');
+        if (el && el.requestFullscreen) el.requestFullscreen();
+      });
+    }
+
+    document.addEventListener('fullscreenchange', function () {
+      if (viewer) setTimeout(function () { viewer.resize(); }, 120);
+    });
+
+    var lightbox = document.querySelector('.hi-lightbox');
+    var lightImg = lightbox ? lightbox.querySelector('img') : null;
+    root.addEventListener('click', function (event) {
+      var btn = event.target.closest('[data-full]');
+      if (!btn || !root.contains(btn) || !lightbox || !lightImg) return;
+      lightImg.src = btn.dataset.full;
+      var img = btn.querySelector('img');
+      lightImg.alt = img ? img.alt : '';
+      lightbox.classList.add('open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      event.preventDefault();
+    });
+
+    if (lightbox) {
+      lightbox.addEventListener('click', function (event) {
+        if (event.target === lightbox || event.target.tagName === 'BUTTON') {
+          lightbox.classList.remove('open');
+          lightbox.setAttribute('aria-hidden', 'true');
+          if (lightImg) lightImg.removeAttribute('src');
+        }
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          lightbox.classList.remove('open');
+          lightbox.setAttribute('aria-hidden', 'true');
+          if (lightImg) lightImg.removeAttribute('src');
+        }
+      });
+    }
   }
 
   function enhanceNeighborhoodSection() {
@@ -396,7 +369,8 @@ function harmat_home_neighborhood_showcase_footer() {
 
     var shortcode = section.querySelector('.elementor-shortcode');
     var host = shortcode || section.querySelector('.elementor-widget-wrap') || section;
-    host.innerHTML = buildShowcase();
+    host.innerHTML = buildInteractive();
+    initInteractive(host.querySelector('.harmat-home-interactive'));
     return true;
   }
 
