@@ -7,7 +7,7 @@ Adds a small homepage-only MU plugin:
 Purpose:
 
 - Restore the homepage aerial overview block to the intended content position.
-- Keep the existing Elementor block and move it after the project introduction and before the room-type entry cards.
+- Keep the existing Elementor block and move it immediately after the hero and before the project introduction.
 - Keep the overview image pointed to `wp-content/uploads/2026/03/Start/bld-Start-frame-01.webp`.
 
 Verification:

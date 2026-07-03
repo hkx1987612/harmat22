@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Overview Position
  * Description: Restores the homepage overview image block to its intended position.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 defined('ABSPATH') || exit;
@@ -29,11 +29,13 @@ function harmat_home_overview_position_footer() {
 
   function restoreOverviewPosition() {
     var overview = document.querySelector('.elementor-element-9c1e1fe');
+    var aboutSection = document.querySelector('.elementor-element-d60b1b2');
     var roomEntry = document.querySelector('.elementor-element-05ffbbb');
-    if (!overview || !roomEntry || !roomEntry.parentNode) return false;
+    var target = aboutSection || roomEntry;
+    if (!overview || !target || !target.parentNode) return false;
 
-    if (roomEntry.previousElementSibling !== overview) {
-      roomEntry.parentNode.insertBefore(overview, roomEntry);
+    if (target.previousElementSibling !== overview) {
+      target.parentNode.insertBefore(overview, target);
     }
 
     overview.classList.add('harmat-home-overview-restored');
