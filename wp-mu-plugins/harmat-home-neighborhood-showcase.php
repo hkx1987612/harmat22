@@ -70,6 +70,7 @@ function harmat_home_neighborhood_showcase_footer() {
     padding: 0;
   }
   body.home .harmat-home-interactive .hi-head {
+    grid-template-columns: 1fr;
     margin-bottom: 24px;
   }
   body.home .harmat-home-interactive .hi-console {
@@ -133,7 +134,6 @@ function harmat_home_neighborhood_showcase_footer() {
       '        <p class="hi-eyebrow">Interakt&iacute;v bemutat&oacute;</p>',
       '        <h3 class="hi-title">Harmat Lak&oacute;park &eacute;lm&eacute;nyk&ouml;zpont</h3>',
       '      </div>',
-      '      <p class="hi-lead">Tekintse meg a Harmat Lak&oacute;park l&aacute;tv&aacute;nyterveit, k&ouml;rnyezet&eacute;t &eacute;s bemutat&oacute;anyagait egy &aacute;ttekinthet&#337;, modern fel&uuml;leten.</p>',
       '    </div>',
       '    <div class="hi-console" aria-label="Harmat Lak&oacute;park interakt&iacute;v bemutat&oacute;">',
       '      <div class="hi-screen">',
@@ -188,8 +188,6 @@ function harmat_home_neighborhood_showcase_footer() {
       '        <div class="hi-actions"><button type="button" data-hi-rotate>Sz&uuml;net</button><button type="button" data-hi-reset>Alaphelyzet</button><button type="button" data-hi-full>Teljes k&eacute;perny&#337;</button></div>',
       '      </div>',
       '    </div>',
-      '    <p class="hi-note">Megjegyz&eacute;s: a bemutat&oacute;anyagok t&aacute;j&eacute;koztat&oacute; jelleg&#369;ek, a v&eacute;gleges tartalom a szerz&#337;d&eacute;s &eacute;s a hivatalos dokument&aacute;ci&oacute; szerint ir&aacute;nyad&oacute;.</p>',
-      '    <p class="hi-note"><a href="' + neighborhoodUrl + '">Teljes k&ouml;rny&eacute;k oldal megnyit&aacute;sa</a></p>',
       '  </div>',
       '</section>',
       '<div class="hi-lightbox" aria-hidden="true"><button type="button" aria-label="Bez&aacute;r&aacute;s">&times;</button><img alt=""></div>'
@@ -360,12 +358,10 @@ function harmat_home_neighborhood_showcase_footer() {
 
     section.classList.add('harmat-home-neighborhood-section');
 
-    var titleLink = section.querySelector('.elementor-heading-title a');
-    if (titleLink) {
-      titleLink.href = neighborhoodUrl;
-      titleLink.removeAttribute('target');
-      titleLink.setAttribute('aria-label', 'Harmat Lak\u00f3park k\u00f6rny\u00e9k\u00e9nek megnyit\u00e1sa');
-    }
+    var oldHeading = section.querySelector('.elementor-element-53a286b');
+    var oldText = section.querySelector('.elementor-element-bcd3a0f');
+    if (oldHeading && oldHeading.parentNode) oldHeading.parentNode.removeChild(oldHeading);
+    if (oldText && oldText.parentNode) oldText.parentNode.removeChild(oldText);
 
     var shortcode = section.querySelector('.elementor-shortcode');
     var host = shortcode || section.querySelector('.elementor-widget-wrap') || section;
