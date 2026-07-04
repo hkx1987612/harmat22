@@ -20,6 +20,7 @@ Use ASCII in internal notes when possible. Public Hungarian website text must ke
 - Before any live edit, create or confirm a rollback path.
 - Never commit or upload passwords, SSH keys, cookies, raw backups, videos, temporary exports, or private customer data.
 - Preserve unrelated user/live-site edits. Do not revert work unless explicitly requested.
+- Treat GitHub as the shared maintenance repository so work can continue seamlessly across computers. Pull before new work, and commit/push approved stable code changes instead of leaving them only on one machine or only on the live server.
 - Keep frontend changes conservative. The current public site is considered stable unless the user asks for redesign.
 - Apartment data should come from the unified sales/apartment source of truth.
 - Do not invent public prices. If price is hidden, use the public-site equivalent of "Ar egyeztetes alapjan".
@@ -57,3 +58,4 @@ For public-facing changes, check:
 - Clear WordPress/cache/minification cache after live CSS/JS/plugin changes.
 - Verify using a fresh browser/incognito view when cache may be involved.
 - Keep GitHub snapshots for stable versions.
+- After a live change is verified stable, mirror the relevant source files to GitHub with a clear commit and tag when appropriate.
