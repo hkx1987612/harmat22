@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Gallery Comfort Layout
  * Description: Rebuilds the public gallery page into a stable desktop and mobile image grid.
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 
 defined('ABSPATH') || exit;
@@ -207,6 +207,7 @@ function harmat_gallery_comfort_footer_script() {
 (function () {
   var scheduled = false;
   var observerStarted = false;
+  var imageObserver = null;
 
   function isGalleryPage() {
     return document.body && document.body.classList.contains('harmat-gallery-comfort');
@@ -244,6 +245,55 @@ function harmat_gallery_comfort_footer_script() {
     return /-\d{2,4}x\d{2,4}\.(jpe?g|png|webp|gif)(\?|#|$)/i.test(src || '');
   }
 
+  function fullSourceFor(img) {
+    var existing = img.getAttribute('data-harmat-gallery-full-src') || '';
+    if (existing) return existing;
+
+    var source = getLinkedImageSource(img);
+    if (source) {
+      img.setAttribute('data-harmat-gallery-full-src', source);
+    }
+    return source;
+  }
+
+  function upgradeImage(img, priority) {
+    if (!img || img.getAttribute('data-harmat-gallery-hd') === '1') return;
+    var fullSource = fullSourceFor(img);
+    if (!fullSource) return;
+
+    img.setAttribute('data-src', fullSource);
+    img.setAttribute('src', fullSource);
+    img.setAttribute('data-harmat-gallery-hd', '1');
+    img.setAttribute('loading', priority === 'high' ? 'eager' : 'lazy');
+    img.setAttribute('fetchpriority', priority === 'high' ? 'high' : 'low');
+  }
+
+  function imageIsNearViewport(img, visibleIndex) {
+    var eagerCount = window.innerWidth <= 860 ? 2 : 4;
+    if (visibleIndex < eagerCount) return true;
+    var rect = img.getBoundingClientRect();
+    return rect.top < window.innerHeight + 700 && rect.bottom > -250;
+  }
+
+  function getImageObserver() {
+    if (imageObserver || !('IntersectionObserver' in window)) return imageObserver;
+    imageObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        imageObserver.unobserve(entry.target);
+        upgradeImage(entry.target, 'low');
+      });
+    }, { rootMargin: '900px 0px' });
+    return imageObserver;
+  }
+
+  function observeImage(img) {
+    var observer = getImageObserver();
+    if (observer) {
+      observer.observe(img);
+    }
+  }
+
   function activeFilterSelector() {
     var active = document.querySelector('.elementor-galerry__filter.elementor-active');
     return active ? (active.getAttribute('data-filter') || '.__all') : '.__all';
@@ -268,21 +318,29 @@ function harmat_gallery_comfort_footer_script() {
   }
 
   function repairImages() {
+    var visibleIndex = 0;
     document.querySelectorAll('.elementor-opal-image-gallery img').forEach(function (img) {
       var src = img.getAttribute('src') || '';
-      var realSource = getRealImageSource(img);
-      var realSrcset = img.getAttribute('data-srcset') || img.getAttribute('data-lazy-srcset') || '';
+      var item = img.closest ? img.closest('.column-item') : null;
+      var itemHidden = item && window.getComputedStyle(item).display === 'none';
 
       img.setAttribute('decoding', 'async');
       img.setAttribute('loading', 'lazy');
+      img.setAttribute('fetchpriority', 'low');
       if (!img.getAttribute('alt')) {
         img.setAttribute('alt', 'Harmat Lak\u00f3park l\u00e1tv\u00e1nyterv');
       }
-      if (realSrcset && !img.getAttribute('srcset')) {
-        img.setAttribute('srcset', realSrcset);
-      }
-      if (realSource && (isPlaceholder(src) || isSmallGeneratedSize(src))) {
-        img.setAttribute('src', realSource);
+
+      fullSourceFor(img);
+
+      if (!itemHidden) {
+        var index = visibleIndex;
+        visibleIndex += 1;
+        if (imageIsNearViewport(img, index) || (fullSourceFor(img) && !isPlaceholder(src) && !isSmallGeneratedSize(src))) {
+          upgradeImage(img, index === 0 ? 'high' : 'low');
+        } else {
+          observeImage(img);
+        }
       }
       setImportant(img, 'opacity', '1');
       setImportant(img, 'visibility', 'visible');
@@ -326,8 +384,8 @@ function harmat_gallery_comfort_footer_script() {
     if (!isGalleryPage()) return;
     document.body.classList.add('harmat-gallery-comfort-ready');
     clearMasonryStyles();
-    repairImages();
     applyGalleryFilter();
+    repairImages();
   }
 
   function schedulePolish() {

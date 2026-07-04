@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.22
+ * Version: 1.3.23
  */
 
 if (!defined('ABSPATH')) {
@@ -5319,7 +5319,7 @@ function harmat_perf_home_structured_data() {
         return;
     }
 
-    $logo = content_url('/uploads/2025/11/Harmat_Logo_250.png');
+    $logo = content_url('/uploads/2025/11/cropped-Harmat_Logo_250.png');
     $thumbnail = content_url('/uploads/2026/02/Harmat22_latvany-3-1024x576.jpg');
     $video = content_url('/uploads/2026/05/yulu-garden-source-compressed-60m.mp4');
     $data = array(
