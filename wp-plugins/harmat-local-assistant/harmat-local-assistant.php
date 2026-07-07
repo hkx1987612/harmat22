@@ -611,7 +611,7 @@ final class Harmat_Local_Assistant {
             <div class="harmat-local-ai-head-tools">
               <div class="harmat-local-ai-lang" aria-label="Nyelv">
                 <button type="button" data-harmat-ai-lang="hu">Magyar</button>
-                <button type="button" data-harmat-ai-lang="zh">中文</button>
+                <button type="button" data-harmat-ai-lang="zh">ZH</button>
                 <button type="button" data-harmat-ai-lang="en">EN</button>
               </div>
               <button class="harmat-local-ai-close" type="button" aria-label="Bezárás">×</button>

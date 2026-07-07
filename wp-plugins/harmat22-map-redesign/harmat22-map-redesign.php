@@ -3,7 +3,7 @@
  * Plugin Name: Harmat22 Map Redesign
  * Plugin URI: https://harmat22.hu
  * Description: Replaces the neighborhood map block with an interactive Harmat22 presentation module.
- * Version: 2.1
+ * Version: 2.2
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat22_Map_Redesign {
-    const VERSION = '2.1';
+    const VERSION = '2.2';
 
     public function __construct() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));

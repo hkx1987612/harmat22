@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Neighborhood Showcase
  * Description: Adds the full neighborhood interactive presentation into the existing homepage environment section.
- * Version: 1.1.0
+ * Version: 1.2.0
  */
 
 defined('ABSPATH') || exit;
@@ -31,7 +31,7 @@ function harmat_home_neighborhood_showcase_assets() {
         'harmat-home-map-redesign',
         content_url('/plugins/harmat22-map-redesign/assets/map-redesign.css'),
         array('harmat-home-pannellum'),
-        '2.1'
+        '2.2'
     );
 }
 add_action('wp_enqueue_scripts', 'harmat_home_neighborhood_showcase_assets', 30);
@@ -118,7 +118,7 @@ function harmat_home_neighborhood_showcase_footer() {
   }
 
   function galleryButton(file, label) {
-    return '<button type="button" data-full="' + asset(file) + '"><img src="' + asset(file) + '" alt="' + label + '" loading="lazy" decoding="async"><span>' + label + '</span></button>';
+    return '<button type="button" data-full="' + asset(file) + '"><img src="' + asset(file) + '" alt="' + label + '" loading="lazy" decoding="async" fetchpriority="low"><span>' + label + '</span></button>';
   }
 
   function tabButton(target, label, sub, active) {
@@ -139,21 +139,21 @@ function harmat_home_neighborhood_showcase_footer() {
       '      <div class="hi-screen">',
       '        <div class="hi-panel active" data-panel="panorama">',
       '          <div class="hi-pano-wrap">',
-      '            <img class="hi-fallback" src="' + asset('pano_pano_f.jpg') + '" alt="Harmat Lak&oacute;park panor&aacute;ma el&#337;n&eacute;zet" loading="lazy" decoding="async">',
+      '            <img class="hi-fallback" src="' + asset('pano_pano_f.jpg') + '" alt="Harmat Lak&oacute;park panor&aacute;ma el&#337;n&eacute;zet" loading="lazy" decoding="async" fetchpriority="low">',
       '            <div id="harmat-panorama" aria-label="Harmat Lak&oacute;park panor&aacute;m&aacute;s l&aacute;tv&aacute;nyt&eacute;r"></div>',
       '          </div>',
       '          <div class="hi-panel-caption"><strong>Panor&aacute;m&aacute;s l&aacute;tv&aacute;nyt&eacute;r</strong><span>H&uacute;zza el a k&eacute;pet, &eacute;s n&eacute;zze k&ouml;rbe a projekt t&eacute;rbeli bemutat&oacute;j&aacute;t.</span></div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="video">',
       '          <div class="hi-video-grid">',
-      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset('video_swsp_xmsp.jpg') + '"><source src="' + asset('swsp_xmsp.mp4') + '" type="video/mp4"></video><div><strong>Projektbemutat&oacute;</strong><span>A lak&oacute;park elhelyezked&eacute;se, &eacute;p&uuml;lett&ouml;mege &eacute;s k&ouml;rnyezeti kapcsolatai.</span></div></article>',
-      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset('video_spjs.jpg') + '"><source src="' + asset('spjs.mp4') + '" type="video/mp4"></video><div><strong>L&aacute;tv&aacute;nyvide&oacute;</strong><span>&Aacute;tfog&oacute; k&eacute;pet ad a tervezett lak&oacute;k&ouml;rnyezetr&#337;l &eacute;s a projekt hangulat&aacute;r&oacute;l.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="none" playsinline data-poster="' + asset('video_swsp_xmsp.jpg') + '"><source src="' + asset('swsp_xmsp.mp4') + '" type="video/mp4"></video><div><strong>Projektbemutat&oacute;</strong><span>A lak&oacute;park elhelyezked&eacute;se, &eacute;p&uuml;lett&ouml;mege &eacute;s k&ouml;rnyezeti kapcsolatai.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="none" playsinline data-poster="' + asset('video_spjs.jpg') + '"><source src="' + asset('spjs.mp4') + '" type="video/mp4"></video><div><strong>L&aacute;tv&aacute;nyvide&oacute;</strong><span>&Aacute;tfog&oacute; k&eacute;pet ad a tervezett lak&oacute;k&ouml;rnyezetr&#337;l &eacute;s a projekt hangulat&aacute;r&oacute;l.</span></div></article>',
       '          </div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="plans">',
       '          <div class="hi-split">',
       '            <div class="hi-copy"><small>Projekt &aacute;ttekint&eacute;s</small><h3>Modern lak&oacute;k&ouml;rnyezet K&#337;b&aacute;ny&aacute;n</h3><p>A Harmat Lak&oacute;park a X. ker&uuml;letben, a Harmat utca 22. sz&aacute;m alatt k&iacute;n&aacute;l &uacute;j &eacute;p&iacute;t&eacute;s&#369; otthonokat &aacute;tgondolt alaprajzokkal, z&ouml;ld k&ouml;rnyezettel &eacute;s k&eacute;nyelmes v&aacute;rosi kapcsolatokkal.</p><div class="hi-stat-row"><span><b>124 lak&aacute;s</b>els&#337; &uuml;tem</span><span><b>Harmat utca 22.</b>Budapest X. ker&uuml;let</span><span><b>Z&ouml;ld k&ouml;rnyezet</b>&eacute;lhet&#337; v&aacute;rosi ritmus</span></div></div>',
-      '            <button class="hi-feature-image" type="button" data-full="' + asset('xgt_8.jpg') + '"><img src="' + asset('xgt_8.jpg') + '" alt="Harmat Lak&oacute;park mad&aacute;rt&aacute;vlati l&aacute;tv&aacute;nyterv" loading="lazy" decoding="async"></button>',
+      '            <button class="hi-feature-image" type="button" data-full="' + asset('xgt_8.jpg') + '"><img src="' + asset('xgt_8.jpg') + '" alt="Harmat Lak&oacute;park mad&aacute;rt&aacute;vlati l&aacute;tv&aacute;nyterv" loading="lazy" decoding="async" fetchpriority="low"></button>',
       '          </div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="gallery">',
@@ -168,7 +168,7 @@ function harmat_home_neighborhood_showcase_footer() {
       '        </div>',
       '        <div class="hi-panel" data-panel="location">',
       '          <div class="hi-split">',
-      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset('video_swsp_xmsp.jpg') + '"><img src="' + asset('video_swsp_xmsp.jpg') + '" alt="Harmat Lak&oacute;park k&ouml;rnyezeti &aacute;ttekint&#337;" loading="lazy" decoding="async"></button>',
+      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset('video_swsp_xmsp.jpg') + '"><img src="' + asset('video_swsp_xmsp.jpg') + '" alt="Harmat Lak&oacute;park k&ouml;rnyezeti &aacute;ttekint&#337;" loading="lazy" decoding="async" fetchpriority="low"></button>',
       '            <div class="hi-copy"><small>Elhelyezked&eacute;s</small><h3>Otthon, ahol a v&aacute;ros &eacute;s a term&eacute;szet tal&aacute;lkozik</h3><p>A k&ouml;rny&eacute;k mindennapi &eacute;lethez sz&uuml;ks&eacute;ges szolg&aacute;ltat&aacute;sokat, z&ouml;ldter&uuml;leteket &eacute;s j&oacute; v&aacute;rosi kapcsolatokat k&iacute;n&aacute;l. A bemutat&oacute; seg&iacute;t gyorsan &aacute;tl&aacute;tni a lak&oacute;park k&ouml;rnyezet&eacute;t.</p><ul><li>Budapest X. ker&uuml;let, Harmat utca 22.</li><li>K&ouml;zeli bev&aacute;s&aacute;rl&aacute;si, oktat&aacute;si &eacute;s eg&eacute;szs&eacute;g&uuml;gyi lehet&#337;s&eacute;gek</li><li>K&ouml;nnyen &eacute;rtelmezhet&#337; projekt- &eacute;s k&ouml;rnyezetbemutat&oacute;</li></ul></div>',
       '          </div>',
       '        </div>',
@@ -237,8 +237,32 @@ function harmat_home_neighborhood_showcase_footer() {
       }
     }
 
-    ensureViewer();
-    setTimeout(ensureViewer, 600);
+    function hydrateVideos() {
+      root.querySelectorAll('.hi-video-card video[data-poster]').forEach(function (video) {
+        video.setAttribute('poster', video.getAttribute('data-poster'));
+        video.removeAttribute('data-poster');
+      });
+    }
+
+    function whenNearViewport(callback) {
+      if (!('IntersectionObserver' in window)) {
+        window.setTimeout(callback, 900);
+        return;
+      }
+      var done = false;
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!done && (entry.isIntersecting || entry.intersectionRatio > 0)) {
+            done = true;
+            observer.disconnect();
+            callback();
+          }
+        });
+      }, { rootMargin: '420px 0px', threshold: 0.01 });
+      observer.observe(root);
+    }
+
+    whenNearViewport(ensureViewer);
 
     var tabs = Array.prototype.slice.call(root.querySelectorAll('.hi-tabs button[data-target]'));
     var panels = Array.prototype.slice.call(root.querySelectorAll('.hi-panel[data-panel]'));
@@ -263,6 +287,12 @@ function harmat_home_neighborhood_showcase_footer() {
     });
 
     function showPanel(name) {
+      if (name === 'video') {
+        hydrateVideos();
+      }
+      if (name === 'panorama') {
+        ensureViewer();
+      }
       panels.forEach(function (panel) {
         panel.classList.toggle('active', panel.dataset.panel === name);
       });
@@ -286,6 +316,7 @@ function harmat_home_neighborhood_showcase_footer() {
     var resetBtn = root.querySelector('[data-hi-reset]');
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
+        ensureViewer();
         showPanel('panorama');
         if (viewer) viewer.lookAt(startPitch, startYaw, startHfov, 900);
       });
@@ -294,6 +325,7 @@ function harmat_home_neighborhood_showcase_footer() {
     var rotateBtn = root.querySelector('[data-hi-rotate]');
     if (rotateBtn) {
       rotateBtn.addEventListener('click', function () {
+        if (!viewer) ensureViewer();
         if (!viewer) return;
         showPanel('panorama');
         autoRotate = !autoRotate;

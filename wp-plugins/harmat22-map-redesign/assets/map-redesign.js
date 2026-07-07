@@ -95,21 +95,21 @@
       '      <div class="hi-screen">',
       '        <div class="hi-panel active" data-panel="panorama">',
       '          <div class="hi-pano-wrap">',
-      '            <img class="hi-fallback" src="' + asset("pano_pano_f.jpg") + '" alt="Harmat Lakópark panoráma előnézet">',
+      '            <img class="hi-fallback" src="' + asset("pano_pano_f.jpg") + '" alt="Harmat Lakópark panoráma előnézet" loading="lazy" decoding="async" fetchpriority="low">',
       '            <div id="harmat-panorama" aria-label="Harmat Lakópark panorámás látványtér"></div>',
       '          </div>',
       '          <div class="hi-panel-caption"><strong>Panorámás látványtér</strong><span>Húzza el a képet, és nézze körbe a projekt térbeli bemutatóját.</span></div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="video">',
       '          <div class="hi-video-grid">',
-      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset("video_swsp_xmsp.jpg") + '"><source src="' + asset("swsp_xmsp.mp4") + '" type="video/mp4"></video><div><strong>Projektbemutató</strong><span>A lakópark elhelyezkedése, épülettömege és környezeti kapcsolatai.</span></div></article>',
-      '            <article class="hi-video-card"><video controls preload="metadata" playsinline poster="' + asset("video_spjs.jpg") + '"><source src="' + asset("spjs.mp4") + '" type="video/mp4"></video><div><strong>Látványvideó</strong><span>Átfogó képet ad a tervezett lakókörnyezetről és a projekt hangulatáról.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="none" playsinline data-poster="' + asset("video_swsp_xmsp.jpg") + '"><source src="' + asset("swsp_xmsp.mp4") + '" type="video/mp4"></video><div><strong>Projektbemutató</strong><span>A lakópark elhelyezkedése, épülettömege és környezeti kapcsolatai.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="none" playsinline data-poster="' + asset("video_spjs.jpg") + '"><source src="' + asset("spjs.mp4") + '" type="video/mp4"></video><div><strong>Látványvideó</strong><span>Átfogó képet ad a tervezett lakókörnyezetről és a projekt hangulatáról.</span></div></article>',
       '          </div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="plans">',
       '          <div class="hi-split">',
       '            <div class="hi-copy"><small>Projekt áttekintés</small><h3>Modern lakókörnyezet Kőbányán</h3><p>A Harmat Lakópark a X. kerületben, a Harmat utca 22. szám alatt kínál új építésű otthonokat átgondolt alaprajzokkal, zöld környezettel és kényelmes városi kapcsolatokkal.</p><div class="hi-stat-row"><span><b>124 lakás</b>első ütem</span><span><b>Harmat utca 22.</b>Budapest X. kerület</span><span><b>Zöld környezet</b>élhető városi ritmus</span></div></div>',
-      '            <button class="hi-feature-image" type="button" data-full="' + asset("xgt_8.jpg") + '"><img src="' + asset("xgt_8.jpg") + '" alt="Harmat Lakópark madártávlati látványterv"></button>',
+      '            <button class="hi-feature-image" type="button" data-full="' + asset("xgt_8.jpg") + '"><img src="' + asset("xgt_8.jpg") + '" alt="Harmat Lakópark madártávlati látványterv" loading="lazy" decoding="async" fetchpriority="low"></button>',
       '          </div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="gallery">',
@@ -124,7 +124,7 @@
       '        </div>',
       '        <div class="hi-panel" data-panel="location">',
       '          <div class="hi-split">',
-      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset("video_swsp_xmsp.jpg") + '"><img src="' + asset("video_swsp_xmsp.jpg") + '" alt="Harmat Lakópark környezeti áttekintő"></button>',
+      '            <button class="hi-feature-image hi-location-map" type="button" data-full="' + asset("video_swsp_xmsp.jpg") + '"><img src="' + asset("video_swsp_xmsp.jpg") + '" alt="Harmat Lakópark környezeti áttekintő" loading="lazy" decoding="async" fetchpriority="low"></button>',
       '            <div class="hi-copy"><small>Elhelyezkedés</small><h3>Otthon, ahol a város és a természet találkozik</h3><p>A környék mindennapi élethez szükséges szolgáltatásokat, zöldterületeket és jó városi kapcsolatokat kínál. A bemutató segít gyorsan átlátni a lakópark környezetét.</p><ul><li>Budapest X. kerület, Harmat utca 22.</li><li>Közeli bevásárlási, oktatási és egészségügyi lehetőségek</li><li>Könnyen értelmezhető projekt- és környezetbemutató</li></ul></div>',
       '          </div>',
       '        </div>',
@@ -152,7 +152,7 @@
   }
 
   function galleryButton(file, label) {
-    return '<button type="button" data-full="' + asset(file) + '"><img src="' + asset(file) + '" alt="' + label + '"><span>' + label + "</span></button>";
+    return '<button type="button" data-full="' + asset(file) + '"><img src="' + asset(file) + '" alt="' + label + '" loading="lazy" decoding="async" fetchpriority="low"><span>' + label + "</span></button>";
   }
 
   function tabButton(target, label, sub, active) {
@@ -160,6 +160,11 @@
   }
 
   function initializeModule(root) {
+    if (!root || root.dataset.harmatReady === "1") {
+      return;
+    }
+    root.dataset.harmatReady = "1";
+
     var viewerEl = document.getElementById("harmat-panorama");
     var fallback = root.querySelector(".hi-fallback");
     var autoRotate = true;
@@ -167,7 +172,17 @@
     var startYaw = 0;
     var startHfov = 92;
 
-    if (window.pannellum && viewerEl) {
+    function hydrateVideos() {
+      root.querySelectorAll(".hi-video-card video[data-poster]").forEach(function (video) {
+        video.setAttribute("poster", video.getAttribute("data-poster"));
+        video.removeAttribute("data-poster");
+      });
+    }
+
+    function ensureViewer() {
+      if (window.harmatViewer || !window.pannellum || !viewerEl) {
+        return;
+      }
       try {
         window.harmatViewer = pannellum.viewer("harmat-panorama", {
           type: "cubemap",
@@ -201,6 +216,28 @@
       }
     }
 
+    function whenNearViewport(callback) {
+      if (!("IntersectionObserver" in window)) {
+        window.setTimeout(callback, 900);
+        return;
+      }
+
+      var done = false;
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!done && (entry.isIntersecting || entry.intersectionRatio > 0)) {
+            done = true;
+            observer.disconnect();
+            callback();
+          }
+        });
+      }, { rootMargin: "420px 0px", threshold: 0.01 });
+
+      observer.observe(root);
+    }
+
+    whenNearViewport(ensureViewer);
+
     var tabs = Array.prototype.slice.call(root.querySelectorAll(".hi-tabs button[data-target]"));
     var panels = Array.prototype.slice.call(root.querySelectorAll(".hi-panel[data-panel]"));
     root.querySelectorAll(".hi-video-card video").forEach(function (video) {
@@ -225,6 +262,12 @@
     });
 
     function showPanel(name) {
+      if (name === "video") {
+        hydrateVideos();
+      }
+      if (name === "panorama") {
+        ensureViewer();
+      }
       panels.forEach(function (panel) {
         panel.classList.toggle("active", panel.dataset.panel === name);
       });
@@ -252,6 +295,7 @@
     var resetBtn = root.querySelector("[data-hi-reset]");
     if (resetBtn) {
       resetBtn.addEventListener("click", function () {
+        ensureViewer();
         showPanel("panorama");
         if (window.harmatViewer) {
           window.harmatViewer.lookAt(startPitch, startYaw, startHfov, 900);
@@ -262,6 +306,9 @@
     var rotateBtn = root.querySelector("[data-hi-rotate]");
     if (rotateBtn) {
       rotateBtn.addEventListener("click", function () {
+        if (!window.harmatViewer) {
+          ensureViewer();
+        }
         if (!window.harmatViewer) {
           return;
         }
