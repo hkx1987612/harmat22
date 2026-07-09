@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.118
+ * Version: 1.6.119
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.109';
+    const VERSION = '1.6.119';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -2786,20 +2786,265 @@ final class Harmat_Sales_Manager {
         return $texts[$lang] ?? $texts['zh'];
     }
 
+    private function sales_parking_space_catalog() {
+        return array(
+            'A-P-KT/001' => array('area' => 9.27, 'gross' => 3900170),
+            'A-P-KT/002' => array('area' => 10.25, 'gross' => 4099560),
+            'A-P-KT/003' => array('area' => 11.07, 'gross' => 4199890),
+            'A-P-KT/004' => array('area' => 11.61, 'gross' => 4400550),
+            'A-P-KT/005' => array('area' => 10.58, 'gross' => 4099560),
+            'A-P-KT/006' => array('area' => 11.07, 'gross' => 4199890),
+            'A-P-KT/007' => array('area' => 11.07, 'gross' => 4199890),
+            'A-P-KT/008' => array('area' => 11.72, 'gross' => 4400550),
+            'A-P-KT/009' => array('area' => 10.39, 'gross' => 4099560),
+            'A-P-KT/010' => array('area' => 11.07, 'gross' => 4199890),
+            'A-P-KT/011' => array('area' => 13.66, 'gross' => 5100320),
+            'A-P-KT/012' => array('area' => 11.61, 'gross' => 4400550),
+            'A-P-KT/013' => array('area' => 11.61, 'gross' => 4400550),
+            'A-P-KT/014' => array('area' => 11.2, 'gross' => 4199890),
+            'A-P-KT/015' => array('area' => 11.48, 'gross' => 4400550),
+            'A-P-KT/016' => array('area' => 10.25, 'gross' => 4099560),
+            'A-P-KT/017' => array('area' => 9.27, 'gross' => 3900170),
+            'A-P-KT/018' => array('area' => 13.26, 'gross' => 5100320),
+            'A-P-KT/019' => array('area' => 12.41, 'gross' => 4899660),
+            'A-P-KT/020' => array('area' => 14.46, 'gross' => 5500370),
+            'A-P-KT/021' => array('area' => 14.46, 'gross' => 5500370),
+            'A-P-KT/022' => array('area' => 12.38, 'gross' => 4800600),
+            'A-P-KT/023' => array('area' => 12.38, 'gross' => 4800600),
+            'A-P-KT/024' => array('area' => 12.27, 'gross' => 4800600),
+            'A-P-KT/025' => array('area' => 12.36, 'gross' => 4800600),
+            'A-P-KT/026' => array('area' => 13.12, 'gross' => 5100320),
+            'A-P-KT/027' => array('area' => 13.14, 'gross' => 5100320),
+            'A-P-KT/028' => array('area' => 12.34, 'gross' => 4800600),
+            'A-P-KT/029' => array('area' => 12.24, 'gross' => 4800600),
+            'A-P-KT/030' => array('area' => 12.41, 'gross' => 4899660),
+            'A-P-KT/031' => array('area' => 12.41, 'gross' => 4899660),
+            'A-P-KT/032' => array('area' => 14.43, 'gross' => 5500370),
+            'A-P-KT/033' => array('area' => 14.46, 'gross' => 5500370),
+            'A-P-KT/034' => array('area' => 12.41, 'gross' => 4899660),
+            'A-P-KT/035' => array('area' => 13.26, 'gross' => 4899660),
+            'A-P-KT/036' => array('area' => 14.08, 'gross' => 5500370),
+            'A-P-KT/037' => array('area' => 13.77, 'gross' => 5100320),
+            'A-P-KT/038' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/039' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/040' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/041' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/042' => array('area' => 12.48, 'gross' => 4400550),
+            'A-P-KT/043' => array('area' => 13.77, 'gross' => 5100320),
+            'A-P-KT/044' => array('area' => 14.6, 'gross' => 5500370),
+            'A-P-KT/045' => array('area' => 12.68, 'gross' => 4899660),
+            'A-P-KT/046' => array('area' => 13.77, 'gross' => 5100320),
+            'A-P-KT/047' => array('area' => 12.48, 'gross' => 4400550),
+            'A-P-KT/048' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/049' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/050' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/051' => array('area' => 14.28, 'gross' => 5500370),
+            'A-P-KT/052' => array('area' => 13.77, 'gross' => 5100320),
+            'A-P-KT/053' => array('area' => 14.03, 'gross' => 5500370),
+            'A-P-KT/054' => array('area' => 13.77, 'gross' => 5100320),
+            'A-P-KT/055' => array('area' => 13.06, 'gross' => 5100320),
+            'A-P-KT/056' => array('area' => 12.13, 'gross' => 4800600),
+            'A-P-KT/057' => array('area' => 12.66, 'gross' => 4899660),
+            'A-P-KT/058' => array('area' => 12.5, 'gross' => 4899660),
+            'A-P-KT/059' => array('area' => 12.41, 'gross' => 4800600),
+            'A-P-KT/060' => array('area' => 12.41, 'gross' => 4800600),
+            'A-P-KT/061' => array('area' => 12.41, 'gross' => 4800600),
+            'A-P-KT/062' => array('area' => 12.24, 'gross' => 4800600),
+            'A-P-KT/063' => array('area' => 12.34, 'gross' => 4800600),
+            'A-P-KT/064' => array('area' => 12.68, 'gross' => 4899660),
+            'A-P-KT/065' => array('area' => 12.56, 'gross' => 4899660),
+            'A-P-KT/066' => array('area' => 12.42, 'gross' => 4800600),
+            'A-P-KT/067' => array('area' => 13.35, 'gross' => 5100320),
+            'A-P-KT/068' => array('area' => 12.43, 'gross' => 4800600),
+            'A-P-KT/069' => array('area' => 12.55, 'gross' => 4899660),
+            'A-P-KT/070' => array('area' => 12.68, 'gross' => 4899660),
+            'A-P-KT/071' => array('area' => 12.34, 'gross' => 4800600),
+            'A-P-KT/072' => array('area' => 12.24, 'gross' => 4800600),
+            'A-P-KT/073' => array('area' => 12.41, 'gross' => 4800600),
+            'A-P-KT/074' => array('area' => 12.41, 'gross' => 4800600),
+            'A-P-KT/075' => array('area' => 14.48, 'gross' => 5500370),
+            'A-P-KT/076' => array('area' => 14.41, 'gross' => 5500370),
+            'A-P-KT/077' => array('area' => 12.41, 'gross' => 4800600),
+            'A-P-KT/078' => array('area' => 12.13, 'gross' => 4800600),
+            'A-P-KT/079' => array('area' => 13.68, 'gross' => 5100320),
+            'A-P-KT/080' => array('area' => 14.4, 'gross' => 5500370),
+            'A-P-KT/081' => array('area' => 14.47, 'gross' => 5500370),
+            'A-P-KT/082' => array('area' => 14.44, 'gross' => 5500370),
+            'A-P-KT/083' => array('area' => 14.31, 'gross' => 5500370),
+            'A-P-KT/084' => array('area' => 13.57, 'gross' => 5100320),
+            'A-P-KT/085' => array('area' => 13.68, 'gross' => 5100320),
+            'A-P-KT/086' => array('area' => 14.47, 'gross' => 5500370),
+            'A-P-KT/087' => array('area' => 14.4, 'gross' => 5500370),
+            'A-P-KT/088' => array('area' => 13.41, 'gross' => 5100320),
+            'A-P-KT/089' => array('area' => 18.37, 'gross' => 5900420),
+            'A-P-KT/090' => array('area' => 12.45, 'gross' => 4800600),
+            'A-P-KT/091' => array('area' => 12.54, 'gross' => 4899660),
+            'A-P-KT/092' => array('area' => 12.26, 'gross' => 4800600),
+            'A-P-KT/093' => array('area' => 12.64, 'gross' => 4899660),
+            'A-P-KT/094' => array('area' => 12.56, 'gross' => 4899660),
+            'A-P-KT/095' => array('area' => 12.49, 'gross' => 4800600),
+            'A-P-KT/096' => array('area' => 12.56, 'gross' => 4899660),
+            'A-P-KT/097' => array('area' => 12.64, 'gross' => 4899660),
+            'A-P-KT/099' => array('area' => 12.54, 'gross' => 4899660),
+            'A-P-KT/098' => array('area' => 12.26, 'gross' => 4800600),
+            'A-P-KT/100' => array('area' => 12.45, 'gross' => 4800600),
+            'A-P-KT/101' => array('area' => 18.37, 'gross' => 5900420),
+            'A-P-KT/102' => array('area' => 13.43, 'gross' => 5100320),
+            'A-P-KT/103' => array('area' => 14.4, 'gross' => 5500370),
+            'A-P-KT/104' => array('area' => 14.47, 'gross' => 5500370),
+            'A-P-KT/105' => array('area' => 14.44, 'gross' => 5500370),
+            'A-P-KT/106' => array('area' => 14.31, 'gross' => 5500370),
+            'A-P-KT/107' => array('area' => 13.57, 'gross' => 5100320),
+            'A-P-KT/108' => array('area' => 13.57, 'gross' => 5100320),
+            'A-P-KT/109' => array('area' => 14.18, 'gross' => 5500370),
+            'A-P-KT/110' => array('area' => 14.4, 'gross' => 5500370),
+            'A-P-KT/111' => array('area' => 13.43, 'gross' => 5100320),
+            'A-P-KT/112' => array('area' => 18.37, 'gross' => 5900420),
+            'A-P-KT/113' => array('area' => 12.45, 'gross' => 4800600),
+            'A-P-KT/114' => array('area' => 12.54, 'gross' => 4899660),
+            'A-P-KT/115' => array('area' => 12.26, 'gross' => 4800600),
+            'A-P-KT/116' => array('area' => 12.08, 'gross' => 4700270),
+            'A-P-KT/117' => array('area' => 12.61, 'gross' => 4899660),
+            'A-P-KT/118' => array('area' => 13.5, 'gross' => 5100320),
+            'A-P-KT/119' => array('area' => 12.61, 'gross' => 4899660),
+            'A-P-KT/120' => array('area' => 12.08, 'gross' => 4700270),
+            'A-P-KT/121' => array('area' => 12.26, 'gross' => 4800600),
+            'A-P-KT/122' => array('area' => 12.54, 'gross' => 4899660),
+            'A-P-KT/123' => array('area' => 12.45, 'gross' => 4800600),
+            'A-P-KT/124' => array('area' => 18.37, 'gross' => 5900420),
+        );
+    }
+
+    private function sales_storage_unit_catalog() {
+        return array(
+            'A-P-KT/001' => array('area' => 1.5, 'gross' => 1143000),
+            'A-P-KT/002' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/003' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/004' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/005' => array('area' => 1.45, 'gross' => 1104900),
+            'A-P-KT/064' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/006' => array('area' => 1.21, 'gross' => 922020),
+            'A-P-KT/007' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/008' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/009' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/010' => array('area' => 1.03, 'gross' => 784860),
+            'A-P-KT/011' => array('area' => 1.5, 'gross' => 1143000),
+            'A-P-KT/012' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/013' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/014' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/015' => array('area' => 1.45, 'gross' => 1104900),
+            'A-P-KT/016' => array('area' => 1.61, 'gross' => 1226820),
+            'A-P-KT/017' => array('area' => 1.5, 'gross' => 1143000),
+            'A-P-KT/018' => array('area' => 1.5, 'gross' => 1143000),
+            'A-P-KT/019' => array('area' => 1.5, 'gross' => 1143000),
+            'A-P-KT/020' => array('area' => 1.58, 'gross' => 1203960),
+            'A-P-KT/021' => array('area' => 0.95, 'gross' => 723900),
+            'A-P-KT/022' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/023' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/024' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/025' => array('area' => 0.8, 'gross' => 609600),
+            'A-P-KT/026' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/027' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/028' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/029' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/030' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/031' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/032' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/033' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/034' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/035' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/036' => array('area' => 0.95, 'gross' => 723900),
+            'A-P-KT/037' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/038' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/039' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/040' => array('area' => 0.8, 'gross' => 609600),
+            'A-P-KT/041' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/042' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/043' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/044' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/045' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/046' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/047' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/048' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/049' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/050' => array('area' => 0.94, 'gross' => 716280),
+            'A-P-KT/051' => array('area' => 1.03, 'gross' => 784860),
+            'A-P-KT/052' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/053' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/054' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/055' => array('area' => 1.21, 'gross' => 922020),
+            'A-P-KT/056' => array('area' => 1.45, 'gross' => 1104900),
+            'A-P-KT/057' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/058' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/059' => array('area' => 1.35, 'gross' => 1028700),
+            'A-P-KT/060' => array('area' => 1.5, 'gross' => 1143000),
+            'A-P-KT/061' => array('area' => 0.74, 'gross' => 563880),
+            'A-P-KT/062' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/063' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/065' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/066' => array('area' => 0.74, 'gross' => 563880),
+            'A-P-KT/067' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/068' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/069' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/070' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/071' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/072' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/073' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/074' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/075' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/076' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/077' => array('area' => 0.74, 'gross' => 563880),
+            'A-P-KT/078' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/079' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/80' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/081' => array('area' => 0.75, 'gross' => 571500),
+            'A-P-KT/082' => array('area' => 0.74, 'gross' => 563880),
+            'A-P-KT/083' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/084' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/085' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/086' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/087' => array('area' => 1.12, 'gross' => 853440),
+            'A-P-KT/088' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/089' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/090' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/091' => array('area' => 1.13, 'gross' => 861060),
+            'A-P-KT/092' => array('area' => 1.13, 'gross' => 861060),
+        );
+    }
+
+    private function sales_unit_catalog($type) {
+        return $type === 'storage' ? $this->sales_storage_unit_catalog() : $this->sales_parking_space_catalog();
+    }
+
+    private function sales_unit_entry($type, $code) {
+        $code = strtoupper(trim((string) $code));
+        $catalog = $this->sales_unit_catalog($type);
+        return isset($catalog[$code]) ? $catalog[$code] : null;
+    }
+
+    private function sales_unit_option_label($code, $entry) {
+        $parts = array((string) $code);
+        if (!empty($entry['area'])) {
+            $parts[] = $this->format_area($entry['area']) . ' m2';
+        }
+        if (!empty($entry['gross'])) {
+            $parts[] = $this->format_money($entry['gross']) . ' HUF';
+        }
+        return implode(' - ', $parts);
+    }
+
     private function sales_parking_space_options() {
         $options = array();
-        for ($i = 1; $i <= 78; $i++) {
-            $code = sprintf('P%03d', $i);
-            $options[$code] = $code;
+        foreach ($this->sales_parking_space_catalog() as $code => $entry) {
+            $options[$code] = $this->sales_unit_option_label($code, $entry);
         }
         return $options;
     }
 
     private function sales_storage_unit_options() {
         $options = array();
-        for ($i = 1; $i <= 60; $i++) {
-            $code = sprintf('T%03d', $i);
-            $options[$code] = $code;
+        foreach ($this->sales_storage_unit_catalog() as $code => $entry) {
+            $options[$code] = $this->sales_unit_option_label($code, $entry);
         }
         return $options;
     }
@@ -2810,14 +3055,74 @@ final class Harmat_Sales_Manager {
         return isset($options[$value]) ? $value : '';
     }
 
+    private function sales_deal_price_text($lang = null) {
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $lang = $lang === 'hu' ? 'hu' : 'zh';
+        $texts = json_decode('{"zh":{"property":"\u623f\u6e90\u542b\u7a0e\u4ef7","parking":"\u8f66\u4f4d\u542b\u7a0e\u4ef7","storage":"\u50a8\u85cf\u5ba4\u542b\u7a0e\u4ef7","total":"\u5408\u8ba1\u542b\u7a0e\u603b\u4ef7","empty":"\u5f85\u9009\u62e9"},"hu":{"property":"Lak\u00e1s brutt\u00f3 \u00e1ra","parking":"Parkol\u00f3 brutt\u00f3 \u00e1ra","storage":"T\u00e1rol\u00f3 brutt\u00f3 \u00e1ra","total":"Teljes brutt\u00f3 \u00e1r","empty":"Nincs kiv\u00e1lasztva"}}', true);
+        return $texts[$lang] ?? $texts['zh'];
+    }
+
+    private function sales_deal_price_components($deal) {
+        $property_id = absint($deal['property_id'] ?? 0);
+        $property_amount = isset($deal['property_amount']) ? (int) preg_replace('/[^\d]/', '', (string) $deal['property_amount']) : 0;
+        if ($property_amount <= 0 && $property_id) {
+            $property_amount = (int) get_post_meta($property_id, 'property_price', true);
+        }
+
+        $parking_entry = !empty($deal['parking_space']) ? $this->sales_unit_entry('parking', $deal['parking_space']) : null;
+        $storage_entry = !empty($deal['storage_unit']) ? $this->sales_unit_entry('storage', $deal['storage_unit']) : null;
+        $parking_amount = isset($deal['parking_amount']) ? (int) preg_replace('/[^\d]/', '', (string) $deal['parking_amount']) : 0;
+        $storage_amount = isset($deal['storage_amount']) ? (int) preg_replace('/[^\d]/', '', (string) $deal['storage_amount']) : 0;
+
+        if ($parking_amount <= 0 && $parking_entry) {
+            $parking_amount = (int) ($parking_entry['gross'] ?? 0);
+        }
+        if ($storage_amount <= 0 && $storage_entry) {
+            $storage_amount = (int) ($storage_entry['gross'] ?? 0);
+        }
+
+        $total = $property_amount + $parking_amount + $storage_amount;
+        if ($total <= 0 && !empty($deal['amount'])) {
+            $total = (int) preg_replace('/[^\d]/', '', (string) $deal['amount']);
+        }
+
+        return array(
+            'property' => $property_amount,
+            'parking' => $parking_amount,
+            'storage' => $storage_amount,
+            'total' => $total,
+        );
+    }
+
+    private function sales_unit_display_value($type, $code, $lang = null) {
+        $code = strtoupper(trim((string) $code));
+        if ($code === '') {
+            return '';
+        }
+        $entry = $this->sales_unit_entry($type, $code);
+        if (!$entry) {
+            return $code;
+        }
+        $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
+        $amount_label = $lang === 'hu' ? 'brutto' : json_decode('"\u542b\u7a0e"');
+        $parts = array($code);
+        if (!empty($entry['area'])) {
+            $parts[] = $this->format_area($entry['area']) . ' m2';
+        }
+        if (!empty($entry['gross'])) {
+            $parts[] = $amount_label . ' ' . $this->format_money($entry['gross']) . ' Ft';
+        }
+        return implode(' / ', $parts);
+    }
+
     private function sales_deal_unit_summary($deal, $lang = null) {
         $unit_text = $this->sales_deal_unit_text($lang);
         $items = array();
         if (!empty($deal['parking_space'])) {
-            $items[] = $unit_text['parking'] . ': ' . (string) $deal['parking_space'];
+            $items[] = $unit_text['parking'] . ': ' . $this->sales_unit_display_value('parking', $deal['parking_space'], $lang);
         }
         if (!empty($deal['storage_unit'])) {
-            $items[] = $unit_text['storage'] . ': ' . (string) $deal['storage_unit'];
+            $items[] = $unit_text['storage'] . ': ' . $this->sales_unit_display_value('storage', $deal['storage_unit'], $lang);
         }
         return $items;
     }
@@ -4009,6 +4314,14 @@ final class Harmat_Sales_Manager {
         if ($property_id && get_post_type($property_id) !== 'property') {
             $property_id = 0;
         }
+        $price_components = $this->sales_deal_price_components(array(
+            'property_id' => $property_id,
+            'parking_space' => $parking_space,
+            'storage_unit' => $storage_unit,
+        ));
+        if (!empty($price_components['total'])) {
+            $amount = (string) $price_components['total'];
+        }
         if (!$can_manage && $property_id && $this->deal_stage_locks_property($stage)) {
             $property_conflict = $this->sales_property_registration_conflict($property_id, $lead_id, $deal_id);
             if ($property_conflict) {
@@ -4147,6 +4460,9 @@ final class Harmat_Sales_Manager {
                 'commission_status',
                 'commission_note',
             ) as $locked_key) {
+                if ($locked_key === 'amount' && !empty($price_components['total'])) {
+                    continue;
+                }
                 if (array_key_exists($locked_key, $previous_deal)) {
                     ${$locked_key} = $previous_deal[$locked_key];
                 } elseif (in_array($locked_key, array('payment_plan_items', 'document_checklist'), true)) {
@@ -4155,6 +4471,10 @@ final class Harmat_Sales_Manager {
                     ${$locked_key} = '';
                 }
             }
+        }
+        if (!$can_manage && !empty($price_components['total'])) {
+            $payment_received_total = (int) $deposit + (int) $payment_received;
+            $payment_status = $this->infer_payment_status($amount, $payment_received_total, $payment_due_date, $payment_status);
         }
         $created_at = isset($deals[$deal_id]['created_at']) ? $deals[$deal_id]['created_at'] : $now;
         $crm_code = !empty($previous_deal['crm_code']) ? (string) $previous_deal['crm_code'] : $this->generate_deal_crm_code($deal_id, $created_at);
@@ -4198,6 +4518,9 @@ final class Harmat_Sales_Manager {
             'phone' => $phone,
             'email' => $email,
             'amount' => $amount,
+            'property_amount' => !empty($price_components['property']) ? (string) $price_components['property'] : '',
+            'parking_amount' => !empty($price_components['parking']) ? (string) $price_components['parking'] : '',
+            'storage_amount' => !empty($price_components['storage']) ? (string) $price_components['storage'] : '',
             'deposit' => $deposit,
             'payment_received' => $payment_received,
             'expected_close' => $expected_close,
@@ -9837,6 +10160,12 @@ final class Harmat_Sales_Manager {
                 '_wpnonce' => wp_create_nonce('harmat_deal_feedback_pdf_' . (int) $form['id']),
             ));
         }
+        $price_text = $this->sales_deal_price_text($lang);
+        $price_components = $this->sales_deal_price_components($form);
+        $price_value = function($value) use ($price_text) {
+            $value = (int) $value;
+            return $value > 0 ? $this->format_money($value) . ' HUF' : $price_text['empty'];
+        };
 
         $this->render_sales_deal_filters($deal_filters, count($filtered_deals), count($deals), $text);
 
@@ -9852,6 +10181,7 @@ final class Harmat_Sales_Manager {
         if (!$can_manage) {
             echo '<div class="harmat-sales-staff-guard"><strong>' . esc_html($text['editor']['staff_guard_title']) . '</strong><span>' . esc_html($text['editor']['staff_guard_text']) . '</span></div>';
         }
+        echo '<style id="harmat-sales-price-breakdown-css">.harmat-sales-price-breakdown{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 2px}.harmat-sales-price-breakdown span{display:grid;gap:5px;min-width:0;padding:11px 12px;border:1px solid #ead8b8;border-radius:12px;background:#fffaf3}.harmat-sales-price-breakdown small{color:#9a6b27;font-size:11px;font-weight:900;letter-spacing:.04em}.harmat-sales-price-breakdown strong{color:#253137;font-size:15px;font-weight:900;overflow-wrap:anywhere}.harmat-sales-price-breakdown .is-total{border-color:#a8762d;background:#fff5df}.harmat-sales-price-breakdown .is-total strong{color:#8a5a16}@media(max-width:900px){.harmat-sales-price-breakdown{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.harmat-sales-price-breakdown{grid-template-columns:1fr}}</style>';
         echo '<form method="post" enctype="multipart/form-data" class="harmat-sales-form" data-harmat-deal-editor-form data-harmat-duplicate-contacts="' . esc_attr(wp_json_encode($duplicate_contacts)) . '">';
         wp_nonce_field('harmat_sales_action_save_deal');
         echo '<input type="hidden" name="harmat_sales_action" value="save_deal">';
@@ -9897,22 +10227,29 @@ final class Harmat_Sales_Manager {
             echo '<input type="hidden" name="deal_assigned_sales_id" value="' . esc_attr(get_current_user_id()) . '">';
         }
         $property_warnings = $this->sales_registered_property_dataset(0, (int) ($form['id'] ?? 0));
-        echo '<label>' . esc_html($text['editor']['property']) . '<select name="deal_property_id" data-harmat-property-warning data-harmat-property-warnings="' . esc_attr(wp_json_encode($property_warnings)) . '"><option value="0">' . esc_html($text['editor']['property_none']) . '</option>';
+        echo '<label>' . esc_html($text['editor']['property']) . '<select name="deal_property_id" data-harmat-deal-property data-harmat-property-warning data-harmat-property-warnings="' . esc_attr(wp_json_encode($property_warnings)) . '"><option value="0" data-price="0">' . esc_html($text['editor']['property_none']) . '</option>';
         foreach ($this->get_properties() as $property) {
-            echo '<option value="' . esc_attr($property->ID) . '"' . selected((int) $form['property_id'], (int) $property->ID, false) . '>' . esc_html(get_the_title($property)) . '</option>';
+            $property_price = (int) get_post_meta((int) $property->ID, 'property_price', true);
+            echo '<option value="' . esc_attr($property->ID) . '" data-price="' . esc_attr($property_price) . '"' . selected((int) $form['property_id'], (int) $property->ID, false) . '>' . esc_html(get_the_title($property)) . '</option>';
         }
         echo '</select></label>';
         $unit_text = $this->sales_deal_unit_text($lang);
-        echo '<label>' . esc_html($unit_text['parking']) . '<select name="deal_parking_space"><option value="">' . esc_html($unit_text['none']) . '</option>';
-        foreach ($this->sales_parking_space_options() as $value => $label) {
-            echo '<option value="' . esc_attr($value) . '"' . selected((string) ($form['parking_space'] ?? ''), $value, false) . '>' . esc_html($label) . '</option>';
+        echo '<label>' . esc_html($unit_text['parking']) . '<select name="deal_parking_space" data-harmat-deal-parking><option value="" data-gross="0" data-area="">' . esc_html($unit_text['none']) . '</option>';
+        foreach ($this->sales_parking_space_catalog() as $value => $entry) {
+            echo '<option value="' . esc_attr($value) . '" data-gross="' . esc_attr((int) ($entry['gross'] ?? 0)) . '" data-area="' . esc_attr($entry['area'] ?? '') . '"' . selected((string) ($form['parking_space'] ?? ''), $value, false) . '>' . esc_html($this->sales_unit_option_label($value, $entry)) . '</option>';
         }
         echo '</select></label>';
-        echo '<label>' . esc_html($unit_text['storage']) . '<select name="deal_storage_unit"><option value="">' . esc_html($unit_text['none']) . '</option>';
-        foreach ($this->sales_storage_unit_options() as $value => $label) {
-            echo '<option value="' . esc_attr($value) . '"' . selected((string) ($form['storage_unit'] ?? ''), $value, false) . '>' . esc_html($label) . '</option>';
+        echo '<label>' . esc_html($unit_text['storage']) . '<select name="deal_storage_unit" data-harmat-deal-storage><option value="" data-gross="0" data-area="">' . esc_html($unit_text['none']) . '</option>';
+        foreach ($this->sales_storage_unit_catalog() as $value => $entry) {
+            echo '<option value="' . esc_attr($value) . '" data-gross="' . esc_attr((int) ($entry['gross'] ?? 0)) . '" data-area="' . esc_attr($entry['area'] ?? '') . '"' . selected((string) ($form['storage_unit'] ?? ''), $value, false) . '>' . esc_html($this->sales_unit_option_label($value, $entry)) . '</option>';
         }
         echo '</select></label>';
+        echo '<div class="harmat-sales-form-wide harmat-sales-price-breakdown" data-harmat-price-breakdown>';
+        echo '<span><small>' . esc_html($price_text['property']) . '</small><strong data-harmat-price-property>' . esc_html($price_value($price_components['property'] ?? 0)) . '</strong></span>';
+        echo '<span><small>' . esc_html($price_text['parking']) . '</small><strong data-harmat-price-parking>' . esc_html($price_value($price_components['parking'] ?? 0)) . '</strong></span>';
+        echo '<span><small>' . esc_html($price_text['storage']) . '</small><strong data-harmat-price-storage>' . esc_html($price_value($price_components['storage'] ?? 0)) . '</strong></span>';
+        echo '<span class="is-total"><small>' . esc_html($price_text['total']) . '</small><strong data-harmat-price-total>' . esc_html($price_value($price_components['total'] ?? 0)) . '</strong></span>';
+        echo '</div>';
         echo '<label>' . esc_html($text['editor']['stage']) . '<select name="deal_stage">';
         foreach ($stage_options_for_form as $value => $label) {
             echo '<option value="' . esc_attr($value) . '"' . selected($form['stage'], $value, false) . '>' . esc_html($label) . '</option>';
@@ -11243,6 +11580,8 @@ final class Harmat_Sales_Manager {
         $source_type = isset($source_options[$deal['source_type'] ?? '']) ? (string) ($deal['source_type'] ?? '') : 'walkin';
         $assigned_sales = !empty($deal['assigned_sales_id']) ? $this->assigned_sales_label((int) $deal['assigned_sales_id']) : '';
         $broker_user = ($source_type === 'broker' && !empty($deal['broker_id'])) ? get_userdata((int) $deal['broker_id']) : null;
+        $price_components = $this->sales_deal_price_components($deal);
+        $deal_total_amount = !empty($price_components['total']) ? $price_components['total'] : ($deal['amount'] ?? '');
         $money = function($value) {
             return $value !== '' && $value !== null ? $this->format_money($value) . ' Ft' : '';
         };
@@ -11256,10 +11595,10 @@ final class Harmat_Sales_Manager {
         $add_deal_row($txt['print_date'], current_time('Y-m-d'));
         $add_deal_row($txt['crm'], $deal['crm_code'] ?? '');
         $add_deal_row($txt['property'], $property);
-        $add_deal_row($txt['parking'], $deal['parking_space'] ?? '');
-        $add_deal_row($txt['storage'], $deal['storage_unit'] ?? '');
+        $add_deal_row($txt['parking'], !empty($deal['parking_space']) ? $this->sales_unit_display_value('parking', $deal['parking_space'], $lang) : '');
+        $add_deal_row($txt['storage'], !empty($deal['storage_unit']) ? $this->sales_unit_display_value('storage', $deal['storage_unit'], $lang) : '');
         $add_deal_row($txt['stage'], $stage_options[$stage] ?? $stage);
-        $add_deal_row($txt['amount'], $money($deal['amount'] ?? ''));
+        $add_deal_row($txt['amount'], $money($deal_total_amount));
         $add_deal_row($txt['deposit'], $money($deal['deposit'] ?? ''));
         $add_deal_row($txt['received'], $this->format_money($this->deal_payment_received_total($deal)) . ' Ft');
         $add_deal_row($txt['payment_method'], !empty($deal['payment_method']) && isset($payment_options[$deal['payment_method']]) ? $payment_options[$deal['payment_method']] : '');
@@ -11341,6 +11680,8 @@ final class Harmat_Sales_Manager {
         $source_type = isset($source_options[$deal['source_type'] ?? '']) ? (string) ($deal['source_type'] ?? '') : 'walkin';
         $property_title = !empty($deal['property_id']) ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $lang) : '';
         $assigned_sales = !empty($deal['assigned_sales_id']) ? $this->assigned_sales_label((int) $deal['assigned_sales_id']) : '';
+        $price_components = $this->sales_deal_price_components($deal);
+        $deal_total_amount = !empty($price_components['total']) ? $price_components['total'] : ($deal['amount'] ?? '');
         $empty = $txt['empty'];
         $money = function($value) {
             return $value !== '' && $value !== null ? $this->format_money($value) . ' Ft' : '';
@@ -11360,10 +11701,10 @@ final class Harmat_Sales_Manager {
         $add_row($txt['email'], $deal['email'] ?? '', 'meta');
         $add_row($txt['assigned_sales'], $assigned_sales, 'meta');
         $add_row($txt['property'], $property_title, 'primary');
-        $add_row($txt['parking'], $deal['parking_space'] ?? '', 'primary');
-        $add_row($txt['storage'], $deal['storage_unit'] ?? '', 'primary');
+        $add_row($txt['parking'], !empty($deal['parking_space']) ? $this->sales_unit_display_value('parking', $deal['parking_space'], $lang) : '', 'primary');
+        $add_row($txt['storage'], !empty($deal['storage_unit']) ? $this->sales_unit_display_value('storage', $deal['storage_unit'], $lang) : '', 'primary');
         $add_row($txt['stage'], $stage_options[$stage] ?? $stage, 'primary');
-        $add_row($txt['amount'], $money($deal['amount'] ?? ''), 'money');
+        $add_row($txt['amount'], $money($deal_total_amount), 'money');
         $add_row($txt['deposit'], $money($deal['deposit'] ?? ''), 'money');
         $add_row($txt['received'], $this->format_money($this->deal_payment_received_total($deal)) . ' Ft', 'money');
         $add_row($txt['payment_method'], !empty($deal['payment_method']) && isset($payment_options[$deal['payment_method']]) ? $payment_options[$deal['payment_method']] : '', 'payment');
@@ -17493,6 +17834,46 @@ final class Harmat_Sales_Manager {
                 }
             }
 
+            function syncDealPriceBreakdown(form, eventTarget) {
+                var propertySelect = form.querySelector("[data-harmat-deal-property]");
+                var parkingSelect = form.querySelector("[data-harmat-deal-parking]");
+                var storageSelect = form.querySelector("[data-harmat-deal-storage]");
+                var amountInput = form.querySelector("[data-harmat-deal-amount]");
+                var summary = form.querySelector("[data-harmat-price-breakdown]");
+
+                function selected(select) {
+                    return select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+                }
+
+                function optionAmount(option, attr) {
+                    return toNumber(option ? option.getAttribute(attr) : "");
+                }
+
+                function setSummary(selector, value) {
+                    if (!summary) {
+                        return;
+                    }
+                    var node = summary.querySelector(selector);
+                    if (node) {
+                        node.textContent = value > 0 ? money(value) + " HUF" : "-";
+                    }
+                }
+
+                var propertyAmount = optionAmount(selected(propertySelect), "data-price");
+                var parkingAmount = optionAmount(selected(parkingSelect), "data-gross");
+                var storageAmount = optionAmount(selected(storageSelect), "data-gross");
+                var total = propertyAmount + parkingAmount + storageAmount;
+
+                setSummary("[data-harmat-price-property]", propertyAmount);
+                setSummary("[data-harmat-price-parking]", parkingAmount);
+                setSummary("[data-harmat-price-storage]", storageAmount);
+                setSummary("[data-harmat-price-total]", total);
+
+                if (amountInput && total > 0 && !(eventTarget && eventTarget.matches && eventTarget.matches("[data-harmat-deal-amount]"))) {
+                    amountInput.value = String(total);
+                }
+            }
+
             function syncDealForm(form, eventTarget) {
                 var sourceInput = form.querySelector("[data-harmat-deal-source]");
                 var source = sourceInput ? sourceInput.value : "";
@@ -17511,6 +17892,8 @@ final class Harmat_Sales_Manager {
                 var commissionInput = form.querySelector("[data-harmat-commission-amount]");
                 var amountInput = form.querySelector("[data-harmat-deal-amount]");
                 var rate = "";
+
+                syncDealPriceBreakdown(form, eventTarget);
 
                 if (brokerVisible && brokerSelect && brokerSelect.selectedIndex >= 0) {
                     rate = brokerSelect.options[brokerSelect.selectedIndex].getAttribute("data-commission-rate") || "";
@@ -17533,7 +17916,7 @@ final class Harmat_Sales_Manager {
                 syncPaymentPlan(form, eventTarget);
             }
 
-            var paymentWatchSelector = "[data-harmat-deal-amount],[data-harmat-deal-deposit],[data-harmat-payment-received],[data-harmat-payment-due-date],[data-harmat-expected-close],[data-harmat-plan-percent],[data-harmat-plan-amount],[data-harmat-plan-paid],[data-harmat-plan-due]";
+            var paymentWatchSelector = "[data-harmat-deal-property],[data-harmat-deal-parking],[data-harmat-deal-storage],[data-harmat-deal-amount],[data-harmat-deal-deposit],[data-harmat-payment-received],[data-harmat-payment-due-date],[data-harmat-expected-close],[data-harmat-plan-percent],[data-harmat-plan-amount],[data-harmat-plan-paid],[data-harmat-plan-due]";
 
             function normalizePhone(value) {
                 var digits = String(value || "").replace(/\D+/g, "");
@@ -17697,7 +18080,9 @@ final class Harmat_Sales_Manager {
                         syncDealForm(form, event.target);
                     }
                     if (event.target.matches("[data-harmat-property-warning]")) {
-                        confirmRegisteredProperty(event.target);
+                        if (!confirmRegisteredProperty(event.target)) {
+                            syncDealForm(form, event.target);
+                        }
                     }
                     if (event.target.matches("input[name='deal_email'],input[name='deal_phone']")) {
                         updateLiveDuplicateWarning(form);
