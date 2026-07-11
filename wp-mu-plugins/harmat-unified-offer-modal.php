@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.0
+ * Version: 1.0.2
  */
 
 if (!defined('ABSPATH')) {
@@ -515,6 +515,12 @@ function harmat_unified_offer_modal_footer() {
     return item.priceLabel || item.price_label || item.totalPriceLabel || money(item.price || item.totalPrice || item.total_price || item.brutto || '');
   }
 
+  function itemIsAvailable(item) {
+    var status = normalize(item && (item.status || item.sale_status || item.availability || item.statusLabel || '')).toLowerCase();
+    if (!status) return true;
+    return status === 'current' || status === 'available' || status === 'elerheto' || status === 'elado';
+  }
+
   function collectItems() {
     var pools = [
       window.harmatUnifiedSalesData && window.harmatUnifiedSalesData.items,
@@ -530,6 +536,7 @@ function harmat_unified_offer_modal_footer() {
       if (!pool) return;
       if (!Array.isArray(pool)) pool = Object.keys(pool).map(function (key) { return pool[key]; });
       pool.forEach(function (item) {
+        if (!itemIsAvailable(item)) return;
         var code = itemCode(item);
         if (!code || seen[code]) return;
         seen[code] = true;
@@ -575,16 +582,10 @@ function harmat_unified_offer_modal_footer() {
     return items.find(function (item) { return pathOf(itemUrl(item)) === wanted; }) || null;
   }
 
-  function fallbackItemFromCode(code, url) {
-    code = String(code || '').trim().toUpperCase();
-    if (!code) return null;
-    return { title: code, url: url || window.location.href };
-  }
-
   function currentPageItem() {
     var slugCode = codeFromSlug(window.location.href);
     var titleCode = codeFromText(document.title);
-    return findItemByUrl(window.location.href) || findItemByCode(slugCode) || findItemByCode(titleCode) || fallbackItemFromCode(slugCode || titleCode, window.location.href);
+    return findItemByUrl(window.location.href) || findItemByCode(slugCode) || findItemByCode(titleCode) || null;
   }
 
   function triggerItem(trigger) {
@@ -598,7 +599,7 @@ function harmat_unified_offer_modal_footer() {
     var href = trigger.getAttribute('href') || '';
     var hrefCode = codeFromSlug(href);
     var textCode = codeFromText((trigger.textContent || '') + ' ' + (holder ? holder.textContent || '' : ''));
-    return findItemByUrl(href) || findItemByCode(hrefCode) || findItemByCode(textCode) || fallbackItemFromCode(hrefCode || textCode, href || window.location.href) || currentPageItem();
+    return findItemByUrl(href) || findItemByCode(hrefCode) || findItemByCode(textCode) || currentPageItem();
   }
 
   function setField(name, value) {
