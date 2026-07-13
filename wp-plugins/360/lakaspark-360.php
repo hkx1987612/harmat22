@@ -2,7 +2,7 @@
 /*
 Plugin Name: Lakópark 360 Viewer
 Description: Interaktív 360-as lakásválasztó modul JSON hitboxokkal.
-Version: 1.8
+Version: 1.8.1
 Author: 21stCenturyWebsites
 */
 
@@ -263,7 +263,7 @@ function render_lakaspark_360_viewer($atts) {
                             <span style="left: 87.5%;">Ny</span>
                             <span style="left: 100%;">ÉNy</span>
                         </div>
-                        <input type="range" id="compassSlider" min="1" max="72" value="1" class="compass-modern-slider">
+                        <input type="range" id="compassSlider" min="1" max="72" value="1" class="compass-modern-slider" aria-label="Épületnézet vezérlése">
                     </div>
                 </div>
             </div>

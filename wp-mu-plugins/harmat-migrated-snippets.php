@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.06.08.12
+ * Version: 2026.07.13.1
  */
 
 defined('ABSPATH') || exit;
@@ -541,7 +541,7 @@ function hm_migrated_virtual_selector_static_html() {
     $html_out = '<section class="harmat-virtual-static-intro" aria-label="Virtuális lakásválasztó összefoglaló">';
     $html_out .= '<span>Virtuális lakásválasztó</span>';
     $html_out .= '<h2>Válasszon épületet az első ütem lakásai közül</h2>';
-    $html_out .= '<p>Az I. ütemben 124 lakás érhető el A1, A2, A3 és A4 épületekben. Az online lakáskereső és a virtuális lakásválasztó segíti az épület, emelet, szobaszám és alapterület szerinti választást.</p>';
+    $html_out .= '<p>Az I. ütem összesen 124 lakást tartalmaz az A1, A2, A3 és A4 épületekben. Az online lakáskereső és a virtuális lakásválasztó segíti az épület, emelet, szobaszám és alapterület szerinti választást.</p>';
     $html_out .= '<nav aria-label="Épületek">';
     foreach ($links as $label => $url) {
         $html_out .= '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';

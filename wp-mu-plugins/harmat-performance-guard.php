@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.23
+ * Version: 1.3.24
  */
 
 if (!defined('ABSPATH')) {
@@ -375,14 +375,37 @@ function harmat_perf_mobile_hero_video_switch() {
 
     $desktop = content_url('/uploads/2026/05/yulu-garden-source-compressed-60m.mp4');
     $mobile = content_url('/uploads/2026/05/yulu-garden-mobile-720p.mp4');
+    $poster = content_url('/uploads/2026/02/Harmat22_latvany-3.jpg');
     ?>
 <script id="harmat-mobile-hero-video-switch">
 (function () {
-  if (!window.matchMedia || !window.matchMedia("(max-width: 767px)").matches) return;
   var desktop = <?php echo wp_json_encode($desktop); ?>;
   var mobile = <?php echo wp_json_encode($mobile); ?>;
+  var poster = <?php echo wp_json_encode($poster); ?>;
   var escapedDesktop = desktop.replace(/\//g, "\\/");
   var escapedMobile = mobile.replace(/\//g, "\\/");
+
+  function patchHeroPoster() {
+    var found = false;
+    document.querySelectorAll("video").forEach(function (video) {
+      var source = video.currentSrc || video.getAttribute("src") || "";
+      var nestedSource = video.querySelector("source");
+      if (!source && nestedSource) source = nestedSource.getAttribute("src") || "";
+      if (source.indexOf("yulu-garden-") === -1) return;
+      found = true;
+      if (!video.getAttribute("poster")) video.setAttribute("poster", poster);
+    });
+    return found;
+  }
+
+  var posterTries = 0;
+  var posterTimer = window.setInterval(function () {
+    posterTries += 1;
+    if (patchHeroPoster() || posterTries > 100) window.clearInterval(posterTimer);
+  }, 50);
+  patchHeroPoster();
+
+  if (!window.matchMedia || !window.matchMedia("(max-width: 767px)").matches) return;
 
   function replaceString(value) {
     return value === desktop ? mobile : (value === escapedDesktop ? escapedMobile : value);
@@ -435,6 +458,30 @@ function harmat_perf_mobile_hero_video_switch() {
     <?php
 }
 add_action('wp_head', 'harmat_perf_mobile_hero_video_switch', 2);
+
+function harmat_perf_home_service_slider_mobile_fix() {
+    if (is_admin() || !is_front_page()) {
+        return;
+    }
+    ?>
+<style id="harmat-home-service-slider-mobile-fix">
+@media (max-width:560px) {
+  body.home .elementor-element-c19513c,
+  body.home .elementor-element-c19513c > .elementor-container,
+  body.home .elementor-element-c19513c .elementor-column,
+  body.home .elementor-element-c19513c .elementor-widget-wrap,
+  body.home .elementor-element-c19513c .elementor-widget-opal-revslider,
+  body.home .elementor-element-c19513c .elementor-widget-container,
+  body.home .elementor-element-c19513c sr7-module {
+    height:clamp(360px,104vw,430px)!important;
+    min-height:0!important;
+    max-height:430px!important;
+  }
+}
+</style>
+    <?php
+}
+add_action('wp_head', 'harmat_perf_home_service_slider_mobile_fix', 90);
 
 
 function harmat_perf_home_hero_cta() {

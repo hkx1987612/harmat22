@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Local Assistant
  * Plugin URI: https://harmat22.hu
  * Description: Local knowledge-base assistant for Harmat Lakópark apartment questions, prices, FAQ, and sales handoff.
- * Version: 0.3.4
+ * Version: 0.3.5
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -47,7 +47,7 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.3.4';
+    const VERSION = '0.3.5';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
     const CONTACT_PHONE = '+36300733375';
@@ -352,7 +352,7 @@ final class Harmat_Local_Assistant {
             border: 0;
             border-radius: 999px;
             background: #9a6a2a;
-            color: #fff;
+            color: #fff !important;
             box-shadow: 0 16px 38px rgba(35, 33, 28, .26);
             font: 800 14px/1.2 Montserrat, Arial, sans-serif;
             letter-spacing: 0;

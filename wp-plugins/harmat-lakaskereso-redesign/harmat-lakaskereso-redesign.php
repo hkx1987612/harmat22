@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.8
+ * Version: 1.1.9
  */
 
 if (!defined('ABSPATH')) {
@@ -37,12 +37,12 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.7');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.9');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
     if (harmat_lakas_redesign_is_page()) {
-        wp_register_script('harmat-lakas-redesign', false, array(), '1.1.8', true);
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.1.9', true);
         wp_enqueue_script('harmat-lakas-redesign');
         wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
     }
@@ -58,7 +58,7 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v10';
+    return 'harmat_lakas_redesign_markup_v11';
 }
 
 function harmat_lakas_redesign_clear_cache() {
@@ -375,7 +375,7 @@ function harmat_lakas_redesign_render() {
             <div class="hm-lakas-stats" aria-label="Lakás statisztika">
                 <span><strong><?php echo esc_html(count($items)); ?></strong> lakás</span>
                 <span><strong><?php echo esc_html($current_count); ?></strong> elérhető</span>
-                <span><strong>Ár</strong> egyeztetés alapján</span>
+                <span><strong>Árak</strong> lakásonként</span>
             </div>
         </div>
 
@@ -576,6 +576,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-actions .hm-lakas-outline{background:#fff;border:1px solid #a8762d;color:#a8762d}
     .hm-lakas-empty{display:none;margin:28px 0 0;padding:24px;border:1px solid rgba(168,118,45,.2);background:#fff;text-align:center;color:#687078}
     .hm-lakas-empty.is-visible{display:block}
+    @media(min-width:1121px) and (max-width:1360px){.hm-lakas-toolbar{grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(120px,.7fr)}.hm-lakas-range-field{grid-column:1/6}.hm-lakas-reset{grid-column:6}}
     @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-range-field{grid-column:1/-1}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-hero p,.hm-lakas-hero h1,.hm-lakas-stats{grid-column:1;grid-row:auto}.hm-lakas-stats{justify-content:flex-start}}
     @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
 
@@ -764,6 +765,14 @@ function harmat_lakas_redesign_js() {
         state.sqmActive=false;
         syncRangeLabels();
       }
+      function applyUrlState(){
+        var params=new URLSearchParams(window.location.search||"");
+        var rooms=params.get("rooms")||"";
+        var roomField=filters.querySelector("[data-filter=rooms]");
+        if(!/^[1-5]$/.test(rooms)||!roomField||!roomField.querySelector("option[value=\""+rooms+"\"]")) return;
+        state.rooms=rooms;
+        roomField.value=rooms;
+      }
       function syncRangeState(changedName){
         var minField=rangeField("sqmMin");
         var maxField=rangeField("sqmMax");
@@ -883,6 +892,7 @@ function harmat_lakas_redesign_js() {
         apply();
       });
       resetRange();
+      applyUrlState();
       apply();
     })();
     ';
