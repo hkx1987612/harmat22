@@ -163,7 +163,11 @@ function hm_migrated_property_floorplan_image_from_uploads($title, $floorplan_ur
 
     $lower = strtolower($title);
     $upper = strtoupper($title);
-    $candidates = array(
+    $candidates = array();
+    if (strcasecmp($title, 'A3-3-L2') === 0) {
+        $candidates[] = '2026/05/A3-3-L2-cn-floorplan-display.jpg';
+    }
+    $candidates = array_merge($candidates, array(
         '2026/05/' . $title . '-cn-floorplan.jpg',
         '2026/05/' . $upper . '-cn-floorplan.jpg',
         '2026/05/' . $lower . '-cn-floorplan.jpg',
@@ -172,7 +176,7 @@ function hm_migrated_property_floorplan_image_from_uploads($title, $floorplan_ur
         '2026/02/' . $lower . '-alaprajz_nagy.jpg',
         '2026/02/' . $lower . '_alaprajz.jpg',
         '2026/02/' . $title . '_szintrajz.jpg',
-    );
+    ));
 
     if (is_string($floorplan_url) && $floorplan_url !== '') {
         $path = wp_parse_url($floorplan_url, PHP_URL_PATH);
