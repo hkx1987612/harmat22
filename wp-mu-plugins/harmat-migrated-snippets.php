@@ -164,8 +164,9 @@ function hm_migrated_property_floorplan_image_from_uploads($title, $floorplan_ur
     $lower = strtolower($title);
     $upper = strtoupper($title);
     $candidates = array();
-    if (strcasecmp($title, 'A3-3-L2') === 0) {
-        $candidates[] = '2026/05/A3-3-L2-cn-floorplan-display.jpg';
+    $display_preview_units = array('A2-3-L2', 'A2-3-L3', 'A3-3-L2');
+    if (in_array($upper, $display_preview_units, true)) {
+        $candidates[] = '2026/05/' . $upper . '-cn-floorplan-display.jpg';
     }
     $candidates = array_merge($candidates, array(
         '2026/05/' . $title . '-cn-floorplan.jpg',
