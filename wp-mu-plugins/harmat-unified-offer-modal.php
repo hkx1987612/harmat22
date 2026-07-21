@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.2
+ * Version: 1.0.4
  */
 
 if (!defined('ABSPATH')) {
@@ -599,7 +599,15 @@ function harmat_unified_offer_modal_footer() {
     var href = trigger.getAttribute('href') || '';
     var hrefCode = codeFromSlug(href);
     var textCode = codeFromText((trigger.textContent || '') + ' ' + (holder ? holder.textContent || '' : ''));
-    return findItemByUrl(href) || findItemByCode(hrefCode) || findItemByCode(textCode) || currentPageItem();
+    var exactItem = findItemByUrl(href) || findItemByCode(hrefCode) || findItemByCode(textCode);
+    if (exactItem) return exactItem;
+    if (hrefCode && href.indexOf('/property/') !== -1) {
+      return {
+        title: hrefCode,
+        url: href.split('#')[0]
+      };
+    }
+    return currentPageItem();
   }
 
   function setField(name, value) {
@@ -636,10 +644,14 @@ function harmat_unified_offer_modal_footer() {
     setField('selected-price', itemPrice(item));
     setField('selected-url', itemUrl(item) || window.location.href);
     setSummary(item);
-    if (code) {
-      var message = TXT.messagePrefix + code + TXT.messageSuffix;
-      var messageField = form.querySelector('[name="your-message"]');
-      if (messageField && !messageField.value) messageField.value = message;
+    var messageField = form.querySelector('[name="your-message"]');
+    if (messageField) {
+      var previousAutoMessage = messageField.getAttribute('data-h22-auto-message') || '';
+      var nextAutoMessage = code ? TXT.messagePrefix + code + TXT.messageSuffix : '';
+      if (!messageField.value || messageField.value === previousAutoMessage) {
+        messageField.value = nextAutoMessage;
+      }
+      messageField.setAttribute('data-h22-auto-message', nextAutoMessage);
     }
   }
 
