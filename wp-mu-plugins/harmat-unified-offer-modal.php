@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.4
+ * Version: 1.0.5
  */
 
 if (!defined('ABSPATH')) {
@@ -206,6 +206,63 @@ function harmat_unified_offer_modal_footer() {
     gap: 12px;
     margin-bottom: 14px;
   }
+  .h22-offer-row.is-single {
+    grid-template-columns: 1fr;
+  }
+  .h22-offer-source {
+    min-width: 0;
+    margin: 0 0 14px;
+    padding: 0;
+    border: 0;
+  }
+  .h22-offer-source legend {
+    margin-bottom: 7px;
+    color: #44515a;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .h22-offer-source-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .h22-offer-source-option {
+    position: relative;
+    min-width: 0;
+    cursor: pointer;
+  }
+  .h22-offer-source-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .h22-offer-source-option span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 9px 10px;
+    border: 1px solid #dec18f;
+    border-radius: 6px;
+    background: #fff;
+    color: #35434b;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .h22-offer-source-option input:checked + span {
+    border-color: #a87027;
+    background: #fff6e8;
+    color: #805018;
+    box-shadow: inset 0 0 0 1px #a87027;
+  }
+  .h22-offer-source-option input:focus-visible + span {
+    outline: 3px solid rgba(168, 112, 39, .18);
+    outline-offset: 2px;
+  }
   .h22-offer-privacy {
     display: flex;
     align-items: flex-start;
@@ -285,6 +342,9 @@ function harmat_unified_offer_modal_footer() {
       grid-template-columns: 1fr;
       gap: 10px;
     }
+    .h22-offer-source-options {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 </style>
 <div class="h22-offer-modal" id="h22-offer-modal" hidden aria-hidden="true">
@@ -328,7 +388,7 @@ function harmat_unified_offer_modal_footer() {
           <input id="h22-offer-date" name="your-date" type="date" required>
         </div>
       </div>
-      <div class="h22-offer-row">
+      <div class="h22-offer-row is-single">
         <div class="h22-offer-field">
           <label for="h22-offer-time">Id&#337;s&aacute;v</label>
           <select id="h22-offer-time" name="your-time">
@@ -338,13 +398,18 @@ function harmat_unified_offer_modal_footer() {
             <option value="15:00-18:00">15:00-18:00</option>
           </select>
         </div>
-        <div class="h22-offer-field">
-          <label for="h22-offer-source">&Eacute;rdekl&#337;d&eacute;s t&iacute;pusa</label>
-          <select id="h22-offer-source" name="lead_source">
-            <option value="website">Weboldali &eacute;rdekl&#337;d&eacute;s</option>
-          </select>
-        </div>
       </div>
+      <fieldset class="h22-offer-source">
+        <legend>Honnan hallott r&oacute;lunk?</legend>
+        <div class="h22-offer-source-options">
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="K&uuml;lt&eacute;ri hirdet&eacute;s"><span>K&uuml;lt&eacute;ri hirdet&eacute;s</span></label>
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="Google keres&eacute;s"><span>Google keres&eacute;s</span></label>
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="ingatlan.com"><span>ingatlan.com</span></label>
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="Facebook"><span>Facebook</span></label>
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="TikTok"><span>TikTok</span></label>
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="Egy&eacute;b"><span>Egy&eacute;b</span></label>
+        </div>
+      </fieldset>
       <div class="h22-offer-field is-wide">
         <label for="h22-offer-message">&Uuml;zenet</label>
         <textarea id="h22-offer-message" name="your-message"></textarea>
