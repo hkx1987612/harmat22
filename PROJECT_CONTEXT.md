@@ -5,7 +5,10 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-youtube-region-fallback`
+- Stable tag: `stable-2026-07-29-four-unit-area-current`
+- The approved sales area for `A1-4-L5`, `A2-4-L5`, `A3-4-L5`, and `A4-4-L5` is `47.83 m2` across apartment-search cards and property detail pages.
+- The four matching per-square-meter prices are recalculated from each current apartment price and the corrected sales area.
+- MU implementation: `wp-mu-plugins/zz-harmat-four-unit-area-correction.php`
 - Homepage presentation video: YouTube video `kmAg_ki-yYY`, muted autoplay, loop, inline playback, adaptive quality with `hd1080` requested.
 - The homepage uses the standard YouTube IFrame API with muted autoplay; the obsolete Slider Revolution preloader is suppressed and the project poster remains the default fallback.
 - The homepage now reveals the standard YouTube embed only after the IFrame API confirms active playback. IPs that receive a YouTube sign-in or bot-verification interstitial keep the high-resolution project poster instead of exposing the error screen.
@@ -25,7 +28,8 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Live backup before the CRM bandwidth widget: `/home/harmath2/codex-backups/crm-bandwidth-widget-20260729-051736`
 - Live backup before the YouTube regional fallback: `/home/harmath2/codex-backups/youtube-region-fallback-20260729-053146`
 - Live backup before extending the regional fallback to the 3D player: `/home/harmath2/codex-backups/youtube-region-fallback-complete-20260729-053634`
-- Post-deployment checks passed for the homepage video, gallery, apartment search, virtual selectors, contact page, sales login, CRM widget fixtures, monthly reset, language separation, PHP logs, and horizontal overflow.
+- Live backup before the four-unit area correction: `/home/harmath2/codex-backups/four-unit-area-correction-20260729-054708`
+- Post-deployment checks passed for the homepage video, gallery, apartment search, four corrected apartment cards and detail pages, virtual selectors, contact page, sales login, CRM widget fixtures, monthly reset, language separation, PHP logs, and horizontal overflow.
 
 ## Business Goal
 
