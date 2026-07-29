@@ -5,7 +5,12 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-direct-links-room-format-current`
+- Stable tag: `stable-2026-07-29-offer-social-source-current`
+- The public offer modal now has five lead-source choices: `Kültéri hirdetés`, `Google keresés`, `ingatlan.com`, `Közösségi média`, and `Egyéb`.
+- `Közösségi média` combines Facebook, Instagram, and TikTok; separate Facebook/TikTok choices were removed without rewriting historical inquiry records.
+- Unified public offer modal version: `1.0.6`
+- Live rollback backup: `/home/harmath2/codex-backups/offer-source-social-media-20260729-081621`
+- After a full WP Super Cache purge, all 145 sitemap URLs returned `200`, all 145 exposed the new social-media choice, and zero pages exposed the former Facebook/TikTok radio options or fatal output.
 - Homepage room-type cards now link directly to `/lakaskereso/?rooms=1-5`, the former `/3d-viewer/` entry links directly to `/virtualis-lakasvalaszto/`, and both `/magunkrol/` offer links point directly to `/lakaskereso/`.
 - Property room-list measurements now use Hungarian decimal commas with two decimal places; the underlying apartment and room-area values were not changed.
 - The idempotent structured content migration is tracked at `server-config/maintenance/2026-07-29-direct-internal-links.php`.

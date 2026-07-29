@@ -381,3 +381,12 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 - Full public audit passed: 145 sitemap URLs returned `200`; 432 internal links and 212 same-origin media resources had zero broken or redirected targets; SEO metadata, H1, language, canonical, mojibake, CJK, placeholder, legacy-video, legacy-link, room-format, and duplicate-metadata findings were all zero.
 - Browser regression passed for the homepage, gallery, apartment search, virtual selectors, A1 building selector, A3-4-L5, contact page, sales/agent/client/lawyer login pages, and the A3-4-L5 offer modal with all six source choices. No test inquiry was submitted.
 - Server verification passed for 186 custom PHP files, WordPress core checksums, all database tables, and absent root, `wp-admin`, and debug logs.
+
+## 2026-07-29 - Unified social-media offer source
+- Updated `wp-mu-plugins/harmat-unified-offer-modal.php` from version `1.0.5` to `1.0.6`.
+- Replaced the separate `Facebook` and `TikTok` public offer-source choices with one Hungarian `Közösségi média` choice covering Facebook, Instagram, and TikTok.
+- Kept historical inquiry records unchanged, so older stored Facebook and TikTok source labels remain readable in CRM history.
+- Live rollback backup: `/home/harmath2/codex-backups/offer-source-social-media-20260729-081621`.
+- Verified the A3-4-L5 modal opens with exactly five choices, selecting `Közösségi média` sets the submitted field value correctly, and apartment, area, and price data remain correct. No test inquiry was submitted.
+- Purged the full WP Super Cache after the first audit detected stale modal HTML on cached pages.
+- Post-purge audit passed for all 145 sitemap URLs: all returned `200`, all contained the new social-media option, and none contained the former Facebook/TikTok radio options or fatal output.

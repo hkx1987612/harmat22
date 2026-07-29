@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.5
+ * Version: 1.0.6
  */
 
 if (!defined('ABSPATH')) {
@@ -405,8 +405,7 @@ function harmat_unified_offer_modal_footer() {
           <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="K&uuml;lt&eacute;ri hirdet&eacute;s"><span>K&uuml;lt&eacute;ri hirdet&eacute;s</span></label>
           <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="Google keres&eacute;s"><span>Google keres&eacute;s</span></label>
           <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="ingatlan.com"><span>ingatlan.com</span></label>
-          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="Facebook"><span>Facebook</span></label>
-          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="TikTok"><span>TikTok</span></label>
+          <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="K&ouml;z&ouml;ss&eacute;gi m&eacute;dia"><span>K&ouml;z&ouml;ss&eacute;gi m&eacute;dia</span></label>
           <label class="h22-offer-source-option"><input type="radio" name="lead_source" value="Egy&eacute;b"><span>Egy&eacute;b</span></label>
         </div>
       </fieldset>
