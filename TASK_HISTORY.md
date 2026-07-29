@@ -238,15 +238,15 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 
 
 ## 2026-06-10 - Samsung test APK build
-- Built Android debug APK  .5.4-comfort / versionCode 10 for Samsung sideload testing.
-- Output APK: ndroid/harmat-app/dist/Harmat22-portal-0.5.4-comfort-debug.apk.
+- Built Android debug APK 0.5.4-comfort / versionCode 10 for Samsung sideload testing.
+- Output APK: android/harmat-app/dist/Harmat22-portal-0.5.4-comfort-debug.apk.
 - This is a debug-signed preview package with applicationId hu.harmat22.app.preview; not a Play Store/release-signed build.
 
 
 ## 2026-06-10 - Preloaded offline APK build
-- Built Android debug APK  .6.0-preloaded / versionCode 11 with local offline app entry at ile:///android_asset/offline/index.html and local floorplan catalog at ile:///android_asset/offline/floorplans.html.
+- Built Android debug APK 0.6.0-preloaded / versionCode 11 with local offline app entry at file:///android_asset/offline/index.html and local floorplan catalog at file:///android_asset/offline/floorplans.html.
 - Embedded 124 floorplan images plus data/floorplans.json into Android assets so Samsung test users can open the app and browse floorplans without first downloading them from the website.
-- Output APK: ndroid/harmat-app/dist/Harmat22-portal-0.6.0-preloaded-debug.apk. Embedded floorplan image bytes: 10542882.
+- Output APK: android/harmat-app/dist/Harmat22-portal-0.6.0-preloaded-debug.apk. Embedded floorplan image bytes: 10542882.
 - This remains a debug-signed preview package with applicationId hu.harmat22.app.preview.
 
 
@@ -326,3 +326,48 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 - Public endpoint testing triggered temporary 429 rate limiting; follow-up verification was run from the server with page nonce/cookies and Unicode-safe test payloads.
 - Key retest passed for: balcony area calculation, reservation/deposit, viewing appointment, nearby buses, nearby schools, and multi-unit comparison (`A1-1-L8` vs `A4-3-L3`).
 - Server rollback backup for the fix: `/home/harmath2/codex-backups/ai-sales-test-fixes-20260611-034346`.
+
+## 2026-06-11 - Homepage featured apartments placement
+- Moved the homepage featured-apartment block to sit directly below the project stats row (`8388 m²`, `124`, `124`, `92`) and before the room-type image grid.
+- Kept the existing featured-apartment data, prices, and Hungarian copy unchanged.
+
+## 2026-06-11 - Homepage project intro visual polish
+- Added `wp-mu-plugins/harmat-home-about-polish.php` as a reversible CSS-only homepage layer.
+- Polished the existing project introduction module without changing Hungarian public copy: stronger left-column typography, cleaner meta cards, hidden visual badges, improved aerial image treatment, and refined four-stat layout.
+
+## 2026-06-29 - Unified public offer modal
+- Replaced the fragmented public inquiry popup behavior with a single MU-plugin modal: `wp-mu-plugins/harmat-unified-offer-modal.php`.
+- Disabled the old live Code Snippets popup takeover, snippet ID 137, and removed the temporary urgent fallback plugin from live MU plugins.
+- The new modal catches homepage, apartment-search card, direct property-page, and `#opal-contactform-popup` property hash links. Property pages and floor-plan/property cards now share the same submission path.
+- The modal submits directly to the existing `harmat-sales-manager/v1/offer` CRM endpoint and keeps the existing sales notification plus customer confirmation email flow.
+- Live rollback backups: `/home/harmath2/codex-backups/unified-offer-modal-20260629-184116` and `/home/harmath2/codex-backups/unified-offer-modal-dom-clean-20260629-184933`.
+- Verified live: public key pages returned HTTP 200 with no fatal errors, old popup script no longer outputs, property-page click opened the new modal with `A1-F-L1`, old hidden popup DOM was removed from the page, apartment-search card click opened with `A1-1-L1`, direct property hash opened with `A1-1-L7`, homepage opened a non-apartment inquiry modal, browser console warnings/errors were empty, and a temporary CRM test inquiry reached mail status `sent` for both sales and customer confirmation before deletion.
+
+## 2026-06-29 - Homepage header sales contact
+- Added `wp-mu-plugins/harmat-header-sales-contact.php` to show the sales contact next to the homepage sticky-header offer button.
+- Uploaded an optimized 320px sales avatar for Julia Wirth to `/wp-content/uploads/2026/06/julia-wirth-sales.jpg`; the displayed contact links to `tel:+36300733375` and shows `+36 30 073 3375`.
+- The contact block is homepage-only and desktop/sticky-header focused; it is not inserted on mobile to avoid squeezing the menu/header.
+- Live rollback backup: `/home/harmath2/codex-backups/header-sales-contact-20260629-191510`.
+- Verified live: homepage returned HTTP 200 with no fatal errors, the avatar image returned HTTP 200, browser DOM showed the contact block next to the offer button with no horizontal overflow, browser console warnings/errors were empty, and 390px mobile did not insert the block or create overflow.
+
+## 2026-06-29 - Technical specification PDF placement
+- Corrected and deployed the public Harmat Lakopark technical specification PDF to `/wp-content/uploads/2026/06/harmat-lakopark-muszaki-leiras.pdf`.
+- Added `wp-mu-plugins/harmat-technical-document-links.php` to place Hungarian-only technical-document entries on the homepage, apartment search, virtual selector pages, and property detail pages without inserting the public block into private portals.
+- Added the same technical specification link to the sales deal editor and to the customer confirmation email generated by the sales manager.
+- Trained the local assistant to recognize technical-document, energy-class, heating/cooling, window/door, flooring, and finish questions. The assistant now returns a concise Hungarian technical summary plus the official PDF link and direct action button.
+- Live rollback backups: `/home/harmath2/codex-backups/technical-doc-links-20260629-194058`, `/home/harmath2/codex-backups/technical-doc-sales-u-helper-20260629-194813`, and `/home/harmath2/codex-backups/technical-doc-ai-summary-20260629-195707`.
+- Verified local and live PHP syntax, public key pages, the PDF URL, AI assistant technical-document and energy-class responses with no Chinese characters, and a temporary public inquiry through CRM plus sales/customer confirmation email before deleting the test records.
+
+## 2026-06-30 - Homepage service-list elevator copy
+- Updated the homepage and services-page Elementor service list so `Hővédő üvegezés` and `Hatékony hőszigetelés` are presented as one compact point: `Hővédő üvegezés és hatékony hőszigetelés`.
+- Replaced the freed list item with the elevator accessibility message: `Az első ütemben 124 lifttel megközelíthető lakás épül.`
+- Also updated the tracked fallback services template, technical-document card copy, and AI technical summary to include elevator/lift information.
+- Live rollback backups: `/home/harmath2/codex-backups/home-lift-thermal-copy-20260630-185850` and `/home/harmath2/codex-backups/home-elementor-lift-copy-20260630-190435`.
+- Verified live public pages return HTTP 200 with no fatal-error text, the homepage source contains the merged insulation/glazing line and elevator line, and the AI assistant responds to lift/elevator questions with the technical-document answer and no Chinese characters.
+
+## 2026-07-01 - Official stable GitHub snapshot
+- Synchronized the local repository with the current live custom WordPress code before creating the official stable snapshot.
+- Included the stabilized public phone/avatar work, AI contact-phone response, homepage service-list wording, and property-page-only technical PDF entry.
+- Removed tracked files that are no longer active on the live site: the old homepage about-polish MU plugin and the obsolete `360/style.css`.
+- Added the active live `harmat-public-audit-polish.php` MU plugin to version control and tightened `.gitignore` so temporary outputs, local backup files, and generated folders are not accidentally committed.
+- The snapshot intentionally excludes WordPress core, third-party plugins, database content, customer data, server backups, and generated media/output folders.
