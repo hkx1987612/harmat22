@@ -5,7 +5,14 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-crm-loan-payment-current`
+- Stable tag: `stable-2026-07-29-video-seo-index-current`
+- Homepage video SEO now exposes exactly one YouTube `VideoObject`; the video sitemap uses a stable publication/last-modified date instead of changing on every request.
+- Retired origin videos `yulu-garden-source-compressed-60m.mp4`, `yulu-garden-mobile-720p.mp4`, and `spjs.mp4` return HTTP `410` with noindex headers and no longer appear in public page source.
+- The dynamically generated `Latvanyvideo` card is replaced with the YouTube player on both the homepage and `/harmat-lakopark-kornyeke/`; the valid on-demand `swsp_xmsp.mp4` project-introduction video remains available.
+- Duplicate public H1 output is normalized on `/harmat-lakopark-kornyeke/`, `/magunkrol/`, and `/szolgaltatasaink/`.
+- Post-deployment sitemap audit covered 145 indexed URLs: all returned `200`, with zero redirect, title, description, canonical, noindex, language, H1, legacy-video, or duplicate-metadata findings.
+- Search Console read `/sitemap_index.xml` successfully on 2026-07-29, reports the homepage indexed with one indexed video, accepted a fresh homepage indexing request, and started validation of the historical `/wp-json/` 5xx record after the endpoint was confirmed `200`.
+- Current YouTube/retired-video guard version: `1.3.3`.
 - CRM payment methods now include the internal key `loan`, displayed as `贷款` in Chinese sales mode and `Bankhitel` in Hungarian sales mode.
 - The loan label is shared by deal editing, validation, filters, exports, confirmation sheets, and customer records; no loan percentage or bank condition is assumed automatically.
 - Harmat Sales Manager version: `1.6.120`
@@ -33,6 +40,8 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Live backup before extending the regional fallback to the 3D player: `/home/harmath2/codex-backups/youtube-region-fallback-complete-20260729-053634`
 - Live backup before the four-unit area correction: `/home/harmath2/codex-backups/four-unit-area-correction-20260729-054708`
 - Live backup before adding the CRM loan payment method: `/home/harmath2/codex-backups/crm-loan-payment-20260729-064821`
+- Full live backup before the video/SEO cleanup: `/home/harmath2/codex-backups/seo-video-index-cleanup-20260729-070118`
+- Supplemental backup before the final neighborhood runtime correction: `/home/harmath2/codex-backups/neighborhood-video-runtime-fix-20260729-071357`
 - Post-deployment checks passed for the homepage video, gallery, apartment search, four corrected apartment cards and detail pages, virtual selectors, contact page, sales/agent/client logins, the bilingual CRM loan option, CRM payment totals, monthly reset, language separation, PHP logs, and horizontal overflow.
 
 ## Business Goal

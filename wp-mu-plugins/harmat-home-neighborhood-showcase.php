@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Neighborhood Showcase
  * Description: Adds the full neighborhood interactive presentation into the existing homepage environment section.
- * Version: 1.2.0
+ * Version: 1.2.1
  */
 
 defined('ABSPATH') || exit;
@@ -147,7 +147,7 @@ function harmat_home_neighborhood_showcase_footer() {
       '        <div class="hi-panel" data-panel="video">',
       '          <div class="hi-video-grid">',
       '            <article class="hi-video-card"><video controls preload="none" playsinline data-poster="' + asset('video_swsp_xmsp.jpg') + '"><source src="' + asset('swsp_xmsp.mp4') + '" type="video/mp4"></video><div><strong>Projektbemutat&oacute;</strong><span>A lak&oacute;park elhelyezked&eacute;se, &eacute;p&uuml;lett&ouml;mege &eacute;s k&ouml;rnyezeti kapcsolatai.</span></div></article>',
-      '            <article class="hi-video-card"><video controls preload="none" playsinline data-poster="' + asset('video_spjs.jpg') + '"><source src="' + asset('spjs.mp4') + '" type="video/mp4"></video><div><strong>L&aacute;tv&aacute;nyvide&oacute;</strong><span>&Aacute;tfog&oacute; k&eacute;pet ad a tervezett lak&oacute;k&ouml;rnyezetr&#337;l &eacute;s a projekt hangulat&aacute;r&oacute;l.</span></div></article>',
+      '            <article class="hi-video-card"><video controls preload="none" playsinline data-harmat-youtube-replacement="1" data-poster="' + asset('video_spjs.jpg') + '"></video><div><strong>L&aacute;tv&aacute;nyvide&oacute;</strong><span>&Aacute;tfog&oacute; k&eacute;pet ad a tervezett lak&oacute;k&ouml;rnyezetr&#337;l &eacute;s a projekt hangulat&aacute;r&oacute;l.</span></div></article>',
       '          </div>',
       '        </div>',
       '        <div class="hi-panel" data-panel="plans">',
@@ -269,9 +269,10 @@ function harmat_home_neighborhood_showcase_footer() {
 
     root.querySelectorAll('.hi-video-card video').forEach(function (video) {
       function getVideoRate() {
+        if (video.hasAttribute('data-harmat-youtube-replacement')) return 1;
         var source = video.querySelector('source');
         var src = ((video.currentSrc || video.getAttribute('src') || '') + ' ' + (source ? source.getAttribute('src') : '')).toLowerCase();
-        return src.indexOf('spjs.mp4') !== -1 ? 1 : 0.25;
+        return src ? 0.25 : 1;
       }
       function applyVideoRate() {
         var rate = getVideoRate();

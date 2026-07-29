@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Homepage YouTube Bandwidth Guard
  * Description: Replaces origin-hosted presentation videos with resilient YouTube players and monitors hosting bandwidth.
- * Version: 1.2.1
+ * Version: 1.3.3
  */
 
 if (!defined('ABSPATH')) {
@@ -16,6 +16,38 @@ const HARMAT_BW_MOBILE_ORIGIN_VIDEO = '/uploads/2026/05/yulu-garden-mobile-720p.
 const HARMAT_BW_POSTER = '/uploads/2026/02/Harmat22_latvany-3.jpg';
 const HARMAT_BW_3D_VIDEO_FILENAME = 'spjs.mp4';
 const HARMAT_BW_3D_POSTER = '/plugins/harmat22-map-redesign/assets/harmat-3d/video_spjs.jpg';
+const HARMAT_BW_VIDEO_UPLOAD_DATE = '2026-05-01T00:00:00+02:00';
+
+function harmat_bw_retired_video_paths(): array
+{
+    return array(
+        (string) wp_parse_url(content_url(HARMAT_BW_ORIGIN_VIDEO), PHP_URL_PATH),
+        (string) wp_parse_url(content_url(HARMAT_BW_MOBILE_ORIGIN_VIDEO), PHP_URL_PATH),
+        (string) wp_parse_url(
+            content_url(
+                '/plugins/harmat22-map-redesign/assets/harmat-3d/'
+                . HARMAT_BW_3D_VIDEO_FILENAME
+            ),
+            PHP_URL_PATH
+        ),
+    );
+}
+
+add_action('init', function (): void {
+    $path = isset($_SERVER['REQUEST_URI'])
+        ? (string) wp_parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH)
+        : '';
+
+    if (!in_array($path, harmat_bw_retired_video_paths(), true)) {
+        return;
+    }
+
+    status_header(410);
+    nocache_headers();
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('X-Robots-Tag: noindex, nofollow', true);
+    exit;
+}, -1000);
 
 function harmat_bw_is_public_homepage(): bool
 {
@@ -23,6 +55,14 @@ function harmat_bw_is_public_homepage(): bool
         && !wp_doing_ajax()
         && !wp_is_json_request()
         && is_front_page();
+}
+
+function harmat_bw_is_public_3d_video_surface(): bool
+{
+    return !is_admin()
+        && !wp_doing_ajax()
+        && !wp_is_json_request()
+        && (is_front_page() || is_page('harmat-lakopark-kornyeke'));
 }
 
 function harmat_bw_youtube_embed_url(bool $privacy_enhanced = true): string
@@ -122,6 +162,11 @@ function harmat_bw_filter_homepage_html(string $html): string
         '',
         $html
     );
+    $html = preg_replace(
+        '~\s*<script[^>]*class=["\'][^"\']*\bharmat-home-seo-schema\b[^"\']*["\'][^>]*>.*?</script>\s*~is',
+        '',
+        $html
+    );
 
     $content_url_patterns = array();
     foreach ($origin_variants as $variant) {
@@ -155,7 +200,7 @@ add_action('wp_head', function (): void {
         'name' => 'Harmat Lakópark látványvideó',
         'description' => 'A Harmat Lakópark új építésű lakásait, környezetét és hangulatát bemutató látványvideó.',
         'thumbnailUrl' => array(content_url(HARMAT_BW_POSTER)),
-        'uploadDate' => '2026-05-01T00:00:00+02:00',
+        'uploadDate' => HARMAT_BW_VIDEO_UPLOAD_DATE,
         'embedUrl' => harmat_bw_youtube_embed_url(false),
         'duration' => 'PT1M30S',
         'inLanguage' => 'hu-HU',
@@ -408,7 +453,7 @@ add_action('wp_footer', function (): void {
 }, 99);
 
 add_action('wp_head', function (): void {
-    if (is_admin() || wp_doing_ajax() || wp_is_json_request()) {
+    if (!harmat_bw_is_public_3d_video_surface()) {
         return;
     }
     ?>
@@ -502,7 +547,7 @@ add_action('wp_head', function (): void {
 }, 43);
 
 add_action('wp_footer', function (): void {
-    if (is_admin() || wp_doing_ajax() || wp_is_json_request()) {
+    if (!harmat_bw_is_public_3d_video_surface()) {
         return;
     }
     ?>
@@ -511,16 +556,7 @@ add_action('wp_footer', function (): void {
   "use strict";
 
   var videoId = <?php echo wp_json_encode(HARMAT_BW_YOUTUBE_ID); ?>;
-  var originFilename = <?php echo wp_json_encode(HARMAT_BW_3D_VIDEO_FILENAME); ?>;
-
-  function videoSource(video) {
-    var source = video.querySelector("source");
-    return (
-      (video.currentSrc || video.getAttribute("src") || "") +
-      " " +
-      (source ? source.getAttribute("src") || "" : "")
-    ).toLowerCase();
-  }
+  var retiredPathSuffix = "/spjs" + ".mp4";
 
   function createTrigger() {
     var trigger = document.createElement("button");
@@ -635,16 +671,39 @@ add_action('wp_footer', function (): void {
     var scope = root && root.querySelectorAll ? root : document;
     var videos = [];
 
-    if (scope.matches && scope.matches(".hi-video-card video")) {
+    function isRetiredVideo(video) {
+      if (!video || video.nodeName !== "VIDEO") return false;
+      if (video.hasAttribute("data-harmat-youtube-replacement")) return true;
+
+      var urls = [
+        video.getAttribute("src"),
+        video.getAttribute("data-src")
+      ];
+
+      video.querySelectorAll("source").forEach(function (source) {
+        urls.push(source.getAttribute("src"));
+        urls.push(source.getAttribute("data-src"));
+      });
+
+      return urls.some(function (url) {
+        if (!url) return false;
+
+        try {
+          return new URL(url, window.location.href).pathname.toLowerCase().endsWith(retiredPathSuffix);
+        } catch (error) {
+          return String(url).toLowerCase().indexOf(retiredPathSuffix.slice(1)) !== -1;
+        }
+      });
+    }
+
+    if (scope.matches && scope.matches("video") && isRetiredVideo(scope)) {
       videos.push(scope);
     }
-    scope.querySelectorAll(".hi-video-card video").forEach(function (video) {
-      videos.push(video);
+    scope.querySelectorAll("video").forEach(function (video) {
+      if (isRetiredVideo(video)) videos.push(video);
     });
 
     videos.forEach(function (video) {
-      if (videoSource(video).indexOf(originFilename) === -1) return;
-
       try {
         video.pause();
       } catch (error) {
@@ -653,8 +712,10 @@ add_action('wp_footer', function (): void {
 
       video.querySelectorAll("source").forEach(function (source) {
         source.removeAttribute("src");
+        source.removeAttribute("data-src");
       });
       video.removeAttribute("src");
+      video.removeAttribute("data-src");
       video.replaceWith(createTrigger());
     });
   }
@@ -701,13 +762,25 @@ add_action('init', function (): void {
     echo "      <video:description><![CDATA[A Harmat Lakópark új építésű lakásait, környezetét és hangulatát bemutató látványvideó.]]></video:description>\n";
     echo '      <video:player_loc>' . esc_url($player_url) . "</video:player_loc>\n";
     echo "      <video:duration>90</video:duration>\n";
-    echo "      <video:publication_date>2026-05-01T00:00:00+02:00</video:publication_date>\n";
+    echo '      <video:publication_date>' . esc_html(HARMAT_BW_VIDEO_UPLOAD_DATE) . "</video:publication_date>\n";
     echo "      <video:family_friendly>yes</video:family_friendly>\n";
     echo "    </video:video>\n";
     echo "  </url>\n";
     echo "</urlset>\n";
     exit;
 }, 0);
+
+add_filter('wpseo_sitemap_index', function (string $index): string {
+    $video_sitemap_url = esc_url(home_url('/harmat-video-sitemap.xml'));
+    $pattern = '~<sitemap>\s*<loc>'
+        . preg_quote($video_sitemap_url, '~')
+        . '</loc>\s*<lastmod>.*?</lastmod>\s*</sitemap>~s';
+    $replacement = '<sitemap><loc>' . $video_sitemap_url . '</loc><lastmod>'
+        . esc_html(HARMAT_BW_VIDEO_UPLOAD_DATE)
+        . '</lastmod></sitemap>';
+
+    return (string) preg_replace($pattern, $replacement, $index, 1);
+}, 999);
 
 add_action('init', function (): void {
     if (!wp_next_scheduled('harmat_bw_hourly_check')) {

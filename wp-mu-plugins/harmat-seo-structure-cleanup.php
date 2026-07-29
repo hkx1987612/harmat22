@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat SEO Structure Cleanup
  * Description: Cleans legacy frontend links and duplicate H1 output on selected public pages.
- * Version: 1.1.1
+ * Version: 1.1.2
  */
 
 defined('ABSPATH') || exit;
@@ -31,6 +31,9 @@ function harmat_seo_cleanup_duplicate_h1_paths() {
         'impresszum',
         'epitesi-naplo',
         'finanszirozas',
+        'harmat-lakopark-kornyeke',
+        'magunkrol',
+        'szolgaltatasaink',
     );
 }
 

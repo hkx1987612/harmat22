@@ -1,5 +1,10 @@
-# Harmat22 archived origin-video bandwidth guard.
+# Harmat22 permanently retired origin-video guard.
 # Deploy this file as .htaccess in the legacy video directories.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule "^(yulu-garden-source-compressed-60m|yulu-garden-mobile-720p|spjs)\.mp4$" - [G,L,NC]
+</IfModule>
+
 <IfModule mod_authz_core.c>
   <FilesMatch "^(yulu-garden-source-compressed-60m|yulu-garden-mobile-720p|spjs)\.mp4$">
     Require all denied
