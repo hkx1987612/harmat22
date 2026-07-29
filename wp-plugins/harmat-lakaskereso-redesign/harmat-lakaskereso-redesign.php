@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.1.9
+ * Version: 1.2.1
  */
 
 if (!defined('ABSPATH')) {
@@ -37,12 +37,12 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.1.9');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.1');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
     if (harmat_lakas_redesign_is_page()) {
-        wp_register_script('harmat-lakas-redesign', false, array(), '1.1.9', true);
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.1', true);
         wp_enqueue_script('harmat-lakas-redesign');
         wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
     }
@@ -58,12 +58,55 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v11';
+    return 'harmat_lakas_redesign_markup_v12';
 }
 
 function harmat_lakas_redesign_clear_cache() {
     delete_transient(harmat_lakas_redesign_cache_key());
+    delete_transient('harmat_lakas_redesign_markup_v11');
 }
+
+function harmat_lakas_redesign_queue_cache_warm() {
+    if (!wp_next_scheduled('harmat_lakas_redesign_warm_cache')) {
+        wp_schedule_single_event(time() + 10, 'harmat_lakas_redesign_warm_cache');
+    }
+}
+
+function harmat_lakas_redesign_invalidate_property_cache($post_id) {
+    if (get_post_type((int) $post_id) !== 'property') {
+        return;
+    }
+
+    harmat_lakas_redesign_clear_cache();
+    harmat_lakas_redesign_queue_cache_warm();
+}
+
+add_action('save_post_property', function ($post_id, $post, $update) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+        return;
+    }
+
+    harmat_lakas_redesign_invalidate_property_cache($post_id);
+}, 20, 3);
+
+function harmat_lakas_redesign_invalidate_property_meta($meta_id, $post_id, $meta_key) {
+    if (
+        !preg_match('/^(property_|propeerty_|_harmat_)/', (string) $meta_key)
+        && $meta_key !== '_thumbnail_id'
+    ) {
+        return;
+    }
+
+    harmat_lakas_redesign_invalidate_property_cache($post_id);
+}
+add_action('added_post_meta', 'harmat_lakas_redesign_invalidate_property_meta', 20, 4);
+add_action('updated_post_meta', 'harmat_lakas_redesign_invalidate_property_meta', 20, 4);
+add_action('deleted_post_meta', 'harmat_lakas_redesign_invalidate_property_meta', 20, 4);
+
+add_action('harmat_lakas_redesign_warm_cache', function () {
+    harmat_lakas_redesign_clear_cache();
+    harmat_lakas_redesign_render();
+});
 
 function harmat_lakas_redesign_items() {
     global $harmat_sales_manager;
@@ -510,6 +553,7 @@ function harmat_lakas_redesign_css() {
     return '
     body.harmat-lakas-redesign-page .site-content{background:#fbf4e8}
     .hm-lakas-page{width:min(1320px,calc(100% - 44px));margin:0 auto;padding:56px 0 76px;color:#253137;font-family:Montserrat,Arial,sans-serif}
+    .hm-lakas-page,.hm-lakas-page *{box-sizing:border-box}
     .hm-lakas-related-section{padding-top:62px}
     .hm-lakas-related-head{margin-bottom:28px}
     .hm-lakas-related-head h2{margin:0;color:#253137;font-family:"Marcellus SC",Georgia,serif;font-size:36px;font-weight:400;line-height:1.15;text-transform:uppercase}
@@ -528,17 +572,17 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-tabs button[data-status="current"].is-active{background:#1f7a4d;border-color:#1f7a4d}
     .hm-lakas-tabs button[data-status="reserved"].is-active{background:#b77a24;border-color:#b77a24}
     .hm-lakas-tabs button[data-status="sold"].is-active{background:#69727d;border-color:#69727d}
-    .hm-lakas-toolbar label{display:grid;gap:7px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .hm-lakas-toolbar label{display:grid;gap:7px;margin:0;color:#80561b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
     .hm-lakas-toolbar input,.hm-lakas-toolbar select{width:100%;height:46px;border:1px solid rgba(168,118,45,.35);background:#fff;color:#253137;padding:0 13px;font-size:14px;outline:none}
     .hm-lakas-toolbar input:focus,.hm-lakas-toolbar select:focus{border-color:#a8762d;box-shadow:0 0 0 3px rgba(168,118,45,.12)}
-    .hm-lakas-range-field{display:grid;gap:7px;margin:0;color:#a8762d;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+    .hm-lakas-range-field{display:grid;gap:7px;margin:0;color:#80561b;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
     .hm-lakas-range-box{height:46px;display:grid;grid-template-rows:18px 1fr;gap:3px;border:1px solid rgba(168,118,45,.35);background:#fff;padding:5px 13px 7px}
     .hm-lakas-range-box strong{display:block;min-width:0;color:#253137;font-size:12px;font-weight:900;letter-spacing:0;line-height:18px;text-align:center;text-transform:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .hm-lakas-range-slider{position:relative;height:18px}
     .hm-lakas-range-track,.hm-lakas-range-fill{position:absolute;left:0;right:0;top:50%;height:4px;border-radius:999px;transform:translateY(-50%)}
     .hm-lakas-range-track{background:#ead8b8}
     .hm-lakas-range-fill{background:#a8762d}
-    .hm-lakas-range-slider input[type=range]{position:absolute;left:0;top:0;width:100%;height:18px;margin:0;padding:0;border:0;background:transparent;box-shadow:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+    .hm-lakas-range-slider input[type=range]{position:absolute;left:0;top:-13px;width:100%;height:44px;margin:0;padding:0;border:0;background:transparent;box-shadow:none;pointer-events:none;-webkit-appearance:none;appearance:none}
     .hm-lakas-range-slider input[type=range]:focus{box-shadow:none}
     .hm-lakas-range-slider input[type=range][data-filter="sqmMin"]{z-index:3}
     .hm-lakas-range-slider input[type=range][data-filter="sqmMax"]{z-index:4}
@@ -563,7 +607,7 @@ function harmat_lakas_redesign_css() {
     .hm-status-sold{filter:grayscale(.15);opacity:.82}
     .hm-lakas-body{padding:18px}
     .hm-lakas-price{margin-bottom:14px;padding:13px 14px;border-left:3px solid #a8762d;background:#fff8ed}
-    .hm-lakas-price small,.hm-lakas-facts small{display:block;margin-bottom:5px;color:#a8762d;font-family:"Marcellus SC",Georgia,serif;font-size:11px;line-height:1.1;text-transform:uppercase}
+    .hm-lakas-price small,.hm-lakas-facts small{display:block;margin-bottom:5px;color:#80561b;font-family:"Marcellus SC",Georgia,serif;font-size:11px;line-height:1.1;text-transform:uppercase}
     .hm-lakas-price strong{display:block;color:#253137;font-size:18px;line-height:1.25}
     .hm-lakas-price span{display:block;margin-top:5px;color:#687078;font-size:12px;font-weight:800;line-height:1.25}
     .hm-lakas-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid rgba(168,118,45,.16);border-radius:6px;overflow:hidden}
@@ -578,7 +622,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-empty.is-visible{display:block}
     @media(min-width:1121px) and (max-width:1360px){.hm-lakas-toolbar{grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(120px,.7fr)}.hm-lakas-range-field{grid-column:1/6}.hm-lakas-reset{grid-column:6}}
     @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-range-field{grid-column:1/-1}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-hero p,.hm-lakas-hero h1,.hm-lakas-stats{grid-column:1;grid-row:auto}.hm-lakas-stats{justify-content:flex-start}}
-    @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
+    @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{min-width:0;width:100%;max-width:100%;padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%;min-width:0;gap:8px}.hm-lakas-stats span{min-width:0;justify-content:center;padding:0 10px;text-align:center;white-space:normal}.hm-lakas-stats span:last-child{grid-column:1/-1}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
 
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .property_loop,
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .elementor-section-wrap,

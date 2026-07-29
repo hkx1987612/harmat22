@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Performance Guard
  * Description: Keeps heavy presentation assets off listing and virtual-selector pages, and suppresses the replaced legacy homepage map.
- * Version: 1.3.24
+ * Version: 1.3.25
  */
 
 if (!defined('ABSPATH')) {
@@ -284,6 +284,7 @@ function harmat_perf_is_private_portal_path() {
 function harmat_perf_dequeue_heavy_assets() {
     $is_fast_path = harmat_perf_is_fast_path();
     $is_property_detail = harmat_perf_is_property_detail();
+    $is_search_page = is_page('lakaskereso') || harmat_perf_request_path() === 'lakaskereso';
 
     if (!$is_fast_path && !$is_property_detail && !is_front_page()) {
         return;
@@ -301,6 +302,21 @@ function harmat_perf_dequeue_heavy_assets() {
             'tp-tools',
             'sr7',
             'sr7css',
+        ));
+    }
+
+    if ($is_search_page) {
+        $handles = array_merge($handles, array(
+            'epl-js-lib',
+            'epl-front-scripts',
+            'jquery-ui-mouse',
+            'jquery-ui-slider',
+            'jquery-touch-punch',
+            'nouislider-js',
+            'nouislider-css',
+            'owl-carousel',
+            'otf-carousel',
+            'maisonco-carousel',
         ));
     }
 
@@ -363,10 +379,50 @@ function harmat_perf_prefetch_key_pages() {
         return;
     }
 
-    echo '<link rel="prefetch" href="' . esc_url(home_url('/lakaskereso/')) . '" as="document">' . "\n";
-    echo '<link rel="prefetch" href="' . esc_url(home_url('/virtualis-lakasvalaszto/')) . '" as="document">' . "\n";
+    $targets = array(
+        home_url('/lakaskereso/'),
+        home_url('/virtualis-lakasvalaszto/'),
+    );
+    ?>
+<script id="harmat-intent-prefetch">
+(function () {
+  "use strict";
+
+  var targets = <?php echo wp_json_encode($targets, JSON_UNESCAPED_SLASHES); ?>;
+  var warmed = {};
+
+  function warmLink(anchor) {
+    if (!anchor || !anchor.href) return;
+    var url;
+    try {
+      url = new URL(anchor.href, window.location.href);
+    } catch (error) {
+      return;
+    }
+    if (targets.indexOf(url.origin + url.pathname) === -1 || warmed[url.href]) return;
+
+    warmed[url.href] = true;
+    var hint = document.createElement("link");
+    hint.rel = "prefetch";
+    hint.href = url.href;
+    document.head.appendChild(hint);
+  }
+
+  function warmFromEvent(event) {
+    var anchor = event.target && event.target.closest
+      ? event.target.closest("a[href]")
+      : null;
+    warmLink(anchor);
+  }
+
+  document.addEventListener("pointerover", warmFromEvent, {passive:true,capture:true});
+  document.addEventListener("touchstart", warmFromEvent, {passive:true,capture:true});
+  document.addEventListener("focusin", warmFromEvent, true);
+}());
+</script>
+    <?php
 }
-add_action('wp_head', 'harmat_perf_prefetch_key_pages', 8);
+add_action('wp_footer', 'harmat_perf_prefetch_key_pages', 80);
 
 function harmat_perf_mobile_hero_video_switch() {
     if (is_admin() || !is_front_page()) {

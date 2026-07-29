@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Homepage YouTube Bandwidth Guard
  * Description: Replaces origin-hosted presentation videos with resilient YouTube players and monitors hosting bandwidth.
- * Version: 1.3.3
+ * Version: 1.4.0
  */
 
 if (!defined('ABSPATH')) {
@@ -185,8 +185,40 @@ function harmat_bw_filter_homepage_html(string $html): string
         $html
     );
 
+    if (
+        strpos($html, 'id="harmat-youtube-player"') === false
+        && strpos($html, "id='harmat-youtube-player'") === false
+    ) {
+        $poster_url = esc_url(content_url(HARMAT_BW_POSTER));
+        $hero_markup = '<div class="harmat-youtube-hero" aria-hidden="true">'
+            . '<img class="harmat-youtube-poster" src="' . $poster_url . '"'
+            . ' alt="" width="1920" height="1080" loading="eager"'
+            . ' fetchpriority="high" decoding="async">'
+            . '<div id="harmat-youtube-player"></div>'
+            . '</div>';
+
+        $html = preg_replace_callback(
+            '~<sr7-module\b[^>]*\bid=["\']SR7_1_1["\'][^>]*>~i',
+            static function (array $match) use ($hero_markup): string {
+                return $match[0] . $hero_markup;
+            },
+            $html,
+            1
+        );
+    }
+
     return $html;
 }
+
+add_action('wp_head', function (): void {
+    if (!harmat_bw_is_public_homepage()) {
+        return;
+    }
+
+    echo '<link rel="preload" as="image" href="'
+        . esc_url(content_url(HARMAT_BW_POSTER))
+        . '" fetchpriority="high">' . "\n";
+}, 1);
 
 add_action('wp_head', function (): void {
     if (!harmat_bw_is_public_homepage()) {
@@ -223,6 +255,12 @@ add_action('wp_head', function (): void {
     ?>
 <style id="harmat-youtube-hero-style">
 #SR7_1_1 {
+  display:block;
+  width:100%;
+  height:100vh!important;
+  min-height:100vh;
+  height:100svh!important;
+  min-height:100svh;
   position:relative;
   background:#202522 url('<?php echo esc_url(content_url(HARMAT_BW_POSTER)); ?>') center center/cover no-repeat;
 }
@@ -240,6 +278,18 @@ add_action('wp_head', function (): void {
   pointer-events:none;
   background:#202522 url('<?php echo esc_url(content_url(HARMAT_BW_POSTER)); ?>') center center/cover no-repeat;
 }
+#SR7_1_1 .harmat-youtube-poster {
+  position:absolute;
+  inset:0;
+  z-index:0;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+  opacity:1;
+  transition:opacity .45s ease;
+}
 #SR7_1_1 .harmat-youtube-hero iframe {
   position:absolute;
   top:50%;
@@ -247,12 +297,16 @@ add_action('wp_head', function (): void {
   border:0;
   max-width:none;
   opacity:0;
+  z-index:1;
   transform:translate(-50%,-50%);
   transition:opacity .45s ease;
   pointer-events:none;
 }
 #SR7_1_1.harmat-youtube-playing .harmat-youtube-hero iframe {
   opacity:1;
+}
+#SR7_1_1.harmat-youtube-playing .harmat-youtube-poster {
+  opacity:0;
 }
 #SR7_1_1.harmat-youtube-playing sr7-module-bg,
 #SR7_1_1.harmat-youtube-playing sr7-bg {
@@ -395,15 +449,24 @@ add_action('wp_footer', function (): void {
 
   function installPlayer() {
     var module = document.getElementById(moduleId);
-    if (!module || module.querySelector(".harmat-youtube-hero")) return false;
-    var layer = document.createElement("div");
-    layer.className = "harmat-youtube-hero";
-    layer.setAttribute("aria-hidden", "true");
+    if (!module) return false;
 
-    var host = document.createElement("div");
-    host.id = "harmat-youtube-player";
-    layer.appendChild(host);
-    module.appendChild(layer);
+    var layer = module.querySelector(".harmat-youtube-hero");
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.className = "harmat-youtube-hero";
+      layer.setAttribute("aria-hidden", "true");
+      module.appendChild(layer);
+    }
+    if (layer.getAttribute("data-harmat-player-installed") === "1") return true;
+
+    var host = layer.querySelector("#harmat-youtube-player");
+    if (!host) {
+      host = document.createElement("div");
+      host.id = "harmat-youtube-player";
+      layer.appendChild(host);
+    }
+    layer.setAttribute("data-harmat-player-installed", "1");
 
     fallbackTimer = window.setTimeout(keepPosterFallback, 15000);
 
@@ -442,11 +505,21 @@ add_action('wp_footer', function (): void {
   }
 
   var attempts = 0;
-  var timer = window.setInterval(function () {
-    attempts += 1;
-    if (installPlayer() || attempts > 120) window.clearInterval(timer);
-  }, 50);
-  installPlayer();
+  var timer = null;
+
+  function bootPlayer() {
+    if (installPlayer()) return;
+    timer = window.setInterval(function () {
+      attempts += 1;
+      if (installPlayer() || attempts > 120) window.clearInterval(timer);
+    }, 50);
+  }
+
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(bootPlayer, {timeout:1600});
+  } else {
+    window.setTimeout(bootPlayer, 700);
+  }
 })();
 </script>
     <?php

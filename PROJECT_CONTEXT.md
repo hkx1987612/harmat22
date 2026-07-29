@@ -5,7 +5,20 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-offer-social-source-current`
+- Stable tag: `stable-2026-07-29-experience-optimization-current`
+- The public experience optimization is live with conservative, rollback-friendly changes covering homepage video startup, apartment-search responsiveness, 360-degree loading, gallery image delivery, floor-plan PDF delivery, and icon-link accessibility.
+- Full rollback backup: `/home/harmath2/codex-backups/experience-optimization-20260729-085538`
+- The homepage now renders and preloads a real high-resolution poster before the YouTube player starts; the poster is hidden only after confirmed playback, so restricted YouTube regions retain a clean project image.
+- Homepage document prefetches are now triggered by visitor intent instead of running unconditionally on initial load.
+- The apartment search keeps all 124 properties, invalidates and warms its cached markup after property changes, removes unused carousel/range-library assets, and provides stable mobile statistics and 44-pixel range controls.
+- The first-phase 360 selector provides direct A1-A4 building links, keyboard-operable SVG hotspots, stable JSON cache versions, a poster-first frame strategy, and connection-aware background frame loading.
+- The public gallery serves verified 640-pixel and 1280-pixel WebP derivatives with responsive `srcset`; the original full-resolution JPEG files remain available as automatic fallbacks.
+- All 124 public property pages now link to verified `-cn-floorplan-web.pdf` copies. The compact copies total approximately 136 MB instead of 398 MB, while the original PDFs remain untouched and accessible for rollback.
+- The distinct `swsp_xmsp.mp4` project-introduction video remains an on-demand local asset with `preload="none"` and a delayed source; the separate `Látványvideó` remains the click-to-load YouTube presentation.
+- Current versions: homepage YouTube guard `1.4.0`, apartment search `1.2.1`, 360 selector `1.9.0`, gallery comfort layout `1.1.0`, accessibility polish `1.0.0`, and floor-plan PDF optimizer `1.0.0`.
+- Final post-deployment audit covered all 145 sitemap URLs and 569 same-origin resources: every page and resource returned successfully, all 124 property pages used the compact floor-plan link, and there were zero SEO metadata, language, mojibake, placeholder, legacy-video, fatal-output, or broken-resource findings.
+- Desktop and mobile browser regression passed for the homepage, 12 highlighted apartments, gallery, 124-property search, offer-source labels, main and first-phase virtual selectors, A3 building selector, A3-4-L5, and contact page without horizontal overflow.
+- WordPress core checksums, every database table, related PHP syntax checks, cache purge, and post-regression error-log checks all passed.
 - The public offer modal now has five lead-source choices: `Kültéri hirdetés`, `Google keresés`, `ingatlan.com`, `Közösségi média`, and `Egyéb`.
 - `Közösségi média` combines Facebook, Instagram, and TikTok; separate Facebook/TikTok choices were removed without rewriting historical inquiry records.
 - Unified public offer modal version: `1.0.6`
@@ -23,7 +36,7 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Duplicate public H1 output is normalized on `/harmat-lakopark-kornyeke/`, `/magunkrol/`, and `/szolgaltatasaink/`.
 - Post-deployment sitemap audit covered 145 indexed URLs: all returned `200`, with zero redirect, title, description, canonical, noindex, language, H1, legacy-video, or duplicate-metadata findings.
 - Search Console read `/sitemap_index.xml` successfully on 2026-07-29, reports the homepage indexed with one indexed video, accepted a fresh homepage indexing request, and started validation of the historical `/wp-json/` 5xx record after the endpoint was confirmed `200`.
-- Current YouTube/retired-video guard version: `1.3.3`.
+- Current YouTube/retired-video guard version: `1.4.0`.
 - CRM payment methods now include the internal key `loan`, displayed as `贷款` in Chinese sales mode and `Bankhitel` in Hungarian sales mode.
 - The loan label is shared by deal editing, validation, filters, exports, confirmation sheets, and customer records; no loan percentage or bank condition is assumed automatically.
 - Harmat Sales Manager version: `1.6.120`

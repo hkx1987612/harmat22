@@ -2,13 +2,29 @@
 /*
 Plugin Name: Lakópark 360 Viewer
 Description: Interaktív 360-as lakásválasztó modul JSON hitboxokkal.
-Version: 1.8.1
+Version: 1.9.0
 Author: 21stCenturyWebsites
 */
 
 if (!defined('ABSPATH')) exit;
 
 add_shortcode('lakaspark_360', 'render_lakaspark_360_viewer');
+
+function lakaspark_360_asset_version($url) {
+    $url_path = (string) wp_parse_url((string) $url, PHP_URL_PATH);
+    $content_path = trailingslashit((string) wp_parse_url(content_url('/'), PHP_URL_PATH));
+
+    if ($url_path && $content_path && strpos($url_path, $content_path) === 0) {
+        $relative_path = ltrim(substr($url_path, strlen($content_path)), '/');
+        $local_path = trailingslashit(WP_CONTENT_DIR) . rawurldecode($relative_path);
+
+        if (is_file($local_path)) {
+            return (string) filemtime($local_path);
+        }
+    }
+
+    return '6.2';
+}
 
 function render_lakaspark_360_viewer($atts) {
     // 1. LÉPÉS: Shortcode attribútumok definiálása (üres alapértelmezésekkel, ahogy kérted)
@@ -50,8 +66,8 @@ function render_lakaspark_360_viewer($atts) {
         }
     }
 
-    wp_enqueue_style('lakaspark-360-css', plugin_dir_url(__FILE__) . 'viewer.css', array(), '6.0');
-    wp_enqueue_script('lakaspark-360-js', plugin_dir_url(__FILE__) . 'viewer.js', array(), '6.0', true);
+    wp_enqueue_style('lakaspark-360-css', plugin_dir_url(__FILE__) . 'viewer.css', array(), '6.2');
+    wp_enqueue_script('lakaspark-360-js', plugin_dir_url(__FILE__) . 'viewer.js', array(), '6.2', true);
 
     $apartment_data = array();
     $filter_rooms = array();
@@ -165,6 +181,7 @@ function render_lakaspark_360_viewer($atts) {
         'scene'          => $scene,
         'baseUrl'        => $image_folder,
         'jsonUrl'        => $json_url,
+        'jsonVersion'    => lakaspark_360_asset_version($json_url),
         'apartments'     => $apartment_data,
         'toggle'         => $toggle_mode,
         'customLinks'    => $custom_links_arr,
@@ -207,7 +224,7 @@ function render_lakaspark_360_viewer($atts) {
             <div class="filter-results-info">
                 <span id="resultCount">Lakások betöltése...</span>
                 <?php if ($toggle_mode !== 'off'): ?>
-                <button class="list-btn-modern" id="topListToggleBtn" title="Lakáslista megnyitása/bezárása">
+                <button class="list-btn-modern" id="topListToggleBtn" title="Lakáslista megnyitása/bezárása" aria-label="Lakáslista megnyitása vagy bezárása">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
                 </button>
                 <?php endif; ?>
@@ -240,12 +257,23 @@ function render_lakaspark_360_viewer($atts) {
 
                     <svg id="hitboxLayer" class="viewer-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice"></svg>
                     <div id="viewerTooltip" class="viewer-tooltip"></div>
+
+                    <?php if (!empty($custom_links_arr)): ?>
+                    <nav class="lakaspark-building-links" aria-label="Épület kiválasztása">
+                        <span>Épület</span>
+                        <?php foreach ($custom_links_arr as $building_id => $building_url): ?>
+                            <a href="<?php echo esc_url($building_url); ?>">
+                                <?php echo esc_html(strtoupper($building_id)); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </nav>
+                    <?php endif; ?>
                     
                     <div class="rotation-controls">
-                        <button id="rotateLeftBtn" class="rotate-btn" title="Forgatás balra">
+                        <button id="rotateLeftBtn" class="rotate-btn" title="Forgatás balra" aria-label="Épületnézet forgatása balra">
                             <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                         </button>
-                        <button id="rotateRightBtn" class="rotate-btn" title="Forgatás jobbra">
+                        <button id="rotateRightBtn" class="rotate-btn" title="Forgatás jobbra" aria-label="Épületnézet forgatása jobbra">
                             <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                         </button>
                     </div>
@@ -269,7 +297,7 @@ function render_lakaspark_360_viewer($atts) {
             </div>
 
             <?php if ($toggle_mode !== 'off'): ?>
-            <button class="list-toggle-btn" id="listToggleBtn" title="Lista kinyitása/bezárása">
+            <button class="list-toggle-btn" id="listToggleBtn" title="Lista kinyitása/bezárása" aria-label="Lakáslista megnyitása vagy bezárása">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
             </button>
             <?php endif; ?>

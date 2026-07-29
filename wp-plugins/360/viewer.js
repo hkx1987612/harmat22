@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
         filePrefix: `bld-${WP_DATA.scene}-frame-`, 
         fileExt: '.webp', 
         totalFrames: 72, 
-        jsonUrl: WP_DATA.jsonUrl 
+        jsonUrl: WP_DATA.jsonUrl,
+        jsonVersion: WP_DATA.jsonVersion || '6.2'
     };
     const WP_APARTMENT_DATA = WP_DATA.apartments || {};
     const TOGGLE_ENABLED = WP_DATA.toggle !== 'off';
@@ -173,12 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = ensureFrameLoaded(frameIndex, true);
         if (!img || !img.dataset.loaded) {
             pendingFrame = frameIndex;
-            preloadAround(frameIndex);
+            preloadAround(frameIndex, 1);
             return false;
         }
 
         currentFrame = frameIndex;
-        preloadAround(frameIndex);
+        preloadAround(frameIndex, 1);
         imageElements.forEach((img, idx) => { if (img) img.style.opacity = (idx + 1 === frameIndex) ? '1' : '0'; });
         
         if (compassSlider) compassSlider.value = frameIndex;
@@ -260,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (!isStatic) {
-                    path.addEventListener('click', () => {
+                    const activatePath = () => {
                         if (isCustomLink) {
                             window.location.href = CUSTOM_LINKS[aptId];
                             return;
@@ -278,6 +279,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         }
+                    };
+
+                    path.setAttribute('tabindex', '0');
+                    path.setAttribute('role', isCustomLink ? 'link' : 'button');
+                    path.setAttribute('aria-label', label);
+                    path.addEventListener('click', activatePath);
+                    path.addEventListener('keydown', (event) => {
+                        if (event.key !== 'Enter' && event.key !== ' ') return;
+                        event.preventDefault();
+                        activatePath();
                     });
                 }
             }
@@ -388,16 +399,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (highPriority) {
             img.fetchPriority = 'high';
         }
-        img.src = buildFrameUrl(normalizedFrame);
         img.className = 'viewer-image';
+        img.alt = '';
+        img.setAttribute('aria-hidden', 'true');
+        img.decoding = 'async';
         img.style.opacity = (normalizedFrame === currentFrame) ? '1' : '0';
+        img.src = buildFrameUrl(normalizedFrame);
         viewer.insertBefore(img, svgLayer);
         imageElements[index] = img;
         return img;
     }
 
-    function preloadAround(frame) {
-        for (let offset = -INITIAL_PRELOAD_RADIUS; offset <= INITIAL_PRELOAD_RADIUS; offset++) {
+    function preloadAround(frame, radius = INITIAL_PRELOAD_RADIUS) {
+        for (let offset = -radius; offset <= radius; offset++) {
             ensureFrameLoaded(frame + offset, Math.abs(offset) <= 1);
         }
     }
@@ -405,20 +419,52 @@ document.addEventListener('DOMContentLoaded', () => {
     function startBackgroundPreload() {
         if (backgroundPreloadStarted) return;
         backgroundPreloadStarted = true;
-        let index = 1;
-        function loadNext() {
-            if (index > CONFIG.totalFrames) return;
-            ensureFrameLoaded(index, false);
-            index++;
-            window.setTimeout(loadNext, 550);
+
+        preloadAround(currentFrame, 1);
+
+        const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        const conserveData = connection && (
+            connection.saveData
+            || /(^|-)2g$/.test(connection.effectiveType || '')
+        );
+        if (conserveData) return;
+
+        const queue = [];
+        const queued = new Set([currentFrame]);
+        for (let distance = 1; distance < CONFIG.totalFrames; distance++) {
+            [currentFrame + distance, currentFrame - distance].forEach((frame) => {
+                const normalized = normalizeFrameIndex(frame);
+                if (queued.has(normalized)) return;
+                queued.add(normalized);
+                queue.push(normalized);
+            });
         }
-        window.setTimeout(loadNext, 1600);
+
+        const delay = connection && connection.effectiveType === '3g' ? 850 : 500;
+        let index = 0;
+        function loadNext() {
+            if (index >= queue.length) return;
+            if (document.hidden) {
+                window.setTimeout(loadNext, 1200);
+                return;
+            }
+
+            ensureFrameLoaded(queue[index], false);
+            index++;
+            window.setTimeout(loadNext, delay);
+        }
+        window.setTimeout(loadNext, 1400);
     }
 
-    preloadAround(currentFrame);
+    preloadAround(currentFrame, 0);
 
     // A renderelés bekerült a fetch belsejébe, hogy biztosan meglegyen a JSON adat!
-    fetch(CONFIG.jsonUrl + (CONFIG.jsonUrl.includes('?') ? '&' : '?') + 'v=' + Date.now(), { cache: 'no-store' })
+    fetch(
+        CONFIG.jsonUrl
+            + (CONFIG.jsonUrl.includes('?') ? '&' : '?')
+            + 'v=' + encodeURIComponent(CONFIG.jsonVersion),
+        { cache: 'force-cache', credentials: 'same-origin' }
+    )
         .then(res => res.json())
         .then(data => {
             hitboxData = data;
