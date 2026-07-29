@@ -1,0 +1,14 @@
+# Harmat22 archived origin-video bandwidth guard.
+# Deploy this file as .htaccess in the legacy video directories.
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(yulu-garden-source-compressed-60m|yulu-garden-mobile-720p|spjs)\.mp4$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+  <FilesMatch "^(yulu-garden-source-compressed-60m|yulu-garden-mobile-720p|spjs)\.mp4$">
+    Order Allow,Deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
