@@ -5,17 +5,24 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-youtube-bandwidth-guard`
+- Stable tag: `stable-2026-07-29-crm-bandwidth-current`
 - Homepage presentation video: YouTube video `kmAg_ki-yYY`, muted autoplay, loop, inline playback, adaptive quality with `hd1080` requested.
+- The homepage uses a direct privacy-enhanced YouTube iframe so playback does not depend on the YouTube JavaScript API; the obsolete Slider Revolution preloader is suppressed after the poster fallback is ready.
 - The 3D experience `Latvanyvideo` card uses the same privacy-enhanced YouTube player and loads only after a visitor clicks play.
 - MU implementation: `wp-mu-plugins/zz-harmat-home-youtube-guard.php`
+- CRM bandwidth widget: `wp-mu-plugins/zz-harmat-crm-bandwidth-widget.php`
 - Static origin-video deny template: `server-config/heavy-origin-video-deny.htaccess`
 - The deny template is deployed as `.htaccess` in `wp-content/uploads/2026/05/` and `wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/`.
 - Legacy large files `yulu-garden-source-compressed-60m.mp4`, `yulu-garden-mobile-720p.mp4`, and `spjs.mp4` are blocked from direct web access.
 - Bandwidth monitoring runs hourly, uses cPanel UAPI when available and archived Apache logs as a fallback, and sends one monthly email per 50/70/85/95 percent threshold.
+- The current-month bandwidth total is displayed beside visitor metrics in the authenticated sales CRM, with separate Chinese and Hungarian labels.
+- Bandwidth usage, threshold-notice state, and archived-log cache reset automatically on the first WordPress request of each new month.
 - Live backup before the first deployment: `/home/harmath2/codex-backups/youtube-bandwidth-guard-20260729-044832`
 - Live backup before the monitor fallback update: `/home/harmath2/codex-backups/bandwidth-monitor-fallback-20260729-045424`
-- Post-deployment checks passed for the homepage, gallery, apartment search, virtual selectors, studio redirect, contact redirect, REST API, and video sitemap.
+- Live backup before the homepage spinner fix: `/home/harmath2/codex-backups/home-youtube-spinner-fix-20260729-051308`
+- Live backup before the forced-autoplay iframe update: `/home/harmath2/codex-backups/home-youtube-autoplay-fix-20260729-051505`
+- Live backup before the CRM bandwidth widget: `/home/harmath2/codex-backups/crm-bandwidth-widget-20260729-051736`
+- Post-deployment checks passed for the homepage video, gallery, apartment search, virtual selectors, contact page, sales login, CRM widget fixtures, monthly reset, language separation, PHP logs, and horizontal overflow.
 
 ## Business Goal
 

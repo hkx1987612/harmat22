@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Homepage YouTube Bandwidth Guard
  * Description: Replaces origin-hosted presentation videos with resilient YouTube players and monitors hosting bandwidth.
- * Version: 1.0.1
+ * Version: 1.1.0
  */
 
 if (!defined('ABSPATH')) {
@@ -181,6 +181,12 @@ add_action('wp_head', function (): void {
   position:relative;
   background:#202522 url('<?php echo esc_url(content_url(HARMAT_BW_POSTER)); ?>') center center/cover no-repeat;
 }
+#SR7_1_1 sr7-prl {
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
 #SR7_1_1 .harmat-youtube-hero {
   position:absolute;
   inset:0;
@@ -211,11 +217,6 @@ add_action('wp_head', function (): void {
   position:relative;
   z-index:2;
 }
-@media (prefers-reduced-motion:reduce) {
-  #SR7_1_1 .harmat-youtube-hero iframe {
-    display:none!important;
-  }
-}
 </style>
     <?php
 }, 42);
@@ -231,9 +232,7 @@ add_action('wp_footer', function (): void {
 
   var videoId = <?php echo wp_json_encode(HARMAT_BW_YOUTUBE_ID); ?>;
   var moduleId = "SR7_1_1";
-  var player = null;
   var frame = null;
-  var started = false;
 
   function sizeFrame() {
     var module = document.getElementById(moduleId);
@@ -253,111 +252,42 @@ add_action('wp_footer', function (): void {
     frame.style.height = Math.ceil(frameHeight) + "px";
   }
 
-  function revealWhenPlaying(event) {
-    if (!window.YT || event.data !== window.YT.PlayerState.PLAYING) return;
+  function revealPlayer() {
     var module = document.getElementById(moduleId);
     if (module) module.classList.add("harmat-youtube-playing");
-  }
-
-  function requestHd() {
-    if (!player || typeof player.setPlaybackQuality !== "function") return;
-    try {
-      player.setPlaybackQuality("hd1080");
-    } catch (error) {
-      // YouTube can still choose an adaptive quality for the visitor.
-    }
-  }
-
-  function createPlayer() {
-    if (started || !window.YT || !window.YT.Player) return;
-    var host = document.getElementById("harmat-youtube-player");
-    if (!host) return;
-    started = true;
-
-    player = new window.YT.Player(host, {
-      host: "https://www.youtube-nocookie.com",
-      videoId: videoId,
-      playerVars: {
-        autoplay: 1,
-        mute: 1,
-        controls: 0,
-        disablekb: 1,
-        fs: 0,
-        iv_load_policy: 3,
-        loop: 1,
-        modestbranding: 1,
-        origin: window.location.origin,
-        playlist: videoId,
-        playsinline: 1,
-        rel: 0,
-        vq: "hd1080"
-      },
-      events: {
-        onReady: function (event) {
-          frame = event.target.getIframe();
-          sizeFrame();
-          event.target.mute();
-          requestHd();
-          event.target.playVideo();
-          window.setTimeout(requestHd, 1200);
-          window.setTimeout(requestHd, 4000);
-        },
-        onStateChange: function (event) {
-          revealWhenPlaying(event);
-          if (window.YT && event.data === window.YT.PlayerState.ENDED) {
-            event.target.seekTo(0, true);
-            event.target.playVideo();
-          }
-        }
-      }
-    });
   }
 
   function installPlayer() {
     var module = document.getElementById(moduleId);
     if (!module || module.querySelector(".harmat-youtube-hero")) return false;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
-
     var layer = document.createElement("div");
     layer.className = "harmat-youtube-hero";
     layer.setAttribute("aria-hidden", "true");
 
-    var host = document.createElement("div");
-    host.id = "harmat-youtube-player";
-    layer.appendChild(host);
+    frame = document.createElement("iframe");
+    frame.title = "Harmat Lakópark látványvideó";
+    frame.loading = "eager";
+    frame.allow = "autoplay; encrypted-media; picture-in-picture";
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame.setAttribute("tabindex", "-1");
+    frame.setAttribute("aria-hidden", "true");
+    frame.addEventListener("load", function () {
+      window.setTimeout(revealPlayer, 450);
+    }, {once:true});
+    frame.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(videoId)
+      + "?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&iv_load_policy=3"
+      + "&loop=1&playlist=" + encodeURIComponent(videoId)
+      + "&playsinline=1&rel=0&modestbranding=1&vq=hd1080";
+
+    layer.appendChild(frame);
     module.appendChild(layer);
-
-    var previousReady = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = function () {
-      if (typeof previousReady === "function") previousReady();
-      createPlayer();
-    };
-
-    if (window.YT && window.YT.Player) {
-      createPlayer();
-    } else if (!document.querySelector('script[data-harmat-youtube-api]')) {
-      var api = document.createElement("script");
-      api.src = "https://www.youtube.com/iframe_api";
-      api.async = true;
-      api.setAttribute("data-harmat-youtube-api", "1");
-      document.head.appendChild(api);
-    }
+    sizeFrame();
 
     if (window.ResizeObserver) {
       new ResizeObserver(sizeFrame).observe(module);
     } else {
       window.addEventListener("resize", sizeFrame, {passive:true});
     }
-
-    document.addEventListener("visibilitychange", function () {
-      if (!player) return;
-      if (document.hidden) {
-        player.pauseVideo();
-      } else {
-        requestHd();
-        player.playVideo();
-      }
-    });
 
     return true;
   }
@@ -578,6 +508,43 @@ add_action('init', function (): void {
         wp_schedule_event(time() + 300, 'hourly', 'harmat_bw_hourly_check');
     }
 }, 20);
+
+add_action('init', 'harmat_bw_maybe_reset_month', 1);
+
+function harmat_bw_maybe_reset_month(): void
+{
+    $current_month = current_time('Y-m');
+    $stored_month = (string) get_option('harmat_bw_month_state', '');
+    $last_usage = get_option('harmat_bw_last_usage', array());
+    $last_month = is_array($last_usage) ? (string) ($last_usage['month'] ?? '') : '';
+
+    if ($stored_month === '') {
+        update_option('harmat_bw_month_state', $current_month, false);
+        if ($last_month === '' || $last_month === $current_month) {
+            return;
+        }
+    } elseif ($stored_month === $current_month) {
+        return;
+    }
+
+    $limit_mib = max(1, (int) get_option('harmat_bw_limit_mib', HARMAT_BW_LIMIT_MIB));
+    $reset_usage = array(
+        'ok' => true,
+        'usage_bytes' => 0,
+        'usage_mib' => 0,
+        'limit_mib' => $limit_mib,
+        'percent' => 0,
+        'threshold' => 0,
+        'month' => $current_month,
+        'source' => 'monthly_reset',
+        'reset_at' => current_time('mysql'),
+    );
+
+    update_option('harmat_bw_last_usage', $reset_usage, false);
+    update_option('harmat_bw_month_state', $current_month, false);
+    delete_option('harmat_bw_notice_state');
+    delete_option('harmat_bw_archived_usage_cache');
+}
 
 add_action('harmat_bw_hourly_check', 'harmat_bw_collect_bandwidth');
 
