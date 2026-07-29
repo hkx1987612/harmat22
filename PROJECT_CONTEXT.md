@@ -5,7 +5,10 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-four-unit-area-current`
+- Stable tag: `stable-2026-07-29-crm-loan-payment-current`
+- CRM payment methods now include the internal key `loan`, displayed as `贷款` in Chinese sales mode and `Bankhitel` in Hungarian sales mode.
+- The loan label is shared by deal editing, validation, filters, exports, confirmation sheets, and customer records; no loan percentage or bank condition is assumed automatically.
+- Harmat Sales Manager version: `1.6.120`
 - The approved sales area for `A1-4-L5`, `A2-4-L5`, `A3-4-L5`, and `A4-4-L5` is `47.83 m2` across apartment-search cards and property detail pages.
 - The four matching per-square-meter prices are recalculated from each current apartment price and the corrected sales area.
 - MU implementation: `wp-mu-plugins/zz-harmat-four-unit-area-correction.php`
@@ -29,7 +32,8 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Live backup before the YouTube regional fallback: `/home/harmath2/codex-backups/youtube-region-fallback-20260729-053146`
 - Live backup before extending the regional fallback to the 3D player: `/home/harmath2/codex-backups/youtube-region-fallback-complete-20260729-053634`
 - Live backup before the four-unit area correction: `/home/harmath2/codex-backups/four-unit-area-correction-20260729-054708`
-- Post-deployment checks passed for the homepage video, gallery, apartment search, four corrected apartment cards and detail pages, virtual selectors, contact page, sales login, CRM widget fixtures, monthly reset, language separation, PHP logs, and horizontal overflow.
+- Live backup before adding the CRM loan payment method: `/home/harmath2/codex-backups/crm-loan-payment-20260729-064821`
+- Post-deployment checks passed for the homepage video, gallery, apartment search, four corrected apartment cards and detail pages, virtual selectors, contact page, sales/agent/client logins, the bilingual CRM loan option, CRM payment totals, monthly reset, language separation, PHP logs, and horizontal overflow.
 
 ## Business Goal
 
