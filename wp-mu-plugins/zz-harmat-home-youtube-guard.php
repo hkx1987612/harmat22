@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Homepage YouTube Bandwidth Guard
  * Description: Replaces origin-hosted presentation videos with resilient YouTube players and monitors hosting bandwidth.
- * Version: 1.1.0
+ * Version: 1.2.1
  */
 
 if (!defined('ABSPATH')) {
@@ -232,7 +232,11 @@ add_action('wp_footer', function (): void {
 
   var videoId = <?php echo wp_json_encode(HARMAT_BW_YOUTUBE_ID); ?>;
   var moduleId = "SR7_1_1";
+  var player = null;
   var frame = null;
+  var started = false;
+  var fallbackTimer = null;
+  var revealTimer = null;
 
   function sizeFrame() {
     var module = document.getElementById(moduleId);
@@ -252,9 +256,96 @@ add_action('wp_footer', function (): void {
     frame.style.height = Math.ceil(frameHeight) + "px";
   }
 
-  function revealPlayer() {
+  function clearPlayerTimers() {
+    if (fallbackTimer) window.clearTimeout(fallbackTimer);
+    if (revealTimer) window.clearTimeout(revealTimer);
+    fallbackTimer = null;
+    revealTimer = null;
+  }
+
+  function keepPosterFallback() {
     var module = document.getElementById(moduleId);
-    if (module) module.classList.add("harmat-youtube-playing");
+    clearPlayerTimers();
+    if (module) module.classList.remove("harmat-youtube-playing");
+
+    window.setTimeout(function () {
+      if (player && typeof player.destroy === "function") {
+        try {
+          player.destroy();
+        } catch (error) {
+          // The poster remains visible when an embedded player cannot be destroyed.
+        }
+      }
+      player = null;
+      frame = null;
+    }, 0);
+  }
+
+  function revealWhenPlaying(event) {
+    if (!window.YT || event.data !== window.YT.PlayerState.PLAYING) return;
+
+    if (fallbackTimer) {
+      window.clearTimeout(fallbackTimer);
+      fallbackTimer = null;
+    }
+    if (revealTimer) window.clearTimeout(revealTimer);
+
+    // Give adaptive playback a moment to leave its low-resolution startup stream.
+    revealTimer = window.setTimeout(function () {
+      if (
+        !player
+        || typeof player.getPlayerState !== "function"
+        || player.getPlayerState() !== window.YT.PlayerState.PLAYING
+      ) {
+        return;
+      }
+
+      var module = document.getElementById(moduleId);
+      if (module) module.classList.add("harmat-youtube-playing");
+    }, 1800);
+  }
+
+  function createPlayer() {
+    if (started || !window.YT || !window.YT.Player) return;
+    var host = document.getElementById("harmat-youtube-player");
+    if (!host) return;
+    started = true;
+
+    player = new window.YT.Player(host, {
+      host: "https://www.youtube.com",
+      videoId: videoId,
+      playerVars: {
+        autoplay: 1,
+        mute: 1,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        iv_load_policy: 3,
+        loop: 1,
+        origin: window.location.origin,
+        playlist: videoId,
+        playsinline: 1,
+        rel: 0,
+        vq: "hd1080",
+        widget_referrer: window.location.href
+      },
+      events: {
+        onReady: function (event) {
+          frame = event.target.getIframe();
+          sizeFrame();
+          event.target.mute();
+          event.target.playVideo();
+        },
+        onStateChange: function (event) {
+          revealWhenPlaying(event);
+          if (window.YT && event.data === window.YT.PlayerState.ENDED) {
+            event.target.seekTo(0, true);
+            event.target.playVideo();
+          }
+        },
+        onError: keepPosterFallback
+      }
+    });
   }
 
   function installPlayer() {
@@ -264,30 +355,43 @@ add_action('wp_footer', function (): void {
     layer.className = "harmat-youtube-hero";
     layer.setAttribute("aria-hidden", "true");
 
-    frame = document.createElement("iframe");
-    frame.title = "Harmat Lakópark látványvideó";
-    frame.loading = "eager";
-    frame.allow = "autoplay; encrypted-media; picture-in-picture";
-    frame.referrerPolicy = "strict-origin-when-cross-origin";
-    frame.setAttribute("tabindex", "-1");
-    frame.setAttribute("aria-hidden", "true");
-    frame.addEventListener("load", function () {
-      window.setTimeout(revealPlayer, 450);
-    }, {once:true});
-    frame.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(videoId)
-      + "?autoplay=1&mute=1&controls=0&disablekb=1&fs=0&iv_load_policy=3"
-      + "&loop=1&playlist=" + encodeURIComponent(videoId)
-      + "&playsinline=1&rel=0&modestbranding=1&vq=hd1080";
-
-    layer.appendChild(frame);
+    var host = document.createElement("div");
+    host.id = "harmat-youtube-player";
+    layer.appendChild(host);
     module.appendChild(layer);
-    sizeFrame();
+
+    fallbackTimer = window.setTimeout(keepPosterFallback, 15000);
+
+    var previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof previousReady === "function") previousReady();
+      createPlayer();
+    };
+
+    if (window.YT && window.YT.Player) {
+      createPlayer();
+    } else if (!document.querySelector('script[data-harmat-youtube-api]')) {
+      var api = document.createElement("script");
+      api.src = "https://www.youtube.com/iframe_api";
+      api.async = true;
+      api.setAttribute("data-harmat-youtube-api", "1");
+      document.head.appendChild(api);
+    }
 
     if (window.ResizeObserver) {
       new ResizeObserver(sizeFrame).observe(module);
     } else {
       window.addEventListener("resize", sizeFrame, {passive:true});
     }
+
+    document.addEventListener("visibilitychange", function () {
+      if (!player) return;
+      if (document.hidden) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
+    });
 
     return true;
   }
@@ -310,6 +414,7 @@ add_action('wp_head', function (): void {
     ?>
 <style id="harmat-youtube-3d-style">
 .hi-video-card > .harmat-youtube-3d-trigger,
+.hi-video-card > .harmat-youtube-3d-player,
 .hi-video-card > .harmat-youtube-3d-frame {
   display:block;
   width:100%;
@@ -327,6 +432,25 @@ add_action('wp_head', function (): void {
   background-image:url('<?php echo esc_url(content_url(HARMAT_BW_3D_POSTER)); ?>');
   background-position:center;
   background-size:cover;
+}
+.hi-video-card > .harmat-youtube-3d-player {
+  position:relative;
+  overflow:hidden;
+  background-image:url('<?php echo esc_url(content_url(HARMAT_BW_3D_POSTER)); ?>');
+  background-position:center;
+  background-size:cover;
+}
+.hi-video-card > .harmat-youtube-3d-player iframe {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  opacity:0;
+  transition:opacity .35s ease;
+}
+.hi-video-card > .harmat-youtube-3d-player.harmat-youtube-3d-playing iframe {
+  opacity:1;
 }
 .hi-video-card > .harmat-youtube-3d-trigger::before {
   content:"";
@@ -405,21 +529,103 @@ add_action('wp_footer', function (): void {
     trigger.setAttribute("aria-label", "Látványvideó lejátszása");
 
     trigger.addEventListener("click", function () {
-      var frame = document.createElement("iframe");
-      var query = [
-        "autoplay=1",
-        "controls=1",
-        "playsinline=1",
-        "rel=0",
-        "vq=hd1080"
-      ].join("&");
+      var shell = document.createElement("div");
+      var host = document.createElement("div");
+      var player = null;
+      var fallbackTimer = null;
+      var revealTimer = null;
 
-      frame.className = "harmat-youtube-3d-frame";
-      frame.title = "Harmat Lakópark látványvideó";
-      frame.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(videoId) + "?" + query;
-      frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-      frame.allowFullscreen = true;
-      trigger.replaceWith(frame);
+      shell.className = "harmat-youtube-3d-player";
+      shell.setAttribute("aria-label", "Harmat Lakópark látványvideó");
+      host.id = "harmat-youtube-3d-player-" + Math.random().toString(36).slice(2);
+      shell.appendChild(host);
+      trigger.replaceWith(shell);
+
+      function clearTimers() {
+        if (fallbackTimer) window.clearTimeout(fallbackTimer);
+        if (revealTimer) window.clearTimeout(revealTimer);
+        fallbackTimer = null;
+        revealTimer = null;
+      }
+
+      function keepPoster() {
+        clearTimers();
+        shell.classList.remove("harmat-youtube-3d-playing");
+        window.setTimeout(function () {
+          if (player && typeof player.destroy === "function") {
+            try {
+              player.destroy();
+            } catch (error) {
+              // The project poster remains visible when YouTube is blocked.
+            }
+          }
+          player = null;
+        }, 0);
+      }
+
+      function createPlayer() {
+        if (player || !window.YT || !window.YT.Player || !document.getElementById(host.id)) {
+          return;
+        }
+
+        player = new window.YT.Player(host.id, {
+          host: "https://www.youtube.com",
+          videoId: videoId,
+          playerVars: {
+            autoplay: 1,
+            controls: 1,
+            origin: window.location.origin,
+            playsinline: 1,
+            rel: 0,
+            vq: "hd1080",
+            widget_referrer: window.location.href
+          },
+          events: {
+            onReady: function (event) {
+              var frame = event.target.getIframe();
+              frame.className = "harmat-youtube-3d-frame";
+              frame.title = "Harmat Lakópark látványvideó";
+              frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+              frame.allowFullscreen = true;
+              event.target.playVideo();
+            },
+            onStateChange: function (event) {
+              if (!window.YT || event.data !== window.YT.PlayerState.PLAYING) return;
+              if (fallbackTimer) window.clearTimeout(fallbackTimer);
+              fallbackTimer = null;
+              if (revealTimer) window.clearTimeout(revealTimer);
+              revealTimer = window.setTimeout(function () {
+                if (
+                  player
+                  && typeof player.getPlayerState === "function"
+                  && player.getPlayerState() === window.YT.PlayerState.PLAYING
+                ) {
+                  shell.classList.add("harmat-youtube-3d-playing");
+                }
+              }, 1200);
+            },
+            onError: keepPoster
+          }
+        });
+      }
+
+      fallbackTimer = window.setTimeout(keepPoster, 15000);
+
+      var previousReady = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () {
+        if (typeof previousReady === "function") previousReady();
+        createPlayer();
+      };
+
+      if (window.YT && window.YT.Player) {
+        createPlayer();
+      } else if (!document.querySelector('script[data-harmat-youtube-api]')) {
+        var api = document.createElement("script");
+        api.src = "https://www.youtube.com/iframe_api";
+        api.async = true;
+        api.setAttribute("data-harmat-youtube-api", "1");
+        document.head.appendChild(api);
+      }
     }, {once:true});
 
     return trigger;

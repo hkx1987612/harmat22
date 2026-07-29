@@ -5,10 +5,11 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-crm-bandwidth-current`
+- Stable tag: `stable-2026-07-29-youtube-region-fallback`
 - Homepage presentation video: YouTube video `kmAg_ki-yYY`, muted autoplay, loop, inline playback, adaptive quality with `hd1080` requested.
-- The homepage uses a direct privacy-enhanced YouTube iframe so playback does not depend on the YouTube JavaScript API; the obsolete Slider Revolution preloader is suppressed after the poster fallback is ready.
-- The 3D experience `Latvanyvideo` card uses the same privacy-enhanced YouTube player and loads only after a visitor clicks play.
+- The homepage uses the standard YouTube IFrame API with muted autoplay; the obsolete Slider Revolution preloader is suppressed and the project poster remains the default fallback.
+- The homepage now reveals the standard YouTube embed only after the IFrame API confirms active playback. IPs that receive a YouTube sign-in or bot-verification interstitial keep the high-resolution project poster instead of exposing the error screen.
+- The 3D experience `Latvanyvideo` card uses the same standard YouTube host, loads only after a visitor clicks play, and keeps its poster visible until playback is confirmed.
 - MU implementation: `wp-mu-plugins/zz-harmat-home-youtube-guard.php`
 - CRM bandwidth widget: `wp-mu-plugins/zz-harmat-crm-bandwidth-widget.php`
 - Static origin-video deny template: `server-config/heavy-origin-video-deny.htaccess`
@@ -22,6 +23,8 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Live backup before the homepage spinner fix: `/home/harmath2/codex-backups/home-youtube-spinner-fix-20260729-051308`
 - Live backup before the forced-autoplay iframe update: `/home/harmath2/codex-backups/home-youtube-autoplay-fix-20260729-051505`
 - Live backup before the CRM bandwidth widget: `/home/harmath2/codex-backups/crm-bandwidth-widget-20260729-051736`
+- Live backup before the YouTube regional fallback: `/home/harmath2/codex-backups/youtube-region-fallback-20260729-053146`
+- Live backup before extending the regional fallback to the 3D player: `/home/harmath2/codex-backups/youtube-region-fallback-complete-20260729-053634`
 - Post-deployment checks passed for the homepage video, gallery, apartment search, virtual selectors, contact page, sales login, CRM widget fixtures, monthly reset, language separation, PHP logs, and horizontal overflow.
 
 ## Business Goal
