@@ -5,7 +5,13 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-29
-- Stable tag: `stable-2026-07-29-video-seo-index-current`
+- Stable tag: `stable-2026-07-29-direct-links-room-format-current`
+- Homepage room-type cards now link directly to `/lakaskereso/?rooms=1-5`, the former `/3d-viewer/` entry links directly to `/virtualis-lakasvalaszto/`, and both `/magunkrol/` offer links point directly to `/lakaskereso/`.
+- Property room-list measurements now use Hungarian decimal commas with two decimal places; the underlying apartment and room-area values were not changed.
+- The idempotent structured content migration is tracked at `server-config/maintenance/2026-07-29-direct-internal-links.php`.
+- Post-deployment audit covered all 145 sitemap URLs, 432 internal links, and 212 same-origin media resources with zero HTTP, redirect, SEO metadata, language, mojibake, legacy-link, legacy-video, room-format, or duplicate-metadata findings.
+- Server verification passed for 186 custom PHP files, WordPress core checksums, all database tables, and empty root, `wp-admin`, and debug error logs.
+- Live rollback backup: `/home/harmath2/codex-backups/direct-links-room-format-20260729-075719`
 - Homepage video SEO now exposes exactly one YouTube `VideoObject`; the video sitemap uses a stable publication/last-modified date instead of changing on every request.
 - Retired origin videos `yulu-garden-source-compressed-60m.mp4`, `yulu-garden-mobile-720p.mp4`, and `spjs.mp4` return HTTP `410` with noindex headers and no longer appear in public page source.
 - The dynamically generated `Latvanyvideo` card is replaced with the YouTube player on both the homepage and `/harmat-lakopark-kornyeke/`; the valid on-demand `swsp_xmsp.mp4` project-introduction video remains available.

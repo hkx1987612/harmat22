@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.07.13.1
+ * Version: 2026.07.29.1
  */
 
 defined('ABSPATH') || exit;
@@ -48,6 +48,16 @@ function hm_migrated_format_square_meter($value) {
     }
 
     return number_format($number, 2, ',', ' ') . ' m²';
+}
+
+function hm_migrated_format_room_size($value) {
+    $value = trim(html_entity_decode((string) $value, ENT_QUOTES, 'UTF-8'));
+    if (!preg_match('~^([0-9]{1,3})(?:[\.,]([0-9]{1,2}))?\s*m(?:2|²)?$~iu', $value, $match)) {
+        return $value;
+    }
+
+    $decimals = isset($match[2]) && $match[2] !== '' ? str_pad($match[2], 2, '0') : '00';
+    return $match[1] . ',' . $decimals . ' m²';
 }
 
 function hm_migrated_property_floor_label($title, $floor) {
@@ -399,11 +409,11 @@ function hm_migrated_property_sample_detail_html($source_html, $floorplan_overri
     if ($rows) {
         $html .= '<div class="harmat-property-detail-rooms"><div class="harmat-property-detail-rooms-head"><span>Helyiséglista</span><h3>Helyiségek és méretek</h3></div><div class="harmat-property-room-table">';
         foreach ($rows as $row) {
-            $html .= '<div class="harmat-property-room-row"><span>' . esc_html($row['code']) . '</span><strong>' . esc_html($row['name']) . '</strong><em>' . esc_html($row['size']) . '</em></div>';
+            $html .= '<div class="harmat-property-room-row"><span>' . esc_html($row['code']) . '</span><strong>' . esc_html($row['name']) . '</strong><em>' . esc_html(hm_migrated_format_room_size($row['size'])) . '</em></div>';
         }
         if ($total_label !== '' && $total_size !== '') {
             $safe_total_label = html_entity_decode('&Eacute;rt&eacute;kes&iacute;tett alapter&uuml;let', ENT_QUOTES, 'UTF-8');
-            $html .= '<div class="harmat-property-room-total"><span>' . esc_html($safe_total_label) . '</span><strong>' . esc_html($total_size) . '</strong></div>';
+            $html .= '<div class="harmat-property-room-total"><span>' . esc_html($safe_total_label) . '</span><strong>' . esc_html(hm_migrated_format_room_size($total_size)) . '</strong></div>';
         }
         $html .= '</div></div>';
     }
