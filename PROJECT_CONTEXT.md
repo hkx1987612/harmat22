@@ -5,7 +5,16 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-31
-- Stable tag: `stable-2026-07-31-traffic-hardening-current`
+- Stable tag: `stable-2026-07-31-public-offer-integrity-current`
+- The public property offer flow now validates email format and prevents past appointment dates before submission. The date field uses the current Budapest date as its minimum.
+- Independent MU protection `wp-mu-plugins/zz-harmat-public-offer-integrity.php` version `1.0.0` validates same-site request evidence, nonce values when present, the five approved lead sources, appointment time slots, appointment dates, and selected properties before the sales callback runs.
+- Selected apartment data is canonicalized against the published WordPress property. Browser-supplied building, floor, area, room, price, and URL values cannot override the CRM record; the sales manager reloads those values from the matched property.
+- Unified public offer modal version: `1.0.7`.
+- Full rollback backup: `/home/harmath2/codex-backups/public-offer-integrity-20260731-110047`
+- No-write REST tests passed for missing request context, invalid nonce, foreign origin, invalid source, past date, invalid property, and manipulated `1 Ft / 999 m2` property values. The private offer-lead count remained exactly 24.
+- Desktop and 390-pixel mobile browser regression passed for `A3-4-L5`: the modal retained `47,83 m2`, `63 214 200 Ft`, all five Hungarian source choices, correct email/date messages, and no horizontal overflow.
+- Post-deployment audits covered all 4 sitemaps, 145 public URLs, all 124 property offer forms, and 572 same-origin resources with zero page, form, resource, language, mojibake, placeholder, or fatal-output failures.
+- WordPress core checksums, every database table, all 40 MU PHP files, the sales-manager PHP file, cache purge, temporary-file checks, key-page smoke tests, and post-regression error logs passed.
 - Sensitive-path probes such as `.env`, `.git/config`, database exports, configuration backups, Composer manifests, and named site-backup archives now return `403` with a zero-byte body instead of rendering the approximately 407 KB WordPress 404 page.
 - The protection uses a conservative root `.htaccess` layer tracked at `server-config/sensitive-probe-guard.htaccess` plus `wp-mu-plugins/zz-harmat-sensitive-probe-guard.php` version `1.0.0` as an early WordPress fallback for paths intercepted by the hosting security layer before root rewrite rules.
 - Normal missing URLs retain the site's existing public 404 experience; valid pages, resources, `.well-known` paths, and ordinary archive/media names are not affected.

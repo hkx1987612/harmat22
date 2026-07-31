@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.6
+ * Version: 1.0.7
  */
 
 if (!defined('ABSPATH')) {
@@ -385,7 +385,7 @@ function harmat_unified_offer_modal_footer() {
         </div>
         <div class="h22-offer-field">
           <label for="h22-offer-date">K&iacute;v&aacute;nt d&aacute;tum *</label>
-          <input id="h22-offer-date" name="your-date" type="date" required>
+          <input id="h22-offer-date" name="your-date" type="date" min="<?php echo esc_attr(wp_date('Y-m-d')); ?>" required>
         </div>
       </div>
       <div class="h22-offer-row is-single">
@@ -469,6 +469,8 @@ function harmat_unified_offer_modal_footer() {
     send: 'K\u00fcld\u00e9s',
     priceOnRequest: '\u00c1r egyeztet\u00e9s alapj\u00e1n',
     required: 'K\u00e9rj\u00fck, t\u00f6ltse ki a nevet, e-mail c\u00edmet, d\u00e1tumot, telefonsz\u00e1mot, \u00e9s fogadja el az adatkezel\u00e9si t\u00e1j\u00e9koztat\u00f3t.',
+    invalidEmail: 'K\u00e9rj\u00fck, adjon meg egy \u00e9rv\u00e9nyes e-mail c\u00edmet.',
+    invalidDate: 'K\u00e9rj\u00fck, v\u00e1lasszon mai vagy k\u00e9s\u0151bbi d\u00e1tumot.',
     success: 'K\u00f6sz\u00f6nj\u00fck, megkaptuk \u00e9rdekl\u0151d\u00e9s\u00e9t.',
     failed: 'A k\u00fcld\u00e9s nem siker\u00fclt. K\u00e9rj\u00fck, pr\u00f3b\u00e1lja \u00fajra.',
     messagePrefix: 'A ',
@@ -755,12 +757,26 @@ function harmat_unified_offer_modal_footer() {
   }
 
   function validate() {
-    var name = form.querySelector('[name="your-name"]').value.trim();
-    var email = form.querySelector('[name="your-email"]').value.trim();
-    var phone = form.querySelector('[name="your-phone"]').value.trim();
-    var date = form.querySelector('[name="your-date"]').value.trim();
-    var privacy = form.querySelector('[name="privacy-acceptance"]').checked;
-    return !!(name && email.indexOf('@') > 0 && phone && date && privacy);
+    var nameField = form.querySelector('[name="your-name"]');
+    var emailField = form.querySelector('[name="your-email"]');
+    var phoneField = form.querySelector('[name="your-phone"]');
+    var dateField = form.querySelector('[name="your-date"]');
+    var privacyField = form.querySelector('[name="privacy-acceptance"]');
+    var name = nameField.value.trim();
+    var email = emailField.value.trim();
+    var phone = phoneField.value.trim();
+    var date = dateField.value.trim();
+
+    if (!name || !email || !phone || !date || !privacyField.checked) {
+      return TXT.required;
+    }
+    if (!emailField.checkValidity()) {
+      return TXT.invalidEmail;
+    }
+    if ((dateField.min && date < dateField.min) || !dateField.checkValidity()) {
+      return TXT.invalidDate;
+    }
+    return '';
   }
 
   function setSubmitting(active) {
@@ -804,8 +820,9 @@ function harmat_unified_offer_modal_footer() {
     fields.status.className = 'h22-offer-status';
     fields.status.textContent = '';
 
-    if (!validate()) {
-      fields.status.textContent = TXT.required;
+    var validationMessage = validate();
+    if (validationMessage) {
+      fields.status.textContent = validationMessage;
       return;
     }
 
