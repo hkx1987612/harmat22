@@ -1,0 +1,14 @@
+# BEGIN Harmat sensitive probe guard
+# Keep this block outside the WordPress-managed section in the root .htaccess.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(.*/)?\.env(\..*)?$ - [F,L,NC]
+  RewriteRule ^(.*/)?\.(git|svn|hg)(/.*)?$ - [F,L,NC]
+  RewriteRule ^(.*/)?\.DS_Store$ - [F,L,NC]
+  RewriteRule ^(.*/)?wp-config\.php([._~-].*)?$ - [F,L,NC]
+  RewriteRule ^(.*/)?(debug\.log|error_log|php\.ini|\.user\.ini)$ - [F,L,NC]
+  RewriteRule ^(.*/)?composer\.(json|lock)$ - [F,L,NC]
+  RewriteRule ^.*\.(sql|sqlite|sqlite3|bak|backup|old|orig|save)$ - [F,L,NC]
+  RewriteRule ^(.*/)?(backup|database|db|site-backup|website-backup|wordpress-backup|public_html)([-_.][^/]*)?\.(zip|7z|tar|tgz|gz)$ - [F,L,NC]
+</IfModule>
+# END Harmat sensitive probe guard

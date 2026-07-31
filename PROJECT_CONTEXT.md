@@ -5,7 +5,20 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-31
-- Stable tag: `stable-2026-07-31-home-runtime-comfort-current`
+- Stable tag: `stable-2026-07-31-traffic-hardening-current`
+- Sensitive-path probes such as `.env`, `.git/config`, database exports, configuration backups, Composer manifests, and named site-backup archives now return `403` with a zero-byte body instead of rendering the approximately 407 KB WordPress 404 page.
+- The protection uses a conservative root `.htaccess` layer tracked at `server-config/sensitive-probe-guard.htaccess` plus `wp-mu-plugins/zz-harmat-sensitive-probe-guard.php` version `1.0.0` as an early WordPress fallback for paths intercepted by the hosting security layer before root rewrite rules.
+- Normal missing URLs retain the site's existing public 404 experience; valid pages, resources, `.well-known` paths, and ordinary archive/media names are not affected.
+- The authenticated sales CRM bandwidth card now identifies hosting-archive data explicitly and shows its approximate age when the latest archived access log is at least six hours old. Chinese and Hungarian labels remain separate; public pages are unchanged.
+- CRM bandwidth widget version: `1.1.0`.
+- The three blocked legacy origin videos were moved intact out of `public_html` to `/home/harmath2/codex-retired-media/retired-origin-video-20260731-102100`; their SHA-256 checksums match the source files and their original public URLs continue to return `410` with zero bytes.
+- The valid on-demand `swsp_xmsp.mp4` video remains in place and available.
+- Full rollback backup: `/home/harmath2/codex-backups/traffic-hardening-20260731-101120`
+- Supplemental rollback backups: `/home/harmath2/codex-backups/traffic-hardening-rule-revision-20260731-101807` and `/home/harmath2/codex-backups/traffic-hardening-mu-fallback-20260731-101956`
+- Post-deployment audit covered all 4 sitemaps, 145 public URLs, all 124 property pages, and 572 same-origin resources with zero page, resource, language, mojibake, placeholder, retired-video-reference, SEO-structure, or fatal-output findings.
+- Desktop and 390-pixel mobile regression passed for the homepage, gallery, apartment search, `A1-1-L2`, the main and first-phase virtual selectors, the A1 building selector, a reserved-apartment detail page, and the contact page without broken images or horizontal overflow.
+- The public offer modal still exposes 90 available apartments and exactly five lead sources, and reserved A1 apartments remain viewable. No test quotation or business record was submitted.
+- WordPress core checksums, every database table, all 39 MU PHP files, the sales-manager PHP file, cache purge, temporary-file checks, relocated-video checksums, and post-regression error logs passed.
 - The homepage keeps the same visible layout, text, links, images, six featured-apartment cards, YouTube behavior, and unified offer modal while avoiding the sales manager's unused generic card/filter runtime.
 - The complete apartment dataset remains available to the homepage offer picker. Only the unused 35 KB generic sales script and 15 KB generic sales stylesheet are replaced by a 521-character visibility shell and a 339-character cleanup script.
 - Homepage source size fell from approximately 604 KB to 553 KB, and compressed HTML transfer fell from approximately 118 KB to 109 KB without changing the frontend.

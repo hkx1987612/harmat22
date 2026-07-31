@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat CRM Bandwidth Widget
  * Description: Shows current-month hosting traffic beside visitor metrics in the private sales CRM.
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 if (!defined('ABSPATH')) {
@@ -83,14 +83,42 @@ function harmat_crm_bw_text(string $lang, array $usage): array
     $updated_label = $updated_timestamp
         ? wp_date('Y-m-d H:i', $updated_timestamp)
         : current_time('Y-m-d H:i');
+    $source = (string) ($usage['source'] ?? '');
+    $archive_source = strpos($source, 'apache_archives') === 0;
+    $age_hours = $updated_timestamp
+        ? max(0, (int) floor((time() - $updated_timestamp) / HOUR_IN_SECONDS))
+        : 0;
+    $archive_delayed = $archive_source && $age_hours >= 6;
 
     if ($lang === 'hu') {
+        if ($source === 'monthly_reset') {
+            $source_label = 'Várakozás a tárhelyszolgáltató első havi archív adatára';
+        } elseif ($archive_delayed) {
+            $source_label = 'Tárhelyszolgáltatói archív adat, kb. ' . $age_hours . ' órás késéssel';
+        } elseif ($archive_source) {
+            $source_label = 'Tárhelyszolgáltatói archív adat';
+        } else {
+            $source_label = 'Tárhelyszolgáltatói forgalmi adat';
+        }
+
         return array(
             'title' => 'Havi adatforgalom',
             'month' => ucfirst($hu_months[$month_number] ?? ''),
             'reset' => 'Minden hónap 1-jén automatikusan nullázódik',
             'updated' => 'Frissítve: ' . $updated_label,
+            'source' => $source_label,
+            'delayed' => $archive_delayed,
         );
+    }
+
+    if ($source === 'monthly_reset') {
+        $source_label = '等待主机商生成本月首次归档数据';
+    } elseif ($archive_delayed) {
+        $source_label = '主机商归档数据，约延迟 ' . $age_hours . ' 小时';
+    } elseif ($archive_source) {
+        $source_label = '主机商归档流量数据';
+    } else {
+        $source_label = '主机商流量数据';
     }
 
     return array(
@@ -98,6 +126,8 @@ function harmat_crm_bw_text(string $lang, array $usage): array
         'month' => $month_number . '月流量',
         'reset' => '每月1日自动归零',
         'updated' => '更新于 ' . $updated_label,
+        'source' => $source_label,
+        'delayed' => $archive_delayed,
     );
 }
 
@@ -127,7 +157,7 @@ function harmat_crm_bw_widget_markup(string $lang, bool $compact = false): strin
 
     if ($compact) {
         return '<span class="harmat-crm-bandwidth-compact harmat-crm-bandwidth-' . esc_attr($tone) . '"'
-            . ' title="' . esc_attr($usage_label . ' · ' . $text['reset']) . '">'
+            . ' title="' . esc_attr($usage_label . ' · ' . $text['reset'] . ' · ' . $text['source']) . '">'
             . '<small>' . esc_html($text['title']) . '</small>'
             . '<strong>' . esc_html($percent_label) . '</strong>'
             . '</span>';
@@ -143,6 +173,8 @@ function harmat_crm_bw_widget_markup(string $lang, bool $compact = false): strin
         . esc_attr(number_format($bar_width, 1, '.', '')) . '%"></i></div>'
         . '<em>' . esc_html($text['month'] . ' · ' . $text['reset']) . '</em>'
         . '<em>' . esc_html($text['updated']) . '</em>'
+        . '<em class="harmat-crm-bandwidth-source' . ($text['delayed'] ? ' is-delayed' : '') . '">'
+        . esc_html($text['source']) . '</em>'
         . '</article>';
 }
 
@@ -159,6 +191,7 @@ function harmat_crm_bw_filter_sales_html(string $html): string
 .harmat-sales-traffic-strip{grid-template-columns:repeat(5,minmax(0,1fr)) auto}
 .harmat-crm-bandwidth-card{position:relative;overflow:hidden}
 .harmat-crm-bandwidth-card em{display:block;margin-top:7px;color:#687178;font-size:11px;font-style:normal;font-weight:800;line-height:1.4}
+.harmat-crm-bandwidth-card .harmat-crm-bandwidth-source.is-delayed{color:#a65313}
 .harmat-crm-bandwidth-progress{height:7px;margin-top:10px;overflow:hidden;border-radius:999px;background:#e8e2d8}
 .harmat-crm-bandwidth-progress i{display:block;height:100%;border-radius:inherit;background:#1f7a4d}
 .harmat-crm-bandwidth-watch .harmat-crm-bandwidth-progress i{background:#c48a2c}
