@@ -5,12 +5,13 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-31
-- Stable tag: `stable-2026-07-31-a1-1-l2-floorplan-display-current`
-- The A1-1-L2 public property page now uses its verified `640x844` cropped display image, so the floor plan fills the presentation frame without stretching or losing the entrance arrow, balcony, or room labels.
-- The original `1680x1680` A1-1-L2 JPEG and both floor-plan PDFs remain unchanged. The exact cropped display asset is tracked at `assets/property-floorplans/A1-1-L2-cn-floorplan-display.jpg`.
-- The scoped image-selection change is in `wp-mu-plugins/harmat-migrated-snippets.php` version `2026.07.31.1`.
-- Live rollback backup: `/home/harmath2/codex-backups/property-floorplan-crop-20260731-064618`
-- Post-deployment audit covered all 145 sitemap URLs and 426 same-origin assets with zero page, asset, SEO metadata, language, fatal-output, or horizontal-overflow findings. WordPress core checksums, database checks, PHP syntax, and recent error logs also passed.
+- Stable tag: `stable-2026-07-31-all-floorplan-displays-current`
+- All 124 public property pages now prefer their verified high-resolution `-cn-floorplan-display.jpg` assets, so floor plans fill the presentation width without stretching or changing the original floor-plan PDFs.
+- The final image set preserves 100 already-clean displays and removes screenshot-edge text/line fragments from 24 affected displays while retaining apartment details, gardens, balconies, and entrance arrows.
+- The exact 124-image production set is tracked at `assets/property-floorplans/`; the image-selection change is in `wp-mu-plugins/harmat-migrated-snippets.php` version `2026.07.31.2`.
+- Full live rollback backup: `/home/harmath2/codex-backups/all-floorplan-display-20260731-071439`
+- Post-deployment audit covered all 145 sitemap URLs, all 124 property pages, and 569 same-origin assets with zero page, asset, language, mojibake, public-Chinese, fatal-output, broken-resource, or floor-plan-selection findings.
+- Desktop and mobile checks passed for portrait, landscape, garden, and large-format floor plans without horizontal overflow. WordPress core checksums, all database tables, PHP syntax, cache purge, temporary-file checks, and post-deployment error logs also passed.
 - The public experience optimization is live with conservative, rollback-friendly changes covering homepage video startup, apartment-search responsiveness, 360-degree loading, gallery image delivery, floor-plan PDF delivery, and icon-link accessibility.
 - Full rollback backup: `/home/harmath2/codex-backups/experience-optimization-20260729-085538`
 - The homepage now renders and preloads a real high-resolution poster before the YouTube player starts; the poster is hidden only after confirmed playback, so restricted YouTube regions retain a clean project image.

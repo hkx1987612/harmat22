@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.07.31.1
+ * Version: 2026.07.31.2
  */
 
 defined('ABSPATH') || exit;
@@ -173,11 +173,9 @@ function hm_migrated_property_floorplan_image_from_uploads($title, $floorplan_ur
 
     $lower = strtolower($title);
     $upper = strtoupper($title);
-    $candidates = array();
-    $display_preview_units = array('A1-1-L2', 'A2-3-L2', 'A2-3-L3', 'A3-3-L2');
-    if (in_array($upper, $display_preview_units, true)) {
-        $candidates[] = '2026/05/' . $upper . '-cn-floorplan-display.jpg';
-    }
+    $candidates = array(
+        '2026/05/' . $upper . '-cn-floorplan-display.jpg',
+    );
     $candidates = array_merge($candidates, array(
         '2026/05/' . $title . '-cn-floorplan.jpg',
         '2026/05/' . $upper . '-cn-floorplan.jpg',
