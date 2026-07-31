@@ -5,7 +5,14 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-31
-- Stable tag: `stable-2026-07-31-all-floorplan-displays-current`
+- Stable tag: `stable-2026-07-31-reserved-virtual-view-current`
+- Reserved apartments remain visible and viewable in the A1-A4 virtual selectors. The selector lists now include 90 available and 32 reserved apartments, while the 2 sold apartments remain disabled and absent from the apartment cards.
+- Reserved apartment cards show `Foglalva` and link to the correct public property page. Reserved SVG hotspots support keyboard navigation and direct mouse navigation to the matching property instead of selecting an unrelated available apartment.
+- The offer-picker inventory remains available-only; the virtual-selector repair reads the complete 360-degree apartment dataset without modifying quotation or sales availability.
+- MU implementation: `wp-mu-plugins/zz-harmat-reserved-virtual-view.php` version `1.3.0`.
+- Full live rollback backup: `/home/harmath2/codex-backups/reserved-virtual-view-20260731-081249`
+- Desktop and mobile regression passed for the main selector, first-phase selector, A1-A4 building selectors, room/floor filters, reserved cards, reserved SVG hotspots, sold hotspot blocking, and reserved property details.
+- Post-deployment audit covered all 145 sitemap URLs, all 124 property pages, and 571 same-origin assets with zero sitemap, page, property, asset, language, mojibake, public-Chinese, or fatal-output findings.
 - All 124 public property pages now prefer their verified high-resolution `-cn-floorplan-display.jpg` assets, so floor plans fill the presentation width without stretching or changing the original floor-plan PDFs.
 - The final image set preserves 100 already-clean displays and removes screenshot-edge text/line fragments from 24 affected displays while retaining apartment details, gardens, balconies, and entrance arrows.
 - The exact 124-image production set is tracked at `assets/property-floorplans/`; the image-selection change is in `wp-mu-plugins/harmat-migrated-snippets.php` version `2026.07.31.2`.
@@ -21,7 +28,7 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - The public gallery serves verified 640-pixel and 1280-pixel WebP derivatives with responsive `srcset`; the original full-resolution JPEG files remain available as automatic fallbacks.
 - All 124 public property pages now link to verified `-cn-floorplan-web.pdf` copies. The compact copies total approximately 136 MB instead of 398 MB, while the original PDFs remain untouched and accessible for rollback.
 - The distinct `swsp_xmsp.mp4` project-introduction video remains an on-demand local asset with `preload="none"` and a delayed source; the separate `Látványvideó` remains the click-to-load YouTube presentation.
-- Current versions: homepage YouTube guard `1.4.0`, apartment search `1.2.1`, 360 selector `1.9.0`, gallery comfort layout `1.1.0`, accessibility polish `1.0.0`, and floor-plan PDF optimizer `1.0.0`.
+- Current versions: homepage YouTube guard `1.4.0`, apartment search `1.2.1`, 360 selector `1.9.0`, reserved virtual view `1.3.0`, gallery comfort layout `1.1.0`, accessibility polish `1.0.0`, and floor-plan PDF optimizer `1.0.0`.
 - Final post-deployment audit covered all 145 sitemap URLs and 569 same-origin resources: every page and resource returned successfully, all 124 property pages used the compact floor-plan link, and there were zero SEO metadata, language, mojibake, placeholder, legacy-video, fatal-output, or broken-resource findings.
 - Desktop and mobile browser regression passed for the homepage, 12 highlighted apartments, gallery, 124-property search, offer-source labels, main and first-phase virtual selectors, A3 building selector, A3-4-L5, and contact page without horizontal overflow.
 - WordPress core checksums, every database table, related PHP syntax checks, cache purge, and post-regression error-log checks all passed.
