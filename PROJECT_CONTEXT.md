@@ -5,7 +5,16 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-07-31
-- Stable tag: `stable-2026-07-31-reserved-virtual-view-current`
+- Stable tag: `stable-2026-07-31-home-runtime-comfort-current`
+- The homepage keeps the same visible layout, text, links, images, six featured-apartment cards, YouTube behavior, and unified offer modal while avoiding the sales manager's unused generic card/filter runtime.
+- The complete apartment dataset remains available to the homepage offer picker. Only the unused 35 KB generic sales script and 15 KB generic sales stylesheet are replaced by a 521-character visibility shell and a 339-character cleanup script.
+- Homepage source size fell from approximately 604 KB to 553 KB, and compressed HTML transfer fell from approximately 118 KB to 109 KB without changing the frontend.
+- The featured-apartment and header offer flows were clicked after deployment. `A1-1-L6` still fills the exact apartment, building, floor, price, area, room and message fields, and the picker still exposes 90 available apartments.
+- MU implementation: `wp-mu-plugins/007-harmat-home-data-comfort.php` version `1.1.0`.
+- Full live rollback backup: `/home/harmath2/codex-backups/home-runtime-payload-20260731-093042`
+- Desktop and mobile browser regression passed for the homepage, apartment search, one property, main and first-phase virtual selectors, A1 building selector, gallery, and contact page with no horizontal overflow or public-language errors.
+- Post-deployment audit covered all 145 sitemap URLs, all 124 property pages, and 571 same-origin assets with zero sitemap, page, property, asset, language, mojibake, public-Chinese, or fatal-output findings.
+- WordPress core checksums, every database table, all 38 MU PHP files, the sales-manager PHP file, cache purge, temporary-file checks, and post-deployment error logs passed.
 - Reserved apartments remain visible and viewable in the A1-A4 virtual selectors. The selector lists now include 90 available and 32 reserved apartments, while the 2 sold apartments remain disabled and absent from the apartment cards.
 - Reserved apartment cards show `Foglalva` and link to the correct public property page. Reserved SVG hotspots support keyboard navigation and direct mouse navigation to the matching property instead of selecting an unrelated available apartment.
 - The offer-picker inventory remains available-only; the virtual-selector repair reads the complete 360-degree apartment dataset without modifying quotation or sales availability.

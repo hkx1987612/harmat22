@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Data Comfort
  * Description: Reuses the homepage sales dataset instead of shipping duplicate apartment data.
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 defined('ABSPATH') || exit;
@@ -85,3 +85,42 @@ function harmat_home_data_comfort_start_buffer() {
     ob_start('harmat_home_data_comfort_compact_html');
 }
 add_action('template_redirect', 'harmat_home_data_comfort_start_buffer', 0);
+
+function harmat_home_data_comfort_trim_sales_assets() {
+    if (!harmat_home_data_comfort_should_run()) {
+        return;
+    }
+
+    $scripts = wp_scripts();
+    if (isset($scripts->registered['harmat-sales-manager-front'])) {
+        $scripts->add_data('harmat-sales-manager-front', 'after', array());
+    }
+
+    wp_dequeue_style('harmat-sales-manager-front');
+
+    wp_register_style('harmat-home-sales-shell', false, array(), '1.1.0');
+    wp_enqueue_style('harmat-home-sales-shell');
+    wp_add_inline_style(
+        'harmat-home-sales-shell',
+        'body.home .epl-premium-filter-wrapper,'
+        . 'body.home .opalestate-search-properties,'
+        . 'body.home .property-search-form,'
+        . 'body.home .property-search,'
+        . 'body.home .search-properties,'
+        . 'body.home .opal-property-search,'
+        . 'body.home .osf-property-search,'
+        . 'body.home .elementor-widget-opal-property-search,'
+        . 'body.home .elementor-widget-maisonco-property-search,'
+        . 'body.home .elementor-element-a00bce3,'
+        . 'body.home .harmat-front-property-filter,'
+        . 'body.home .harmat-front-status-filter{display:none!important}'
+    );
+
+    wp_register_script('harmat-home-sales-shell', false, array(), '1.1.0', true);
+    wp_enqueue_script('harmat-home-sales-shell');
+    wp_add_inline_script(
+        'harmat-home-sales-shell',
+        '(function(){function clean(){document.querySelectorAll(".elementor-element-a00bce3,.harmat-front-property-filter,.harmat-front-status-filter").forEach(function(node){node.remove();});}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",clean);}else{clean();}})();'
+    );
+}
+add_action('wp_enqueue_scripts', 'harmat_home_data_comfort_trim_sales_assets', 1002);
