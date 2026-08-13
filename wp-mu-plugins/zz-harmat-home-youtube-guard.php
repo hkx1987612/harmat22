@@ -236,11 +236,7 @@ add_action('wp_head', function (): void {
         'embedUrl' => harmat_bw_youtube_embed_url(false),
         'duration' => 'PT1M30S',
         'inLanguage' => 'hu-HU',
-        'publisher' => array(
-            '@type' => 'Organization',
-            'name' => 'Harmat Lakópark',
-            'url' => home_url('/'),
-        ),
+        'publisher' => array('@id' => home_url('/#organization')),
     );
 
     echo '<script type="application/ld+json" id="harmat-youtube-video-schema">';
