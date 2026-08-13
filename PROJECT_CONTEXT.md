@@ -5,7 +5,14 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-08-13
-- Stable tag: `stable-2026-08-13-search-ai-discovery-current`
+- Stable tag: `stable-2026-08-13-keyword-intent-current`
+- Hungarian keyword-intent layer `wp-mu-plugins/zz-harmat-keyword-intent.php` version `1.0.0` is live. It maps one distinct, factual search intent to each of five existing pages without adding obsolete meta-keywords or changing apartment, price, status, offer, CRM, image, video, or interactive-tour data.
+- The homepage now reinforces `új építésű lakások Kőbányán`; the project page targets `új építésű lakópark Kőbányán`; apartment search targets `eladó új építésű lakások Kőbányán`; the neighborhood page targets `Kőbánya és Óhegy környéke`; and financing targets `új építésű lakás finanszírozása`. Each page has a unique Hungarian title and description plus concise natural-language context and relevant internal links.
+- Full rollback backup: `/home/harmath2/codex-backups/keyword-intent-20260813-190357`
+- Desktop and 390-pixel mobile validation passed all five target pages with exact titles, descriptions and canonicals, one H1, Hungarian output, expected factual text, no mojibake, no Chinese public text, no horizontal overflow, and intact apartment-search and neighborhood 3D interactions.
+- Full regression passed all 4 sitemaps, 145 public pages, all 124 property pages and offer forms, and 570 same-origin assets with zero failures. WordPress core checksums, every database table, WP-Cron, all 43 MU PHP files plus the sales-manager PHP file, sensitive-path guards, retired-video guards, Schema, PDF headers, temporary-file cleanup, and the unchanged server error log also passed. All 26 real offer leads remain intact and no test offer was submitted.
+- All five changed canonical URLs returned `200` from the official Bing IndexNow endpoint. The central `api.indexnow.org` batch endpoint returned a one-time `403` even though the root key file returned `200` with an exact match for browser, IndexNow, Bingbot, and curl user agents; sitemap and Google discovery are unaffected.
+- Previous stable tag: `stable-2026-08-13-search-ai-discovery-current`
 - Search/AI discovery layer `wp-mu-plugins/zz-harmat-search-ai-discovery.php` version `1.0.0` is live. It replaces two competing property Schema emitters with one data-backed `Apartment`/`Offer` graph linked to one `ApartmentComplex` and Yoast's `Organization` entity.
 - Project entity data now includes the complete `1105 Budapest, Harmat utca 22.` address and sales contact. The homepage YouTube `VideoObject` references the same Organization instead of declaring a second one.
 - Twelve currently available apartments have a conservative Hungarian factual-summary pilot sourced dynamically from their real WordPress fields. No apartment record, price, status, area, Elementor content, offer flow, or CRM logic was changed.
@@ -13,7 +20,7 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - The former active Code Snippets entity emitter `#114` is disabled after its data was migrated into the tracked MU plugin, keeping GitHub as the source of truth.
 - Full rollback backup: `/home/harmath2/codex-backups/search-ai-discovery-20260813-183649`
 - Post-deployment validation passed all 4 sitemaps, 145 public pages, all 124 property pages and offer forms, 570 same-origin assets, the 12 content-pilot pages, crawler user agents, JSON-LD parsing, the A3-4-L5 `47.83 m2` correction, PDF headers, IndexNow key, retired-video guards, and sensitive-path guards. There were no PHP fatals or change-related warnings; one concurrent Action Scheduler rescheduling warning occurred during the first audit, after which WP-Cron tested healthy and the warning did not repeat.
-- Previous stable tag: `stable-2026-08-13-china-cache-comfort-current`
+- Search/AI discovery predecessor tag: `stable-2026-08-13-china-cache-comfort-current`
 - Anonymous public `GET` and `HEAD` requests no longer start the unnecessary Easy Property Listings session, allowing WP Super Cache to serve reusable public HTML. `POST`, WP-CLI, wp-cron, REST, logged-in, sales, agent, client, customer, lawyer, and other private requests retain their prior session behavior.
 - Homepage and apartment-search HTML use a conservative five-minute public cache policy with a one-day stale-while-revalidate window. Property saves and relevant property-meta changes purge the page cache once at request shutdown so prices, areas, and statuses do not remain stale.
 - Cache implementation: `wp-mu-plugins/008-harmat-public-cache-comfort.php` version `1.0.0`, `wp-mu-plugins/harmat-homepage-nocache.php` version `2.0.0`, and apartment search version `1.2.2`.
