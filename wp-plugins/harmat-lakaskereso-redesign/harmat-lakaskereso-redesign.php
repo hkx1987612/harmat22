@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.2.1
+ * Version: 1.2.2
  */
 
 if (!defined('ABSPATH')) {
@@ -37,12 +37,12 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.1');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.2');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
     if (harmat_lakas_redesign_is_page()) {
-        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.1', true);
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.2', true);
         wp_enqueue_script('harmat-lakas-redesign');
         wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
     }
@@ -378,15 +378,6 @@ function harmat_lakas_redesign_render_related() {
 }
 
 function harmat_lakas_redesign_render() {
-    if (!headers_sent()) {
-        if (!defined('DONOTCACHEPAGE')) {
-            define('DONOTCACHEPAGE', true);
-        }
-        nocache_headers();
-        header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
-        header('Pragma: no-cache');
-    }
-
     $cached_markup = get_transient(harmat_lakas_redesign_cache_key());
     if (is_string($cached_markup) && $cached_markup !== '') {
         return $cached_markup;

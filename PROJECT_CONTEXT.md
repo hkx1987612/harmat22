@@ -4,8 +4,19 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## Current Stable State
 
-- Stable date: 2026-07-31
-- Stable tag: `stable-2026-07-31-public-offer-integrity-current`
+- Stable date: 2026-08-13
+- Stable tag: `stable-2026-08-13-china-cache-comfort-current`
+- Anonymous public `GET` and `HEAD` requests no longer start the unnecessary Easy Property Listings session, allowing WP Super Cache to serve reusable public HTML. `POST`, WP-CLI, wp-cron, REST, logged-in, sales, agent, client, customer, lawyer, and other private requests retain their prior session behavior.
+- Homepage and apartment-search HTML use a conservative five-minute public cache policy with a one-day stale-while-revalidate window. Property saves and relevant property-meta changes purge the page cache once at request shutdown so prices, areas, and statuses do not remain stale.
+- Cache implementation: `wp-mu-plugins/008-harmat-public-cache-comfort.php` version `1.0.0`, `wp-mu-plugins/harmat-homepage-nocache.php` version `2.0.0`, and apartment search version `1.2.2`.
+- No public content, apartment data, offer behavior, portal behavior, image, video, layout, or DNS/CDN setting changed in this optimization.
+- Warm origin requests for the homepage, apartment search, property detail, virtual selector, gallery, and contact page now reach first byte in approximately `0.04 s`, compared with approximately `1.2 s` before public page caching.
+- A 10-location mainland-China Globalping sample improved from an average `7.175 s` total and multi-second TTFB to an average `2.519 s` total and `0.660 s` TTFB. Cross-border DNS/TLS variance remains possible without mainland-China infrastructure and ICP filing.
+- Full rollback backup: `/home/harmath2/codex-backups/china-cache-comfort-20260813-170953`
+- Supplemental rollback backup for the final WP-CLI/wp-cron scope correction: `/home/harmath2/codex-backups/china-cache-comfort-cli-scope-20260813-171918`
+- Post-deployment warm audit passed all 4 sitemap documents, 145 unique public URLs, all 124 property pages and offer forms, and 570 same-origin resources with zero HTTP, asset, language, placeholder, mojibake, retired-video-reference, SEO-structure, or fatal-output failures.
+- SEO verification found zero duplicate titles/descriptions and zero failures for titles, descriptions, exact canonicals, Hungarian language declarations, single H1 output, indexability, sitemap dates, or JSON-LD parsing. Both declared sitemaps return `200`, and retired origin videos are absent. Two descriptions are only 1-2 characters over 160, and 15 ordinary content/legal pages lack a social-share image; these are non-blocking future polish items.
+- Sales pages remain private and non-cacheable, all 26 real offer leads remained intact, no test offer was submitted, and the server error-log size and timestamp remained unchanged through deployment and regression.
 - The public property offer flow now validates email format and prevents past appointment dates before submission. The date field uses the current Budapest date as its minimum.
 - Independent MU protection `wp-mu-plugins/zz-harmat-public-offer-integrity.php` version `1.0.0` validates same-site request evidence, nonce values when present, the five approved lead sources, appointment time slots, appointment dates, and selected properties before the sales callback runs.
 - Selected apartment data is canonicalized against the published WordPress property. Browser-supplied building, floor, area, room, price, and URL values cannot override the CRM record; the sales manager reloads those values from the matched property.
