@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.7
+ * Version: 1.0.8
  */
 
 if (!defined('ABSPATH')) {
@@ -841,6 +841,9 @@ function harmat_unified_offer_modal_footer() {
       if (result.ok && result.data && result.data.success) {
         fields.status.className = 'h22-offer-status is-success';
         fields.status.textContent = TXT.success;
+        try {
+          if (typeof window.harmatTrackConfirmedOffer === 'function') window.harmatTrackConfirmedOffer(result.data);
+        } catch (error) {}
         window.setTimeout(function () { window.location.href = thankYouUrl; }, 300);
         return;
       }

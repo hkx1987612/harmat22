@@ -1295,6 +1295,9 @@ function harmat_perf_offer_success_fallback() {
       if (result.ok && data.success) {
         form.dataset.harmatCf7Submitting = '';
         setSubmitting(form, false);
+        try {
+          if (typeof window.harmatTrackConfirmedOffer === 'function') window.harmatTrackConfirmedOffer(data);
+        } catch (error) {}
         redirectSoon();
         return;
       }

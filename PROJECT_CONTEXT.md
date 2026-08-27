@@ -4,8 +4,17 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## Current Stable State
 
-- Stable date: 2026-08-13
-- Stable tag: `stable-2026-08-13-keyword-intent-current`
+- Stable date: 2026-08-27
+- Stable tag: `stable-2026-08-27-confirmed-leads-current`
+- Consent-aware Google Ads lead measurement is live in `wp-mu-plugins/zz-harmat-confirmed-lead-tracking.php` version `1.0.0`. The unified modal (`1.0.8`) and legacy appointment REST success branch report only saved, non-ignored inquiries to the existing Ads appointment action. Failed requests, spam acknowledgments, popup opens and contact clicks are not primary Ads conversions.
+- Exact existing destination: `AW-18191634808/7FpbCJ-ahLQcEPiiueJD`; GA4 destination: `G-5ZHKLHYE3F`. Ads events require current marketing consent; GA4 lead/phone/email events require analytics consent. New tracking excludes logged-in visitors and private portals and sends no form names, email addresses, telephone numbers, messages or apartment prices.
+- A short-lived session reference permits one thank-you-page retry with the same Google Ads transaction ID; direct visits and refreshes without a pending confirmed inquiry do not trigger conversions. CRM persistence, email delivery, form fields, UI, inventory and redirect timing are unchanged. The legacy CF7 fallback without a confirmed CRM ID is intentionally not promoted to an Ads conversion.
+- File rollback backup: `/home/harmath2/codex-backups/ads-confirmed-leads-20260827-145251`. Existing live hashes matched the repo before deployment. All three temporary and final PHP files passed lint, WordPress booted, cache was cleared, and temporary files were removed.
+- Regression: 13 isolated JavaScript tests, 19 PHP scope/configuration checks, seven live public/private tracking checks, 145 public pages, 124 property pages and 571 resources passed. Quote-modal opening, five source choices, required-field validation and A1-1-L2 preselection passed in the browser. All 34 existing offer leads remained; no test lead or live conversion was submitted. Root error-log modification time predates deployment; admin/debug logs were absent.
+- Google Ads account `133-638-0278`, campaign `Harmat Lakópark` (`23887334395`), retains `HUF 5,000/day` and Maximize conversions. Its upgraded asset group (`6716281376`) has 12 images, one project video, 15 headlines, four long headlines, five descriptions and six sitelinks; it now shows eligible, while ad strength remains pending evaluation.
+- Google still shows incomplete conversion tracking pending real event detection. Website implementation is verified, but receipt/attribution of a genuine consented inquiry has not yet been observed in Ads or GA4. Do not manufacture test conversions to clear this warning. Existing Ads category, primary status, once counting, USD 1 default lead value and last-click attribution were not changed in this tracking repair.
+- Previous stable date: 2026-08-13
+- Previous stable tag: `stable-2026-08-13-keyword-intent-current`
 - Hungarian keyword-intent layer `wp-mu-plugins/zz-harmat-keyword-intent.php` version `1.0.0` is live. It maps one distinct, factual search intent to each of five existing pages without adding obsolete meta-keywords or changing apartment, price, status, offer, CRM, image, video, or interactive-tour data.
 - The homepage now reinforces `új építésű lakások Kőbányán`; the project page targets `új építésű lakópark Kőbányán`; apartment search targets `eladó új építésű lakások Kőbányán`; the neighborhood page targets `Kőbánya és Óhegy környéke`; and financing targets `új építésű lakás finanszírozása`. Each page has a unique Hungarian title and description plus concise natural-language context and relevant internal links.
 - Full rollback backup: `/home/harmath2/codex-backups/keyword-intent-20260813-190357`
