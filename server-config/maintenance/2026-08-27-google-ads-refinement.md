@@ -18,10 +18,10 @@
 
 - Original settings inspected and rollback recorded before saving Ads changes.
 - Search themes: eight additions saved; reopening the editor confirmed all nine themes including the original brand theme. No audience list or demographic signal was added.
-- One 15-second landscape variant was visually checked and uploaded to YouTube's video-ad storage channel. Attaching it to the existing group reached a Google identity-confirmation gate; association is NOT yet confirmed saved.
+- One 15-second landscape variant was visually checked and uploaded to YouTube's video-ad storage channel. Its association initially reached a Google identity-confirmation gate. After the user completed the official phone confirmation in Chrome, saving succeeded and reopening the group verified both videos.
 - A portrait template draft remains unpublished: scene text did not reliably persist and final preview rendering failed. Do not publish placeholder frames or claim this version is ready.
 - Budget was rechecked at `HUF 5,000/day`; bidding remains Maximize conversions.
-- Today's channel report showed one YouTube impression, zero YouTube clicks and `HUF 0` YouTube cost at inspection. The small, non-real-time sample is not performance evidence. Other activity included `HUF 19` on Display.
+- An earlier channel report showed one YouTube impression, zero YouTube clicks and `HUF 0` YouTube cost, with `HUF 19` on Display. The later post-save campaign table showed 33 total impressions, two clicks and `HUF 26` total cost. These small, non-real-time samples are not performance evidence or proof that the new short has served.
 - The existing appointment conversion still showed unverified/inactive, zero conversions and the incomplete-tracking campaign warning. No fake inquiry, customer-list upload, live conversion, payment change or new campaign was made.
 
 ## Added Search Themes
@@ -45,8 +45,11 @@ These are additive Performance Max signals, not exact-match keyword restrictions
 - Opens on the rendered project courtyard and terraces; ends with the existing Harmat logo over the project aerial rendering. Native preview played and the opening/closing frames were checked.
 - Preview resolution was `960x540`; do not claim verified 1080p delivery for the uploaded short without checking YouTube processing.
 - Three automatically proposed, unpublished alternatives were discarded from this generation session. No existing campaign video was deleted.
-- The asset-group editor contained both original `kmAg_ki-yYY` and new `bf7SNOlbTYQ`, with existing copy, images and six sitelinks retained. Saving triggered a Google identity-verification prompt, so this is not evidence of a persisted association.
-- Continue only after the user completes Google's official identity verification. Save, reopen the group and verify both video IDs, all nine search themes and the unchanged budget.
+- The initial in-app editor contained both original `kmAg_ki-yYY` and new `bf7SNOlbTYQ`, but its identity-verification interruption did not persist the association. A fresh Chrome inspection confirmed only the original was attached before the retry.
+- In Chrome, the user explicitly confirmed saving the short and then completed Google's official phone identity verification. Saving returned to the asset-group table with two videos. Reopening the editor confirmed both exact YouTube thumbnail IDs, 12 images, one logo, 15 unchanged headlines, four unchanged long headlines, five unchanged descriptions and six unchanged sitelinks.
+- Reopening the signals editor verified all nine exact search themes. The post-save campaign table confirmed the sole existing campaign, `HUF 5,000/day`, Maximize conversions and the existing incomplete-conversion-tracking warning. No signal, budget, bidding or conversion setting was changed in this retry.
+- At the post-save inspection, Google showed the asset group as under review/not serving and ad strength pending evaluation. Do not describe the new short as approved or already delivering; no review outcome or real lead receipt has been verified.
+- Website, CRM, hosting and DNS were untouched. No test inquiry/conversion was sent, and the portrait draft remains unpublished. Rollback is to detach only `bf7SNOlbTYQ`, preserving the original video and other assets.
 
 ## Portrait Draft (Not Uploaded)
 
