@@ -1,4 +1,4 @@
-"""Read-only server audit for the construction-video deployment."""
+"""Read-only server audit for the construction media deployment."""
 
 import argparse
 import hashlib
@@ -12,6 +12,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 LIVE = "/home/harmath2/public_html"
 PLUGIN = "zz-harmat-construction-progress-video.php"
 POSTER = "harmat-epitesi-naplo-2026-08.jpg"
+GALLERY_SOURCE = ROOT / "assets" / "construction" / "progress"
+GALLERY_TARGET = LIVE + "/wp-content/uploads/2026/08/construction-progress"
 q = shlex.quote
 
 
@@ -62,7 +64,14 @@ def main():
             raise RuntimeError("Live plugin hash does not match GitHub source.")
         if remote_hash(poster_target) != sha256(poster_source):
             raise RuntimeError("Live poster hash does not match GitHub source.")
+        gallery_sources = sorted(GALLERY_SOURCE.glob("*.webp"))
+        if len(gallery_sources) != 32:
+            raise RuntimeError("Local gallery asset count is not 32.")
+        for source in gallery_sources:
+            if remote_hash(GALLERY_TARGET + "/" + source.name) != sha256(source):
+                raise RuntimeError("Live gallery hash mismatch: " + source.name)
         print("LIVE_HASHES_MATCH")
+        print("GALLERY_FILES=32")
         print(run("php -l " + q(plugin_target)))
         print(run("cd " + q(LIVE) + " && wp core verify-checksums"))
         print(run("cd " + q(LIVE) + " && wp db check", timeout=180))
@@ -86,6 +95,8 @@ def main():
             + q(LIVE + "/wp-content/mu-plugins")
             + " "
             + q(LIVE + "/wp-content/uploads/2026/08")
+            + " "
+            + q(GALLERY_TARGET)
             + " -maxdepth 1 -type f -name "
             + q("*.codex-tmp-*")
             + " -print"
@@ -108,9 +119,13 @@ def main():
         html = run("curl -L --compressed -sS " + q("https://harmat22.hu/epitesi-naplo/"))
         required = (
             'data-harmat-construction-video="1"',
+            'data-harmat-construction-gallery="1"',
+            'data-harmat-construction-lightbox',
             "HMgnTfeuQYM",
             POSTER,
             '"@type":"VideoObject"',
+            '"@type":"ImageGallery"',
+            "2026-08-26-tomoritett-agyazat-960.webp",
             'name="description" content="A Harmat Lakópark építési naplója:',
         )
         missing = [marker for marker in required if marker not in html]
@@ -118,8 +133,12 @@ def main():
             raise RuntimeError("Live HTML markers missing: " + ", ".join(missing))
         if "<iframe" in html.lower():
             raise RuntimeError("YouTube iframe loads before visitor interaction.")
+        if html.count('<button type="button" data-harmat-construction-photo ') != 16:
+            raise RuntimeError("Live construction photo count is not 16.")
+        if html.count("-1920.webp") < 16:
+            raise RuntimeError("Live full-size construction images are incomplete.")
         print("LIVE_HTML_PASS")
-        print("CONSTRUCTION_VIDEO_SERVER_AUDIT_PASSED")
+        print("CONSTRUCTION_MEDIA_SERVER_AUDIT_PASSED")
     finally:
         sftp.close()
         client.close()

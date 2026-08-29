@@ -65,6 +65,8 @@ try {
 
       if (route === '/epitesi-naplo/') {
         assert(await page.locator('[data-harmat-construction-video="1"]').count() === 1, `${device.name}: construction video missing.`);
+        assert(await page.locator('[data-harmat-construction-gallery="1"]').count() === 1, `${device.name}: construction gallery missing.`);
+        assert(await page.locator('[data-harmat-construction-photo]').count() === 16, `${device.name}: construction photo count changed.`);
         assert(await page.locator('[data-harmat-construction-player] iframe').count() === 0, `${device.name}: construction iframe loaded early.`);
       }
       if (route === '/lakaskereso/') {
