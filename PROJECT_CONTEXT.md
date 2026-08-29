@@ -5,7 +5,10 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 ## Current Stable State
 
 - Stable date: 2026-08-29
-- Stable tag: `stable-2026-08-29-construction-gallery-current`
+- Stable tag: `stable-2026-08-29-construction-menu-current`
+- The clean header drawer now includes `Építési napló` exactly once between `Galéria` and `Elérhetőségek`. The rollback-friendly `wp-mu-plugins/zz-harmat-construction-menu-link.php` version `1.0.0` extends only the existing JavaScript-generated public menu; it does not modify the obsolete WordPress menu records, page header markup, footer, properties, offers or CRM data.
+- Menu-link backup: `/home/harmath2/codex-backups/construction-menu-link-20260829-072916`. Temporary and final PHP files passed lint, live hash matches GitHub, WordPress booted, cache was cleared and no staging file remains. Desktop and mobile verified the exact nine-link order, single construction link, menu overflow and navigation to the live gallery page. Nine key-page regressions and the 145-page, 124-property, 588-resource scan returned zero issues; all 36 offer leads remained and no inquiry was submitted.
+- Previous stable tag: `stable-2026-08-29-construction-gallery-current`
 - The existing public `/epitesi-naplo/` page now combines the official August 2026 construction video `HMgnTfeuQYM` with a four-stage, 16-photo Hungarian construction timeline. `wp-mu-plugins/zz-harmat-construction-progress-video.php` version `1.1.0` owns both modules without creating a duplicate page, changing the homepage video or touching any property/offer/CRM data.
 - The initial page still serves the tracked 1280x720 local poster and no YouTube iframe. Sixteen 960x720 WebP thumbnails load lazily; a visitor click loads only the selected 1920-pixel WebP in the keyboard-accessible lightbox. The 32 reviewed derivatives total 11.2 MB in GitHub, while the 530 MB source archives, 347 MB originals and 183 MB raw clips remain local and were not uploaded to GitHub or the website.
 - The page has updated Hungarian SEO descriptions, the existing `VideoObject` and a 16-image `ImageGallery` graph with factual Hungarian captions and dates. Source photos span June 10 through August 26 and cover site preparation, excavation, setting-out, side support, compaction and crushed-stone bedding.
