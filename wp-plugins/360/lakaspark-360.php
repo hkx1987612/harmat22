@@ -2,7 +2,7 @@
 /*
 Plugin Name: Lakópark 360 Viewer
 Description: Interaktív 360-as lakásválasztó modul JSON hitboxokkal.
-Version: 1.9.0
+Version: 1.9.1
 Author: 21stCenturyWebsites
 */
 
@@ -67,7 +67,7 @@ function render_lakaspark_360_viewer($atts) {
     }
 
     wp_enqueue_style('lakaspark-360-css', plugin_dir_url(__FILE__) . 'viewer.css', array(), '6.2');
-    wp_enqueue_script('lakaspark-360-js', plugin_dir_url(__FILE__) . 'viewer.js', array(), '6.2', true);
+    wp_enqueue_script('lakaspark-360-js', plugin_dir_url(__FILE__) . 'viewer.js', array(), '6.3', true);
 
     $apartment_data = array();
     $filter_rooms = array();

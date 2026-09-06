@@ -52,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let loaderDismissed = false;
     let backgroundPreloadStarted = false;
     let pendingFrame = null;
+    let frameSurface = null;
+    let frameContext = null;
     const loaderOverlay = document.getElementById('lakasparkLoader');
     const loaderBarFill = document.getElementById('loaderBarFill');
     const loaderPercent = document.getElementById('loaderPercent');
@@ -80,7 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(textInterval);
             if(loaderOverlay) loaderOverlay.style.opacity = '0';
             setTimeout(() => { if(loaderOverlay) loaderOverlay.style.display = 'none'; }, 500);
-            window.setTimeout(() => updateFrame(currentFrame), 0);
+            window.setTimeout(() => {
+                if (pendingFrame === null) updateFrame(currentFrame);
+            }, 0);
             startBackgroundPreload();
         }
     }
@@ -171,16 +175,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateFrame(frameIndex) {
+        frameIndex = normalizeFrameIndex(frameIndex);
+        pendingFrame = frameIndex;
         const img = ensureFrameLoaded(frameIndex, true);
-        if (!img || !img.dataset.loaded) {
-            pendingFrame = frameIndex;
+        if (!img || img.dataset.loaded !== '1' || !img.naturalWidth) {
             preloadAround(frameIndex, 1);
             return false;
         }
 
+        if (!presentFrame(img)) return false;
+        pendingFrame = null;
         currentFrame = frameIndex;
         preloadAround(frameIndex, 1);
-        imageElements.forEach((img, idx) => { if (img) img.style.opacity = (idx + 1 === frameIndex) ? '1' : '0'; });
         
         if (compassSlider) compassSlider.value = frameIndex;
         updateCompassMask(frameIndex);
@@ -332,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const absSteps = Math.abs(steps);
         
         const stepInt = setInterval(() => {
-            let nextFrame = currentFrame + dir;
+            let nextFrame = (pendingFrame === null ? currentFrame : pendingFrame) + dir;
             if (nextFrame > CONFIG.totalFrames) nextFrame = 1;
             if (nextFrame < 1) nextFrame = CONFIG.totalFrames;
             updateFrame(nextFrame);
@@ -346,20 +352,84 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const imageElements = new Array(CONFIG.totalFrames);
     const posterImage = document.getElementById('lakasparkPoster');
+    // Keep one painted surface: async image layers can briefly expose the white page.
+    try {
+        frameSurface = document.createElement('canvas');
+        frameContext = frameSurface.getContext('2d');
+        if (frameContext) {
+            frameSurface.className = 'viewer-image viewer-frame-surface';
+            frameSurface.setAttribute('aria-hidden', 'true');
+            frameSurface.style.opacity = '0';
+            frameSurface.style.zIndex = '1';
+            viewer.insertBefore(frameSurface, svgLayer);
+        }
+    } catch (error) {
+        frameContext = null;
+    }
+
+    function presentFrame(img) {
+        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return false;
+        if (frameContext) {
+            try {
+                if (!frameSurface.dataset.painted) {
+                    frameSurface.width = img.naturalWidth;
+                    frameSurface.height = img.naturalHeight;
+                }
+                // Never clear/resize a painted canvas before its replacement is ready.
+                frameContext.drawImage(img, 0, 0, frameSurface.width, frameSurface.height);
+                frameSurface.dataset.painted = '1';
+                frameSurface.dataset.frame = String(normalizeFrameIndex(
+                    imageElements.indexOf(img) + 1
+                ));
+                frameSurface.style.opacity = '1';
+            } catch (error) {
+                return false;
+            }
+        }
+        if (!frameContext) img.decoding = 'sync';
+        imageElements.forEach(frame => {
+            if (frame) frame.style.opacity = !frameContext && frame === img ? '1' : '0';
+        });
+        return true;
+    }
+
+    function markImageReady(img, frame) {
+        if (img.dataset.progressDone || img.dataset.decoding) return;
+        if (!img.complete || !img.naturalWidth || !img.naturalHeight) return;
+        img.dataset.decoding = '1';
+        const decoded = typeof img.decode === 'function' ? img.decode() : Promise.resolve();
+        decoded.then(() => {
+            delete img.dataset.decoding;
+            if (!img.naturalWidth || !img.naturalHeight) return;
+            img.dataset.loaded = '1';
+            img.dataset.progressDone = '1';
+            onImageLoadProgress();
+            if (pendingFrame === frame) updateFrame(frame);
+        }).catch(() => {
+            delete img.dataset.decoding;
+            markImageFailed(img, frame);
+        });
+    }
+
+    function markImageFailed(img, frame) {
+        img.dataset.loaded = '';
+        img.dataset.failed = '1';
+        // A failed request is not a usable frame. Keep the last painted view.
+        if (frame === 1 && !loaderDismissed) updateFrame(2);
+    }
+
     if (posterImage) {
         imageElements[0] = posterImage;
-        posterImage.dataset.loaded = posterImage.complete ? '1' : '';
-        const markPosterReady = function () {
-            if (posterImage.dataset.progressDone) return;
-            posterImage.dataset.loaded = '1';
-            posterImage.dataset.progressDone = '1';
-            onImageLoadProgress();
-        };
+        posterImage.dataset.loaded = '';
+        const markPosterReady = () => markImageReady(posterImage, 1);
         if (posterImage.complete) {
-            window.setTimeout(markPosterReady, 0);
+            window.setTimeout(() => {
+                if (posterImage.naturalWidth) markPosterReady();
+                else markImageFailed(posterImage, 1);
+            }, 0);
         } else {
             posterImage.addEventListener('load', markPosterReady, { once: true });
-            posterImage.addEventListener('error', markPosterReady, { once: true });
+            posterImage.addEventListener('error', () => markImageFailed(posterImage, 1), { once: true });
         }
     }
 
@@ -377,25 +447,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function ensureFrameLoaded(frame, highPriority = false) {
         const normalizedFrame = normalizeFrameIndex(frame);
         const index = normalizedFrame - 1;
-        if (imageElements[index]) return imageElements[index];
+        if (imageElements[index]) {
+            if (highPriority) imageElements[index].fetchPriority = 'high';
+            return imageElements[index];
+        }
 
         const img = new Image();
-        img.onload = function () {
-            img.dataset.loaded = '1';
-            onImageLoadProgress();
-            if (pendingFrame === normalizedFrame) {
-                pendingFrame = null;
-                updateFrame(normalizedFrame);
-            }
-        };
-        img.onerror = function () {
-            img.dataset.loaded = '1';
-            onImageLoadProgress();
-            if (pendingFrame === normalizedFrame) {
-                pendingFrame = null;
-                updateFrame(normalizedFrame);
-            }
-        };
+        img.onload = () => markImageReady(img, normalizedFrame);
+        img.onerror = () => markImageFailed(img, normalizedFrame);
         if (highPriority) {
             img.fetchPriority = 'high';
         }
@@ -403,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         img.alt = '';
         img.setAttribute('aria-hidden', 'true');
         img.decoding = 'async';
-        img.style.opacity = (normalizedFrame === currentFrame) ? '1' : '0';
+        img.style.opacity = '0';
         img.src = buildFrameUrl(normalizedFrame);
         viewer.insertBefore(img, svgLayer);
         imageElements[index] = img;
@@ -491,7 +550,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isDragging) return;
         const currentX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
         if (Math.abs(currentX - startX) > 15) {
-            const nextFrame = (currentX - startX < 0) ? (currentFrame < CONFIG.totalFrames ? currentFrame + 1 : 1) : (currentFrame > 1 ? currentFrame - 1 : CONFIG.totalFrames);
+            const rotationFrame = pendingFrame === null ? currentFrame : pendingFrame;
+            const nextFrame = normalizeFrameIndex(rotationFrame + (currentX - startX < 0 ? 1 : -1));
             updateFrame(nextFrame); startX = currentX;
         }
     };

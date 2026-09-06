@@ -4,8 +4,12 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## Current Stable State
 
-- Stable date: 2026-08-29
-- Stable tag: `stable-2026-08-29-construction-menu-current`
+- Stable date: 2026-09-06
+- Stable tag: `stable-2026-09-06-360-no-flash-current`
+- The 360 selector version `1.9.1` / JavaScript `6.3` retains one full-resolution painted canvas while the next frame loads and decodes. Failed frames never replace the current view; stale frame completions cannot undo a newer selection. Existing SVG hotspots, reserved-property access, filters, links, image assets, layout, offers and CRM data are unchanged. The fix is inside the existing viewer closure rather than a competing MU observer.
+- Backup: `/home/harmath2/codex-backups/360-no-flash-20260906-144526`. Both live files matched GitHub before deployment; staged/final PHP lint, file hashes, cache clearing and WordPress boot passed. All 39 offer leads remained and the root error log did not change.
+- Verification: 10 isolated frame tests including delayed/rejected decoding, failed images, reverse selection and 72-frame cycles; desktop and 390px local rendering/pixel samples; live desktop rotation/drag/selection; live 390px rotation, filters and reserved-property keyboard navigation; public quote-modal opening with five sources; and a 145-page / 124-property / 586-resource scan with zero issues. No test inquiry was submitted. See `server-config/maintenance/2026-09-06-360-no-flash.md` for scope, test limitations and rollback.
+- Previous stable tag: `stable-2026-08-29-construction-menu-current`
 - The clean header drawer now includes `Építési napló` exactly once between `Galéria` and `Elérhetőségek`. The rollback-friendly `wp-mu-plugins/zz-harmat-construction-menu-link.php` version `1.0.0` extends only the existing JavaScript-generated public menu; it does not modify the obsolete WordPress menu records, page header markup, footer, properties, offers or CRM data.
 - Menu-link backup: `/home/harmath2/codex-backups/construction-menu-link-20260829-072916`. Temporary and final PHP files passed lint, live hash matches GitHub, WordPress booted, cache was cleared and no staging file remains. Desktop and mobile verified the exact nine-link order, single construction link, menu overflow and navigation to the live gallery page. Nine key-page regressions and the 145-page, 124-property, 588-resource scan returned zero issues; all 36 offer leads remained and no inquiry was submitted.
 - Previous stable tag: `stable-2026-08-29-construction-gallery-current`
