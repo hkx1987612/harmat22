@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Public Audit Polish
  * Description: Public SEO and UX cleanup layer for Harmat Lakópark audit items.
- * Version: 2026.06.15.1
+ * Version: 2026.07.13.1
  */
 
 defined('ABSPATH') || exit;
@@ -307,6 +307,103 @@ function harmat_audit_related_cards_script() {
     return '<script id="harmat-audit-related-cards-fix">(function(){function mark(){var heads=Array.prototype.slice.call(document.querySelectorAll("h1,h2,h3,h4"));heads.forEach(function(head){if(head.closest&&head.closest("#hm-lakas-related-source")){return;}var text=(head.textContent||"").toLowerCase();if(text.indexOf("hasonló lakások")===-1&&text.indexOf("hasonlo lakasok")===-1){return;}var section=head.closest("section,div.elementor-section,div.elementor-widget-wrap,div");if(!section){return;}section.classList.add("harmat-related-modern");Array.prototype.slice.call(section.querySelectorAll("article,.property,.opalestate-property,.elementor-post,.post,.item")).forEach(function(card){card.classList.add("harmat-related-modern-card");});});}if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",mark);}else{mark();}})();</script>';
 }
 
+function harmat_audit_stability_content_cleanup($html) {
+    if (!is_string($html) || $html === '') {
+        return $html;
+    }
+
+    return str_replace(
+        array(
+            '<span><strong>Ár</strong> egyeztetés alapján</span>',
+            'Az I. ütemben 124 lakás érhető el A1, A2, A3 és A4 épületekben.',
+        ),
+        array(
+            '<span><strong>Árak</strong> lakásonként</span>',
+            'Az I. ütem összesen 124 lakást tartalmaz az A1, A2, A3 és A4 épületekben.',
+        ),
+        $html
+    );
+}
+
+function harmat_audit_stability_script() {
+    return <<<'HTML'
+<script id="harmat-audit-stability-js">
+(function () {
+  if (window.__harmatAuditStabilityReady) return;
+  window.__harmatAuditStabilityReady = true;
+
+  function normalizeHeader() {
+    var headers = Array.prototype.slice.call(document.querySelectorAll('[id="my-sticky-header"]'));
+    headers.forEach(function (header, index) {
+      if (index > 0) header.id = 'my-sticky-header-source-' + index;
+    });
+
+    document.querySelectorAll('a.elementor-icon[href*="elementor-action"]').forEach(function (link) {
+      if (!link.getAttribute('aria-label') && !(link.textContent || '').trim()) {
+        link.setAttribute('aria-label', 'Menü megnyitása');
+      }
+    });
+  }
+
+  function applyRoomFilter() {
+    if (window.location.pathname.replace(/\/+$/, '') !== '/lakaskereso') return;
+
+    var page = document.querySelector('[data-hm-lakas-page]');
+    if (!page || page.getAttribute('data-hm-url-filter-applied')) return;
+
+    var rooms = new URLSearchParams(window.location.search).get('rooms') || '';
+    if (!/^[1-5]$/.test(rooms)) return;
+
+    var field = page.querySelector('[data-filter="rooms"]');
+    if (!field || !field.querySelector('option[value="' + rooms + '"]')) return;
+
+    field.value = rooms;
+    page.setAttribute('data-hm-url-filter-applied', rooms);
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function patchHeroPoster() {
+    if (window.location.pathname !== '/') return;
+
+    document.querySelectorAll('video').forEach(function (video) {
+      var source = video.currentSrc || video.getAttribute('src') || '';
+      var nestedSource = video.querySelector('source');
+      if (!source && nestedSource) source = nestedSource.getAttribute('src') || '';
+      if (source.indexOf('yulu-garden-') === -1 || video.getAttribute('poster')) return;
+
+      video.setAttribute('poster', 'https://harmat22.hu/wp-content/uploads/2026/02/Harmat22_latvany-3.jpg');
+    });
+  }
+
+  function labelVirtualControls() {
+    if (window.location.pathname.indexOf('/virtualis-lakasvalaszto') !== 0) return;
+
+    document.querySelectorAll('input[type="range"]:not([aria-label]):not([aria-labelledby])').forEach(function (field) {
+      field.setAttribute('aria-label', 'Épületnézet vezérlése');
+    });
+  }
+
+  function run() {
+    normalizeHeader();
+    applyRoomFilter();
+    patchHeroPoster();
+    labelVirtualControls();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+  window.addEventListener('load', run);
+  window.setTimeout(run, 900);
+  window.setTimeout(run, 2200);
+}());
+</script>
+HTML;
+}
+
 function harmat_audit_output_cleanup($html) {
     if (!is_string($html) || $html === '') {
         return $html;
@@ -318,12 +415,16 @@ function harmat_audit_output_cleanup($html) {
     $html = harmat_audit_remove_related_after_footer($html);
     $html = harmat_audit_project_heading_cleanup($html);
     $html = harmat_audit_demote_extra_h1($html);
+    $html = harmat_audit_stability_content_cleanup($html);
 
     if (strpos($html, 'harmat-audit-modal-dom-fix') === false) {
         $html = str_ireplace('</body>', harmat_audit_modal_script() . '</body>', $html);
     }
     if (strpos(harmat_audit_request_path(), 'property/') === 0 && strpos($html, 'harmat-audit-related-cards-fix') === false) {
         $html = str_ireplace('</body>', harmat_audit_related_cards_script() . '</body>', $html);
+    }
+    if (strpos($html, 'harmat-audit-stability-js') === false) {
+        $html = str_ireplace('</body>', harmat_audit_stability_script() . '</body>', $html);
     }
 
     return $html;
@@ -454,3 +555,34 @@ body.single-property .elementor-4110 .elementor-element-90ce068 { background:#9a
 </style>
     <?php
 }, 90);
+
+add_action('wp_head', function () {
+    if (!harmat_audit_is_public()) {
+        return;
+    }
+    ?>
+<style id="harmat-audit-stability-css">
+.harmat-local-ai-launch { color:#fff!important; border-color:#a8762d!important; }
+@media (min-width:1121px) and (max-width:1360px) {
+  body.harmat-lakas-redesign-page .hm-lakas-toolbar { grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(120px,.7fr)!important; }
+  body.harmat-lakas-redesign-page .hm-lakas-range-field { grid-column:1/6!important; }
+  body.harmat-lakas-redesign-page .hm-lakas-reset { grid-column:6!important; }
+}
+@media (max-width:560px) {
+  #my-sticky-header .headerrow,
+  [id^="my-sticky-header-source-"] .headerrow { height:100px!important; min-height:100px!important; }
+  #my-sticky-header a[href*="opal-contactform-popup"],
+  [id^="my-sticky-header-source-"] a[href*="opal-contactform-popup"] { display:none!important; }
+  #hm-cookie-settings-button { left:12px!important; right:auto!important; bottom:max(70px,calc(env(safe-area-inset-bottom,0px) + 70px))!important; }
+  body:not(.elementor-editor-active) .harmat-local-ai-launch { right:12px!important; bottom:max(14px,calc(env(safe-area-inset-bottom,0px) + 14px))!important; }
+  body.home .elementor-element-c19513c,
+  body.home .elementor-element-c19513c > .elementor-container,
+  body.home .elementor-element-c19513c .elementor-column,
+  body.home .elementor-element-c19513c .elementor-widget-wrap,
+  body.home .elementor-element-c19513c .elementor-widget-opal-revslider,
+  body.home .elementor-element-c19513c .elementor-widget-container,
+  body.home .elementor-element-c19513c sr7-module { height:clamp(360px,104vw,430px)!important; min-height:0!important; max-height:430px!important; }
+}
+</style>
+    <?php
+}, 9999);
