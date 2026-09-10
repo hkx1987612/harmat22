@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Harmat Homepage YouTube Bandwidth Guard
- * Description: Replaces origin-hosted presentation videos with resilient YouTube players and monitors hosting bandwidth.
- * Version: 1.4.0
+ * Description: Serves a guarded native homepage video, retains on-demand YouTube tours and monitors hosting bandwidth.
+ * Version: 1.5.0
  */
 
 if (!defined('ABSPATH')) {
@@ -17,6 +17,14 @@ const HARMAT_BW_POSTER = '/uploads/2026/02/Harmat22_latvany-3.jpg';
 const HARMAT_BW_3D_VIDEO_FILENAME = 'spjs.mp4';
 const HARMAT_BW_3D_POSTER = '/plugins/harmat22-map-redesign/assets/harmat-3d/video_spjs.jpg';
 const HARMAT_BW_VIDEO_UPLOAD_DATE = '2026-05-01T00:00:00+02:00';
+const HARMAT_BW_NATIVE_VIDEO = '/uploads/harmat-video/harmat-home-1080p-v2.mp4';
+
+function harmat_bw_native_video_available(): bool
+{
+    return !(defined('HARMAT_HOME_NATIVE_VIDEO_DISABLED') && HARMAT_HOME_NATIVE_VIDEO_DISABLED)
+        && is_readable(WP_CONTENT_DIR . HARMAT_BW_NATIVE_VIDEO)
+        && is_readable(__DIR__ . '/assets/harmat-home-native-video.js');
+}
 
 function harmat_bw_retired_video_paths(): array
 {
@@ -188,13 +196,20 @@ function harmat_bw_filter_homepage_html(string $html): string
     if (
         strpos($html, 'id="harmat-youtube-player"') === false
         && strpos($html, "id='harmat-youtube-player'") === false
+        && strpos($html, 'id="harmat-native-home-video"') === false
     ) {
         $poster_url = esc_url(content_url(HARMAT_BW_POSTER));
+        $player_markup = harmat_bw_native_video_available()
+            ? '<video id="harmat-native-home-video" muted playsinline loop preload="none"'
+                . ' width="1920" height="1080" tabindex="-1"'
+                . ' data-src="' . esc_url(content_url(HARMAT_BW_NATIVE_VIDEO)) . '"'
+                . ' poster="' . $poster_url . '"></video>'
+            : '<div id="harmat-youtube-player"></div>';
         $hero_markup = '<div class="harmat-youtube-hero" aria-hidden="true">'
             . '<img class="harmat-youtube-poster" src="' . $poster_url . '"'
             . ' alt="" width="1920" height="1080" loading="eager"'
             . ' fetchpriority="high" decoding="async">'
-            . '<div id="harmat-youtube-player"></div>'
+            . $player_markup
             . '</div>';
 
         $html = preg_replace_callback(
@@ -238,6 +253,11 @@ add_action('wp_head', function (): void {
         'inLanguage' => 'hu-HU',
         'publisher' => array('@id' => home_url('/#organization')),
     );
+
+    if (harmat_bw_native_video_available()) {
+        unset($schema['embedUrl']);
+        $schema['contentUrl'] = content_url(HARMAT_BW_NATIVE_VIDEO);
+    }
 
     echo '<script type="application/ld+json" id="harmat-youtube-video-schema">';
     echo wp_json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -301,6 +321,21 @@ add_action('wp_head', function (): void {
 #SR7_1_1.harmat-youtube-playing .harmat-youtube-hero iframe {
   opacity:1;
 }
+#SR7_1_1 .harmat-youtube-hero video {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  opacity:0;
+  z-index:1;
+  pointer-events:none;
+  transition:opacity .35s ease;
+}
+#SR7_1_1.harmat-youtube-playing .harmat-youtube-hero video {
+  opacity:1;
+}
 #SR7_1_1.harmat-youtube-playing .harmat-youtube-poster {
   opacity:0;
 }
@@ -318,6 +353,12 @@ add_action('wp_head', function (): void {
 
 add_action('wp_footer', function (): void {
     if (!harmat_bw_is_public_homepage()) {
+        return;
+    }
+    if (harmat_bw_native_video_available()) {
+        echo '<script id="harmat-native-home-runtime" src="'
+            . esc_url(content_url('/mu-plugins/assets/harmat-home-native-video.js?ver=1.0.0'))
+            . '" defer></script>' . "\n";
         return;
     }
     ?>
@@ -829,7 +870,11 @@ add_action('init', function (): void {
     echo '      <video:thumbnail_loc>' . esc_url($poster_url) . "</video:thumbnail_loc>\n";
     echo "      <video:title><![CDATA[Harmat Lakópark látványvideó]]></video:title>\n";
     echo "      <video:description><![CDATA[A Harmat Lakópark új építésű lakásait, környezetét és hangulatát bemutató látványvideó.]]></video:description>\n";
-    echo '      <video:player_loc>' . esc_url($player_url) . "</video:player_loc>\n";
+    if (harmat_bw_native_video_available()) {
+        echo '      <video:content_loc>' . esc_url(content_url(HARMAT_BW_NATIVE_VIDEO)) . "</video:content_loc>\n";
+    } else {
+        echo '      <video:player_loc>' . esc_url($player_url) . "</video:player_loc>\n";
+    }
     echo "      <video:duration>90</video:duration>\n";
     echo '      <video:publication_date>' . esc_html(HARMAT_BW_VIDEO_UPLOAD_DATE) . "</video:publication_date>\n";
     echo "      <video:family_friendly>yes</video:family_friendly>\n";
@@ -1078,7 +1123,7 @@ function harmat_bw_collect_bandwidth(bool $send_alert = true): array
 
     $subject = sprintf('[Harmat22] Tárhelyforgalom: %.1f%%', $percent);
     $message = sprintf(
-        "A harmat22.hu havi HTTP-forgalma elérte a(z) %.1f%%-ot.\n\nFelhasználás: %.2f MB\nKeret: %d MB\nKüszöb: %d%%\n\nA kezdőlapi videó YouTube-ról töltődik, ezért nem terheli a tárhely adatforgalmát. Ellenőrizze a további nagyméretű médiafájlokat és a hozzáférési naplókat.",
+        "A harmat22.hu havi HTTP-forgalma elérte a(z) %.1f%%-ot.\n\nFelhasználás: %.2f MB\nKeret: %d MB\nKüszöb: %d%%\n\nA saját tárhelyről lejátszott videók növelik az adatforgalmat. Ellenőrizze a médiafájlokat és a hozzáférési naplókat.",
         $percent,
         $result['usage_mib'],
         $limit_mib,

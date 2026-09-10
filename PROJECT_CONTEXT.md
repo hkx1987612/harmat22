@@ -4,8 +4,14 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## Current Stable State
 
-- Stable date: 2026-09-06
-- Stable tag: `stable-2026-09-06-360-no-flash-current`
+- Stable date: 2026-09-10
+- Stable tag: `stable-2026-09-10-home-native-video-current`
+- At the user's request, only the homepage hero has returned to native self-hosted muted/inline/looping video, using the original full 90-second presentation at 1920x1080. The 39,504,516-byte faststart derivative is approximately 34.4% smaller than the archived source. Existing dimensions, copy and buttons are preserved; construction and on-demand 3D videos remain unchanged.
+- The existing `zz-harmat-home-youtube-guard.php` is version `1.5.0`, with `assets/harmat-home-native-video.js` version `1.0.0`. Playback pauses offscreen/hidden, and motion reduction, Save-Data, failed loading or blocked autoplay retain the poster. The old YouTube implementation is preserved for rollback; the three retired media URLs remain blocked.
+- The homepage VideoObject and video sitemap now identify `/wp-content/uploads/harmat-video/harmat-home-1080p-v2.mp4`. Monthly bandwidth monitoring remains enabled, with accurate self-hosted-video email wording. Video traffic again consumes hosting quota; 1,000 complete uncached downloads add about 39.5 GB, and archived usage is delayed.
+- Backup: `/home/harmath2/codex-backups/home-native-video-20260910-162013`, containing the previous guard and identical deployed video. Large media stays out of GitHub; exact hashes, encoding and restore instructions are in `server-config/maintenance/2026-09-10-home-native-video.md`.
+- Verification: 24 PHP assertions, local desktop/mobile playback and fallback tests, live desktop/mobile decoded 1080p playback and screenshots, range/cache/SEO checks, nine key-page regressions and the 145-page / 124-property / 588-resource scan all passed. All 44 existing offer leads and the server error-log size/time remained unchanged. No test inquiry or conversion was submitted. Real iOS and China-network playback remain unverified.
+- Previous stable tag: `stable-2026-09-06-360-no-flash-current`
 - The 360 selector version `1.9.1` / JavaScript `6.3` retains one full-resolution painted canvas while the next frame loads and decodes. Failed frames never replace the current view; stale frame completions cannot undo a newer selection. Existing SVG hotspots, reserved-property access, filters, links, image assets, layout, offers and CRM data are unchanged. The fix is inside the existing viewer closure rather than a competing MU observer.
 - Backup: `/home/harmath2/codex-backups/360-no-flash-20260906-144526`. Both live files matched GitHub before deployment; staged/final PHP lint, file hashes, cache clearing and WordPress boot passed. All 39 offer leads remained and the root error log did not change.
 - Verification: 10 isolated frame tests including delayed/rejected decoding, failed images, reverse selection and 72-frame cycles; desktop and 390px local rendering/pixel samples; live desktop rotation/drag/selection; live 390px rotation, filters and reserved-property keyboard navigation; public quote-modal opening with five sources; and a 145-page / 124-property / 586-resource scan with zero issues. No test inquiry was submitted. See `server-config/maintenance/2026-09-06-360-no-flash.md` for scope, test limitations and rollback.
@@ -141,9 +147,9 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - The approved sales area for `A1-4-L5`, `A2-4-L5`, `A3-4-L5`, and `A4-4-L5` is `47.83 m2` across apartment-search cards and property detail pages.
 - The four matching per-square-meter prices are recalculated from each current apartment price and the corrected sales area.
 - MU implementation: `wp-mu-plugins/zz-harmat-four-unit-area-correction.php`
-- Homepage presentation video: YouTube video `kmAg_ki-yYY`, muted autoplay, loop, inline playback, adaptive quality with `hd1080` requested.
-- The homepage uses the standard YouTube IFrame API with muted autoplay; the obsolete Slider Revolution preloader is suppressed and the project poster remains the default fallback.
-- The homepage now reveals the standard YouTube embed only after the IFrame API confirms active playback. IPs that receive a YouTube sign-in or bot-verification interstitial keep the high-resolution project poster instead of exposing the error screen.
+- Historical July 29 homepage implementation (replaced by native playback on September 10): YouTube video `kmAg_ki-yYY`, muted autoplay, loop, inline playback, adaptive quality with `hd1080` requested.
+- The retained rollback implementation uses the standard YouTube IFrame API with muted autoplay; the obsolete Slider Revolution preloader is suppressed and the project poster remains the default fallback.
+- In the YouTube rollback implementation, the homepage reveals the embed only after the IFrame API confirms active playback. IPs receiving a YouTube sign-in or bot-verification interstitial retain the project poster.
 - The 3D experience `Latvanyvideo` card uses the same standard YouTube host, loads only after a visitor clicks play, and keeps its poster visible until playback is confirmed.
 - MU implementation: `wp-mu-plugins/zz-harmat-home-youtube-guard.php`
 - CRM bandwidth widget: `wp-mu-plugins/zz-harmat-crm-bandwidth-widget.php`

@@ -1,0 +1,10 @@
+# Versioned homepage media only; the retired URLs remain blocked separately.
+<IfModule mod_mime.c>
+    AddType video/mp4 .mp4
+</IfModule>
+<IfModule mod_headers.c>
+    <Files "harmat-home-1080p-v2.mp4">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set X-Content-Type-Options "nosniff"
+    </Files>
+</IfModule>
