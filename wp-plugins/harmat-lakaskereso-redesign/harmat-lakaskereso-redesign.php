@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.2.3
+ * Version: 1.2.4
  */
 
 if (!defined('ABSPATH')) {
@@ -37,12 +37,12 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.3');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.4');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
     if (harmat_lakas_redesign_is_page()) {
-        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.3', true);
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.4', true);
         wp_enqueue_script('harmat-lakas-redesign');
         wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
     }
@@ -58,11 +58,12 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v13';
+    return 'harmat_lakas_redesign_markup_v14';
 }
 
 function harmat_lakas_redesign_clear_cache() {
     delete_transient(harmat_lakas_redesign_cache_key());
+    delete_transient('harmat_lakas_redesign_markup_v13');
     delete_transient('harmat_lakas_redesign_markup_v12');
     delete_transient('harmat_lakas_redesign_markup_v11');
 }
@@ -400,7 +401,18 @@ function harmat_lakas_redesign_render() {
         <div class="hm-lakas-hero">
             <p>Harmat Lakópark</p>
             <h1>Lakáskereső</h1>
-            <a class="hm-lakas-construction-link" href="<?php echo esc_url(home_url('/epitesi-naplo/')); ?>">Építési napló</a>
+            <a class="hm-lakas-construction-link" href="<?php echo esc_url(home_url('/epitesi-naplo/')); ?>">
+                <svg class="hm-lakas-construction-mark" viewBox="0 0 52 52" width="52" height="52" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 40h40" fill="none" stroke="#a8762d" stroke-width="1.5"/>
+                    <path d="M10 38V14l14-6 14 6v24" fill="#fffaf1" stroke="#253137" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M15 19h6v6h-6zm13 0h6v6h-6zM15 29h6v6h-6z" fill="#d7e5df" stroke="#34766e" stroke-width="1.2"/>
+                    <path d="M25 38v-9h8v9" fill="#e8d2a9" stroke="#a8762d" stroke-width="1.2"/>
+                    <path d="M30 35c0-5 3.6-8.5 8-8.5s8 3.5 8 8.5" fill="#d8a74f" stroke="#80561b" stroke-width="1.4"/>
+                    <path d="M38 27v6m-10 2h20" fill="none" stroke="#80561b" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M31 39h14" fill="none" stroke="#253137" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span class="hm-lakas-construction-label">Építési napló</span>
+            </a>
         </div>
 
         <div class="hm-lakas-toolbar" data-hm-filter data-sqm-active="0">
@@ -542,8 +554,10 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 32px;align-items:center;margin-bottom:22px;padding:24px 30px;border:1px solid rgba(168,118,45,.2);background:linear-gradient(135deg,#fffaf1,#f6ead8)}
     .hm-lakas-hero p{grid-column:1;grid-row:1;margin:0;color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
     .hm-lakas-hero h1{grid-column:1;grid-row:2;margin:0;padding:0!important;color:#253137;font-family:"Marcellus SC",Georgia,serif;font-size:50px;font-weight:400;line-height:.98;letter-spacing:.04em;text-transform:uppercase}
-    .hm-lakas-construction-link{grid-column:2;grid-row:1/3;display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:1px solid #a8762d;background:#fff;color:#80561b;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase;white-space:nowrap}
-    .hm-lakas-construction-link:hover{background:#a8762d;color:#fff}
+    .hm-lakas-construction-link{grid-column:2;grid-row:1/3;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;color:#80561b;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase;white-space:nowrap}
+    .hm-lakas-construction-mark{display:block;flex:none;width:52px;height:52px}
+    .hm-lakas-construction-label{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:1px solid #a8762d;background:#fff}
+    .hm-lakas-construction-link:hover .hm-lakas-construction-label{background:#a8762d;color:#fff}
     .hm-lakas-construction-link:focus-visible{outline:3px solid #253137;outline-offset:3px}
     .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(360px,2fr) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
     .hm-lakas-tabs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
@@ -603,7 +617,7 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-empty.is-visible{display:block}
     @media(min-width:1121px) and (max-width:1360px){.hm-lakas-toolbar{grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(120px,.7fr)}.hm-lakas-range-field{grid-column:1/6}.hm-lakas-reset{grid-column:6}}
     @media(max-width:1120px){.hm-lakas-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-range-field{grid-column:1/-1}.hm-lakas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-reset{grid-column:auto}.hm-lakas-hero{grid-template-columns:1fr}.hm-lakas-hero p,.hm-lakas-hero h1,.hm-lakas-construction-link{grid-column:1;grid-row:auto}.hm-lakas-construction-link{justify-self:start;margin-top:8px}}
-    @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{min-width:0;width:100%;max-width:100%;padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-construction-link{width:100%}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
+    @media(max-width:680px){.hm-lakas-page{width:calc(100% - 24px);padding:34px 0 56px}.hm-lakas-hero{min-width:0;width:100%;max-width:100%;padding:24px 18px}.hm-lakas-hero h1{font-size:38px}.hm-lakas-construction-link{width:100%;justify-content:flex-start;white-space:normal}.hm-lakas-construction-mark{width:44px;height:44px}.hm-lakas-construction-label{flex:1;min-width:0;text-align:center}.hm-lakas-toolbar{grid-template-columns:1fr;padding:16px}.hm-lakas-range-field{grid-column:1;grid-template-columns:1fr}.hm-lakas-grid{grid-template-columns:1fr}.hm-lakas-media{height:238px}.hm-lakas-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.hm-lakas-facts div:nth-child(n){border-right:1px solid rgba(168,118,45,.13);border-bottom:1px solid rgba(168,118,45,.13)}.hm-lakas-facts div:nth-child(2n){border-right:0}.hm-lakas-actions{grid-template-columns:1fr}}
 
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .property_loop,
     body.single-property .elementor-widget-loop-grid .e-loop-item.property .elementor-section-wrap,
