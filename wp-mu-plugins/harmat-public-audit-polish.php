@@ -268,7 +268,6 @@ function harmat_audit_financing_html() {
 function harmat_audit_build_log_html() {
     return '<main id="main" class="site-main harmat-info-page harmat-build-log-page" role="main">'
         . '<article class="page type-page status-publish hentry"><div class="entry-content">'
-        . '<section class="harmat-info-hero"><span>Projektfrissítések</span><h1>Építési napló</h1><p>A Harmat Lakópark nyilvános projektmérföldkövei és építési hírei egy helyen.</p></section>'
         . '<section class="harmat-build-log-list"><article><time datetime="2026-06-12">2026. június 12.</time><h2>Ünnepélyes alapkőletétel és hivatalos értékesítési nyitás</h2><p>A Harmat Lakópark első ütemének bemutatása és hivatalos értékesítési nyitása 2026. június 12-én indult. Ettől az időponttól az első ütem lakásadatai, alaprajzai és ajánlatkérési folyamata részletesen elérhető a weboldalon és az értékesítési csapatnál.</p>'
         . '<div class="harmat-build-log-details" data-harmat-build-log-details="1">'
         . '<section><h3>Értékesítési iroda megnyitása</h3><p>Az érdeklődők személyes tájékoztatást, alaprajzi egyeztetést és ajánlatkérést kérhetnek az értékesítési csapattól.</p></section>'

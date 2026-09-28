@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Construction Progress Media
  * Description: Adds the current construction video and photo timeline to the public construction-log page.
- * Version: 1.1.0
+ * Version: 1.2.0
  */
 
 defined('ABSPATH') || exit;
@@ -166,6 +166,25 @@ function harmat_construction_video_markup(): string
         . '</section>';
 }
 
+function harmat_construction_nearby_video_markup(): string
+{
+    $video_url = content_url('/uploads/2026/09/harmat-kornyek-kutyapark-2026-09.mp4');
+    $poster_url = content_url('/uploads/2026/09/harmat-kornyek-kutyapark-2026-09.jpg');
+
+    return '<section class="harmat-construction-nearby" aria-labelledby="harmat-construction-nearby-title">'
+        . '<div class="harmat-construction-gallery-head">'
+        . '<h2 id="harmat-construction-nearby-title">Közeli park és kutyafuttató környezete</h2>'
+        . '<p>Felvételek a Harmat Lakópark környékéről.</p></div>'
+        . '<div class="harmat-construction-nearby-player" data-harmat-nearby-player data-video-url="' . esc_url($video_url) . '" data-poster-url="' . esc_url($poster_url) . '">'
+        . '<button type="button" class="harmat-construction-trigger" data-harmat-nearby-play aria-label="A közeli park videójának lejátszása">'
+        . '<img src="' . esc_url($poster_url) . '" width="1280" height="720" alt="A Harmat Lakópark közelében lévő park környezete" loading="lazy" decoding="async">'
+        . '<span class="harmat-construction-play-icon" aria-hidden="true"></span>'
+        . '<span class="harmat-construction-play-label">Videó lejátszása</span>'
+        . '</button></div>'
+        . '<p class="harmat-construction-nearby-link"><a href="' . esc_url($video_url) . '" target="_blank" rel="noopener noreferrer">Videó megnyitása külön lapon</a></p>'
+        . '</section>';
+}
+
 function harmat_construction_video_inject(string $html): string
 {
     if ($html === '' || strpos($html, 'data-harmat-construction-video="1"') !== false) {
@@ -180,6 +199,7 @@ function harmat_construction_video_inject(string $html): string
 
     return substr($html, 0, $position)
         . harmat_construction_video_markup()
+        . harmat_construction_nearby_video_markup()
         . harmat_construction_gallery_markup()
         . substr($html, $position);
 }
@@ -216,6 +236,12 @@ add_action('wp_head', static function (): void {
 .harmat-construction-player iframe{display:block;width:100%;height:100%;border:0;background:#17272d}
 .harmat-construction-feature-meta{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 0;border-bottom:1px solid rgba(154,106,42,.22);color:#667278;font-size:13px}
 .harmat-construction-feature-meta a{color:#8b6128;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.harmat-construction-nearby{margin:42px 0 0;color:#263135}
+.harmat-construction-nearby .harmat-construction-gallery-head h2{margin:0 0 10px;font-size:30px}
+.harmat-construction-nearby-player{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#17272d}
+.harmat-construction-nearby-player video{display:block;width:100%;height:100%;object-fit:contain;background:#17272d}
+.harmat-construction-nearby-link{margin:12px 0 0;font-size:13px}
+.harmat-construction-nearby-link a{color:#8b6128;font-weight:800;text-decoration:underline;text-underline-offset:3px}
 .harmat-construction-gallery{margin:46px 0 44px;color:#263135}
 .harmat-construction-gallery-head{max-width:820px;margin:0 0 12px}
 .harmat-construction-gallery-head time,.harmat-construction-milestone>header time{display:block;margin:0 0 8px;color:#9a6a2a;font:800 12px/1.2 Montserrat,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}
@@ -273,6 +299,26 @@ add_action('wp_footer', static function (): void {
       player.setAttribute('data-player-loaded','1');
       trigger.replaceWith(frame);
       frame.focus();
+    },{once:true});
+  }
+
+  var nearbyTrigger=document.querySelector('[data-harmat-nearby-play]');
+  if(nearbyTrigger){
+    nearbyTrigger.addEventListener('click',function(){
+      var player=nearbyTrigger.closest('[data-harmat-nearby-player]');
+      var videoUrl=player&&player.getAttribute('data-video-url');
+      if(!videoUrl){return;}
+      var video=document.createElement('video');
+      video.controls=true;
+      video.playsInline=true;
+      video.preload='none';
+      video.poster=player.getAttribute('data-poster-url')||'';
+      video.setAttribute('aria-label','A közeli park videója');
+      video.src=videoUrl;
+      nearbyTrigger.replaceWith(video);
+      video.focus();
+      var playback=video.play();
+      if(playback&&typeof playback.catch==='function'){playback.catch(function(){});}
     },{once:true});
   }
 

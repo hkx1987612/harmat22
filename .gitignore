@@ -10,6 +10,7 @@ ssh-askpass.cmd
 
 # Large local media and generated uploads
 *.mp4
+!assets/construction/harmat-kornyek-kutyapark-2026-09.mp4
 *.pdf
 *.png
 *.jpg

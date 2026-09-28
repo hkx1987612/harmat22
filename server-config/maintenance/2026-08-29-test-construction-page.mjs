@@ -114,18 +114,22 @@ try {
     assert(errors.length === 0, `${test.name}: page errors: ${errors.join(' | ')}`);
 
     assert(!galleryRequests.some((requestUrl) => requestUrl.includes('-1920.webp')), `${test.name}: full-size images loaded before interaction.`);
-    await page.evaluate(async () => {
-      for (let y = 0; y < document.body.scrollHeight; y += 500) {
-        scrollTo(0, y);
-        await new Promise((resolve) => setTimeout(resolve, 35));
-      }
-      scrollTo(0, 0);
-    });
-    await page.waitForFunction(() => [...document.querySelectorAll('[data-harmat-construction-photo] img')]
-      .every((image) => image.complete && image.naturalWidth === 960 && image.naturalHeight === 720));
+    const thumbnails = page.locator('[data-harmat-construction-photo] img');
+    for (let index = 0; index < await thumbnails.count(); index++) {
+      const image = thumbnails.nth(index);
+      await image.scrollIntoViewIfNeeded();
+      await image.evaluate((node) => new Promise((resolve, reject) => {
+        const verify = () => node.naturalWidth === 960 && node.naturalHeight === 720
+          ? resolve()
+          : reject(new Error('Gallery thumbnail failed to load at 960x720'));
+        if (node.complete) return verify();
+        node.addEventListener('load', verify, { once: true });
+        node.addEventListener('error', () => reject(new Error('Gallery thumbnail failed to load')), { once: true });
+      }));
+    }
     assert(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth) <= 1, `${test.name}: gallery scrolling caused overflow.`);
 
-    await page.screenshot({ path: path.join(outputDir, `epitesi-naplo-${test.name}.png`), fullPage: true });
+    await page.screenshot({ path: path.join(outputDir, `epitesi-naplo-${test.name}.png`), fullPage: false });
 
     if (test.name === 'desktop') {
       await page.locator('[data-harmat-construction-photo]').first().click();
@@ -147,7 +151,7 @@ try {
       await frame.waitFor({ state: 'visible', timeout: 10000 });
       assert((await frame.getAttribute('src'))?.includes('youtube-nocookie.com/embed/HMgnTfeuQYM'), 'mobile: wrong video embed.');
       assert(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth) <= 1, 'mobile: playback caused overflow.');
-      await page.screenshot({ path: path.join(outputDir, 'epitesi-naplo-mobile-playing.png'), fullPage: true });
+      await page.screenshot({ path: path.join(outputDir, 'epitesi-naplo-mobile-playing.png'), fullPage: false });
     }
 
     await page.close();
