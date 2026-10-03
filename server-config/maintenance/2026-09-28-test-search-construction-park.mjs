@@ -101,8 +101,17 @@ async function constructionChecks(page, device, mp4Requests) {
   check(await page.locator('[data-harmat-construction-video="1"]').count() === 1, 'Main video missing');
   check(await page.locator('[data-harmat-construction-play]').count() === 1, 'Main video trigger missing');
   check(await page.locator('[data-harmat-construction-gallery="1"]').count() === 1, 'Gallery missing');
-  check(await page.locator('[data-harmat-construction-photo]').count() === 16, 'Gallery is not 16 photos');
-  const thumbnails = page.locator('[data-harmat-construction-photo] img');
+  const historicGallery = page.locator('[data-harmat-construction-gallery="1"]');
+  check(await historicGallery.locator('[data-harmat-construction-photo]').count() === 16, 'Historical gallery is not 16 photos');
+  const september = page.locator('[data-harmat-construction-september="1"]');
+  if (await september.count()) {
+    check(await september.count() === 1, 'September section duplicated');
+    check(await september.locator('[data-harmat-construction-photo]').count() === 4, 'September gallery is not 4 photos');
+    check(await page.locator('[data-harmat-construction-photo]').count() === 20, 'Combined galleries are not 20 photos');
+  } else {
+    check(await page.locator('[data-harmat-construction-photo]').count() === 16, 'Gallery is not 16 photos');
+  }
+  const thumbnails = historicGallery.locator('[data-harmat-construction-photo] img');
   check(await thumbnails.count() === 16, 'Gallery thumbnail count changed');
   check(await page.locator('[data-harmat-nearby-player]').count() === 1, 'Nearby video section missing');
   check(await page.locator('[data-harmat-nearby-player] video').count() === 0, 'Nearby video loaded before click');
@@ -113,7 +122,7 @@ async function constructionChecks(page, device, mp4Requests) {
     return image?.complete && image.naturalWidth > 0;
   }, { timeout: 12000 });
   check(mp4Requests.length === 0, `MP4 requested before click: ${mp4Requests.join(', ')}`);
-  const fallback = page.locator('.harmat-construction-nearby-link a');
+  const fallback = page.locator('.harmat-construction-nearby .harmat-construction-nearby-link a');
   check(await fallback.count() === 1, 'Nearby video fallback missing');
   const videoUrl = await page.locator('[data-harmat-nearby-player]').getAttribute('data-video-url');
   check(new URL(await fallback.getAttribute('href')).href === new URL(videoUrl).href, 'Fallback video URL differs');
@@ -152,7 +161,7 @@ async function constructionChecks(page, device, mp4Requests) {
   check(await video.evaluate(media => media.controls && media.paused && media.videoWidth > 0), 'Native video did not decode/pause');
   await page.screenshot({ path: join(outputDir, `nearby-video-first-frame-${device}.png`), fullPage: false });
 
-  await page.locator('[data-harmat-construction-photo]').first().click();
+  await historicGallery.locator('[data-harmat-construction-photo]').first().click();
   const lightbox = page.locator('[data-harmat-construction-lightbox]');
   check(await lightbox.evaluate(dialog => dialog.open), 'Gallery lightbox did not open');
   await page.locator('[data-harmat-construction-next]').click();
@@ -168,7 +177,17 @@ const browser = await chromium.launch({ executablePath: chromePath, headless: tr
 const failures = [];
 try {
   for (const device of devices) {
-    const context = await browser.newContext({ viewport: device.viewport, locale: 'hu-HU' });
+    const context = await browser.newContext({ viewport: device.viewport, locale: 'hu-HU', serviceWorkers: 'block' });
+    // Block every off-origin request (including tracking) and all write methods.
+    await context.route('**/*', async route => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.origin !== origin || !['GET', 'HEAD', 'OPTIONS'].includes(request.method())
+          || /\/harmat-local-assistant\/v1\/event(?:[/?]|$)|\/wp-admin\/(?:admin-ajax|admin-post)\.php/i.test(url.pathname)) {
+        return route.abort('blockedbyclient');
+      }
+      return route.continue();
+    });
     const page = await context.newPage();
     const pageErrors = [];
     const mp4Requests = [];
@@ -191,6 +210,7 @@ try {
       console.log(`${device.name}: finance intro, no page errors PASS`);
     } catch (error) {
       failures.push(`${device.name}: ${error.message}`);
+      await page.screenshot({ path: join(outputDir, `failure-${device.name}.png`), fullPage: true }).catch(() => {});
       console.error(`FAIL ${device.name}: ${error.message}; pageErrors=${pageErrors.join(' | ') || 'none'}`);
     } finally {
       await context.close();

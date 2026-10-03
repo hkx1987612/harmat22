@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Harmat Construction Progress Media
- * Description: Adds the current construction video and photo timeline to the public construction-log page.
- * Version: 1.2.0
+ * Description: Adds construction videos and a photo timeline to the public construction-log page.
+ * Version: 1.3.0
  */
 
 defined('ABSPATH') || exit;
@@ -139,6 +139,72 @@ function harmat_construction_gallery_markup(): string
     return $html;
 }
 
+function harmat_construction_september_base_url(): string
+{
+    return content_url('/uploads/2026/09/construction-september/');
+}
+
+function harmat_construction_september_player(string $slug, string $label, bool $primary = false): string
+{
+    $base = harmat_construction_september_base_url();
+    return '<div class="harmat-construction-september-player" data-harmat-september-player data-video-url="' . esc_url($base . $slug . '.mp4') . '" data-poster-url="' . esc_url($base . $slug . '.jpg') . '">'
+        . '<button type="button" class="harmat-construction-trigger" data-harmat-september-play aria-label="' . esc_attr($label . ' – lejátszás') . '">'
+        . '<img src="' . esc_url($base . $slug . '.jpg') . '" width="1280" height="720" alt="' . esc_attr($label) . '" decoding="async" ' . ($primary ? 'fetchpriority="high"' : 'loading="lazy"') . '>'
+        . '<span class="harmat-construction-play-icon" aria-hidden="true"></span>'
+        . '<span class="harmat-construction-play-label">Videó lejátszása</span></button></div>'
+        . '<p class="harmat-construction-nearby-link"><a href="' . esc_url($base . $slug . '.mp4') . '" target="_blank" rel="noopener noreferrer">Videó megnyitása külön lapon</a></p>';
+}
+
+function harmat_construction_september_markup(): string
+{
+    $html = '<section class="harmat-construction-september" data-harmat-construction-september="1" aria-labelledby="harmat-construction-september-title">'
+        . '<header class="harmat-construction-gallery-head"><time datetime="2026-09-30">2026. szeptember 30-i állapot</time>'
+        . '<h2 id="harmat-construction-september-title">Építési napló – 2026. szeptember</h2>'
+        . '<p>Az első ütem alapozási és pincei szerkezetépítési munkáinak szeptemberi állása.</p></header>'
+        . harmat_construction_september_player('2026-09-overview', 'A Harmat Lakópark 2026. október 2-i helyszíni felvétele', true)
+        . '<p class="harmat-construction-september-duration"><time datetime="2026-10-02">2026. október 2-i helyszíni felvétel</time> · 32 másodperc<br>A szeptember 30-i beszámoló kiegészítése.</p>'
+        . '<dl class="harmat-construction-progress-rows">';
+    $progress = array(
+        'A1' => 'A pincefalak és pillérek betonozása elkészült. A pincefödém zsaluzása 30%-os készültségű.',
+        'A2' => 'A pincefalak és pillérek betonozása 80%-os, a pincefödém zsaluzása 20%-os készültségű.',
+        'A3' => 'Az alaplemez vasalása 40%-os készültségű.',
+        'A4' => 'Az alaplemez betonozása elkészült. A falak és pillérek vasalása folyamatban van.',
+    );
+    foreach ($progress as $building => $status) {
+        $html .= '<div><dt>' . esc_html($building . ' épület') . '</dt><dd>' . esc_html($status) . '</dd></div>';
+    }
+    $html .= '</dl><div class="harmat-construction-photo-grid">';
+    $photo_captions = array(
+        'Alaplemez és pinceszinti vasalás – 2026. október 2.',
+        'Zsaluzási munkák a pince szintjén',
+        'Toronydaru és pinceszinti szerkezet',
+        'Alaplemez vasalása – 2026. október 2.',
+    );
+    for ($index = 1; $index <= 4; $index++) {
+        $slug = 'harmat-2026-09-site-' . sprintf('%02d', $index);
+        $caption = $photo_captions[$index - 1];
+        $base = harmat_construction_september_base_url();
+        $html .= '<figure class="harmat-construction-photo"><button type="button" data-harmat-construction-photo data-full="' . esc_url($base . $slug . '-1920.webp') . '" data-alt="' . esc_attr($caption) . '" data-caption="' . esc_attr($caption) . '" aria-label="' . esc_attr($caption . ' – kép nagyítása') . '" title="Kép nagyítása">'
+            . '<img src="' . esc_url($base . $slug . '-960.webp') . '" width="960" height="720" alt="' . esc_attr($caption) . '" loading="lazy" decoding="async">'
+            . '<span class="harmat-construction-expand" aria-hidden="true">⛶</span></button><figcaption><span>' . esc_html($caption) . '</span></figcaption></figure>';
+    }
+    $html .= '</div><details class="harmat-construction-september-clips"><summary>Szeptemberi helyszíni videók (7)</summary><div class="harmat-construction-clip-grid">';
+    $clips = array(
+        array('2026-09-21-a1-a2', '2026-09', '2026. szeptember', 'A1 és A2'),
+        array('2026-09-22-a2', '2026-09-22', '2026. szeptember 22.', 'A2'),
+        array('2026-09-23-a1', '2026-09-23', '2026. szeptember 23.', 'A1'),
+        array('2026-09-24-a3', '2026-09-24', '2026. szeptember 24.', 'A3'),
+        array('2026-09-25-a1', '2026-09-25', '2026. szeptember 25.', 'A1'),
+        array('2026-09-25-a2', '2026-09-25', '2026. szeptember 25.', 'A2'),
+        array('2026-09-25-a4', '2026-09-25', '2026. szeptember 25.', 'A4'),
+    );
+    foreach ($clips as $clip) {
+        $html .= '<article><h3><time datetime="' . esc_attr($clip[1]) . '">' . esc_html($clip[2]) . '</time> · ' . esc_html($clip[3]) . '</h3>'
+            . harmat_construction_september_player($clip[0], $clip[2] . ' – ' . $clip[3]) . '</article>';
+    }
+    return $html . '</div></details></section>';
+}
+
 function harmat_construction_video_markup(): string
 {
     $poster_url = harmat_construction_video_poster_url();
@@ -147,13 +213,13 @@ function harmat_construction_video_markup(): string
     return '<section class="harmat-construction-feature" data-harmat-construction-video="1" aria-labelledby="harmat-construction-video-title">'
         . '<div class="harmat-construction-feature-head">'
         . '<div><time datetime="2026-08">2026. augusztus</time>'
-        . '<h2 id="harmat-construction-video-title">Az építkezés aktuális állása</h2>'
-        . '<p>Helyszíni és légi felvételek mutatják be az első ütem földmunkáit, az alapozás előkészítését és a munkaterület jelenlegi állapotát.</p></div>'
+        . '<h2 id="harmat-construction-video-title">Az építkezés augusztusi állása</h2>'
+        . '<p>Helyszíni és légi felvételek mutatják be az első ütem augusztusi földmunkáit, az alapozás előkészítését és a munkaterület akkori állapotát.</p></div>'
         . '<span aria-label="A videó hossza 1 perc 31 másodperc">1:31</span>'
         . '</div>'
         . '<div class="harmat-construction-player" data-harmat-construction-player>'
         . '<button type="button" class="harmat-construction-trigger" data-harmat-construction-play data-video-id="' . esc_attr(HARMAT_CONSTRUCTION_VIDEO_ID) . '" aria-label="A 2026. augusztusi építési videó lejátszása">'
-        . '<img src="' . esc_url($poster_url) . '" width="1280" height="720" alt="A Harmat Lakópark építési területe 2026 augusztusában" decoding="async" fetchpriority="high">'
+        . '<img src="' . esc_url($poster_url) . '" width="1280" height="720" alt="A Harmat Lakópark építési területe 2026 augusztusában" loading="lazy" decoding="async">'
         . '<span class="harmat-construction-play-icon" aria-hidden="true"></span>'
         . '<span class="harmat-construction-play-label">Videó lejátszása</span>'
         . '</button>'
@@ -198,6 +264,7 @@ function harmat_construction_video_inject(string $html): string
     }
 
     return substr($html, 0, $position)
+        . harmat_construction_september_markup()
         . harmat_construction_video_markup()
         . harmat_construction_nearby_video_markup()
         . harmat_construction_gallery_markup()
@@ -217,6 +284,23 @@ add_action('wp_head', static function (): void {
     }
     ?>
 <style id="harmat-construction-video-css">
+.harmat-construction-september{margin:30px 0 42px;color:#263135;min-width:0;overflow-wrap:anywhere}
+.harmat-construction-september .harmat-construction-gallery-head h2{font-size:28px}
+.harmat-construction-september .harmat-construction-gallery-head time{letter-spacing:0}
+.harmat-construction-september-player{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#17272d}
+.harmat-construction-september-player video{display:block;width:100%;height:100%;object-fit:contain;background:#17272d}
+.harmat-construction-september-duration{margin:10px 0 20px;color:#536066;font-size:13px}
+.harmat-construction-progress-rows{margin:0 0 26px}
+.harmat-construction-progress-rows>div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:18px;padding:14px 0;border-top:1px solid #dce1e2}
+.harmat-construction-progress-rows dt{font-weight:700}
+.harmat-construction-progress-rows dd{margin:0;font-size:15px;line-height:1.6}
+.harmat-construction-september-clips{margin:26px 0 0;border-block:1px solid #dce1e2}
+.harmat-construction-september-clips summary{padding:16px 0;cursor:pointer;font-weight:700}
+.harmat-construction-september-clips summary:focus-visible{outline:2px solid #263135;outline-offset:3px}
+.harmat-construction-clip-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 18px;padding-bottom:24px}
+.harmat-construction-clip-grid article{min-width:0}
+.harmat-construction-clip-grid h3{margin:0 0 10px;font:700 14px/1.5 Arial,sans-serif;letter-spacing:0;color:#263135}
+@media(max-width:720px){.harmat-construction-september .harmat-construction-gallery-head h2{font-size:24px}.harmat-construction-progress-rows>div{grid-template-columns:1fr;gap:5px}.harmat-construction-clip-grid{grid-template-columns:1fr}}
 .harmat-construction-feature{margin:30px 0 38px;color:#263135}
 .harmat-construction-feature-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin:0 0 18px}
 .harmat-construction-feature-head>div{max-width:790px}
@@ -322,6 +406,26 @@ add_action('wp_footer', static function (): void {
     },{once:true});
   }
 
+  document.querySelectorAll('[data-harmat-september-play]').forEach(function(button){
+    button.addEventListener('click',function(){
+      var player=button.closest('[data-harmat-september-player]');
+      var videoUrl=player&&player.getAttribute('data-video-url');
+      if(!videoUrl){return;}
+      var video=document.createElement('video');
+      video.controls=true;
+      video.playsInline=true;
+      video.preload='none';
+      video.poster=player.getAttribute('data-poster-url')||'';
+      video.setAttribute('aria-label',button.querySelector('img').alt);
+      video.setAttribute('tabindex','0');
+      video.src=videoUrl;
+      button.replaceWith(video);
+      video.focus();
+      var playback=video.play();
+      if(playback&&typeof playback.catch==='function'){playback.catch(function(){});}
+    },{once:true});
+  });
+
   var photos=Array.prototype.slice.call(document.querySelectorAll('[data-harmat-construction-photo]'));
   var lightbox=document.querySelector('[data-harmat-construction-lightbox]');
   if(!photos.length||!lightbox){return;}
@@ -371,7 +475,7 @@ add_filter('wpseo_metadesc', static function ($description) {
         return $description;
     }
 
-    return 'A Harmat Lakópark építési naplója: helyszíni videó és fényképes idővonal a 2026. június–augusztusi földmunkákról és alapozási előkészítésről.';
+    return 'A Harmat Lakópark építési naplója: 2026. szeptember 30-i készültség, helyszíni videók és fotók, valamint a június–augusztusi munkák képes idővonala.';
 }, 99);
 
 add_filter('wpseo_opengraph_desc', static function ($description) {
@@ -379,7 +483,7 @@ add_filter('wpseo_opengraph_desc', static function ($description) {
         return $description;
     }
 
-    return 'A Harmat Lakópark építkezése videón és fényképes idővonalon, a Harmat utca 22. munkaterületéről.';
+    return 'A Harmat Lakópark 2026. szeptember 30-i készültsége, helyszíni videók és fotók a Harmat utca 22. munkaterületéről.';
 }, 99);
 
 add_filter('wpseo_twitter_description', static function ($description) {
@@ -387,15 +491,15 @@ add_filter('wpseo_twitter_description', static function ($description) {
         return $description;
     }
 
-    return 'A Harmat Lakópark építkezése videón és fényképes idővonalon, a Harmat utca 22. munkaterületéről.';
+    return 'A Harmat Lakópark 2026. szeptember 30-i készültsége, helyszíni videók és fotók a Harmat utca 22. munkaterületéről.';
 }, 99);
 
 add_filter('wpseo_opengraph_image', static function ($image) {
-    return harmat_construction_video_is_page() ? harmat_construction_video_poster_url() : $image;
+    return harmat_construction_video_is_page() ? harmat_construction_september_base_url() . '2026-09-overview.jpg' : $image;
 }, 99);
 
 add_filter('wpseo_twitter_image', static function ($image) {
-    return harmat_construction_video_is_page() ? harmat_construction_video_poster_url() : $image;
+    return harmat_construction_video_is_page() ? harmat_construction_september_base_url() . '2026-09-overview.jpg' : $image;
 }, 99);
 
 add_filter('wpseo_schema_graph', static function ($graph) {
@@ -404,6 +508,7 @@ add_filter('wpseo_schema_graph', static function ($graph) {
     }
 
     $video_id = harmat_construction_video_page_url() . '#construction-video';
+    $september_video_id = harmat_construction_video_page_url() . '#construction-september-video';
     $gallery_id = harmat_construction_video_page_url() . '#construction-gallery';
     $existing_ids = array();
     foreach ($graph as $node) {
@@ -423,6 +528,24 @@ add_filter('wpseo_schema_graph', static function ($graph) {
             'duration' => HARMAT_CONSTRUCTION_VIDEO_DURATION,
             'embedUrl' => 'https://www.youtube-nocookie.com/embed/' . HARMAT_CONSTRUCTION_VIDEO_ID,
             'contentUrl' => harmat_construction_video_watch_url(),
+            'inLanguage' => 'hu-HU',
+            'isPartOf' => array('@id' => harmat_construction_video_page_url()),
+            'about' => array('@id' => home_url('/#harmat-lakopark')),
+            'publisher' => array('@id' => home_url('/#organization')),
+        );
+    }
+
+    if (!in_array($september_video_id, $existing_ids, true)) {
+        $graph[] = array(
+            '@type' => 'VideoObject',
+            '@id' => $september_video_id,
+            'name' => 'Harmat Lakópark – 2026. október 2-i helyszíni felvétel',
+            'description' => '2026. október 2-i helyszíni felvétel a Harmat Lakópark első ütemének építkezéséről, a szeptember 30-i beszámoló kiegészítéseként.',
+            'thumbnailUrl' => harmat_construction_september_base_url() . '2026-09-overview.jpg',
+            'contentUrl' => harmat_construction_september_base_url() . '2026-09-overview.mp4',
+            'uploadDate' => '2026-10-03',
+            'dateCreated' => '2026-10-02',
+            'duration' => 'PT32S',
             'inLanguage' => 'hu-HU',
             'isPartOf' => array('@id' => harmat_construction_video_page_url()),
             'about' => array('@id' => home_url('/#harmat-lakopark')),

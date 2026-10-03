@@ -30,7 +30,17 @@ try {
     { name: 'desktop', viewport: { width: 1440, height: 1000 } },
     { name: 'mobile', viewport: { width: 390, height: 844 } },
   ]) {
-    const context = await browser.newContext({ viewport: device.viewport, locale: 'hu-HU' });
+    const context = await browser.newContext({ viewport: device.viewport, locale: 'hu-HU', serviceWorkers: 'block' });
+    // Block every off-origin request (including tracking) and all write methods.
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.origin !== origin || !['GET', 'HEAD', 'OPTIONS'].includes(request.method())
+          || /\/harmat-local-assistant\/v1\/event(?:[/?]|$)|\/wp-admin\/(?:admin-ajax|admin-post)\.php/i.test(url.pathname)) {
+        return route.abort('blockedbyclient');
+      }
+      return route.continue();
+    });
     const page = await context.newPage();
 
     for (const route of routes) {
@@ -66,7 +76,15 @@ try {
       if (route === '/epitesi-naplo/') {
         assert(await page.locator('[data-harmat-construction-video="1"]').count() === 1, `${device.name}: construction video missing.`);
         assert(await page.locator('[data-harmat-construction-gallery="1"]').count() === 1, `${device.name}: construction gallery missing.`);
-        assert(await page.locator('[data-harmat-construction-photo]').count() === 16, `${device.name}: construction photo count changed.`);
+        assert(await page.locator('[data-harmat-construction-gallery="1"] [data-harmat-construction-photo]').count() === 16, `${device.name}: historical construction photo count changed.`);
+        const september = page.locator('[data-harmat-construction-september="1"]');
+        if (await september.count()) {
+          assert(await september.count() === 1, `${device.name}: September section duplicated.`);
+          assert(await september.locator('[data-harmat-construction-photo]').count() === 4, `${device.name}: September photo count changed.`);
+          assert(await page.locator('[data-harmat-construction-photo]').count() === 20, `${device.name}: combined construction photo count changed.`);
+        } else {
+          assert(await page.locator('[data-harmat-construction-photo]').count() === 16, `${device.name}: construction photo count changed.`);
+        }
         assert(await page.locator('[data-harmat-construction-player] iframe').count() === 0, `${device.name}: construction iframe loaded early.`);
       }
       if (route === '/lakaskereso/') {

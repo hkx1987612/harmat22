@@ -23,7 +23,17 @@ try {
     { name: 'desktop', viewport: { width: 1440, height: 1000 } },
     { name: 'mobile', viewport: { width: 390, height: 844 } },
   ]) {
-    const page = await browser.newPage({ viewport: test.viewport, locale: 'hu-HU' });
+    const page = await browser.newPage({ viewport: test.viewport, locale: 'hu-HU', serviceWorkers: 'block' });
+    // Block every off-origin request (including tracking) and all write methods.
+    await page.context().route('**/*', async route => {
+      const request = route.request();
+      const requestUrl = new URL(request.url());
+      if (requestUrl.origin !== new URL(url).origin || !['GET', 'HEAD', 'OPTIONS'].includes(request.method())
+          || /\/harmat-local-assistant\/v1\/event(?:[/?]|$)|\/wp-admin\/(?:admin-ajax|admin-post)\.php/i.test(requestUrl.pathname)) {
+        return route.abort('blockedbyclient');
+      }
+      return route.continue();
+    });
     const errors = [];
     const galleryRequests = [];
     page.on('pageerror', (error) => errors.push(String(error)));
@@ -38,15 +48,22 @@ try {
     if (await necessaryCookies.isVisible().catch(() => false)) {
       await necessaryCookies.click();
     }
+    const augustPoster = page.locator('[data-harmat-construction-video="1"] .harmat-construction-trigger img');
+    await augustPoster.scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => {
+      const image = document.querySelector('[data-harmat-construction-video="1"] .harmat-construction-trigger img');
+      return image?.complete && image.naturalWidth > 0;
+    }, null, { timeout: 15000 });
+    await augustPoster.evaluate(image => image.decode());
 
     const audit = await page.evaluate(() => {
       const html = document.documentElement;
       const feature = document.querySelector('[data-harmat-construction-video="1"]');
       const heading = document.querySelector('.harmat-construction-feature-head');
       const player = document.querySelector('[data-harmat-construction-player]');
-      const poster = document.querySelector('.harmat-construction-trigger img');
+      const poster = feature?.querySelector('.harmat-construction-trigger img');
       const gallery = document.querySelector('[data-harmat-construction-gallery="1"]');
-      const photos = [...document.querySelectorAll('[data-harmat-construction-photo]')];
+      const photos = [...(gallery?.querySelectorAll('[data-harmat-construction-photo]') || [])];
       const list = document.querySelector('.harmat-build-log-list');
       const schemas = [...document.querySelectorAll('script[type="application/ld+json"]')]
         .map((node) => {
@@ -66,6 +83,9 @@ try {
         markerCount: document.querySelectorAll('[data-harmat-construction-video="1"]').length,
         galleryCount: document.querySelectorAll('[data-harmat-construction-gallery="1"]').length,
         photoCount: photos.length,
+        septemberCount: document.querySelectorAll('[data-harmat-construction-september="1"]').length,
+        septemberPhotoCount: document.querySelectorAll('[data-harmat-construction-september="1"] [data-harmat-construction-photo]').length,
+        totalPhotoCount: document.querySelectorAll('[data-harmat-construction-photo]').length,
         lightboxOpen: document.querySelector('[data-harmat-construction-lightbox]')?.hasAttribute('open') || false,
         iframeCount: feature?.querySelectorAll('iframe').length || 0,
         poster: {
@@ -91,7 +111,15 @@ try {
     });
 
     assert(audit.title === 'Építési napló | Harmat Lakópark', `${test.name}: title changed.`);
-    assert(audit.description.includes('fényképes idővonal'), `${test.name}: description is stale.`);
+    if (audit.septemberCount) {
+      assert(audit.septemberCount === 1, `${test.name}: September section duplicated.`);
+      assert(audit.description.includes('2026. szeptember 30-i') && audit.description.includes('képes idővonal'), `${test.name}: September description is stale.`);
+      assert(audit.septemberPhotoCount === 4, `${test.name}: September photo count changed.`);
+      assert(audit.totalPhotoCount === 20, `${test.name}: combined gallery photo count changed.`);
+    } else {
+      assert(audit.description.includes('fényképes idővonal'), `${test.name}: description is stale.`);
+      assert(audit.totalPhotoCount === 16, `${test.name}: combined gallery photo count changed.`);
+    }
     assert(audit.canonical === url, `${test.name}: canonical is incorrect.`);
     assert(audit.h1.length === 1 && audit.h1[0] === 'Építési napló', `${test.name}: H1 is incorrect.`);
     assert(audit.markerCount === 1, `${test.name}: video module count is incorrect.`);
@@ -114,7 +142,7 @@ try {
     assert(errors.length === 0, `${test.name}: page errors: ${errors.join(' | ')}`);
 
     assert(!galleryRequests.some((requestUrl) => requestUrl.includes('-1920.webp')), `${test.name}: full-size images loaded before interaction.`);
-    const thumbnails = page.locator('[data-harmat-construction-photo] img');
+    const thumbnails = page.locator('[data-harmat-construction-gallery="1"] [data-harmat-construction-photo] img');
     for (let index = 0; index < await thumbnails.count(); index++) {
       const image = thumbnails.nth(index);
       await image.scrollIntoViewIfNeeded();
@@ -132,7 +160,7 @@ try {
     await page.screenshot({ path: path.join(outputDir, `epitesi-naplo-${test.name}.png`), fullPage: false });
 
     if (test.name === 'desktop') {
-      await page.locator('[data-harmat-construction-photo]').first().click();
+      await page.locator('[data-harmat-construction-gallery="1"] [data-harmat-construction-photo]').first().click();
       const lightbox = page.locator('[data-harmat-construction-lightbox]');
       await lightbox.waitFor({ state: 'visible' });
       const fullImage = lightbox.locator('[data-harmat-construction-lightbox-image]');
