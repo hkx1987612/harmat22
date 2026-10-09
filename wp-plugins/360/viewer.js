@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.setAttribute('data-id', id);
 
                 let priceText = data.status === 'available' ? 'Érdeklődjön' : (data.status === 'reserved' ? 'Egyeztetés alatt' : 'Eladva');
-                let imgHtml = data.image ? `<img src="${data.image}" class="apt-card-img" alt="Alaprajz">` : `<div class="apt-card-img">Nincs kép</div>`;
+                let imgHtml = data.image ? `<img src="${data.image}" class="apt-card-img" alt="Alaprajz" loading="lazy" decoding="async">` : `<div class="apt-card-img">Nincs kép</div>`;
 
                 card.innerHTML = `
                     ${imgHtml}

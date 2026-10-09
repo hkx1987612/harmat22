@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Search and AI Discovery
  * Description: Consolidates public entities, property facts, and IndexNow discovery without changing property data.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 
 if (!defined('ABSPATH')) {
@@ -266,7 +266,7 @@ function harmat_sai_entity_graph(): array
         'name' => $data['title'],
         'identifier' => $data['title'],
         'url' => $url,
-        'mainEntityOfPage' => $url . '#webpage',
+        'mainEntityOfPage' => $url,
         'description' => harmat_sai_property_summary_text($post_id),
         'isPartOf' => array('@id' => home_url('/#harmat-lakopark')),
         'address' => array(
