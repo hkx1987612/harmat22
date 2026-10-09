@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Search and AI Discovery
  * Description: Consolidates public entities, property facts, and IndexNow discovery without changing property data.
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 
 if (!defined('ABSPATH')) {
@@ -15,7 +15,15 @@ const HARMAT_SAI_INDEXNOW_LAST_RESULT = 'harmat_sai_indexnow_last_result';
 
 function harmat_sai_pilot_property_ids(): array
 {
-    return array(4292, 4311, 4317, 4327, 4365, 4385, 4386, 4419, 4263, 5148, 5141, 5312);
+    return array_merge(
+        array(4292, 4311, 4317, 4327, 4365, 4385, 4386, 4419, 4263, 5148, 5141, 5312),
+        harmat_sai_extended_pilot_property_ids()
+    );
+}
+
+function harmat_sai_extended_pilot_property_ids(): array
+{
+    return array(4349, 4388, 4418, 5146);
 }
 
 function harmat_sai_is_public_request(): bool
@@ -177,7 +185,7 @@ function harmat_sai_format_area(float $value): string
     return number_format($value, 2, ',', ' ') . ' m²';
 }
 
-function harmat_sai_property_summary_text(int $post_id): string
+function harmat_sai_property_summary_text(int $post_id, bool $indoor_focus = false): string
 {
     $data = harmat_sai_property_summary_data($post_id);
     $location = '';
@@ -191,7 +199,8 @@ function harmat_sai_property_summary_text(int $post_id): string
     $summary = 'Az ' . $data['title'] . $location . ', ' . $room_text . 'lakás.';
 
     if ($data['area'] > 0) {
-        $summary .= ' Az alapterület ' . harmat_sai_format_area($data['area']) . '.';
+        $area_label = $indoor_focus ? ' A belső alapterület ' : ' Az alapterület ';
+        $summary .= $area_label . harmat_sai_format_area($data['area']) . '.';
     }
 
     if ($data['outdoor'] > 0) {
@@ -199,7 +208,7 @@ function harmat_sai_property_summary_text(int $post_id): string
         $summary .= ' A lakáshoz ' . harmat_sai_format_area($data['outdoor']) . '-es ' . $outdoor_label . ' kapcsolódik.';
     }
 
-    if ($data['sales_area'] > 0) {
+    if (!$indoor_focus && $data['sales_area'] > 0) {
         $summary .= ' Az értékesítési terület ' . harmat_sai_format_area($data['sales_area']) . '.';
     }
 
@@ -351,10 +360,33 @@ add_action('wp_head', function (): void {
 function harmat_sai_property_summary_html(int $post_id): string
 {
     $title = get_the_title($post_id);
+    $extended = in_array($post_id, harmat_sai_extended_pilot_property_ids(), true);
+    $navigation = '';
+
+    if ($extended) {
+        $building = trim((string) get_post_meta($post_id, 'property_address_street', true));
+        $selectors = array(
+            'A1' => '/virtualis-lakasvalaszto-a1-epulet/',
+            'A2' => '/virtualis-lakasvalaszto-a2-epulet/',
+        );
+        $links = array();
+        if (isset($selectors[$building])) {
+            $links[$selectors[$building]] = $building . ' épület lakásai';
+        }
+        $links['/lakaskereso/'] = 'Lakáskereső';
+        $links['/epitesi-naplo/'] = 'Építési napló';
+
+        $navigation = '<nav class="harmat-search-summary-links" aria-label="Kapcsolódó lakásinformációk">';
+        foreach ($links as $path => $label) {
+            $navigation .= '<a href="' . esc_url(home_url($path)) . '">' . esc_html($label) . '</a>';
+        }
+        $navigation .= '</nav>';
+    }
 
     return '<section class="harmat-search-summary" data-harmat-property-search-summary="1" aria-labelledby="harmat-search-summary-title">'
         . '<h2 id="harmat-search-summary-title">' . esc_html($title) . ' lakás röviden</h2>'
-        . '<p>' . esc_html(harmat_sai_property_summary_text($post_id)) . '</p>'
+        . '<p>' . esc_html(harmat_sai_property_summary_text($post_id, $extended)) . '</p>'
+        . $navigation
         . '</section>';
 }
 
@@ -410,6 +442,9 @@ add_action('wp_head', function (): void {
 .harmat-search-summary{max-width:1180px;margin:0 auto 30px;padding:6px 26px 2px;border-top:1px solid rgba(152,112,51,.24);font-family:Montserrat,Arial,sans-serif;color:#263135}
 .harmat-search-summary h2{margin:16px 0 10px;font-family:Marcellus,Georgia,serif;font-size:26px;font-weight:500;line-height:1.2;color:#263135}
 .harmat-search-summary p{max-width:980px;margin:0;font-size:15px;line-height:1.75;color:#535d61}
+.harmat-search-summary-links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:14px;line-height:1.75;letter-spacing:0}
+.harmat-search-summary-links a{color:#535d61;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.harmat-search-summary-links a:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 @media(max-width:700px){.harmat-search-summary{margin:0 16px 24px;padding:4px 2px 0}.harmat-search-summary h2{font-size:22px}.harmat-search-summary p{font-size:14px;line-height:1.7}}
 </style>
     <?php
