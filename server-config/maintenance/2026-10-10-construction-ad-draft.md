@@ -2,7 +2,7 @@
 
 Date: 2026-10-10. Website baseline: `ec3bd99`.
 
-Status: LOCAL SAMPLES ONLY, NOT ACCEPTED FOR PUBLICATION. User found the first samples unclear and requested a full-screen revision. Neither version is uploaded, submitted for platform review, approved or serving. No live website, advertising settings, budget, bidding or conversion action is changed.
+Status: V2 VISUAL QUALITY ACCEPTED AND PUBLICATION AUTHORIZED, NOT UPLOADED. After accepting the full-screen revision, the user explicitly approved uploading both v2 videos to YouTube and adding them as additional assets to existing Google Ads, preserving old assets, budgets and the website. The user subsequently requested separate public pages and detailed Hungarian introductions for earlier supplied videos on the dedicated company YouTube account, not the personal account. Neither version has been uploaded, submitted for platform review, approved by Google or put into delivery in this task. Company-account sign-in is still required; no live website, advertising settings, budget, bidding or conversion action is changed.
 
 ## Approved Creative
 
@@ -46,7 +46,7 @@ Suggested campaign landing page: https://harmat22.hu/lakaskereso/
 
 Construction-proof secondary link: https://harmat22.hu/epitesi-naplo/
 
-These are proposed destinations and copy, not a record of saved Ads assets. Existing ads and campaign budgets must be preserved until a separately approved publication step.
+These are proposed destinations and copy, not a record of saved Ads assets. Publication is now authorized for the two full-screen v2 video additions only. Preserve all old assets, existing destinations, campaign budgets, bidding, targeting and conversion settings.
 
 ## Local Outputs And Reproduction
 
@@ -117,6 +117,19 @@ Defaults expect `source/overview-raw.mp4`, `source/photo01.jpg`, `source/photo04
 - [x] Both exports completed with exact 30-second duration.
 - [x] Full decode, moving-frame, dimensions, metadata and font/layout checks passed.
 - [x] Parent visual review and browser playback passed.
-- [ ] User accepted the revised visual quality and separately approved publication.
+- [x] User accepted the revised visual quality and separately approved publication.
+- [ ] Dedicated company YouTube account and existing Google Ads asset group verified in the authenticated backend.
+- [ ] Approved v2 uploads completed and platform HD processing/playback checked.
+- [ ] Both new video assets saved in the existing asset group, with old assets and campaign settings preserved.
+
+## Company Channel Publication Preflight
+
+- Chrome was connected after an initial unavailable-browser result. The signed-in Studio was a personal empty channel; no files were uploaded there. The user explicitly requires the dedicated company YouTube account. The normal Google add-account sign-in page is open as a handoff; the user must complete company sign-in before publication.
+- Public channel observed in Chrome: `https://www.youtube.com/@Harmat-22` (display name `Harmat`). Its public video tab lists `HMgnTfeuQYM` / `2026.08` and `kmAg_ki-yYY` / `harmat22`. The August watch page currently has no description. This is a public listing, not an inventory of private/unlisted backend content. Reuse and preserve these existing URLs; do not create duplicate uploads or assume personal-channel ownership.
+- Expanded channel-copy/inventory preparation remains pending. Earlier real site footage is intended for separate public video pages, with accurate Hungarian titles/descriptions and construction, project-visualization and nearby-environment playlists; the two approved v2 advertising exports remain separate additions to the existing advertising asset group. No complete inventory of all earlier archives, finished per-video metadata pack or channel branding change is claimed. Do not attach every archive clip to Ads or change website video sources automatically.
+- Company sign-in has reached a user-controlled Google identity check requiring an already signed-in device. Authentication/verification must be completed by the user; no identity values, phone number, verification code or credential was submitted by the agent. Browser handoff tabs are retained.
+- Privately prepared native-quality overview: ignored `outputs/2026-10-10-youtube-ready/harmat-helyszini-attekintes-2026-10-02.mp4`, 136,032,849 bytes, SHA-256 `96930de3cb5de59a7aa00903a4c7a28da495fd416d90ace47d5d97268b98d3fa`. Lossless video-only remux of the pinned October 2 original removes audio, timed data, location/device/creation metadata and chapters, retaining native 1920x1080 HEVC, SAR 1:1 and the approximately 31.81-second variable-timebase recording. It does not turn the native recording into the separate exact-32-second website derivative.
+- Raw and sanitized compressed video stream SHA-256 agree: `16019628260e40e9a2f20d5a395a04f49a4d033fcc5c8a4cc5e0efed70090791`. Complete decode passed with input timebase retained (`-fps_mode passthrough -enc_time_base:v 1:90000`). Earlier default-null-mux checks reported a duplicate-DTS rounding warning; no source packet was changed to mask it. Sanitized inspection shows one video stream and no audio/data or source location/creation fields. Original sources and both v2 export hashes remain preserved.
+- All preparation above is local/read-only platform inspection. No new YouTube ID, publication, review, delivery or performance result exists yet. Website stable tag remains unchanged.
 
 No Google approval, delivery, improved lead rate or sales effect is promised. Compare actual qualified inquiries after a controlled creative test; views or click volume alone are not the objective.
