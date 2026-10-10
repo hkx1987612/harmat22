@@ -2,6 +2,7 @@
 
 Requires FFmpeg with drawtext/libx264 and Pillow. No network or publishing.
 Override a source only together with its independently verified SHA-256.
+--fullscreen selects the separate native-photo/full-bleed v2 storyboard and output owner.
 """
 
 import argparse
@@ -20,6 +21,8 @@ from PIL import Image, ImageChops, ImageFont, ImageStat
 REPO = Path(__file__).resolve().parents[2]
 OUTPUT = REPO / "outputs/2026-10-10-construction-ad"
 OWNER = "harmat-construction-ad-2026-10-10-v1"
+FULLSCREEN_OUTPUT = REPO / "outputs/2026-10-10-construction-ad-fullscreen"
+FULLSCREEN_OWNER = "harmat-construction-ad-2026-10-10-fullscreen-v2"
 FPS = 30
 QA_TIMES = (2, 8, 14, 21, 25, 29)
 CTA = "K\u00e9rjen szem\u00e9lyes aj\u00e1nlatot!"
@@ -47,6 +50,49 @@ SCENES = (
     ("overview", 24.0, 7, "K\u00f6vesse az \u00e9p\u00edtkez\u00e9st", LATEST),
     ("render", 72.0, 6, "Udvar \u00e9s teraszok", RENDER),
 )
+PHOTO_DATED = "Helysz\u00edni fot\u00f3: 2026. okt\u00f3ber 2."
+PHOTO_UNDATED = "Helysz\u00edni fot\u00f3 (d\u00e1tuma nem ismert)"
+OPENING = "\u00c9p\u00fcl a Harmat Lak\u00f3park"
+FOUNDATION = "Alapoz\u00e1s \u00e9s vasal\u00e1s"
+STRUCTURE = "Pincei szerkezet\u00e9p\u00edt\u00e9s"
+FULLSCREEN_DEFAULTS = {
+    "overview": ("outputs/2026-10-10-construction-ad-fullscreen/source/overview-raw.mp4",
+                 "c9d7f0fb4a2b97e8168785c9b76f9b2e9174db3882abcee692db1b6472062166"),
+    "render": DEFAULTS["render"],
+    "logo": ("outputs/2026-10-10-construction-ad-fullscreen/source/harmat-logo.png", DEFAULTS["logo"][1]),
+    "photo01": ("outputs/2026-10-10-construction-ad-fullscreen/source/photo01.jpg",
+                "488d0045b2bff585366f48384bbb4f0aac4e4edafdf199d889a62384b85af410"),
+    "photo04": ("outputs/2026-10-10-construction-ad-fullscreen/source/photo04.jpg",
+                "42ea068630cab24b8e58850020bcbc588fbc2633210c43e2e5dcad3e71a47f04"),
+    "photo02": ("outputs/2026-10-10-construction-ad-fullscreen/source/photo02.jpg",
+                "c93c7239e224de90414c31b8561976aa2b7e662ae9a4e099d1870df4387f5aec"),
+}
+FULLSCREEN_SCENES = {
+    "landscape": (("overview", 18.0, 6, OPENING, LATEST),
+                  ("photo04", 0, 6, FOUNDATION, PHOTO_DATED),
+                  ("overview", 24.0, 6, STRUCTURE, LATEST),
+                  ("render", 72.0, 6, "Udvar \u00e9s teraszok", RENDER),
+                  ("photo01", 0, 6, BRAND, PHOTO_DATED)),
+    "portrait": (("photo01", 0, 6, OPENING, PHOTO_DATED),
+                 ("photo04", 0, 6, FOUNDATION, PHOTO_DATED),
+                 ("photo02", 0, 6, STRUCTURE, PHOTO_UNDATED),
+                 ("render", 72.0, 6, "Udvar \u00e9s teraszok", RENDER),
+                 ("photo01", 0, 6, BRAND, PHOTO_DATED)),
+}
+# Crop anchors within the available native-image margins, after visual review.
+PHOTO_FOCUS = {
+    "photo01": {"landscape": (0.50, 0.72), "portrait": (0.72, 0.50)},
+    "photo04": {"landscape": (0.50, 0.90), "portrait": (0.22, 0.50)},
+    "photo02": {"landscape": (0.50, 0.72), "portrait": (0.52, 0.50)},
+}
+
+
+def storyboard(mode, fullscreen):
+    return FULLSCREEN_SCENES[mode] if fullscreen else SCENES + (("brand", 0, 6, BRAND, ""),)
+
+
+def build_scope(fullscreen):
+    return (FULLSCREEN_OUTPUT, FULLSCREEN_OWNER, FULLSCREEN_DEFAULTS) if fullscreen else (OUTPUT, OWNER, DEFAULTS)
 
 
 def sha256(path):
@@ -62,12 +108,12 @@ def require(condition, message):
         raise RuntimeError(message)
 
 
-def run(command, timeout=600):
+def run(command, timeout=600, binary_stdout=False):
     result = subprocess.run(command, shell=False, stdin=subprocess.DEVNULL,
                             capture_output=True, timeout=timeout)
     require(result.returncode == 0,
             result.stderr.decode("utf-8", "replace")[-6000:])
-    return result.stdout.decode("utf-8", "replace"), result.stderr.decode("utf-8", "replace")
+    return (result.stdout if binary_stdout else result.stdout.decode("utf-8", "replace")), result.stderr.decode("utf-8", "replace")
 
 
 def probe(ffmpeg, source):
@@ -150,6 +196,122 @@ def layout(mode, end, title, caption, fonts):
     return width, height, styles, logo, extra
 
 
+def fullscreen_layout(mode, end, title, caption, fonts):
+    regular, bold, display = fonts
+    width, height = (1920, 1080) if mode == "landscape" else (1080, 1920)
+    if end:
+        if mode == "landscape":
+            styles = [text_style(BRAND, 72, 456, display, "white"),
+                      text_style(CTA, 52, 592, bold, "white"),
+                      text_style(DOMAIN, 52, 724, regular, "white"),
+                      text_style(caption, 26, 982, regular, "white", False)]
+            logo = (835, 148, 250)
+        else:
+            styles = [text_style(BRAND, 64, 700, display, "white"),
+                      text_style(CTA, 52, 890, bold, "white"),
+                      text_style(DOMAIN, 58, 1040, regular, "white"),
+                      text_style(caption, 28, 1470, regular, "white")]
+            logo = (415, 330, 250)
+        extra = "drawbox=x=0:y=0:w=iw:h=ih:color=black@0.48:t=fill"
+    else:
+        y, size, caption_y, caption_size = (900, 46, 976, 28) if mode == "landscape" else (1334, 56, 1440, 36)
+        styles = [text_style(title, size, y, bold, "white", False),
+                  text_style(caption, caption_size, caption_y, regular, "white", False)]
+        box_width = max(style["width"] for style in styles) + 48
+        box_y, box_height = (880, 152) if mode == "landscape" else (1310, 206)
+        extra = f"drawbox=x=72:y={box_y}:w={box_width}:h={box_height}:color=0x142d27@0.68:t=fill"
+        logo = None
+    for style in styles:
+        style["left"] = (width - style["width"]) // 2 if style["centered"] else style["x"]
+        require(96 <= style["left"] and style["left"] + style["width"] <= width - 96,
+                "Fullscreen text exceeds horizontal safe zone")
+        bottom_limit = 1560 if mode == "portrait" else height - 40
+        require(150 <= style["y"] and style["y"] + style["height"] <= bottom_limit,
+                "Fullscreen text exceeds vertical safe zone")
+    require(all(a["y"] + a["height"] + 20 < b["y"] for a, b in zip(styles, styles[1:])),
+            "Fullscreen text overlaps")
+    return width, height, styles, logo, extra
+
+
+def fullscreen_source_guard(role, facts):
+    if role.startswith("photo"):
+        require((facts["width"], facts["height"], facts["orientation"]) == (4096, 3072, 1),
+                "Fullscreen photographs must be the reviewed native, upright 4096x3072 files")
+    elif role == "overview":
+        require((facts["width"], facts["height"], facts["codec"]) == (1920, 1080, "hevc"),
+                "Fullscreen overview must be the native 1080 HEVC source, not the 720 archive/derivative")
+        require(facts["creation_time"] == "2026-10-02T08:19:32.000000Z", "Overview capture provenance changed")
+    elif role == "render":
+        require((facts["width"], facts["height"]) == (1920, 1080), "Render source dimensions changed")
+
+
+def fullscreen_media(role, mode):
+    width, height = (1920, 1080) if mode == "landscape" else (1080, 1920)
+    if role.startswith("photo"):
+        crop_w, crop_h = (4096, 2304) if mode == "landscape" else (1728, 3072)
+        focus_x, focus_y = PHOTO_FOCUS[role][mode]
+        require(0 <= focus_x <= 1 and 0 <= focus_y <= 1, "Photo focal range outside source")
+        x, y = 2 * int((4096 - crop_w) * focus_x / 2), 2 * int((3072 - crop_h) * focus_y / 2)
+        require(x + crop_w <= 4096 and y + crop_h <= 3072, "Photo crop exceeds native pixels")
+        require(crop_w / 1.045 >= width and crop_h / 1.045 >= height, "Photo crop would upscale")
+        filters = (f"crop={crop_w}:{crop_h}:{x}:{y},"
+                   f"zoompan=z='1+0.045*on/179':x='(iw-iw/zoom)*(0.45+0.10*on/179)':"
+                   f"y='(ih-ih/zoom)*0.55':d=180:s={width}x{height}:fps=30")
+        framing = {"native_crop_xywh": [x, y, crop_w, crop_h], "zoom_range": [1, 1.045],
+                   "pan_x_fraction_range": [0.45, 0.55], "pan_y_fraction": 0.55,
+                   "motion": "Editorial pan/zoom of a real photograph, not recorded camera motion",
+                   "photo_upscaling": False}
+    elif mode == "portrait":
+        require(role == "render", "Fullscreen portrait must not enlarge camera-strip footage")
+        crop_w, low, high = 606, 0.46, 0.48
+        filters = (f"crop={crop_w}:1080:x='2*floor((iw-ow)*({low}+{high-low:.2f}*n/179)/2)':y=0,"
+                   "scale=1080:1920:flags=lanczos")
+        framing = {"native_crop_width_height": [crop_w, 1080], "horizontal_margin_fraction_range": [low, high],
+                   "native_x_range": [604, 630], "visualization_upscale_factor": 1920 / 1080}
+    else:
+        filters = "scale=1920:1080:flags=lanczos"
+        framing = {"native_full_frame": True}
+    require("pad=" not in filters and "color=" not in filters, "Fullscreen media cannot contain blank bands")
+    return filters, framing
+
+
+def fullscreen_pixel_check(ffmpeg, movie, mode):
+    small_w, small_h = (96, 54) if mode == "landscape" else (54, 96)
+    data, _ = run([str(ffmpeg), "-hide_banner", "-nostdin", "-loglevel", "error", "-xerror",
+                   "-err_detect", "explode", "-threads", "4", "-i", str(movie), "-map", "0:v:0", "-an",
+                   "-vf", f"scale={small_w}:{small_h}", "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1"],
+                  binary_stdout=True)
+    stride = small_w * small_h * 3
+    require(len(data) == 900 * stride, "Fullscreen pixel decode count mismatch")
+    edges = ((0, 0, small_w, 3), (0, small_h - 3, small_w, small_h),
+             (0, 0, 3, small_h), (small_w - 3, 0, small_w, small_h))
+    minimum, edge_minimum = 255, 255
+    for index in range(900):
+        frame = Image.frombytes("RGB", (small_w, small_h), data[index * stride:(index + 1) * stride])
+        variation = max(ImageStat.Stat(frame).stddev)
+        edge_variation = min(max(ImageStat.Stat(frame.crop(edge)).stddev) for edge in edges)
+        require(variation > 8 and edge_variation > 0.25, f"Blank frame/constant edge band at frame {index}")
+        minimum, edge_minimum = min(minimum, variation), min(edge_minimum, edge_variation)
+    return {"frames_checked": 900, "minimum_frame_stddev": round(minimum, 3),
+            "minimum_edge_stddev": round(edge_minimum, 3), "no_pad_filter": True,
+            "media_fills_canvas_before_overlays": True}
+
+
+def safe_hungarian_glyphs(fonts):
+    for path in fonts:
+        font = ImageFont.truetype(str(path), 36)
+        missing = bytes(font.getmask("\u0378"))
+        for character in "\u00c9\u00e1\u00e9\u00ed\u00f3\u00f6\u0151\u00fa\u00fc\u0171":
+            mask = font.getmask(character)
+            require(mask.getbbox() is not None and bytes(mask) != missing,
+                    "Required Hungarian glyph absent in " + path.name)
+
+
+def output_metadata_guard(info):
+    require("Audio:" not in info and "Data:" not in info, "Unexpected export stream")
+    require(not re.search(r"location|creation_time|GPS|openharmony", info, re.I), "Private metadata remains")
+
+
 def faststart(path):
     boxes = []
     with path.open("rb") as stream:
@@ -171,43 +333,69 @@ def faststart(path):
 
 
 def build(args):
+    output, owner, defaults = build_scope(args.fullscreen)
     ffmpeg = Path(args.ffmpeg or shutil.which("ffmpeg") or "").resolve()
     require(ffmpeg.is_file(), "Supply --ffmpeg with the FFmpeg executable")
     fonts = tuple(Path(value).resolve() for value in (args.font, args.bold_font, args.display_font))
     require(all(font.is_file() for font in fonts), "A required font is missing")
+    if args.fullscreen:
+        safe_hungarian_glyphs(fonts)
     inputs, facts = {}, {}
-    for role, (default_path, default_hash) in DEFAULTS.items():
+    for role, (default_path, default_hash) in defaults.items():
         supplied = getattr(args, role + "_source")
         path = Path(supplied).resolve() if supplied else REPO / default_path
         expected = getattr(args, role + "_sha256")
         require(not supplied or expected, "Source override requires --" + role + "-sha256")
         expected = expected or default_hash
         require(re.fullmatch(r"[a-fA-F0-9]{64}", expected) is not None, "Invalid SHA-256 pin")
+        if args.fullscreen:
+            require(expected.lower() == default_hash, "Fullscreen inputs must match the approved native-source pins")
         require(path.is_file() and sha256(path) == expected.lower(), "Input hash mismatch: " + role)
         inputs[role] = path
         facts[role] = {"filename": path.name, "bytes": path.stat().st_size,
                        "sha256": expected.lower()}
-        if role != "logo":
+        if role.startswith("photo"):
+            with Image.open(path) as photo:
+                require(photo.format in ("JPEG", "MPO"), "Native photograph must be JPEG or its MPO container")
+                facts[role].update({"width": photo.width, "height": photo.height,
+                                    "orientation": photo.getexif().get(274, 1), "image_format": photo.format,
+                                    "primary_image": 0})
+            if facts[role]["image_format"] == "MPO":
+                loop_hashes, _ = run([str(ffmpeg), "-hide_banner", "-nostdin", "-loglevel", "error",
+                                      "-loop", "1", "-framerate", "30", "-i", str(path), "-map", "0:v:0",
+                                      "-frames:v", "3", "-f", "framemd5", "-"])
+                primary_rows = [line for line in loop_hashes.splitlines() if line and not line.startswith("#")]
+                require(len(primary_rows) == 3 and len({line.split(",")[-1].strip() for line in primary_rows}) == 1,
+                        "MPO loop must repeat only the approved primary photograph")
+                require("#dimensions 0: 4096x3072" in loop_hashes, "MPO decoder selected a non-native auxiliary image")
+                facts[role]["primary_image_loop_verified"] = True
+        elif role != "logo":
             media, _ = probe(ffmpeg, path)
             facts[role].update(media)
+        if args.fullscreen:
+            fullscreen_source_guard(role, facts[role])
     with Image.open(inputs["logo"]) as logo_image:
         require(logo_image.mode == "RGBA" and logo_image.width >= 250,
                 "Expected a transparent logo of at least 250 pixels")
         require(logo_image.getextrema()[3][0] < 255, "Logo transparency is absent")
         facts["logo"]["dimensions"] = list(logo_image.size)
-    for role, start, duration, _, _ in SCENES:
-        require(start + duration <= facts[role]["duration_seconds_reported"], "Cut exceeds source")
-    require(sum(scene[2] for scene in SCENES) + 6 == 30, "Timeline is not exactly 30 seconds")
+    for mode in ("landscape", "portrait"):
+        scenes = storyboard(mode, args.fullscreen)
+        for role, start, duration, _, _ in scenes:
+            if role in facts and "duration_seconds_reported" in facts[role]:
+                require(start + duration <= facts[role]["duration_seconds_reported"], "Cut exceeds source")
+        require(sum(scene[2] for scene in scenes) == 30, "Timeline is not exactly 30 seconds")
 
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    require(not OUTPUT.is_symlink(), "Output root cannot be a symlink")
-    registry = OUTPUT / ".builder-owned.json"
+    output.mkdir(parents=True, exist_ok=True)
+    require(not output.is_symlink(), "Output root cannot be a symlink")
+    registry = output / ".builder-owned.json"
+    require(not registry.is_symlink(), "Output registry cannot be a symlink")
     if registry.exists():
         state = json.loads(registry.read_text(encoding="utf-8"))
-        require(state.get("owner") == OWNER and args.overwrite_own,
+        require(state.get("owner") == owner and args.overwrite_own,
                 "Existing build: use --overwrite-own only to replace this builder's files")
     else:
-        state = {"owner": OWNER, "files": {}}
+        state = {"owner": owner, "files": {}}
         with registry.open("x", encoding="utf-8") as stream:
             json.dump(state, stream, indent=2)
 
@@ -215,8 +403,10 @@ def build(args):
         registry.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
     def destination(relative):
-        path = OUTPUT / relative
-        require(path.resolve().is_relative_to(OUTPUT.resolve()), "Output escapes approved scope")
+        path = output / relative
+        require(relative.split("/", 1)[0] != "source", "Source files must never be builder-owned")
+        require(path.resolve().is_relative_to(output.resolve()), "Output escapes approved scope")
+        require(path.resolve() not in inputs.values(), "A source cannot be used as an output")
         require(not any(parent.is_symlink() for parent in (path, *path.parents)), "Output symlink refused")
         if path.exists():
             require(args.overwrite_own and relative in state["files"], "Unowned/existing output: " + relative)
@@ -229,7 +419,7 @@ def build(args):
         return path
 
     def record(path):
-        state["files"][path.relative_to(OUTPUT).as_posix()] = sha256(path)
+        state["files"][path.relative_to(output).as_posix()] = sha256(path)
         save_registry()
 
     def write_text(relative, value):
@@ -241,7 +431,7 @@ def build(args):
 
     common = [str(ffmpeg), "-hide_banner", "-nostdin", "-loglevel", "error", "-n"]
     encoding = ["-an", "-sn", "-dn", "-map_metadata", "-1", "-map_chapters", "-1",
-                "-c:v", "libx264", "-preset", "medium", "-crf", "18", "-threads", "4",
+                "-c:v", "libx264", "-preset", "medium", "-crf", "17" if args.fullscreen else "18", "-threads", "4",
                 "-pix_fmt", "yuv420p", "-r", "30", "-fps_mode", "cfr",
                 "-video_track_timescale", "30000", "-color_primaries", "bt709",
                 "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv",
@@ -251,12 +441,19 @@ def build(args):
     for mode in ("landscape", "portrait"):
         segments = []
         geometry[mode] = []
+        scenes = storyboard(mode, args.fullscreen)
         for index in range(5):
             end = index == 4
-            role, start, duration, title, caption = ("brand", 0, 6, BRAND, "") if end else SCENES[index]
-            width, height, styles, logo, extra = layout(mode, end, title, caption, fonts)
+            role, start, duration, title, caption = scenes[index]
+            layout_function = fullscreen_layout if args.fullscreen else layout
+            width, height, styles, logo, extra = layout_function(mode, end, title, caption, fonts)
             base = f"fps=30,trim=end_frame={duration * FPS},setpts=N/(30*TB),setsar=1"
-            if not end:
+            framing = None
+            if args.fullscreen:
+                media_filters, framing = fullscreen_media(role, mode)
+                base += "," + media_filters + f",trim=end_frame={duration * FPS},setpts=N/(30*TB)"
+                require("pad=" not in base, "Fullscreen cannot use padding")
+            elif not end:
                 if mode == "landscape":
                     base += ",scale=1920:1080:force_original_aspect_ratio=decrease:flags=lanczos,pad=1920:1080:(ow-iw)/2:(oh-ih)/2"
                 else:
@@ -277,7 +474,9 @@ def build(args):
             graph_file = write_text(f"filters/{mode}-{index}.ffgraph", graph)
             path = destination(f"work/{mode}-{index}.mp4")
             command = common + ["-threads", "4"]
-            if end:
+            if args.fullscreen and role.startswith("photo"):
+                command += ["-loop", "1", "-framerate", "30", "-i", str(inputs[role])]
+            elif end and not args.fullscreen:
                 command += ["-f", "lavfi", "-i", f"color=c={BG}:s={width}x{height}:r=30:d=6"]
             else:
                 command += ["-ss", str(start), "-t", str(duration), "-i", str(inputs[role])]
@@ -291,6 +490,8 @@ def build(args):
             segments.append(path)
             geometry[mode].append({"scene": index, "logo": logo, "text": [
                 {key: value for key, value in style.items() if key != "font"} for style in styles]})
+            if args.fullscreen:
+                geometry[mode][-1]["media_framing"] = framing
         concat = write_text(f"work/{mode}-concat.txt", "".join(
             f"file '{segment.name}'\n" for segment in segments))
         movie = destination(f"harmat-construction-ad-{mode}.mp4")
@@ -304,8 +505,7 @@ def build(args):
         require(media["sample_aspect_ratio"] == [1, 1], "Export pixels must be square")
         require(media["duration_seconds_reported"] == 30 and media["codec"] == "h264" and
                 media["pixel_format"] == "yuv420p", "Export codec/duration mismatch")
-        require("Audio:" not in info and "Data:" not in info, "Unexpected export stream")
-        require(not re.search(r"location|creation_time|GPS|openharmony", info, re.I), "Private metadata remains")
+        output_metadata_guard(info)
         boxes = faststart(movie)
         md5_file = destination(f"qa/{mode}-frames.framemd5")
         print(f"Decoding/checking all 900 {mode} frames", flush=True)
@@ -318,7 +518,7 @@ def build(args):
         require(all(int(row[2]) == index and int(row[3]) == 1 for index, row in enumerate(rows)),
                 "Non-contiguous frame timestamps")
         motion, offset = [], 0
-        for scene in SCENES:
+        for scene in (scenes if args.fullscreen else SCENES):
             count = scene[2] * FPS
             unique = len({row[-1].strip() for row in rows[offset:offset + count]})
             require(unique >= 20, "Moving scene unexpectedly frozen")
@@ -332,22 +532,27 @@ def build(args):
             record(frame)
             with Image.open(frame) as image:
                 require(image.size == (width, height), "QA frame geometry mismatch")
-                region = (0, 0, width, 880) if mode == "landscape" else (0, 560, width, 1168)
+                region = (0, 0, width, height) if args.fullscreen else (
+                    (0, 0, width, 880) if mode == "landscape" else (0, 560, width, 1168))
                 if second < 24:
                     variation = max(ImageStat.Stat(image.crop(region).resize((160, 90))).stddev)
                     require(variation > 12, "Blank/flat scene pixels")
                 else:
                     variation = max(ImageStat.Stat(image.resize((160, 90))).stddev)
                     require(variation > 12, "Blank brand endscreen")
-                scene_index = next((i for i, boundary in enumerate((5, 11, 18, 24, 30)) if second < boundary), 4)
+                boundaries = [sum(scene[2] for scene in scenes[:i + 1]) for i in range(5)]
+                scene_index = next((i for i, boundary in enumerate(boundaries) if second < boundary), 4)
                 for style in geometry[mode][scene_index]["text"]:
                     crop = image.crop((style["left"], style["y"], style["left"] + style["width"],
                                        style["y"] + style["height"] + 10)).convert("L")
                     require(ImageStat.Stat(crop).stddev[0] > 10, "Text region is blank")
                 pixel_checks.append({"second": second, "pixel_stddev": round(variation, 3)})
-        with Image.open(OUTPUT / f"qa/{mode}-25s.jpg") as first, Image.open(OUTPUT / f"qa/{mode}-29s.jpg") as last:
+        with Image.open(output / f"qa/{mode}-25s.jpg") as first, Image.open(output / f"qa/{mode}-29s.jpg") as last:
             end_delta = sum(ImageStat.Stat(ImageChops.difference(first, last)).mean) / 3
-        require(end_delta < 2, "Endscreen is not stable")
+        if args.fullscreen:
+            require(end_delta > 0.2, "Fullscreen ending backdrop must move")
+        else:
+            require(end_delta < 2, "Endscreen is not stable")
         cover = destination(f"harmat-construction-ad-{mode}-cover.jpg")
         run(common + ["-ss", "25", "-i", str(movie), "-frames:v", "1", "-an", "-map_metadata", "-1",
                       "-q:v", "2", "-update", "1", str(cover)])
@@ -359,9 +564,12 @@ def build(args):
                         "moving_scenes": motion, "pixel_checks": pixel_checks,
                         "endscreen_mean_pixel_delta": round(end_delta, 5), "safe_text_geometry": True,
                         "audio_data_gps_creation_metadata_absent": True}
+        if args.fullscreen:
+            checks[mode]["fullscreen_pixels"] = fullscreen_pixel_check(ffmpeg, movie, mode)
+            checks[mode]["endscreen_text_geometry_identity"] = True
 
     require(all(sha256(inputs[role]) == facts[role]["sha256"] for role in inputs), "Input changed during build")
-    manifest = {"owner": OWNER, "status": "local-preview-only", "script_sha256": sha256(Path(__file__)),
+    manifest = {"owner": owner, "status": "local-preview-only", "script_sha256": sha256(Path(__file__)),
                 "sources": facts, "source_provenance": {
                     "overview": "Filmed 2026-10-02; September 30 is only the progress-report cutoff",
                     "archive": "A1 archive, 2026-09-25", "render": "Architectural visualization, not live footage",
@@ -376,6 +584,23 @@ def build(args):
                 "limits": ["Silent preview; no music or speech", "No platform upload/publishing validation",
                            "Existing source exposure/compression retained; no AI alteration",
                            "Typography pixel/geometry checks are not an OCR proof; visual review required"]}
+    if args.fullscreen:
+        manifest.update({"fullscreen": True, "source_provenance": {
+            "overview": "Native HEVC, filmed 2026-10-02; September 30 is only the progress cutoff",
+            "photo01": "Native site photograph, 2026-10-02; editorial pan/zoom only",
+            "photo04": "Native foundation/rebar site photograph, 2026-10-02; editorial pan/zoom only",
+            "photo02": "Native yellow-formwork site photograph; capture date unknown; editorial pan/zoom only",
+            "render": "Architectural visualization, not live footage", "logo": "Native public logo, unchanged"},
+            "timeline": {mode: [{"output_start": i * 6, "source": scene[0], "source_start": scene[1],
+                                  "seconds": scene[2], "title": scene[3], "caption": scene[4], "brand_ending": i == 4}
+                                 for i, scene in enumerate(FULLSCREEN_SCENES[mode])]
+                         for mode in ("landscape", "portrait")},
+            "export": "1080 fullscreen export; native 4096x3072 photographs and 1920x1080 videos; not 4K",
+            "limits": ["Silent local preview; no publishing/platform/browser validation by this renderer",
+                       "Portrait uses deliberately cropped native photos, not live video for its first 18 seconds",
+                       "Portrait visualization is a 606x1080 focal crop enlarged to 1080x1920 for six seconds",
+                       "Photo motion is editorial pan/zoom; no AI content alteration or invented capture dates",
+                       "Text/pixel guards require final human playback review"]})
     manifest_file = write_text("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps({"manifest": str(manifest_file), "deliverables": deliverables, "qa_passed": True}, indent=2), flush=True)
 
@@ -393,20 +618,76 @@ def self_test():
     print("9 storyboard/guard self-tests passed")
 
 
+def expect_refusal(function, *arguments):
+    try:
+        function(*arguments)
+    except RuntimeError:
+        return
+    raise RuntimeError("Expected guard refusal: " + function.__name__)
+
+
+def fullscreen_self_test(fonts):
+    require(build_scope(False) == (OUTPUT, OWNER, DEFAULTS), "Default v1 scope changed")
+    require(FULLSCREEN_OUTPUT != OUTPUT and FULLSCREEN_OWNER != OWNER, "Fullscreen must have a new scope/owner")
+    require("archive" not in FULLSCREEN_DEFAULTS, "Fullscreen cannot require the 720 archive")
+    require(all(re.fullmatch(r"[a-f0-9]{64}", value[1]) for value in FULLSCREEN_DEFAULTS.values()), "Bad v2 pin")
+    require(FULLSCREEN_DEFAULTS["overview"][1] != DEFAULTS["overview"][1], "Fullscreen must pin the native raw overview")
+    require(FULLSCREEN_SCENES["landscape"][0][:3] == ("overview", 18.0, 6), "Landscape intro changed")
+    require(FULLSCREEN_SCENES["landscape"][2][:3] == ("overview", 24.0, 6), "Landscape late cut changed")
+    require([scene[0] for scene in FULLSCREEN_SCENES["portrait"][:3]] == ["photo01", "photo04", "photo02"],
+            "Portrait must use native photo proof, not an enlarged camera strip")
+    require(FULLSCREEN_SCENES["portrait"][2][4] == PHOTO_UNDATED and "2026" not in PHOTO_UNDATED,
+            "Undated photograph cannot acquire a date")
+    safe_hungarian_glyphs(fonts)
+    count = 10
+    for mode in ("landscape", "portrait"):
+        scenes = storyboard(mode, True)
+        require(len(scenes) == 5 and all(scene[2] == 6 for scene in scenes), "V2 must have five six-second scenes")
+        require(sum(scene[2] * FPS for scene in scenes) == 900, "Fullscreen frame count changed")
+        require(scenes[0][3] == OPENING and scenes[3][1:3] == (72.0, 6) and scenes[3][4] == RENDER,
+                "Fullscreen opening/render provenance changed")
+        require(scenes[-1][0] == "photo01", "Ending must use a real image backdrop")
+        count += 4
+        for index, (role, _, _, title, caption) in enumerate(scenes):
+            _, _, styles, logo, _ = fullscreen_layout(mode, index == 4, title, caption, fonts)
+            media_filters, _ = fullscreen_media(role, mode)
+            require("pad=" not in media_filters and "color=" not in media_filters, "Blank fullscreen media")
+            if index == 4:
+                require(logo[2] == 250 and any(style["text"] == CTA for style in styles), "Native logo/exact CTA changed")
+            count += 2
+    good_photo = {"width": 4096, "height": 3072, "orientation": 1}
+    fullscreen_source_guard("photo01", good_photo)
+    expect_refusal(fullscreen_source_guard, "photo01", {**good_photo, "width": 1280})
+    expect_refusal(fullscreen_source_guard, "photo01", {**good_photo, "orientation": 6})
+    native = {"width": 1920, "height": 1080, "codec": "hevc", "creation_time": "2026-10-02T08:19:32.000000Z"}
+    fullscreen_source_guard("overview", native)
+    expect_refusal(fullscreen_source_guard, "overview", {**native, "codec": "h264"})
+    expect_refusal(fullscreen_source_guard, "overview", {**native, "creation_time": None})
+    expect_refusal(fullscreen_media, "overview", "portrait")
+    for metadata in ("Audio: aac", "Data: timed_metadata", "location: coordinate", "creation_time: date", "GPS"):
+        expect_refusal(output_metadata_guard, metadata)
+    output_metadata_guard("Video: h264, yuv420p, SAR 1:1")
+    require(CTA.encode("utf-8").decode("utf-8") == CTA, "UTF-8 CTA changed")
+    print(f"{count + 14} fullscreen story/crop/source/metadata/glyph self-tests passed")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ffmpeg", help="FFmpeg executable (otherwise PATH)")
-    for role in DEFAULTS:
+    for role in {**DEFAULTS, **FULLSCREEN_DEFAULTS}:
         parser.add_argument("--" + role + "-source", help="Optional source path; requires its hash pin")
         parser.add_argument("--" + role + "-sha256", help="Independently verified source SHA-256")
     parser.add_argument("--font", default="C:/Windows/Fonts/segoeui.ttf")
     parser.add_argument("--bold-font", default="C:/Windows/Fonts/segoeuib.ttf")
     parser.add_argument("--display-font", default="C:/Windows/Fonts/georgia.ttf")
     parser.add_argument("--overwrite-own", action="store_true", help="Replace only unchanged builder-owned outputs")
+    parser.add_argument("--fullscreen", action="store_true", help="Build only full-bleed v2 in its separate output directory")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
         self_test()
+        if args.fullscreen:
+            fullscreen_self_test(tuple(Path(value).resolve() for value in (args.font, args.bold_font, args.display_font)))
     else:
         build(args)
 

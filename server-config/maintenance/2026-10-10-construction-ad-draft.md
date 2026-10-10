@@ -2,7 +2,7 @@
 
 Date: 2026-10-10. Website baseline: `ec3bd99`.
 
-Status: LOCAL SAMPLES COMPLETE, USER REVIEW PENDING. Not uploaded, submitted for platform review, approved or serving. No live website, advertising settings, budget, bidding or conversion action is changed.
+Status: LOCAL SAMPLES ONLY, NOT ACCEPTED FOR PUBLICATION. User found the first samples unclear and requested a full-screen revision. Neither version is uploaded, submitted for platform review, approved or serving. No live website, advertising settings, budget, bidding or conversion action is changed.
 
 ## Approved Creative
 
@@ -74,6 +74,42 @@ The default overview is the separately hash-pinned local 1080p derivative; it pr
 
 Browser evidence: ignored `outputs/2026-10-10-construction-ad/parent-browser-qa/results.json`. The local QA server and render/browser processes are stopped after their checks. Real iOS, social-platform safe-zone overlays, YouTube processing and Google ad review/delivery are not tested.
 
+## Full-Screen Quality Revision
+
+Revision baseline: `102ef26`. The user requested clearer, full-screen footage. The first version and its evidence remain intact in their original ignored output directory; its technical playback checks do not imply user acceptance of its visual quality.
+
+- Completed new local output scope: ignored `outputs/2026-10-10-construction-ad-fullscreen/`. The renderer's explicit `--fullscreen` selects a separate v2 owner/output scope; without it the v1 storyboard/layout and default source pins remain unchanged.
+- Both formats use full-bleed media throughout all 30 seconds, including the closing. No large plain background, boxed wide footage or baked-in letterbox is intended.
+- The 720p September archive is omitted. Landscape retains native 1080p camera footage; portrait uses native 4096x3072 site photographs for its construction scenes instead of enlarging a low-resolution wide video crop. Photograph captions identify them as photographs. The architectural-render portion remains labelled `Látványterv`.
+- Unchanged native photo copies are privately retained under the new `source/` directory and are not builder-owned output files. Sources 01/04 are October 2 supplements; source 02 is undated. September 30 remains the report cutoff. No source exposure, construction feature or capture date is invented or AI-altered.
+- Photo pins: `photo01.jpg` / `488d0045b2bff585366f48384bbb4f0aac4e4edafdf199d889a62384b85af410`; `photo04.jpg` / `42ea068630cab24b8e58850020bcbc588fbc2633210c43e2e5dcad3e71a47f04`; `photo02.jpg` / `c93c7239e224de90414c31b8561976aa2b7e662ae9a4e099d1870df4387f5aec`. Each is 4096x3072, EXIF orientation 1. Original attachments and all private source copies are preserved.
+- The exact six-second closing CTA/logo/website are retained over a real construction-photo background. Moving a camera view or photograph crop does not create additional construction progress. Full-screen framing cannot recover detail absent from a native 1080p video or turn it into genuine 4K footage.
+- No Adobe/cloud media upload is made: this revision requires a new deterministic montage, crop and title composition, not a same-ratio resize. Generated video, private source/metadata and QA evidence remain outside GitHub.
+
+| Output time | Landscape full-screen source | Portrait full-screen source |
+| --- | --- | --- |
+| 0-6 seconds | Native October 2 overview, 18-24 seconds | Native site photo 01, October 2 |
+| 6-12 seconds | Native foundation/rebar photo 04, October 2 | Native foundation/rebar photo 04, October 2 |
+| 12-18 seconds | Native October 2 overview, 24-30 seconds | Native yellow-formwork photo 02, explicitly undated |
+| 18-24 seconds | Project rendering, 72-78 seconds, `Látványterv` | Focal crop of the same labelled rendering |
+| 24-30 seconds | Photo 01 moving backdrop and unchanged logo/CTA/website | Photo 01 moving backdrop and unchanged logo/CTA/website |
+
+- Landscape: `harmat-construction-ad-landscape.mp4`, 81,939,202 bytes, SHA-256 `6a69e6bc23d9f520cc0cdbc7e8871d8f57dd51366450ce6cf1ac610d9eac6135`.
+- Portrait: `harmat-construction-ad-portrait.mp4`, 42,466,175 bytes, SHA-256 `3f4456197b4b4f66e1aaa7f7af5a6391fe86f95d834b4557cd3c6b6875ea6c95`.
+- Renderer LF SHA-256 at v2 render: `0ed2126e25da0ab674a4963ba16fa7e9c6304c839ad1775dd5e1b1cc57d049ac`. Both exports are exactly 30 seconds/900 frames at 30 fps, square SAR 1:1, silent H.264/yuv420p, faststart, without source GPS/creation metadata or audio/data streams. All five scenes, including the editorial photo ending, have 180 different decoded frame hashes. The native-photo crops are downscaled, not enlarged. The six-second portrait visualization uses a 606x1080 crop enlarged to 1080x1920; it is not claimed to gain native detail or become 4K.
+- Nine original plus 52 full-screen story/crop/source/metadata/Hungarian-glyph checks passed and were independently repeated. Every frame fully decoded; every frame also passed separate small-canvas/edge variation checks with no pad filter. Native camera source, three photographs, render source and logo remain hash-identical and unowned by the output registry. Parent independently compared both new outputs, all six source pins and the script/manifest pin, plus all 71 v1 builder-owned output hashes. Real no-overwrite and source-override-without-hash guard refusals were independently verified without changing exports.
+- Independent final Chrome playback passed 1440x810 landscape, 432x768 portrait and 390x844 portrait cases: exact natural dimensions/duration, 21 nonblank frame/side-edge samples, moving opening and ending backdrop, actual advancing playback, and zero page errors. Parent reviewed construction, rendering and closing frames and mobile typography. First browser-run pixel/playback checks passed, but one screenshot caught Chrome's transient post-seek spinner; final screenshot capture waits for playable readiness and omits browser controls to inspect the encoded artwork. Initial evidence is preserved separately. Full-bleed describes the encoded canvas: a taller-than-9:16 player using `contain` may add external letterboxing, which is not baked into the video.
+- Final evidence: `outputs/2026-10-10-construction-ad-fullscreen/parent-browser-qa-final/results.json`; renderer evidence and source/crop provenance: its `manifest.json`, `qa/`, `filters/` and `text/`. All render/browser/temporary QA-server processes finished; delegated agent closed. No platform upload, approval, delivery, real iOS/platform-overlay test or site regression claim is made.
+
+Full-screen rebuild template (all hash-verified inputs and the same fonts/FFmpeg must be privately available on computer B):
+
+```powershell
+python -X utf8 -B server-config/maintenance/2026-10-10-build-construction-ad.py `
+  --fullscreen --ffmpeg '<FFmpeg executable>'
+```
+
+Defaults expect `source/overview-raw.mp4`, `source/photo01.jpg`, `source/photo04.jpg`, `source/photo02.jpg` and `source/harmat-logo.png` in the new ignored output directory, plus the existing `outputs/home-native-video/original.mp4` render. The raw overview pin is `c9d7f0fb4a2b97e8168785c9b76f9b2e9174db3882abcee692db1b6472062166`. Optional private path overrides require the exact approved source hash. A repeat render needs `--overwrite-own`, which cannot replace changed/unowned outputs or sources. Keep the originals/private metadata and all large source/export files outside GitHub.
+
 ## Publication Gate
 
 - [x] User approved local sample and the exact closing CTA.
@@ -81,6 +117,6 @@ Browser evidence: ignored `outputs/2026-10-10-construction-ad/parent-browser-qa/
 - [x] Both exports completed with exact 30-second duration.
 - [x] Full decode, moving-frame, dimensions, metadata and font/layout checks passed.
 - [x] Parent visual review and browser playback passed.
-- [ ] User reviewed the samples and separately approved publication.
+- [ ] User accepted the revised visual quality and separately approved publication.
 
 No Google approval, delivery, improved lead rate or sales effect is promised. Compare actual qualified inquiries after a controlled creative test; views or click volume alone are not the objective.
