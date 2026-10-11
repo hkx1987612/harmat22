@@ -118,9 +118,11 @@ Defaults expect `source/overview-raw.mp4`, `source/photo01.jpg`, `source/photo04
 - [x] Full decode, moving-frame, dimensions, metadata and font/layout checks passed.
 - [x] Parent visual review and browser playback passed.
 - [x] User accepted the revised visual quality and separately approved publication.
-- [ ] Dedicated company YouTube account and existing Google Ads asset group verified in the authenticated backend.
-- [ ] Approved v2 uploads completed and platform HD processing/playback checked.
+- [x] Dedicated company YouTube account and existing Google Ads asset group verified in the authenticated backend (October 11).
+- [x] Approved v2 uploads completed and platform HD processing/playback checked (October 11).
 - [ ] Both new video assets saved in the existing asset group, with old assets and campaign settings preserved.
+
+October 11 superseding publication result: company-channel V2 landscape `385fClJD1xI` and portrait `8qD5q8Glitc` are unlisted, with actual native-orientation 1080p playback verified. Eight source clips are public; existing two IDs/URLs preserved with updated metadata. The park upload hit YouTube's daily limit. Correct Ads backend and its four old videos/budgets verified; the picker is awaiting action-time commercial-use rights confirmation before any asset save. See `2026-10-11-youtube-publication.md`. The October 10 preflight below remains a historical preparation snapshot, not current status.
 
 ## Company Channel Publication Preflight
 
