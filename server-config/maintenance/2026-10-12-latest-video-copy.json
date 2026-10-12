@@ -1,0 +1,36 @@
+{
+  "brand": "Harmat Lakópark",
+  "capture_date": "2026-10-12",
+  "date_authority": "User explicitly confirmed all four were filmed today on 2026-10-12.",
+  "publication_authorization": "User confirmed company YouTube upload agreement and public YouTube/Facebook use of all four videos and original audio.",
+  "email": "ertekesites@harmat22.hu",
+  "phone": "+36300733375",
+  "description_template": "{title}\n\nFriss helyszíni videó a Harmat Lakópark építkezéséről, 2026. október 12-én készült felvétellel. {scene}\n\nA videó a felvétel napján látható állapotot dokumentálja, nem az elkészült lakóparkot mutatja be.\n\nHelyszín: 1105 Budapest, Harmat utca 22.\nProjekt: Harmat Lakópark\nÉpítési napló: https://harmat22.hu/epitesi-naplo/\nLakáskereső és alaprajzok: https://harmat22.hu/lakaskereso/\n\nKérjen személyes ajánlatot!\nTelefon: +36300733375\nE-mail: ertekesites@harmat22.hu\n\n#HarmatLakópark #Kőbánya #Budapest #ÉpítésiNapló",
+  "videos": [
+    {
+      "file": "outputs/2026-10-12-latest-videos/prepared-v1/latest-site-01.mp4",
+      "sha256": "951c5d059460e856fe08f2c87438f027f059a03987c7f3746383f0aab0062233",
+      "title": "Harmat Lakópark | Zsaluzatok és szerkezeti részletek - 2026. október 12.",
+      "scene": "Daru, zsaluzatok és szerkezeti részletek láthatók az épülő lakópark munkaterületén."
+    },
+    {
+      "file": "outputs/2026-10-12-latest-videos/prepared-v1/latest-site-02.mp4",
+      "sha256": "edd260132f920058595c5937e32abfb4669f8b9d90f3d97aafd89114627edcc8",
+      "title": "Harmat Lakópark | Helyszíni körkép és vasalások - 2026. október 12.",
+      "scene": "A helyszíni körkép zsaluzott felületeket, vasalásokat és folyamatban lévő munkákat mutat."
+    },
+    {
+      "file": "outputs/2026-10-12-latest-videos/prepared-v1/latest-site-03.mp4",
+      "sha256": "044bf06813d46fccc2d9bf48a1fcfaecdf99c1189f134dbdb0a3ec31ae52ae32",
+      "title": "Harmat Lakópark | Daru és zsaluzott felületek - 2026. október 12.",
+      "scene": "Daru, zsaluzott felületek és a munkaterület környezete szerepel a felvételen."
+    },
+    {
+      "file": "outputs/2026-10-12-latest-videos/prepared-v1/latest-site-04.mp4",
+      "sha256": "142b038bd0571d70c54b30ac6266a7673f46903b8832a166273a6ce9ba8672cc",
+      "title": "Harmat Lakópark | Daruk és az építési terület körképe - 2026. október 12.",
+      "scene": "Daruk, zsaluzatok és a környező munkaterület láthatók a helyszíni körképen."
+    }
+  ],
+  "limits": "No unconfirmed building identifiers, completion percentages, prices, handover promises, personal names or personal email addresses. Native 1280x720 approximately 60fps, no upscale. Preserve original construction audio, add no music. Keep paid boosts off. Legal identity and billing information remain factual and unchanged."
+}
