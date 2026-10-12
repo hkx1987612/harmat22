@@ -1,5 +1,10 @@
 # Company YouTube subscriber test - 2026-10-12
 
+## Superseding Main-Creative Continuation
+
+- Later October 12 observation: both existing 30-second subscriber ads are enabled/Eligible with some recorded activity, no longer only the initial pending-review snapshot. User requested the actual homepage main video as primary; it is now public/featured as `5bCVZYxpKDU`.
+- A new main-video ad was prepared INSIDE this existing campaign/group, retaining HUF28,000 total/October 12-25. Its save is stopped at Google phone reauthentication, with pending editor changes. It is NOT yet a third saved ad, approved or delivering. Existing two ads were not paused, property campaigns untouched. Resume the existing draft and verify saved inventory before any retry/creative focus change. Exact copy and gates: `2026-10-12-main-video-promotion.md`.
+
 ## Scope And Authorization
 
 - User approved a separate 14-day subscriber test at an average HUF2,000/day, with a HUF28,000 campaign total budget. This is additional to existing property advertising, not a replacement or increase to its budgets.

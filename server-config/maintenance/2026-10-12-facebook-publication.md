@@ -1,5 +1,10 @@
 # Facebook Page Setup And Primary Homepage Video
 
+## Superseding Main-Video Promotion Continuation
+
+- Latest October 12 terms/payment/draft status is in `2026-10-12-main-video-promotion.md`. User now accepted Meta advertising terms, confirmed company-card/Hungary/HUF/Europe-Budapest billing and allowed true legal-company statutory disclosure. Configured main-Reel inquiry draft shows Housing category, Hungarian Messenger text and HUF149,996/14-day summary, but is NOT published; company tax/card/payment steps and final schedule/fees/preview audit remain pending. The later user-opened default boost page is payment-only and must not be published.
+- Actual homepage video is also public on company YouTube as `5bCVZYxpKDU`, saved as both channel Home features. Google main-ad draft awaits phone reauthentication, not saved/launched. Earlier unresolved-gate snapshots below are historical; no new website deployment.
+
 ## Scope And Current Result
 
 - User approved an official Harmat Facebook Page and a property-inquiry test. The latest budget supersedes the earlier HUF28,000 proposal: 14 days, HUF150,000 total. No Facebook paid promotion has been published by this work.
