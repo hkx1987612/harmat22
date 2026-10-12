@@ -120,7 +120,9 @@ Defaults expect `source/overview-raw.mp4`, `source/photo01.jpg`, `source/photo04
 - [x] User accepted the revised visual quality and separately approved publication.
 - [x] Dedicated company YouTube account and existing Google Ads asset group verified in the authenticated backend (October 11).
 - [x] Approved v2 uploads completed and platform HD processing/playback checked (October 11).
-- [ ] Both new video assets saved in the existing asset group, with old assets and campaign settings preserved.
+- [x] Both new video assets saved in the existing asset group, with old assets and campaign settings preserved (October 12; group review remains pending).
+
+October 12 superseding result: user confirmed Google's legal-rights/commercial-use declaration. Both approved V2 IDs were appended, saved and verified after reopening alongside the original four. Thirty protected fields and seven site links remained exact; twelve images/one logo and company name retained. Campaign budgets independently re-read unchanged at HUF14,000/day PMax and HUF2,500/day nationwide search. The asset-group table currently reports under review/not serving, not approved. Advertiser-verification banner remains visible. A single sanitized park retry still hit YouTube's daily limit without an ID. See the October 12 continuation in `2026-10-11-youtube-publication.md`; website unchanged.
 
 October 11 superseding publication result: company-channel V2 landscape `385fClJD1xI` and portrait `8qD5q8Glitc` are unlisted, with actual native-orientation 1080p playback verified. Eight source clips are public; existing two IDs/URLs preserved with updated metadata. The park upload hit YouTube's daily limit. Correct Ads backend and its four old videos/budgets verified; the picker is awaiting action-time commercial-use rights confirmation before any asset save. See `2026-10-11-youtube-publication.md`. The October 10 preflight below remains a historical preparation snapshot, not current status.
 
