@@ -1,0 +1,72 @@
+{
+  "status": "DRAFT",
+  "language": "hu-HU",
+  "intro": {
+    "title": "Üdvözöljük a környéken!",
+    "subtitle": "Harmat Lakópark",
+    "sponsor_line": "A közeli park felújítását a Harmat Lakópark finanszírozta."
+  },
+  "scenes": [
+    {
+      "scene": 1,
+      "title": "Játék és nevetés",
+      "subtitle": "Vidám pillanatok a közeli játszótéren."
+    },
+    {
+      "scene": 2,
+      "title": "Színes gyermeki álmok",
+      "subtitle": "Egy hely, ahol szárnyalhat a képzelet."
+    },
+    {
+      "scene": 3,
+      "title": "A játék öröme",
+      "subtitle": "A közös játékból lesznek a kedves emlékek."
+    },
+    {
+      "scene": 4,
+      "title": "Kutyafuttató",
+      "subtitle": "Mozgás, játék és önfeledt szaladgálás."
+    },
+    {
+      "scene": 5,
+      "title": "Négylábú találkozások",
+      "subtitle": "Ismerkedés és közös játék a kutyás területen."
+    },
+    {
+      "scene": 6,
+      "title": "Nyilvános parkolóhelyek",
+      "subtitle": "Parkolási lehetőség a környéken."
+    },
+    {
+      "scene": 7,
+      "title": "Hazaérkezés, nyugodtan",
+      "subtitle": "Az út végén kezdődhet az otthoni pihenés."
+    }
+  ],
+  "closing": {
+    "title": "Harmat Lakópark",
+    "subtitle": "Otthon és környék, együtt.",
+    "cta": "Kérjen személyes ajánlatot!",
+    "website": "https://harmat22.hu/"
+  },
+  "youtube": {
+    "title": "Harmat Lakópark | Közeli park, játszótér és kutyás terület",
+    "description": "Játék, nevetés és közös pillanatok a Harmat Lakópark közelében. Videónk a környék parkját, a gyermekek játszóterét, a kutyáknak kialakított területet és a környék nyilvános parkolóhelyeit mutatja be.\n\nA közeli park felújítását a Harmat Lakópark finanszírozta. A park a lakópark közelében, nem a beruházás területén található. A kutyás rész kialakítása nem jelent kizárólagos lakói használatot. A nyilvános parkolóhelyek bemutatása nem garantál szabad vagy ingyenes parkolást.\n\nA játszótéri pillanatoktól a négylábúak közös játékáig: egy rövid séta a környék hétköznapi helyszínein. Ismerje meg a Harmat Lakópark környezetét, és érdeklődjön az otthonokról közvetlenül értékesítőinknél.\n\nKérjen személyes ajánlatot!\nHonlap: https://harmat22.hu/\nA környékről: https://harmat22.hu/harmat-lakopark-kornyeke/\nTelefon: +36300733375\nE-mail: ertekesites@harmat22.hu"
+  },
+  "provenance": {
+    "basis": "User-provided scene meanings and explicit renovation-funding confirmation.",
+    "funding": "User confirms that Harmat Lakopark financed the nearby park renovation.",
+    "location_scope": "Nearby neighborhood park, not the housing development site.",
+    "contacts": "Only official public contact details supplied by the user."
+  },
+  "notes": [
+    "Local rendering is separate from publication. Parent independently reviews visual QA, publication gates and music rights.",
+    "Scene order follows the seven user-provided scene meanings.",
+    "Scene titles are at most 32 characters; subtitles are at most 62 characters. Renderer may wrap each into at most two lines.",
+    "Intro sponsor line is at most 100 characters and may wrap into two lines.",
+    "Dog area is dedicated by use, not private or exclusive to residents.",
+    "No park or parking ownership claim, guaranteed parking availability, free-parking promise, prices, completion dates, handover dates, move-in promises or performance claims.",
+    "No source media, metadata, private account details or audio copyright-clearance assertion is recorded.",
+    "No upload or platform action is represented as completed."
+  ]
+}
