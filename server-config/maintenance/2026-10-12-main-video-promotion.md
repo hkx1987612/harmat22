@@ -1,6 +1,13 @@
 # Main Homepage Video Promotion - October 12
 
-## Latest Saved And Paused Continuation
+## Latest Facebook Resume
+
+- Existing single main-video promotion is now saved ON, not paused: HUF10,714 average/day, actual HUF150,000 advertising-spend cap, October 12 20:23 to October 26 20:23 / 14 days, Budapest. Existing Monday-Friday 09:00-17:00 delivery hours retained. Exact cap/ON/no pending edits independently reopened.
+- Saved Hungarian Messenger greeting/three questions, follow-up OFF and genuine company beneficiary/same payer independently reopened. Commercial HU/HUF/Budapest billing and verified VAT ID inspected read only; this is not a tax-inclusive invoice guarantee. Ad Center active / Ads Manager preparing or review / zero spend, not proven delivery or approval.
+- Page polish and existing Google/YouTube ads remain unchanged this continuation. Normal keyboard scrolling mounted previously unavailable virtualized editor cards despite Meta's extension warning; the earlier blanket blocker attribution is not proved. Final extra screenshot/retained-tab marking stopped at an extension-update request after verification. Use `2026-10-12-facebook-promotion-resumed.md`; do not recreate an ad or publish old drafts.
+- All paused/draft/payment handoff snapshots and continuation instructions below are historical and superseded where this record says completed.
+
+## Earlier Saved And Paused Continuation
 
 - User completed Google phone reauthentication. The existing main draft was saved once after actual clearance; the real ads table shows exactly three saved ads. `Harmat | Fo video | 90 mp` is enabled, UNDER REVIEW / NOT SERVING with zero activity at observation. It is no longer an unsaved draft; do not recreate it. The original two 30-second subscriber ads remain enabled/Eligible.
 - Refreshed campaign table independently confirms the YouTube test remains HUF28,000 total / October 12-25, PMax HUF14,000/day and nationwide Search HUF2,500/day unchanged. The separate advertiser-verification banner remains unresolved; phone reauthentication is not advertiser verification or creative approval.
@@ -59,7 +66,7 @@
 - User could not see the task-group payment window. Their newly opened same-Reel boost page was claimed, Payment method expanded and Add clicked; the actual payment modal was verified and screenshot shown. THIS SECOND PAGE HAS DEFAULT AD SETTINGS (automatic goal, HUF983/day, indefinite, Chinese greeting, unresolved payer), NOT the configured approved draft. Use it only to add the company card to the same account; NEVER publish it. The original configured draft remains open separately.
 - Actual Page Ad Center showed the first-ad prompt at inspection, not an existing paid Facebook promotion. No new ad or invoice has been submitted by this task.
 
-## Safe Continuation
+## Historical Draft Continuation
 
 1. User completes company tax/card/payment terms and Google phone authentication. Do not read/store full card numbers, codes or identity documents; do not screenshot populated financial details.
 2. Continue the existing Google main-ad draft; inspect actual saved inventory to prevent duplication. Confirm new status, unchanged total/dates/subscription goal and protected property-campaign budgets. Approval and delivery must be observed, not inferred from upload/publication.

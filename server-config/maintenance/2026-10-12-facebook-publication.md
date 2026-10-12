@@ -1,13 +1,19 @@
 # Facebook Page Setup And Primary Homepage Video
 
-## Superseding Main-Video Promotion Continuation
+## Latest Main-Video Promotion Resume
+
+- Existing single main promotion is saved ON, HUF10,714 average/day, actual HUF150,000 advertising-spend cap, saved October 12 20:23 to October 26 20:23 / 14 days, Budapest. Existing Monday-Friday 09:00-17:00 schedule retained. Hungarian greeting/three questions/follow-up OFF and genuine company beneficiary/same payer reopened; commercial billing read only. No gross tax-inclusive invoice guarantee.
+- Ad Center active, native Ads Manager preparing/review, zero spend/results at observation; approval/delivery not claimed. No second campaign, Page/video re-upload, Google/YouTube budget change or website deployment. Exact saved-state proof, extension-warning correction, final extension-update interruption and B-computer continuation: `2026-10-12-facebook-promotion-resumed.md`.
+- All older paused/unpublished/payment-only statements below are historical, not the current paid state. Do not publish their stale drafts.
+
+## Earlier Main-Video Promotion Continuation
 
 - Latest continuation supersedes the following earlier gates: user reports company card added; ONE already submitted main promotion was discovered at HUF5,000/day / indefinite, then switched OFF after the user reaffirmed 14 days / HUF150,000 maximum. Existing HUF10,714/day and actual HUF150,000 campaign spending limit are saved/reopened, Housing audience adjustment confirmed. End date/template/final payer/charges remain unverified; extension interference blocks editing, so do not enable or create a second campaign. Google main ad is now saved UNDER REVIEW, no longer at phone authentication. Exact status: `2026-10-12-main-video-promotion.md`.
 - Facebook official Page now has saved concise bio, pinned sales phone, four real official links and one public four-image render album with Hungarian captions/disclaimer. Existing genuine logo, panoramic cover and main first Featured retained. Desktop contact fields and existing website CTA confirmed. Details/public album/safe continuation: `2026-10-12-facebook-professional-page.md`. Earlier setup snapshots below remain historical, not current paid status.
 - Latest October 12 terms/payment/draft status is in `2026-10-12-main-video-promotion.md`. User now accepted Meta advertising terms, confirmed company-card/Hungary/HUF/Europe-Budapest billing and allowed true legal-company statutory disclosure. Configured main-Reel inquiry draft shows Housing category, Hungarian Messenger text and HUF149,996/14-day summary, but is NOT published; company tax/card/payment steps and final schedule/fees/preview audit remain pending. The later user-opened default boost page is payment-only and must not be published.
 - Actual homepage video is also public on company YouTube as `5bCVZYxpKDU`, saved as both channel Home features. Google main-ad draft awaits phone reauthentication, not saved/launched. Earlier unresolved-gate snapshots below are historical; no new website deployment.
 
-## Scope And Current Result
+## Earlier Scope And Result
 
 - User approved an official Harmat Facebook Page and a property-inquiry test. The latest budget supersedes the earlier HUF28,000 proposal: 14 days, HUF150,000 total. No Facebook paid promotion has been published by this work.
 - Official Page: https://www.facebook.com/profile.php?id=61595018954218

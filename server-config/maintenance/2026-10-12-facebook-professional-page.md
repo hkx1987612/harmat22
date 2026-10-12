@@ -1,5 +1,11 @@
 # Facebook Professional Page - October 12
 
+## Latest Paid Resume
+
+- Public Page polish below remains saved and was not changed again. The existing single main-video promotion is now saved ON with HUF10,714/day, actual HUF150,000 ad-spend limit and saved October 12 20:23 to October 26 20:23 / 14 days, Budapest. Existing Monday-Friday 09:00-17:00 delivery hours retained.
+- Hungarian Messenger copy/three questions and follow-up OFF independently reopened; true company beneficiary/same payer confirmed. Billing inspected read only; no tax-inclusive invoice guarantee. Ad Center active, Ads Manager preparing/review, zero activity, not proven delivery. Exact verification and recovery: `2026-10-12-facebook-promotion-resumed.md`.
+- The earlier paused-state and keep-OFF instructions below are historical. Do not use them to overwrite the saved resumed promotion or publish stale drafts. Normal keyboard scrolling revealed virtualized sections despite the extension warning; prior general editing-block attribution is not confirmed. A later extra screenshot/tab-mark attempt stopped at the Chrome extension-update request after verification.
+
 ## Saved Public Page
 
 - Scope: the official Facebook Page, not the website homepage. The user expressly clarified this and requested a clean, professional project presentation.
@@ -36,7 +42,7 @@ Kérjen személyes ajánlatot: ertekesites@harmat22.hu | +36300733375
 
 - Actual public album, four-item count, expanded description, saved-success notice and desktop appearance were verified. No price, handover date, completed-home claim, new capture date or construction percentage was invented. This natural publication does not create another paid promotion.
 
-## Paid Promotion Is Still Paused
+## Earlier Paused Promotion Snapshot
 
 - This continuation discovered ONE already submitted main-video promotion at HUF5,000/day with indefinite duration. Its origin is not attributed. The user explicitly reconfirmed 14 days / HUF150,000 maximum; no second campaign was created.
 - Existing campaign was switched OFF and independently confirmed closed/paused in Ads Manager, Ad Center and the main-post card. Spending was zero at observation.
@@ -49,7 +55,7 @@ Kérjen személyes ajánlatot: ertekesites@harmat22.hu | +36300733375
 - Earlier original tab showed two pending entities after campaign publication. A fresh tab has disabled Publish/Discard Draft controls and independently persisted budget/cap/Housing; do not publish the stale review modal or assume its two entities remain unsaved. Audit the actual saved single campaign/ad set/ad first.
 - Google main-video ad is now saved in the existing YouTube subscriber campaign, enabled but UNDER REVIEW / NOT SERVING at observation. There are exactly three saved ads; old two remain enabled. Total HUF28,000 / October 12-25, property PMax HUF14,000/day and nationwide Search HUF2,500/day remain unchanged. Details: `2026-10-12-main-video-promotion.md`.
 
-## Safe Continuation
+## Historical Paused Continuation
 
 1. Keep the existing Facebook campaign OFF. Restore the user's normal browser extension configuration only through their explicit action; do not bypass safety interstitials, use other identities or create another boost.
 2. After extension interference is resolved, reopen the existing promotion and reapply/save the 14-day end date. Current date/start/remaining duration must be revalidated, not silently extended beyond the authorization.
