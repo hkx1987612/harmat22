@@ -24,7 +24,7 @@
 - Meta upload copyright checks displayed no issues. New clips remain natural public posts, not paid boosts; remix/audio reuse, automatic translation, groups/story and AI labels were not enabled. Clip 04 additionally has auto captions off. Preserve original audio; do not add unauthorized music.
 - These are factual dated construction records, not completed homes. Titles/descriptions contain no invented building labels, percentages, prices or guaranteed handover dates, personal names or personal email addresses.
 
-## YouTube: Not Yet Uploaded
+## Earlier YouTube Limit-Blocked Snapshot
 
 - Company channel https://www.youtube.com/@Harmat-22 was authenticated and checked for existing items. Company name/about changed and persisted as Harmat Lakópark; handle, official sales email and three site links retained. No private Google identity/billing change.
 - Latest 01 first attempt lost the uploader without a created ID during cross-tab activity. A fresh bounded attempt returned the actual daily upload limit and offered one-time verification or waiting 24 hours. No new latest-video ID was created and clips 02-04 were not attempted after the refusal.
@@ -49,3 +49,32 @@
 - Private reviewed screenshot: `outputs/2026-10-12-latest-videos/youtube-limit-recheck-1617.png`, shown to the user and excluded from Git. No identity/verification link, codes, personal channel or quota workaround was used.
 - This completes the authorized once-only follow-up, not the pending video publications. No additional/daily retry schedule was created. Any verification remains a user action; the exact limit-reset instant is unknown. Await a new user instruction before another retry or schedule.
 - Website/server, Google Ads, Facebook content/paid ads, budgets, payer and verified identity remain unchanged. Records only are synchronized to GitHub; no raw media, screenshots or private account identifiers.
+
+## Later User-Requested Retry: Four Public Videos
+
+- After the one-time follow-up, the user explicitly requested another attempt. Clean main `98ed261` pulled up to date. Same authenticated company Chrome profile/channel and previously accepted unchanged upload agreement were used. Rechecked all five upload pins; none changed.
+- At approximately 18:53 Europe/Budapest on October 12, latest-01 was accepted and generated an ID instead of the earlier limit refusal. Continued only the already approved remaining three clips and park v2. Exactly one accepted upload per file in this retry, not duplicates or a quota workaround.
+
+| Clip | Public YouTube Video | Platform Result |
+| --- | --- | --- |
+| 01 | https://www.youtube.com/watch?v=ZqiUj2_OsDQ | Public, copyright checks no issues, decoded 1280x720 |
+| 02 | https://www.youtube.com/watch?v=-bD86jNd9jA | Public, copyright checks no issues, decoded 1280x720 |
+| 03 | https://www.youtube.com/watch?v=UU0JIvhbPv4 | Public, copyright checks no issues, decoded 1280x720 |
+| 04 | https://www.youtube.com/watch?v=-WiYQf0Lm8c | Public, copyright checks no issues, decoded 1280x720 |
+
+- Each construction export was initially private and filled/saved with the approved Hungarian copy, user-confirmed October 12 date, project-only brand and real sales email/phone. Drafts 02-04 were independently reopened with their full saved text read back; 01's saved title and description introduction were checked on the watch page. Added each to the existing `Epitesi naplo` construction playlist; no new playlist or unrelated existing-video change.
+- New video audience set to not made for children, Hungarian language; standard YouTube license, embedding and subscription-feed defaults retained. No paid sponsorship/realistic AI generation declared for these original company recordings. Automatic chapters/places/concepts and Shorts remix disabled. No new collaborator/access code, paid promotion, website/Ads insertion or account-default change.
+- Before public visibility, each construction item displayed completed copyright checks with no issues and actual company-owner YouTube playback decoded native 720p; first quality UI explicitly showed 720p60. The uploader's hidden local blob/source preview is not HD-processing proof: it was distinguished from the HTTPS platform player. All four final upload panels also showed processing completed.
+- Publishing the existing private drafts, rather than uploading again, yielded exact-ID receipts. Fresh Studio reload independently showed all four public, each with no restriction notice. Public-watch titles and absent private badge were checked on all four; actual HTTPS players decoded 1280x720, readyState 4, advancing beyond initial 0 seconds. Post-publication times observed approximately 18.50, 25.96, 17.01 and 20.54 seconds with durations 30.301, 35.621, 32.901 and 27.201 seconds respectively. This is bounded desktop Chrome playback, not full-length/mobile/China-network QA or a guarantee of future copyright status.
+- Private evidence: `outputs/2026-10-12-latest-videos/youtube-final-inventory.png`, four publication receipts/public-player screenshots and `youtube-public-playback-qa.json`. Inventory proof shown to user; none committed. Public copy/IDs and maintenance records are the Git material.
+- Studio warns that clickable external description links require one-time verification. No verification link/identity flow was followed or falsely marked completed. Text descriptions remain correct; clickable external-link functionality is not claimed.
+- No renewed schedule, Facebook re-upload, Google/Facebook paid-ad, budget, payer, identity, site/server/property/offer/CRM/mail/tracking change. Existing website stable release unchanged, no new site scan. Computer B should use these existing public IDs and never re-upload this four-file set.
+
+## Park V2: Uploaded Private, Copyright Decision Pending
+
+- Correct original-audio v2 matching the earlier pin was accepted, uploaded, and saved with exact approved Hungarian title/description, official brand and sales contact. No invented capture date; renovation-funding/neighborhood/non-exclusive-use copy retained. No public playlist, Ads or Facebook addition.
+- Original-audio metadata, source/export and user authorization remain unchanged. The item remains an existing private draft, not a public publication; locate it in the company Studio by `Harmat Lakopark | Kozeli park, jatszoter es kutyas terulet`. Its private link is deliberately not recorded in public Git. Do not re-upload it or substitute the rejected v1.
+- Platform copyright check found an audio Content ID claim for `Happy Walking (no whistling edit)` by Klimentij Skripnikov. Actual claim overview says current reach is unaffected, the video can be watched according to chosen visibility and this is not a copyright strike. The upload check warns that future monetization income may be affected. This does not establish music-license ownership or immunity from future changes.
+- Stopped this item's public publication and requested the user's choice: retain original audio and publish despite the current claim, use the approved silent v2 with original draft kept private, or leave unpublished. At this record's cutoff no response. No dispute, takedown, replacement, deletion or rights declaration was submitted.
+- Platform provided 1080p HD. After manual selection and replay, the private HTTPS player decoded 1920x1080, readyState 4, approximately 20.07 seconds / 37.661 seconds; reviewed nonblank screenshot shows the Hungarian title region. Earlier automatic playback was 360p and the immediate resolution-switch sample was unready; neither was represented as 1080p success.
+- Copyright screenshot shown to user and private playback proof remain ignored. Preserve the existing private draft for the decision; reuse it if original-audio publication is later explicitly approved. A silent-file upload is a separate accepted-file attempt and still needs source pin/duplicate/processing/copyright checks, not automatic permission to delete the original.
