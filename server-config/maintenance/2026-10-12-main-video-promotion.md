@@ -1,6 +1,16 @@
 # Main Homepage Video Promotion - October 12
 
-## Current Result
+## Latest Saved And Paused Continuation
+
+- User completed Google phone reauthentication. The existing main draft was saved once after actual clearance; the real ads table shows exactly three saved ads. `Harmat | Fo video | 90 mp` is enabled, UNDER REVIEW / NOT SERVING with zero activity at observation. It is no longer an unsaved draft; do not recreate it. The original two 30-second subscriber ads remain enabled/Eligible.
+- Refreshed campaign table independently confirms the YouTube test remains HUF28,000 total / October 12-25, PMax HUF14,000/day and nationwide Search HUF2,500/day unchanged. The separate advertiser-verification banner remains unresolved; phone reauthentication is not advertiser verification or creative approval.
+- Facebook now has ONE already submitted main-Reel promotion. Observed HUF5,000/day / indefinite after the user's card-added reply; origin not attributed. User reconfirmed the original 14-day / HUF150,000 maximum. Switched existing campaign OFF; no second Facebook campaign or duplicate ad created.
+- Existing Facebook campaign HUF10,714/day and actual HUF150,000 campaign spending limit were saved while OFF and independently reopened in a fresh same-profile tab. Housing/policy-adjusted Hungary audience also reopened. Spend zero at observation. Final tax/fees and true legal payer persistence are not independently verified.
+- End date is NOT saved: fresh boost details still show indefinite duration; current edit selected October 26 and shows 14 days / HUF149,996, but Save Changes is disabled. Actual destination preview still shows default Chinese greeting/questions; the submitted promotion's Hungarian template is unverified. Meta explicitly reports extension/ad-block interference and hides some relevant editing sections. Campaign stays OFF pending user extension action and final schedule/template/payer/charges review.
+- Facebook Page polishing is saved: concise Hungarian bio, pinned sales phone, four official links, verified contact email/retained Contact Us website CTA, unchanged panoramic cover/logo/main first Featured. Exactly one four-image official-gallery render album is public with saved Hungarian captions/disclaimer/description. Exact public link, pins and safe continuation: `2026-10-12-facebook-professional-page.md`.
+- These results supersede the earlier unsaved/unpublished/payment-only snapshots below. Never resume the earlier configured boost draft or publish a stale modal; audit and finish the actual saved single campaign while OFF.
+
+## Earlier Publication Snapshot
 
 - This continuation supersedes the earlier Facebook payment/terms gates and the initial YouTube subscriber-ad review snapshot. It is a social/advertising-only task; no website deployment or new full-site scan.
 - User requested the actual homepage showcase as the main YouTube/Facebook creative, featured on both platforms. Public identity is Harmat Lakópark with ertekesites@harmat22.hu and +36300733375, not a personal name/email or the legal developer name.
