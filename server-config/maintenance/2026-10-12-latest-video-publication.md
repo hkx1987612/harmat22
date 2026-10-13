@@ -1,5 +1,12 @@
 # October 12 Construction Video Publication
 
+## October 13 Stale Heartbeat Retired
+
+- A delayed repetition of the October 12 one-time upload reminder arrived at October 13 14:17 UTC / 16:17 Budapest. Latest shared publication records and thread evidence already confirm four construction videos plus park v2 published on October 12; reuse their public IDs recorded below. No pending upload remained for this reminder.
+- The matching local `harmat-youtube` heartbeat still showed ACTIVE despite its once-only instruction. Changed only status to PAUSED using the app automation tool and independently read back PAUSED from its saved configuration. Preserved name, prompt, original schedule and thread; cause of the extra trigger is not established. No raw schedule edits or new automation.
+- No company-browser access, file transmission, quota test, media/audio/visibility edit or duplicate publication this run. Current visibility, copyright, playback and ad delivery were not freshly tested; October 12 QA evidence is historical, not a new October 13 verification claim.
+- Clean main `e0f62d4` synchronized; only owned maintenance/context/history additions shared. Local automation state stays local and must not be recreated on computer B merely from Git records. No website/server/Google/Facebook paid-ad, budget, payer or identity change, new scan or inquiry.
+
 ## Authority And Preparation
 
 - User provided four clips in the October 12 archive and explicitly confirmed all were filmed today, 2026-10-12. No A1-A4 attribution or completion percentage was confirmed.
