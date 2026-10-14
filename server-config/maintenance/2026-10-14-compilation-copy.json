@@ -1,0 +1,35 @@
+{
+  "status": "DRAFT_NOT_UPLOADED",
+  "brand": "Harmat Lakópark",
+  "capture_date": "2026-10-13",
+  "date_and_building_authority": "User confirmed all four clips were filmed on October 13 and their filename building descriptions are accurate.",
+  "scope": "One compilation for Facebook and YouTube, replacing the initial four-individual-upload plan. Remove all original audio; add newly requested Hungarian narration. Existing publications, main creative and budgets unchanged.",
+  "title": "Harmat Lakópark | Építési napló - 2026. október 13.",
+  "description": "A Harmat Lakópark hivatalos helyszíni összefoglalója, 2026. október 13-án készült felvételekből.\n\nA videó négy helyszíni felvételt foglal össze:\n- A1 és A3: vasbeton szerkezetek, zsaluzatok és helyszíni munkák.\n- A2: a pince feletti födém betonozása.\n- A4 és A2: a munkaterület és a folyamatban lévő szerkezetépítés.\n- Áttekintő körkép az építkezésről.\n\nAz eredeti helyszíni hang helyett magyar nyelvű, szintetikus narráció hallható. A képek valódi helyszíni felvételek; az építési állapotot a felvétel napján mutatják, nem elkészült otthonokat.\n\nHelyszín: 1105 Budapest, Harmat utca 22.\nÉpítési napló: https://harmat22.hu/epitesi-naplo/\nLakáskereső és alaprajzok: https://harmat22.hu/lakaskereso/\nProjekt: https://harmat22.hu/\n\nKérjen személyes ajánlatot!\nTelefon: +36300733375\nE-mail: ertekesites@harmat22.hu\n\n#HarmatLakópark #Kőbánya #Budapest #ÉpítésiNapló",
+  "narration_language": "hu",
+  "voice_policy": "Generic authorized synthetic narrator only; no imitation or cloning of a real person. New narration only, no source audio or added music.",
+  "narration_sections": [
+    {
+      "source": "site-01",
+      "chapter": "A1 és A3",
+      "text": "Így halad a Harmat Lakópark építkezése Budapesten, a Harmat utca huszonkettőben. A felvételek kétezer-huszonhat október tizenharmadikán készültek. Elsőként az A egyes és az A hármas épület környékét mutatjuk: vasbeton szerkezetek, zsaluzatok és folyamatban lévő helyszíni munkák láthatók."
+    },
+    {
+      "source": "site-02",
+      "chapter": "A2 - Pincefödém betonozása",
+      "text": "Az A kettes épületnél a pince feletti födém betonozását követjük. A felvételen a födém vasalása, a betonpumpa és a munkaterületen dolgozó csapat látható. Ezek a képek a helyszínen zajló szerkezetépítést dokumentálják."
+    },
+    {
+      "source": "site-03",
+      "chapter": "A4 és A2",
+      "text": "Ezután az A négyes és az A kettes épület környékére tekintünk. A betonpumpa, a zsaluzott felületek és a munkaterület körképe mutatja az építkezés ezen részét. A felvételek valódi helyszíni állapotot rögzítenek."
+    },
+    {
+      "source": "site-04",
+      "chapter": "Helyszíni körkép",
+      "text": "Végül áttekintjük az építési területet, a falakat és a zsaluzatokat. Ez az október tizenharmadikai összefoglaló nem elkészült otthonokat mutat. További építési hírek és alaprajzok a Harmat huszonkettő pont hu weboldalon. Kérjen személyes ajánlatot!"
+    }
+  ],
+  "publication_gates": "Final narrated file and audio/visual QA pending. Confirm correct company accounts and deduplication; accept the current batch upload agreement at action time before file submission. No ad creation or spend is authorized by this natural publication request.",
+  "limits": "No unconfirmed completion percentage, price, move-in deadline or building attribution beyond the user-confirmed source descriptions. Preserve real footage and native720p origin; do not claim native1080p. Do not upload source metadata, raw files or private screenshots to GitHub."
+}
