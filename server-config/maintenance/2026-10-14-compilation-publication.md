@@ -7,8 +7,10 @@
 - User confirmed all four sources were filmed on 2026-10-13 and their filename descriptions are accurate. No additional completion percentage, price or delivery date was supplied.
 - Runway installed/enabled was not proof of a usable connection: three authentication checks returned UNAUTHORIZED and supplied no actionable authorization URL. No generation task, trial, purchase, credits or cloud narration was created.
 - User clarified the account was unregistered, then reported registration required payment and expressly rejected paid Runway. Do not retry Runway, subscribe, enter a card, start a trial or uninstall it under this request.
-- Free local Piper Hungarian Imre narration is generated; user was shown the first paragraph audio and asked to review its sound. No listening/native-speaker quality approval or platform copyright/playback result is claimed.
-- Narrated MP4 assembly and local technical QA now pass; complete inline video preview shown. User sound/synchronization review and both platform publications are still pending. Silent MP4 below is NOT the publication target. No claim that the user approved the new voice or accepted this batch's actual upload terms.
+- User expressly approved the free Piper Hungarian Imre voice and asked to continue using it. This is user sound approval, not an agent/native-Hungarian pronunciation review or platform copyright/playback result.
+- Narrated MP4 assembly and local technical QA pass; complete inline video preview previously shown. Actual file pin rechecked on this approval resume. Both platform uploads remain pending at the current YouTube upload agreement gate; silent/individual files are NOT the targets.
+- Approval resume began on clean shared main `333cef0`, pulled up to date. Fresh authorized company Studio Videos tab lists17 items, no October13 compilation; official Facebook Reels grid lists6 existing IDs. This is bounded visible inventory, not perceptual or every-hidden-draft duplicate detection. Existing main first Featured was seen before opening Reels; no existing content/ad was edited.
+- Opened company YouTube upload dialog and official Facebook Create Reels picker. YouTube explicitly says file submission accepts its service terms/community guidelines; stopped BEFORE any filechooser/file bytes. Saved/shown ignored upload-terms screenshot, retained both current pages for handoff and asked user to confirm this specific narrated compilation's company-channel terms/public uploads. No answer yet at this checkpoint; no new draft/upload/ID or public post.
 
 ## Source and Silent Preview
 
@@ -43,9 +45,9 @@
 
 1. Read this current status, current thread replies and copy before continuing. Do not resurrect old separate-upload or original-audio YouTube targets.
 2. Preserve all existing output/source files. Scripts reject unknown existing attempts rather than overwrite them. Rebuild on computer B only with privately transferred hash-verified source assets and appropriate local Python/FFmpeg/font paths; no raw media/model/private screenshots in GitHub.
-3. Obtain the user's actual sound/synchronization review of the narrated preview. Revalidate its exact hash before publication; do not regenerate/replace approved media silently. Preserve failed/partial attempts separately.
+3. Stock voice is user-approved. Read the current specific upload-terms reply before submitting bytes; revalidate narrated preview SHA256 before publication. Do not regenerate/replace approved media silently. Preserve failed/partial attempts separately.
 4. Company YouTube Studio and the original authorized Facebook manager Chrome were verified this turn; the other company Chrome lacked the Facebook Page publishing actor. Use only the correct company channel/Page and read fresh native UI; do not use a personal channel or former company-name Page.
-5. No uploader was opened/file sent. Accept any current batch upload agreement at action time with user confirmation; old batches' terms are not automatically proof. Verify fresh inventory and receipt to avoid duplicates, factual date/brand/copy/real contacts, processing/copyright state, saved visibility and actual playback before claiming publication. Stop at identity/permission/copyright/limit problems.
+5. Upload dialogs are open, but no file has been selected/transmitted. User confirmation of the current YouTube agreement is required at action time; old batches' terms are not proof. Verify receipt to avoid duplicates, factual date/brand/copy/real contacts, processing/copyright state, saved visibility and actual playback before claiming publication. Stop at identity/permission/copyright/limit problems.
 
 ## Protected Scope
 
