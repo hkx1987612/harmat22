@@ -153,7 +153,7 @@ function harmat_offer_integrity_filter($response, $handler, $request) {
     $allowed_sources = array(
         '',
         harmat_offer_integrity_message('K&uuml;lt&eacute;ri hirdet&eacute;s'),
-        'Google keres&eacute;s',
+        harmat_offer_integrity_message('Google keres&eacute;s'),
         'ingatlan.com',
         harmat_offer_integrity_message('K&ouml;z&ouml;ss&eacute;gi m&eacute;dia'),
         harmat_offer_integrity_message('Egy&eacute;b'),
