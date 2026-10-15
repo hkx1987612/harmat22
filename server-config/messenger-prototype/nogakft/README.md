@@ -1,12 +1,34 @@
-# Local Receive-Only Metadata Adapter
+# Local Receive-Only Messenger Components
 
-Python standard-library SQLite preparation only. Not deployed, not integrated
+Python standard-library isolated preparation. Not deployed, not integrated
 with the existing host or app.py, not a full chatbot, and not a claim of complete
 equivalence to the JavaScript transport/reducer. No dependencies, subscription,
-HTTP listener, sender, model, WordPress/CRM API, credentials or live access.
+HTTP listener, sender, model, private WordPress/CRM API or credentials.
+The separate fixed-URL inventory reader now supports the approved anonymous
+public GET only; it does not modify or expose the CRM or booking functions.
 Budget reservations are deliberately omitted: no USD15 allowance enforcement or
 provider invoice cap is supplied by this adapter. Eligibility is not sending or
 spending authorization.
+
+## Latest Continuation
+
+Parent independently passed148 local tests:30 metadata,42 ingress,31 public
+inventory,37 deterministic reply previews and8 synthetic composition checks.
+The latter are NOT actual Meta receive/reply or a production queue/model.
+All receive/verification gates remain off, previews always non-sendable.
+
+Private host staging passed31 reader fixtures on Linux/Python3.11.6, but its
+actual public GET failed closed. Bounded diagnostics and the authorized network
+task confirm a TCP443 timeout, not a proven DNS or API-code issue. No network
+settings, existing services or WordPress were modified. A computer can read124
+units; that is not host-sync proof. Do not substitute stale/default facts.
+
+Meta remains Unpublished/unconnected with blank callback fields, an outstanding
+minimal Page-binding confirmation and missing publication privacy URL. Real
+model/data-flow/secure-credential/transport/retention/sender/takeover/live test
+and platform-review gates remain. See
+`../../maintenance/2026-10-15-facebook-messenger-nogakft-staging.md` for proof,
+private backup, limitations and continuation. Do not enable this by Git pull.
 
 ## Local API
 
