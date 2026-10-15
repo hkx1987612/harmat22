@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "status": "local_draft_not_deployed",
+  "enabled": false,
+  "deployed": false,
+  "language": "hu",
+  "response_mode": "prewritten_faq_draft",
+  "review_required": ["parent_hungarian_copy_review", "meta_capability_review", "explicit_deployment_approval"],
+  "provenance": {
+    "baseline_code": "wp-plugins/harmat-local-assistant/harmat-local-assistant.php",
+    "baseline_public_faq": "wp-plugins/harmat-local-assistant/data/harmat_ai_faq_responses.md",
+    "adaptation": "selected_public_topics_only_no_bulk_import",
+    "volatile_property_adapter": "wp-mu-plugins/zz-harmat-assistant-live-data.php",
+    "unified_public_property_helper": "harmat_sai_property_summary_data",
+    "live_source_connected": false,
+    "volatile_fact_policy": "public_search_link_now_read_only_published_unified_data_if_later_approved",
+    "hidden_price_policy": "never_copy_expose_or_infer_hidden_prices",
+    "historical_fact_policy": "do_not_copy_old_dates_payment_milestones_counts_or_price_snapshots"
+  },
+  "scope": {
+    "phase": "messenger_private_only",
+    "proposed_entry_points": ["messenger_private_inquiry", "messenger_ad_inquiry"],
+    "runtime_enabled": false,
+    "automatic_sending_enabled": false,
+    "public_comment_replies_enabled": false,
+    "customer_reads_enabled": false,
+    "crm_writes_enabled": false,
+    "marketing_follow_up_enabled": false,
+    "external_ai_processing_enabled": false,
+    "free_form_generation_enabled": false,
+    "human_transfer_enabled": false,
+    "appointment_booking_enabled": false,
+    "data_collection_enabled": false
+  },
+  "public": {
+    "brand": "Harmat Lakópark",
+    "address": "1105 Budapest, Harmat utca 22.",
+    "sales_phone": "+36300733375",
+    "sales_email": "ertekesites@harmat22.hu",
+    "links": {
+      "site": "https://harmat22.hu/",
+      "apartment_search": "https://harmat22.hu/lakaskereso/",
+      "construction": "https://harmat22.hu/epitesi-naplo/",
+      "contact": "https://harmat22.hu/elerhetosegeink/"
+    }
+  },
+  "routing": {
+    "mode": "manual_topic_map_only_no_runtime",
+    "ambiguous": "copy.clarification",
+    "default": "copy.fallback",
+    "topics": {
+      "apartment_search": "copy.faq.apartment_search",
+      "price": "copy.faq.price",
+      "viewing": "copy.faq.viewing",
+      "location": "copy.faq.location",
+      "construction": "copy.faq.construction",
+      "floorplans": "copy.faq.floorplans",
+      "parking_storage": "copy.faq.parking_storage",
+      "manual_contact": "copy.faq.manual_contact",
+      "recruitment": "recruitment.reply",
+      "sensitive_data": "copy.sensitive_data",
+      "finance_or_contract": "copy.finance_or_contract"
+    }
+  },
+  "copy": {
+    "greeting": "Üdvözöljük a Harmat Lakóparknál! Ez egy automatikus tájékoztató. Lakást keres, alaprajzot vagy árajánlatot szeretne, esetleg megtekintést egyeztetne? Miben segíthetünk?",
+    "clarification": "Lakásvásárlással vagy álláslehetőséggel kapcsolatban érdeklődik? Kérjük, csak a témát jelezze, személyes adatot vagy dokumentumot ne küldjön.",
+    "fallback": "Erre a kérdésre nincs ellenőrzött, előre megírt válaszunk. Lakásügyben kérjük, keresse közvetlenül értékesítőnket: +36300733375, ertekesites@harmat22.hu. Állásügyben válassza az álláslehetőség témát. Ez az üzenet nem továbbította a kérdését ügyintézőnek.",
+    "sensitive_data": "Kérjük, itt ne küldjön önéletrajzot, személyazonosító okmányt, banki vagy pénzügyi adatot. Személyes egyeztetéshez válassza a lakásügyi kapcsolat vagy az álláslehetőség témát.",
+    "finance_or_contract": "Hitelfeltételekről és hitelbírálatról az illetékes pénzintézet, szerződéses kérdésekről az értékesítő és szükség esetén jogi szakember adhat tájékoztatást. Ez a bot nem ad hiteljóváhagyást vagy szerződéses ígéretet. Lakásügyi kapcsolat: +36300733375, ertekesites@harmat22.hu.",
+    "faq": {
+      "apartment_search": {
+        "question": "Hol kereshetek lakást?",
+        "answer": "A Harmat Lakópark hivatalos lakáskeresőjében találja a nyilvános lakásadatokat és elérhetőségi jelzéseket: https://harmat22.hu/lakaskereso/ . A kiválasztott lakás aktuális elérhetőségét értékesítőnk erősítheti meg: +36300733375, ertekesites@harmat22.hu."
+      },
+      "price": {
+        "question": "Hol találom a lakások árát?",
+        "answer": "A nyilvánosan feltüntetett árakat a hivatalos lakáskeresőben és a lakás adatlapján tekintheti meg: https://harmat22.hu/lakaskereso/ . Ha az ár nincs feltüntetve: Ár egyeztetés alapján. Konkrét ajánlatért keresse értékesítőnket: +36300733375, ertekesites@harmat22.hu."
+      },
+      "viewing": {
+        "question": "Hogyan egyeztethetek megtekintést?",
+        "answer": "Megtekintés egyeztetéséhez kérjük, hívja a +36300733375 számot, vagy írjon az ertekesites@harmat22.hu címre. Az időpontot az értékesítővel kell egyeztetni; ez az üzenet nem foglal és nem igazol vissza időpontot."
+      },
+      "location": {
+        "question": "Hol található a Harmat Lakópark?",
+        "answer": "A Harmat Lakópark címe: 1105 Budapest, Harmat utca 22., Budapest X. kerületében. Hivatalos honlap: https://harmat22.hu/ . Kapcsolat és helyszín: https://harmat22.hu/elerhetosegeink/ . Látogatás előtt kérjük, egyeztessen értékesítőnkkel: +36300733375."
+      },
+      "construction": {
+        "question": "Hol követhetem az építkezést?",
+        "answer": "A dátummal ellátott nyilvános beszámolókat a hivatalos építési naplóban találja: https://harmat22.hu/epitesi-naplo/ . Ez a válasz nem igazolja a pillanatnyi készültséget vagy az átadás időpontját. Konkrét kérdésével keresse értékesítőnket: +36300733375, ertekesites@harmat22.hu."
+      },
+      "floorplans": {
+        "question": "Hol találom az alaprajzokat?",
+        "answer": "Az alaprajzot a kiválasztott lakás hivatalos adatlapján tekintheti meg. Az adatlapot a lakáskeresőből érheti el: https://harmat22.hu/lakaskereso/ . Ha nem találja a keresett alaprajzot, kérje értékesítőnk segítségét: +36300733375, ertekesites@harmat22.hu."
+      },
+      "parking_storage": {
+        "question": "Hogyan érdeklődhetek parkolóról vagy tárolóról?",
+        "answer": "Parkoló vagy tároló aktuális elérhetőségéről, áráról és foglalási feltételeiről kérjen tájékoztatást és ajánlatot értékesítőnktől: +36300733375, ertekesites@harmat22.hu. A kiválasztott lakáshoz kapcsolódó lehetőségeket is közvetlenül vele egyeztesse. Ez a bot nem foglal parkolót vagy tárolót."
+      },
+      "manual_contact": {
+        "question": "Hogyan beszélhetek értékesítővel?",
+        "answer": "Értékesítőnket közvetlenül a +36300733375 számon vagy az ertekesites@harmat22.hu címen érheti el. További elérhetőségek: https://harmat22.hu/elerhetosegeink/ . Ez a bot nem kapcsolta ügyintézőhöz és nem indított visszahívást."
+      }
+    }
+  },
+  "recruitment": {
+    "phone": "+36306410358",
+    "email": "ertekesites@harmat22.hu",
+    "workplace": "1105 Budapest, Harmat utca 22.",
+    "working_hours": "Munkaidő: hétfőtől péntekig, 09:00-17:00. Kizárólag a meghirdetett állás munkaideje, nem általános értékesítési nyitvatartás.",
+    "reply": "Álláslehetőséggel kapcsolatban a Harmat Lakópark toborzási elérhetősége: +36306410358, ertekesites@harmat22.hu. Munkavégzés helye: 1105 Budapest, Harmat utca 22. Munkaidő: hétfőtől péntekig, 09:00-17:00. Ez az állás munkaideje, nem értékesítési nyitvatartás. Kérjük, itt ne küldjön önéletrajzot, okmányt vagy pénzügyi adatot; a jelentkezés módjáról érdeklődjön közvetlenül a fenti elérhetőségeken. Ez a bot nem rögzít jelentkezést és nem továbbítja ügyintézőnek."
+  }
+}
