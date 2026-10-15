@@ -12,6 +12,23 @@ spending authorization.
 
 ## Latest Continuation
 
+Superseding autonomous-debug checkpoint: parent independently passed177 offline
+tests, including29 new bounded ASGI cases, plus20 real local-loopback HTTP checks
+with synthetic payloads. `asgi_app.py` defaults OFF and requires explicit
+metadata-only test mode for POST; readiness always503 because no question queue,
+model or sender exists. It is NOT a production Messenger bootstrap. Optional
+Uvicorn test dependencies were installed only in an ignored local virtual
+environment, not into the existing host. All local listeners/fixture databases
+were cleaned up. Exact commands, evidence and continuation:
+`../../maintenance/2026-10-15-messenger-autonomous-check.md`.
+
+Further host diagnosis finds outbound SYNs/no replies without local OUTPUT-drop
+evidence; the blocking side remains unknown. Existing service has no nonempty
+model API key and external model is inactive. Hosting portal requires login.
+Meta callback/token/subscription remain unset. No live deployment or shutdown:
+the user's shutdown condition requires genuine end-to-end success, not177+20
+synthetic checks. Website/quote/appointment/CRM guards and old service pass.
+
 Parent independently passed148 local tests:30 metadata,42 ingress,31 public
 inventory,37 deterministic reply previews and8 synthetic composition checks.
 The latter are NOT actual Meta receive/reply or a production queue/model.
