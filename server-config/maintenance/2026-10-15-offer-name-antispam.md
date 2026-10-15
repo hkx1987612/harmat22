@@ -1,5 +1,7 @@
 # Public offer name-URL anti-spam repair
 
+Later user-authorized cleanup supersedes the retained-record checkpoint below: all120 confirmed records are now in recoverable trash with private originals, not permanently purged. Exact completion/recovery: `2026-10-15-offer-spam-cleanup.md`. Anti-spam source/hash and website frontend are unchanged.
+
 ## Scope and Evidence
 
 User reported promotional junk in the CRM and explicitly approved a narrow reversible repair: reject website URLs in the name field across the existing offer REST endpoint and legacy CF7 forms, with backup/lint/regression. No frontend, CAPTCHA, IP ban, existing-record deletion or additional positive TEST inquiry is authorized by this work.
