@@ -23,11 +23,13 @@ task confirm a TCP443 timeout, not a proven DNS or API-code issue. No network
 settings, existing services or WordPress were modified. A computer can read124
 units; that is not host-sync proof. Do not substitute stale/default facts.
 
-Meta remains Unpublished/unconnected with blank callback fields, an outstanding
-minimal Page-binding confirmation and missing publication privacy URL. Real
+Meta Page association is now COMPLETE after the user's specific confirmation:
+exactly one project Page, seven configuration guards and148 local rerun pass.
+Callback/token remain blank, no webhook subscription, token generation or live
+reply. Binding approval is no longer pending. Publication privacy URL and real
 model/data-flow/secure-credential/transport/retention/sender/takeover/live test
 and platform-review gates remain. See
-`../../maintenance/2026-10-15-facebook-messenger-nogakft-staging.md` for proof,
+`../../maintenance/2026-10-15-facebook-messenger-page-binding.md` for current proof,
 private backup, limitations and continuation. Do not enable this by Git pull.
 
 ## Local API

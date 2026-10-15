@@ -4,7 +4,7 @@
 
 User explicitly authorized continuing Facebook AI integration, testing before publication and preserving the website/quote/appointment functions. Shared main started clean at `3b7c680`, pulled up to date. Astra coordinated; three bounded Sol workers implemented only isolated Python components, parent reviewed/composed/tested them and closed all three. The pre-existing network-maintenance task was reused with the user's earlier explicit authorization, then returned to idle; never archive/close that existing task.
 
-NO ordinary-customer launch, app publication, Page grant/token, webhook subscription, model call, sender, valid inquiry, appointment or CRM change occurred. No website PHP/config or existing nogakft app/widget/service/proxy was edited. The current production source tag remains `stable-2026-10-15-messenger-public-inventory-current`; this continuation is prototype/diagnostic work, not a new production release.
+During the component/diagnostic checkpoint, NO ordinary-customer launch, app publication, Page grant/token, webhook subscription, model call, sender, valid inquiry, appointment or CRM change occurred. Subsequent separately approved Page association is now COMPLETE as recorded in `2026-10-15-facebook-messenger-page-binding.md`; no token/subscription/activation was added. No website PHP/config or existing nogakft app/widget/service/proxy was edited. The current production source tag remains `stable-2026-10-15-messenger-public-inventory-current`; this is not a chatbot production release.
 
 ## Components and Verification
 
@@ -40,14 +40,14 @@ Tools: `2026-10-15-audit-messenger-host.py` and `2026-10-15-test-messenger-reade
 
 ## Meta and Launch Gates
 
-Read-only Chrome revisited the one existing project-named Meta app; still Development/Unpublished, no duplicate creation. Messenger callback/token fields blank, no Facebook Page connected. Its current UI explicitly limits development messaging to app roles and requires review for live data. Publication page has missing privacy-policy URL and disabled Publish button. No permission/terms/verification/identity bypass or publication click.
+The earlier read-only Chrome checkpoint found Development/Unpublished, blank callback/token fields and no Page; current UI explicitly limited development messaging to app roles and required review for live data, with a missing publication privacy URL/disabled Publish button. The subsequently approved binding did not publish the app or configure a callback/token.
 
-An action-time question requests binding ONLY Harmat Lakopark to the existing app with minimal Page-list/Messenger/metadata callback permissions, administrators/testers only, no historical Inbox/CRM/ad/ordinary-customer activation. Answer is pending at this checkpoint; broad conditional 'test then publish' is not a substitute. Existing settings tab is retained for this handoff, private IDs/screenshots not committed.
+User answered the specific binding question affirmatively. Exactly one Harmat Lakopark Page is now associated; seven native configuration checks and a148-test local rerun pass. No webhook fields, token or customer activation. Association approval is no longer pending; do not repeat the same request. The ordinary-login popup closed during continuation and the main table verified success; no exhaustive granted-scope screen was visible. Future scope/terms expansion must be assessed separately. Full current proof and remaining gates: `2026-10-15-facebook-messenger-page-binding.md`. Settings tab retained, private IDs/screenshots excluded.
 
 Remaining gates, all must be met before launch:
 
 1. Resolve actual source-to-website connectivity without weakening website quote/appointment/security checks; rerun one successful bounded public-only fetch, freshness/masking/grounding and failure tests from intended host.
-2. Human grants the exact Page/app access at action time. Scope any newly displayed permissions/terms separately; no advertising, public comments or unrelated Pages.
+2. DONE: user-confirmed single Page association. Future token/subscription/data-flow steps require their own secure implementation and review of any newly displayed scope/terms; no advertising, public comments or unrelated Pages.
 3. Review truthful privacy/data flow, including intended host location, retention, message handling and eventual model provider. Fill an appropriate published notice only after review; do not assert an old website notice covers new processing automatically.
 4. Implement/test the actual bounded HTTP transport/queue/retention, secure credential workflow, real model client and atomic worst-case cost controls within the approved first-month operating direction. There is NO production model/API-key connection, sender or complete invoice cap in this Python prototype. Do not silently reuse old WordPress shared CRM credentials or old nogakft defaults.
 5. Specifically authorize one role-based real test conversation; verify receipt/reply/failure/duplicates/actual staff takeover/resume and quote/appointment non-interference, then complete current Meta review requirements. Never send to real prospects just to test. Only then consider limited publication under the user's conditional instruction.
