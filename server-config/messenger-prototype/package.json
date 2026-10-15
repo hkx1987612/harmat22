@@ -1,0 +1,9 @@
+{
+  "name": "harmat-messenger-receive-only-staging",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": { "test": "node --test *.test.mjs" },
+  "devDependencies": { "miniflare": "4.20260730.0" }
+}

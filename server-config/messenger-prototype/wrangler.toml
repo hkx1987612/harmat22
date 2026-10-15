@@ -1,0 +1,23 @@
+# Disabled receive-only staging template. Not a production chatbot or approved deployment.
+# No harmat22.hu route, domain, account identifier or credential belongs in this file.
+name = "harmat-messenger-receive-only-staging"
+main = "worker.mjs"
+compatibility_date = "2026-07-30"
+workers_dev = false
+preview_urls = false
+
+[vars]
+VERIFY_ENABLED = "false"
+RECEIVE_ENABLED = "false"
+DATA_PROCESSING_APPROVED = "false"
+
+[[durable_objects.bindings]]
+name = "GUARD"
+class_name = "HarmatGuard"
+
+[[migrations]]
+tag = "guard-staging-v1"
+new_sqlite_classes = ["HarmatGuard"]
+
+[observability]
+enabled = false
