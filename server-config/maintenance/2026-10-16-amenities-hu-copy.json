@@ -1,0 +1,34 @@
+{
+  "status": "PREPARED_LOCAL",
+  "language": "hu-HU",
+  "brand": "Harmat Lakópark",
+  "intro": {
+    "title": "Harmat Lakópark",
+    "subtitle": "Kikapcsolódás a közelben"
+  },
+  "scenes": [
+    {"start_frame": 0, "end_frame": 120, "title": "Ismerje meg a környéket!", "subtitle": "Kutyafuttató és játszótér a közelben."},
+    {"start_frame": 120, "end_frame": 240, "title": "Kutyafuttató", "subtitle": "Szabad mozgás és játék a négylábúaknak."},
+    {"start_frame": 240, "end_frame": 360, "title": "Tér a közös játékhoz", "subtitle": "Kutyabarát környezet a mindennapi sétákhoz."},
+    {"start_frame": 360, "end_frame": 480, "title": "Kikapcsolódás kedvenceinkkel", "subtitle": "A rajzolt szereplők illusztrációk."},
+    {"start_frame": 480, "end_frame": 600, "title": "Játszótér a közelben", "subtitle": "Játék és mozgás a szabadban."},
+    {"start_frame": 600, "end_frame": 720, "title": "Felfedezés és tanulás", "subtitle": "Játékos élmények a gyermekeknek."},
+    {"start_frame": 720, "end_frame": 840, "title": "Zöld környezet, közös élmények", "subtitle": "Hely a játékhoz és a családi kikapcsolódáshoz."},
+    {"start_frame": 840, "end_frame": 960, "title": "Közterületi parkolás a környéken", "subtitle": "A szabad helyek az aktuális telítettségtől függnek."},
+    {"start_frame": 960, "end_frame": 1089, "title": "Kényelmes mindennapok", "subtitle": "Ismerje meg a Harmat Lakópark környezetét!"}
+  ],
+  "closing": {
+    "title": "Harmat Lakópark",
+    "subtitle": "Új otthonok Budapest X. kerületében",
+    "cta": "Kérjen személyes ajánlatot!",
+    "website": "https://harmat22.hu/",
+    "contact": "ertekesites@harmat22.hu | +36300733375"
+  },
+  "youtube": {
+    "title": "Harmat Lakópark | Játszótér, kutyafuttató és környékbemutató",
+    "description": "Ismerje meg a Harmat Lakópark környezetében található szabadidős lehetőségeket! Ebben a rövid helyszíni videóban a közeli kutyafuttató, játszótér, zöldterületek és a környék közterületi parkolási lehetőségei láthatók.\n\nA bemutatott környékbeli létesítmények nem kizárólagos lakói használatú magánterületek. A közterületi parkolás az aktuális szabályoktól és telítettségtől függ; a videó nem jelent fenntartott vagy garantált parkolóhelyet. A rajzolt alakok szemléltető illusztrációk. A felvétel nem az épülő lakások készültségi állapotát mutatja.\n\nHarmat Lakópark – 1105 Budapest, Harmat utca 22.\nProjekt: https://harmat22.hu/\nLakáskereső és alaprajzok: https://harmat22.hu/lakaskereso/\nAktuális építési napló: https://harmat22.hu/epitesi-naplo/\n\nKérjen személyes ajánlatot!\nE-mail: ertekesites@harmat22.hu\nTelefon: +36300733375\n\n#HarmatLakópark #Kőbánya #Budapest"
+  },
+  "facebook": {
+    "text": "Harmat Lakópark | Kikapcsolódás a közelben\n\nKutyafuttató, játszótér és zöld környezet a mindennapokhoz. Ismerje meg a Harmat Lakópark környékét rövid helyszíni videónkban!\n\nA bemutatott környékbeli létesítmények nem kizárólagos lakói használatú magánterületek. A közterületi parkolás az aktuális szabályoktól és telítettségtől függ, nem jelent fenntartott vagy garantált parkolóhelyet. A rajzolt alakok illusztrációk; a videó nem az épülő lakások készültségi állapotát mutatja.\n\nLakáskereső: https://harmat22.hu/lakaskereso/\nProjekt: https://harmat22.hu/\nKérjen személyes ajánlatot!\nertekesites@harmat22.hu | +36300733375\n\n#HarmatLakópark #Kőbánya #Budapest"
+  }
+}
