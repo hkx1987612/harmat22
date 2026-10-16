@@ -1,5 +1,6 @@
 """Offline safety checks for the non-deployable About-page visual preview."""
 
+import hashlib
 import re
 import unittest
 from html.parser import HTMLParser
@@ -102,6 +103,32 @@ class AboutPreviewTests(unittest.TestCase):
                 self.assertEqual(parsed.scheme, "https")
                 self.assertIn(parsed.netloc.removeprefix("www."), approved)
 
+    def assert_local_dependency(self, value):
+        self.assertIsInstance(value, str)
+        self.assertRegex(value, r"\A[A-Za-z0-9_./-]+\Z")
+        parsed = urlsplit(value)
+        self.assertEqual((parsed.scheme, parsed.netloc, parsed.query, parsed.fragment),
+                         ("", "", "", ""))
+        self.assertFalse(parsed.path.startswith("/"))
+        self.assertFalse({"", ".", ".."} & set(parsed.path.split("/")))
+        path = (PREVIEW / parsed.path).resolve(strict=True)
+        self.assertTrue(path.is_relative_to(PREVIEW.resolve()))
+        self.assertTrue(path.is_file())
+        return path
+
+    def test_non_anchor_dependencies_are_local_existing_files(self):
+        dependencies = []
+        for tag, attrs in self.doc.tags:
+            if tag == "a":
+                continue
+            for name in ("src", "href"):
+                if name in attrs:
+                    dependencies.append((tag, name, attrs[name]))
+        self.assertTrue(dependencies)
+        for tag, name, value in dependencies:
+            with self.subTest(tag=tag, attribute=name, value=value):
+                self.assert_local_dependency(value)
+
     def test_official_contacts_and_project_facts(self):
         for text in ("398", "124", "2028", "Harmat utca 22", "ertekesites@harmat22.hu"):
             self.assertIn(text, self.copy)
@@ -117,16 +144,31 @@ class AboutPreviewTests(unittest.TestCase):
             self.assertIn(domain, self.html)
 
     def test_image_provenance_dimensions_and_notice(self):
+        reviewed = {
+            "assets/harmat-courtyard.jpg": (
+                "b9081b36c296f5c1ff519467eb8e1d3ce9379f03f78e4f0b49e4c7ce9405ee78",
+                "1920", "1080"),
+            "assets/harmat-living-room.jpg": (
+                "3d68545fda27820a95c976074a89254d8ac442471119c2acfa8e385340e7d0c4",
+                "1920", "1080"),
+            "assets/harmat-logo.png": (
+                "83d853c5000b336d1be4169cef51ad3cc0096c187eb5fa0b68673b053ec5604c",
+                "250", "250"),
+        }
         images = [attrs for tag, attrs in self.doc.tags if tag == "img"]
-        self.assertGreaterEqual(len(images), 3)
+        self.assertCountEqual([attrs.get("src") for attrs in images],
+                              [*reviewed, "assets/harmat-logo.png"])
         for attrs in images:
             self.assertTrue(attrs.get("alt", "").strip())
             self.assertGreater(int(attrs.get("width", "0")), 0)
             self.assertGreater(int(attrs.get("height", "0")), 0)
-            src = urlsplit(attrs["src"])
-            self.assertEqual((src.scheme, src.netloc), ("https", "harmat22.hu"))
-        self.assertIn("Harmat22_latvany-11", self.html)
-        self.assertIn("Harmat22_latvany-13", self.html)
+            src = attrs["src"]
+            self.assertIn(src, reviewed)
+            path = self.assert_local_dependency(src)
+            self.assertTrue(path.is_relative_to((PREVIEW / "assets").resolve()))
+            sha256, width, height = reviewed[src]
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), sha256)
+            self.assertEqual((attrs["width"], attrs["height"]), (width, height))
         self.assertRegex(self.copy.lower(), r"látványterv")
         self.assertRegex(self.copy.lower(), r"illusztráció")
 
