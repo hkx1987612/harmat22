@@ -5,7 +5,7 @@
 - User requests Hungarian replacement of the embedded Chinese captions in the supplied amenities video, followed by organic publication on the official Harmat Lakopark Facebook Page and company YouTube channel.
 - User specifically confirms Facebook silent and YouTube original music, and states the music may be used. This is user-provided rights confirmation, not independent copyright clearance.
 - Final local edition is `outputs/2026-10-16-amenities-hu/render-v2/`. Facebook publication is COMPLETE: [public amenities Reel](https://www.facebook.com/reel/2334523980724610/). ONE Publish click, native success alert shared to EVERYONE, independent official-Page feed with Public audience and exact new title, then actual permalink readback/playing video verify the result. Do not republish.
-- Company YouTube connection is unresolved: the connected Chrome exposes only a personal channel, not the official company channel. Do not upload there or create a replacement channel. A company-window connection was requested; a reported connection did not change the observed identity.
+- YouTube upload is CANCELLED by the user's subsequent explicit instruction: they found a similar existing video and no longer want this edition uploaded. No new YouTube upload occurred. Do not reconnect, upload, retry or schedule this video without a new request. Earlier company-connection attempts are historical, not an outstanding task.
 - No website, CRM, inquiry, appointment, email, advertising, budget, billing, featured-video, pin, DNS or security setting changed. No new test lead or paid service. The website stable tag remains `stable-2026-10-16-area-https-current`.
 
 ## Native Source and Final Exports
@@ -36,9 +36,8 @@
 - Actual private proof `facebook-published-reel.jpg` shows captioned footage and `facebook-published-expanded.jpg` shows the branded ending/full public introduction. Essential captions remain above the lower platform text, although the small secondary footer brand stamp is partly behind the native author overlay. Main showcase remains featured on official Page; no new pin/boost occurred. Platform copyright check had not reported a final result before accepting publication; no independent copyright-clearance claim is made.
 - Immutable renderer manifest deliberately retains build-time `NOT_CONFIRMED` / `upload_allowed:false`; it is not a publishing permission system. Later user rights confirmation and the actual publication outcome are recorded here separately. Do not rewrite rendered evidence to imply platform clearance.
 
-## Continuation Gates
+## Final Disposition
 
 1. Facebook is already published and verified at the exact public link above; do not upload/publish it again. The check was still pending when the platform accepted the single publication action; do not claim copyright clearance.
-2. Connect the actual company YouTube Chrome, verify official identity and existing inventory to avoid duplicate. Obtain action-time agreement if the upload dialog requires accepting terms for this new file.
-3. Upload only the exact original-audio v2 after that check, use the saved Hungarian title/description and correct general-audience project category. Wait for native HD processing and copyright results before Public. Any new copyright claim/verification/limit requires appropriate user action; no bypass or repeated quota retry.
-4. Record actual public links and limitations. No automatic retry schedule, paid promotion, new featured/pinned replacement or website deployment is authorized by this media task.
+2. YouTube upload cancelled by user to avoid similar content. The prepared original-audio file remains local; do not upload or remove existing YouTube content.
+3. No pending connection, upload or retry for this edition. Facebook remains published and unchanged. No automatic schedule, paid promotion, new featured/pinned replacement or website deployment.
