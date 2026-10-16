@@ -1,0 +1,138 @@
+<?php
+defined('ABSPATH') || exit;
+return <<<'HARMAT_ABOUT_FAMILY_HTML'
+<div id="harmat-about-redesign" class="harmat-about-preview">
+    <section class="hap-hero" aria-labelledby="hap-title">
+      <img class="hap-hero-image" src="assets/harmat-courtyard.jpg" width="1920" height="1080" alt="A Harmat Lakópark tervezett belső udvara, lakóépületekkel és sétáló családokkal." fetchpriority="high" decoding="async">
+      <div class="hap-container hap-hero-inner">
+        <div class="hap-hero-copy">
+          <p class="hap-hero-location">Budapest, Óhegy</p>
+          <h2 id="hap-title" class="hap-title">Harmat<br>Lakópark</h2>
+          <p>Hely a közös reggeleknek.<br>Otthon a család mindennapjainak.</p>
+          <a class="hap-button hap-button-light" href="https://harmat22.hu/lakaskereso/">Megnézem a lakásokat <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="hap-facts" aria-label="A lakópark számokban">
+      <dl class="hap-container hap-facts-grid">
+        <div><dt>Tervezett lakások</dt><dd>398 <span>otthon összesen</span></dd></div>
+        <div><dt>Az első ütem</dt><dd>124 <span>tervezett lakás</span></dd></div>
+        <div><dt>Várható átadás</dt><dd>2028 <span>II. negyedév, első ütem</span></dd></div>
+        <div><dt>A közelben</dt><dd>Óhegy park <span>zöld tér a mindennapokhoz</span></dd></div>
+      </dl>
+      <div class="hap-container hap-facts-notes">
+        <p>A látványtervek tájékoztató jellegű illusztrációk.</p>
+        <p>Az átadás pontos időpontja az építési ütemezés és a szerződés függvénye.</p>
+      </div>
+    </section>
+
+    <section class="hap-about hap-section" id="rolunk" aria-labelledby="hap-about-title">
+      <div class="hap-container">
+        <div class="hap-section-heading">
+          <p class="hap-kicker">A Harmat Lakóparkról</p>
+          <h2 id="hap-about-title">A nagy tervek mögött<br>az apró, közös pillanatok.</h2>
+        </div>
+        <div class="hap-about-grid">
+          <figure class="hap-living-room">
+            <img src="assets/harmat-living-room.jpg" width="1920" height="1080" alt="A tervezett nappali ülőrésszel, nagy üvegfelületekkel és teraszkapcsolattal." loading="lazy" decoding="async">
+            <figcaption>A látványtervek tájékoztató jellegű illusztrációk.</figcaption>
+          </figure>
+          <div class="hap-about-copy">
+            <h3>Együtt lenni. És elférni.</h3>
+            <p>Egy közös reggeli, játék a nappaliban, egy kis csend a nap végén. Az otthon attól lesz igazán személyes, hogy helyet ad mindannak, ami Önöknek fontos.</p>
+            <p>A Budapest X. kerületében, a Harmat utca 22. alatt tervezett lakóparkban a használható terek és a szabadban töltött idő egyaránt része az otthonról alkotott képünknek.</p>
+            <a class="hap-text-link" href="https://harmat22.hu/lakaskereso/">Találják meg a saját helyüket <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hap-features hap-section" aria-labelledby="hap-features-title">
+      <div class="hap-container hap-features-layout">
+        <div class="hap-section-heading">
+          <p class="hap-kicker">A mindennapokra tervezve</p>
+          <h2 id="hap-features-title">Jó otthon lenni.<br>Jó kint is lenni.</h2>
+          <p>Élhető részletek, amelyek között minden család megtalálhatja a saját ritmusát.</p>
+        </div>
+        <div class="hap-feature-list">
+          <div class="hap-feature-row">
+            <span class="hap-row-number" aria-hidden="true">01</span>
+            <div><h3>Kert vagy terasz, a saját ritmusukhoz</h3><p>A kertkapcsolatos és teraszos otthonok között a szabadban töltött pillanatoknak is helyet kereshetnek. A kialakítás az adott lakás tervétől függ.</p></div>
+          </div>
+          <div class="hap-feature-row">
+            <span class="hap-row-number" aria-hidden="true">02</span>
+            <div><h3>Zöld környezet, városi mindennapok</h3><p>Az Óhegy park közelsége egy közös sétának vagy egy szabad délutánnak is teret ad, miközben az otthonuk Budapesten marad.</p></div>
+          </div>
+          <div class="hap-feature-row">
+            <span class="hap-row-number" aria-hidden="true">03</span>
+            <div><h3>Hőszivattyús megoldás</h3><p>A tervezett gépészeti megoldások része a hőszivattyús rendszer. A pontos műszaki tartalmat a kiválasztott lakás dokumentációja rögzíti.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hap-progress hap-section" aria-labelledby="hap-progress-title">
+      <div class="hap-container hap-progress-grid">
+        <div class="hap-progress-date"><p class="hap-kicker">Első ütem</p><p>2028<span>II. negyedév</span></p><span class="hap-date-label">Várható átadás</span></div>
+        <div>
+          <h2 id="hap-progress-title">Lépésről lépésre az otthonok felé.</h2>
+          <p>A 398 lakásosra tervezett fejlesztés első üteme 124 otthont foglal magában. Az építkezés dokumentált állomásait az építési naplóban követhetik.</p>
+          <p class="hap-small">Az átadás várható időpontja tájékoztató jellegű; a pontos időpont az építési ütemezés és a szerződés függvénye.</p>
+          <a class="hap-text-link" href="https://harmat22.hu/epitesi-naplo/">Megnézem az építési naplót <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="hap-partners hap-section" id="partnerek" aria-labelledby="hap-partners-title">
+      <div class="hap-container">
+        <div class="hap-section-heading hap-partners-heading">
+          <p class="hap-kicker">Szakmai háttér</p>
+          <h2 id="hap-partners-title">Emberek és tapasztalat<br>a tervek mögött.</h2>
+          <p>Ismerje meg a fejlesztés szakmai szereplőit és munkájuk hátterét.</p>
+        </div>
+        <div class="hap-partner-grid">
+          <article class="hap-partner">
+            <p class="hap-partner-role">Fejlesztés és koordináció</p>
+            <h3>Cooperation Power Kft.</h3>
+            <p>A Cooperation Power Kft. a fejlesztés, a szakmai munka és az értékesítés összehangolását koordinálja a Harmat Lakópark projektben.</p>
+          </article>
+          <article class="hap-partner">
+            <p class="hap-partner-role">Építészeti háttér</p>
+            <h3>Avant-Garde Építész Stúdió</h3>
+            <p>Prof. Dr. Kertész András Tibor DLA, Ybl- és Pro Architectura-díjas építész szakmai hátterével.</p>
+            <details class="hap-references">
+              <summary>Válogatott referenciák <span aria-hidden="true"></span></summary>
+              <ul><li>Családi villa, Normafa, Budapest</li><li>Yacht Club, Balatonfüred</li><li>Budafoki Piac, Budapest</li><li>Általános Iskola, Fót</li><li>Milestone Diákszálló, Budapest</li><li>Sportcsarnok, Bolzano</li></ul>
+            </details>
+            <a class="hap-text-link" href="https://avant-garde.hu/">Az iroda weboldala <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="hap-partner">
+            <p class="hap-partner-role">Építészeti háttér</p>
+            <h3>MODUM Építésziroda Kft.</h3>
+            <p>Krizsán András DLA, Ybl-, Pro Architectura- és Kós Károly-díjas építész szakmai hátterével.</p>
+            <details class="hap-references">
+              <summary>Válogatott referenciák <span aria-hidden="true"></span></summary>
+              <ul><li>Reitter99</li><li>Nagy Lajos 210–216</li><li>Sarepta lakóotthon</li><li>Zánkai Új Nemzedék Központ</li><li>Kastélydombi Luther kápolna</li><li>Piliscsabai evangélikus templom</li></ul>
+            </details>
+            <a class="hap-text-link" href="https://modum.hu/">Az iroda weboldala <span aria-hidden="true">↗</span></a>
+          </article>
+          <article class="hap-partner">
+            <p class="hap-partner-role">Megvalósítási szakértelem</p>
+            <h3>Value4Real Group</h3>
+            <p>Független magyar vállalatcsoport, amely lakóingatlan-fejlesztések megvalósítását is támogatja.</p>
+            <p>Szakterületei a generálkivitelezés és a Design&amp;Build, a projekt- és költségmenedzsment, valamint a műszaki ellenőrzés.</p>
+            <a class="hap-text-link" href="https://value4real.com/">A csoport weboldala <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="hap-contact hap-section" aria-labelledby="hap-contact-title">
+      <div class="hap-container hap-contact-grid">
+        <div><p class="hap-kicker">Beszéljünk az otthonukról</p><h2 id="hap-contact-title">Minden családnak<br>más jelenti az otthont.</h2><p>Meséljék el, Önök mit keresnek. Értékesítési csapatunk segít eligazodni a tervek és a lehetőségek között.</p><a class="hap-button" href="https://harmat22.hu/elerhetosegeink/">Felveszem a kapcsolatot <span aria-hidden="true">↗</span></a></div>
+        <address class="hap-contact-details"><span>Keressenek bennünket</span><a class="hap-phone" href="tel:+36300733375">+36 30 073 3375</a><a href="mailto:ertekesites@harmat22.hu">ertekesites@harmat22.hu</a><p>A lakópark címe<br><strong>1105 Budapest, Harmat utca 22.</strong></p></address>
+      </div>
+    </section>
+  </div>
+HARMAT_ABOUT_FAMILY_HTML;

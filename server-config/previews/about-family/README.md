@@ -1,10 +1,10 @@
 # About Page - Family-Warmth Visual Preview
 
-LOCAL PREVIEW ONLY. Not deployed, not a WordPress plugin, and not a replacement for the live site.
+APPROVED AND RELEASED October16. This directory remains the standalone review reference; the production integration is a separate page-scoped MU, not this preview shell. The earlier preview-only checkpoints below are historical and superseded by the release note.
 
 ## Scope
 
-User requests a redesign of `/magunkrol/`, specifically better color, type, layout and light, with a warm family feeling. Astra inspected existing repository contracts; Sol implements the bounded static preview and the parent reviews it. Approved website baseline remains `stable-2026-10-16-area-https-current`.
+User requests a redesign of `/magunkrol/`, specifically better color, type, layout and light, with a warm family feeling. Astra inspected existing repository contracts; Sol implements the bounded static preview and the parent reviews it. User subsequently approved replacement. Current production reference: `stable-2026-10-16-about-family-current`; source, exact private backups, tests, native-shell integration and recovery are in `server-config/maintenance/2026-10-16-about-family-release.md`.
 
 Open `index.html` directly. Images, CSS and navigation JS are now relative local files; no network resources are required to display the preview. No build step, analytics, production scripts, API, form submission, storage or tracking. Links navigate to the existing public site only when deliberately followed. The preview header/footer are visual context, not changes to the production shell. Quote/contact navigation is not a tested or replaced production booking modal.
 
