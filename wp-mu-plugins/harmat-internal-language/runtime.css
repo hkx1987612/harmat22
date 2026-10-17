@@ -1,0 +1,92 @@
+/* Parent may override --hil-left/--hil-bottom/--hil-z-index for local collisions. */
+#harmat-internal-language {
+  position: fixed;
+  left: max(var(--hil-left, 12px), env(safe-area-inset-left, 0px));
+  bottom: calc(var(--hil-bottom, 84px) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--hil-z-index, 9990);
+  display: inline-flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: 120px;
+  max-width: min(128px, calc(100vw - 24px));
+  height: 44px;
+  max-height: 44px;
+  margin: 0;
+  padding: 2px;
+  overflow: hidden;
+  border: 1px solid #666;
+  border-radius: 6px;
+  background: #fff;
+  color: #222;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  isolation: isolate;
+}
+
+#harmat-internal-language[hidden] {
+  display: none;
+}
+
+#harmat-internal-language > button[data-hil-language] {
+  appearance: none;
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  height: 38px;
+  min-height: 0;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: center;
+  text-decoration: none;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+#harmat-internal-language > button[data-hil-language][aria-pressed="true"] {
+  background: #222;
+  color: #fff;
+}
+
+#harmat-internal-language > button[data-hil-language]:focus-visible {
+  outline: 2px solid #126b8b;
+  outline-offset: -2px;
+}
+
+html[data-harmat-language] #harmat-internal-language > button[data-hil-language] {
+  font-family: system-ui, "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+}
+
+/* Text-bearing elements only: do not replace icon fonts or the native chat UI. */
+html[data-harmat-language="zh-Hans"] :where(h1, h2, h3, h4, h5, h6, p, a, span, div, section, article, nav, li, dl, dt, dd, label, legend, button, select, option, th, td, caption, figcaption, summary, details, strong, em, small, blockquote):not(:where(
+  #wpadminbar, #wpadminbar *,
+  #harmat-local-ai-panel, #harmat-local-ai-panel *,
+  .harmat-local-ai-launch, .harmat-local-ai-launch *,
+  [class^="harmat-local-ai-"], [class^="harmat-local-ai-"] *,
+  #harmat-ai-assistant, #harmat-ai-assistant *, #harmat-ai-panel, #harmat-ai-panel *,
+  #harmat22-ai-root, #harmat22-ai-root *, #harmat22-ai-widget-root, #harmat22-ai-widget-root *,
+  [data-harmat-ai-chat], [data-harmat-ai-chat] *,
+  .fb-customerchat, .fb-customerchat *, .fb_dialog, .fb_dialog *, #fb-root, #fb-root *,
+  [data-customer-chat], [data-customer-chat] *, [data-customerchat], [data-customerchat] *,
+  [data-harmat-customer-chat], [data-harmat-customer-chat] *,
+  [translate="no"], [translate="no"] *, .notranslate, .notranslate *,
+  [data-language-protect], [data-language-protect] *,
+  [contenteditable]:not([contenteditable="false"]), [contenteditable]:not([contenteditable="false"]) *,
+  pre, pre *, code, code *, svg, svg *, canvas, output, output *,
+  .fa, .fas, .far, .fab, .fal, .fad, .eicon, [class*="eicon-"], [class*="icon-"],
+  .dashicons, [class*="dashicons-"]
+)) {
+  font-family: system-ui, "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif !important;
+}
