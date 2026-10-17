@@ -32,7 +32,7 @@ function harmat_about_family_context() {
 function harmat_about_family_assets() {
     $hashes = array(
         'body.php' => '2bb078625505ba20ab0702823c6954a93601425a310ede7f4f6073009ccd4f1e',
-        'about-family.css' => 'de5fa727295f6b76b0ea7945d71cce840043e88faa2e8d396b0652cebd214042',
+        'about-family.css' => '71aea33319d2875bcc3d233fad088525adb42402f3059104de73af732c479ea4',
         'harmat-courtyard.jpg' => 'b9081b36c296f5c1ff519467eb8e1d3ce9379f03f78e4f0b49e4c7ce9405ee78',
         'harmat-living-room.jpg' => '3d68545fda27820a95c976074a89254d8ac442471119c2acfa8e385340e7d0c4',
     );
@@ -69,7 +69,7 @@ function harmat_about_family_content($content) {
 function harmat_about_family_enqueue() {
     if (harmat_about_family_context() && harmat_about_family_assets()) {
         wp_enqueue_style('harmat-about-family', content_url('/mu-plugins/harmat-about-family/about-family.css'),
-            array(), 'de5fa727295f6b76', 'all');
+            array(), '71aea33319d2875b', 'all');
     }
 }
 

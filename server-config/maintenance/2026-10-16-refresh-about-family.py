@@ -1,4 +1,4 @@
-"""Exact two-file About subheading correction; default offline, no business writes."""
+"""Exact two-file About numeral correction; default offline, no business writes."""
 import argparse
 import importlib.util
 import json
@@ -8,10 +8,10 @@ from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('about_release', Path(__file__).with_name('2026-10-16-deploy-about-family.py'))
 D = importlib.util.module_from_spec(spec); spec.loader.exec_module(D)
-PREVIOUS = D.PREFIX + 'cb16e0cb72634b809edf6fae26029516'
+PREVIOUS = D.PREFIX + '49c368aea72c4b05a49bc60bb3fc9e00'
 UPDATES = (D.ASSET + '/about-family.css', D.MAIN)
-OLD = dict(zip(UPDATES, ('270bd5152c9fef9f05c4e24b4c5c505076aa35de9151c08987d69ccbffbb8f99',
-                       '64f5e951535ae3e183d4730700b116e2bf0fb7d96b4248043b779fcb06ae12bc')))
+OLD = dict(zip(UPDATES, ('de5fa727295f6b76b0ea7945d71cce840043e88faa2e8d396b0652cebd214042',
+                       'e46f0183118c11e23c6775d081242b2478df2b057d8a291f21d16d756bfd1ce2')))
 
 def refresh(blobs, pins, digest):
     r = D.H.Remote(); locked = False; stages = {}; installed = []; originals = {}
@@ -36,7 +36,7 @@ def refresh(blobs, pins, digest):
             r.write_new(backup + '/' + name, data)
             if name.endswith('.php'): r.lint(backup + '/' + name)
         fixture = r.run(D.H.PHP + ' ' + shlex.quote(backup + '/' + D.TEST) + ' ' + shlex.quote(backup + '/' + D.MAIN))
-        D.require('PASS: 503 assertions' in fixture, 'Updated isolated fixture failed')
+        D.require('PASS: 513 assertions' in fixture, 'Updated isolated fixture failed')
         r.write_new(backup + '/fixture-result.txt', fixture.encode())
         native = json.loads(r.run(D.H.PHP + ' ' + shlex.quote(backup + '/' + D.NATIVE) + ' ' + shlex.quote(backup + '/' + D.MAIN)))
         D.require(native['native'] is True, 'Native render failed')

@@ -1,5 +1,7 @@
 # About Family Presentation - Released
 
+Historical October16 release. The current numeral-only follow-up and verification manifest are in `2026-10-17-about-numerals.md`; its current hashes/tag supersede the corresponding values below.
+
 ## Approval and Scope
 
 User approved the self-contained family-warmth preview with "can replace". Shared main `9fc622b` was clean and pulled current before implementation. Prior Astra planning was retained; bounded Sol implemented the new controller/isolated fixture and a separate offline deployment fixture. Parent reviewed, corrected integration details, reran tests and closed both workers.

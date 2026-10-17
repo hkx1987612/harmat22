@@ -44,6 +44,17 @@ def main():
     css = (SOURCE/'about-family.css').read_text(encoding='utf-8')
     css = css.replace('.harmat-about-preview', '#harmat-about-redesign.harmat-about-preview').replace(' h1', ' .hap-title')
     css += '''
+/* Keep prominent numerals consistent at every breakpoint; the fourth fact is text. */
+#harmat-about-redesign.harmat-about-preview .hap-facts-grid > div:nth-child(-n+3) > dd,
+#harmat-about-redesign.harmat-about-preview .hap-progress-date > p:not(.hap-kicker) {
+  font: 400 34px/1.25 Arial, Helvetica, sans-serif;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+#harmat-about-redesign.harmat-about-preview .hap-progress-date > p > span {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 /* Only this page's layout shell changes; native navigation/forms remain owned. */
 body.page-id-2686 #content, body.page-id-2686 #content > .wrap,
 body.page-id-2686 #primary, body.page-id-2686 #main {

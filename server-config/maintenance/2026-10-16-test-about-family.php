@@ -181,13 +181,40 @@ foreach ($fallbacks as $index => $fallback) {
 }
 harmat_about_family_enqueue();
 check($styles === array(array('harmat-about-family',
-    'https://fixture.invalid/wp-content/mu-plugins/harmat-about-family/about-family.css', array(), 'de5fa727295f6b76', 'all')), 'owned versioned stylesheet');
+    'https://fixture.invalid/wp-content/mu-plugins/harmat-about-family/about-family.css', array(), '71aea33319d2875b', 'all')), 'owned versioned stylesheet');
 check(str_contains(file_get_contents(dirname($candidate) . '/harmat-about-family/about-family.css'),
     'body.page-id-2686.opal-header-absolute #masthead > div.site-header {position:relative!important;}'),
     'native inner header participates in flow only on the About page');
 check(str_contains(file_get_contents(dirname($candidate) . '/harmat-about-family/about-family.css'),
     '#harmat-about-redesign.harmat-about-preview h3 {font-family:inherit;}'),
     'subheadings inherit the approved readable font instead of native small caps');
+$css = file_get_contents(dirname($candidate) . '/harmat-about-family/about-family.css');
+$numeric_selector = '#harmat-about-redesign.harmat-about-preview .hap-facts-grid > div:nth-child(-n+3) > dd,'
+    . "\n" . '#harmat-about-redesign.harmat-about-preview .hap-progress-date > p:not(.hap-kicker)';
+$numeric_rule = array();
+check(preg_match('~' . preg_quote($numeric_selector, '~') . '\s*\{([^{}]*)\}~', $css, $numeric_rule, PREG_OFFSET_CAPTURE) === 1,
+    'only first three fact values and progress year share the numeric rule');
+$numeric_style = trim($numeric_rule[1][0]);
+check($numeric_style === "font: 400 34px/1.25 Arial, Helvetica, sans-serif;\n  font-variant-numeric: lining-nums tabular-nums;",
+    'numerals use explicit shared family, weight, size, line height and lining/tabular figures');
+check(substr_count($css, $numeric_selector) === 1, 'one shared numeric override');
+$numeric_at = $numeric_rule[0][1];
+$before_numeric = substr($css, 0, $numeric_at);
+check($numeric_at > strrpos($css, '@media'), 'numeric override follows every responsive breakpoint');
+check(substr_count($before_numeric, '{') === substr_count($before_numeric, '}'),
+    'numeric override is top level and applies at every width');
+check(strpos(substr($css, $numeric_at), '@media') === false, 'no later mobile rule overrides numeric size');
+$quarter_selector = '#harmat-about-redesign.harmat-about-preview .hap-progress-date > p > span';
+$quarter_rule = array();
+check(preg_match('~' . preg_quote($quarter_selector, '~') . '\s*\{([^{}]*)\}~', substr($css, $numeric_at), $quarter_rule) === 1,
+    'progress quarter override follows numeric rule');
+check(trim($quarter_rule[1]) === "font-size: 14px;\n  line-height: 1.5;",
+    'quarter is a secondary 14px/1.5 label without changing other text');
+check(str_contains($css, '#harmat-about-redesign.harmat-about-preview .hap-facts dd { color: var(--hap-ink); font: 400 34px/1.25 Georgia, "Times New Roman", serif; }'),
+    'fourth textual fact retains its original serif styling');
+check(str_contains($css, '#harmat-about-redesign.harmat-about-preview .hap-facts dd { font-size: 28px; }')
+    && str_contains($css, '#harmat-about-redesign.harmat-about-preview .hap-facts dd { font-size: 30px; }'),
+    'fourth textual fact retains its original responsive sizes');
 // The namespaced evaluation changes function registration lookup only in tests.
 // Alias its callback for the actual ob_start integration test, without WP.
 eval('namespace { function harmat_about_family_output($html) { return \\HarmatAboutFamilyFixture\\harmat_about_family_output($html); } }');

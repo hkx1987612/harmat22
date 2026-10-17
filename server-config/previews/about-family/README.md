@@ -1,5 +1,7 @@
 # About Page - Family-Warmth Visual Preview
 
+October17 production follow-up: prominent398/124/2028 numerals now share equal-height34px Arial figures, while this original approved preview remains a historical review reference. Current stable tag `stable-2026-10-17-about-numerals-current`; see `server-config/maintenance/2026-10-17-about-numerals.md`.
+
 APPROVED AND RELEASED October16. This directory remains the standalone review reference; the production integration is a separate page-scoped MU, not this preview shell. The earlier preview-only checkpoints below are historical and superseded by the release note.
 
 ## Scope

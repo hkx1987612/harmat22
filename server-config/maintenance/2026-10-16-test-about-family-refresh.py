@@ -46,7 +46,7 @@ class RefreshTests(B.OfflineCase):
         self.r.dirs.update((D.DIR+'/'+D.ASSET,R.PREVIOUS))
         for name in D.FILES: self.r.files[D.DIR+'/'+name]=self.old[name]
         self.r.files[R.PREVIOUS+'/manifest.json']=json.dumps({'pins':self.oldpins,'before':self.before}).encode()
-        self.r.fixture='PASS: 503 assertions'
+        self.r.fixture='PASS: 513 assertions'
         for owner,name,value in ((D.H,'Remote',self.r),(D,'snapshot',self.before),(D,'public_proof',{'public':'ok'})):
             mock=self.stack.enter_context(patch.object(owner,name,return_value=value))
             if name=='public_proof': self.public=mock
