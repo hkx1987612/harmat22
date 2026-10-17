@@ -6,6 +6,12 @@ No server-side content/CRM/property writes, REST route or external translation.
 - Default original Hungarian. A small Magyar/Chinese control is non-submitting.
   Chinese loads the local109KB reviewed dictionary only on explicit selection or
   an earlier choice in this tab's sessionStorage. Storage failure keeps manual use.
+- October17 menu placement: the same body-child control is positioned beside the
+  real non-spacer navigation menu, without changing native header columns. It
+  remains visible at the last good position when the native header hides or
+  scrolls away. Narrow screens stack only if necessary to avoid the logo;
+  unavailable/unsafe anchors use the original visible fallback. No cloned UI,
+  permanent animation loop or translation/submission-owner change.
 - Exact text/description translations, reversible node identities, incremental
   mutation handling. No broad string substitution or HTML reconstruction.
 - Original field names, input values, option values, units, numbers, money, URLs,
@@ -44,6 +50,9 @@ do not run preview deployment against the now-public source.
 
 Actual release/backup/gates/recovery live in
 `server-config/maintenance/2026-10-17-internal-language-release.md`.
-Use public publisher `--verify` with its exact successful backup for read-only
-verification. The freshly approved ONE positive TEST is NEVER replayed from B;
+Latest header-only follow-up is in `2026-10-17-language-header.md`; use its exact
+final header backup and `2026-10-17-refresh-language-header-visible.py --verify`
+for current read-only verification. The older publisher pins the first release,
+so it intentionally rejects later presentation hashes. The freshly approved ONE
+positive TEST is NEVER replayed from B;
 the one-shot intent/result is private and deliberately not in Git.

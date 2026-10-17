@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Internal Public Language
  * Description: Reviewed local Chinese display translations; no inventory or form writes.
- * Version: 1.0.0
+ * Version: 1.0.2
  */
 if (!defined('ABSPATH')) { exit; }
 
@@ -41,8 +41,8 @@ function harmat_internal_language_scope() {
 function harmat_internal_language_assets() {
     return array(
         'runtime.js' => '2b1b7b78b92a062d9e53b68f1ed16b53016cb066d9ce0a08f6c9716849e3dabb',
-        'runtime.css' => '0b5c3f67bc915ae0e1216ca540e3ee675874b568fb483959c49840f5488659b3',
-        'bootstrap.js' => '4d1734173954a4b7bcdc67049d1e7fbb440f0a8da24f0d8732c4b38bf495ad7d',
+        'runtime.css' => '1d499473464720f1d9dd3aeb09f1725d65993fc2dd070bf5c5754ad747232137',
+        'bootstrap.js' => 'b8219789c404f58d722357cba1e7e460ab4e7022a3a1c7dd92b997273c5aeb4a',
         'patterns.js' => 'cc5d50fe6f7a2719c40413d76d4de54e82d7f34eec570f4d7397262d0a30807e',
         'zh-Hans.json' => '32e658c9ef1112e47b02af8c1fc4a10466b72c97af50ced5fbf3ce40ad7f82e4',
     );
