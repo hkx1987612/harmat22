@@ -1,5 +1,12 @@
 # LOCAL PREVIEW / NOT DEPLOYED
 
+Historical preview reference: the user subsequently approved this design and the
+separate production MU is now released. Current tag
+`stable-2026-10-17-project-family-current`; exact backups, native integration,
+verification and recovery are in `server-config/maintenance/2026-10-17-project-family-release.md`.
+This standalone preview shell itself was not deployed. The preview-only notes
+below record the original review checkpoint.
+
 Static visual proposal for `https://harmat22.hu/harmat-lakopark/`.
 This folder is not a WordPress release, native theme replacement, booking
 integration, or deployment approval. No production files or records are changed.

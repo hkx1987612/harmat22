@@ -1,0 +1,130 @@
+<?php
+return <<<'HARMAT_PROJECT_FAMILY_BODY'
+<main id="main" class="site-main harmat-project-family" role="main"><div id="harmat-project-family" class="hpf-preview">
+    <section class="hpf-hero" id="hpf-lakopark" aria-labelledby="hpf-title">
+      <img class="hpf-hero-image" src="assets/project-aerial.jpg" width="1920" height="1080" alt="A Harmat Lakópark tervezett épületei és környezetük madártávlati látványterven." loading="eager" fetchpriority="high" decoding="async">
+      <div class="hpf-container hpf-hero-inner">
+        <div class="hpf-hero-copy">
+          <p class="hpf-location">Budapest X. kerület <span aria-hidden="true">/</span> Harmat utca 22.</p>
+          <h1 id="hpf-title">Harmat Lakópark</h1>
+          <p class="hpf-hero-description">Új építésű otthonok Óhegyen.</p>
+        </div>
+        <div class="hpf-hero-bottom">
+          <div class="hpf-actions">
+            <a class="hpf-button hpf-button-light" href="https://harmat22.hu/lakaskereso/">Megnézem a lakásokat <span aria-hidden="true">&#8599;</span></a>
+            <a class="hpf-hero-journal" href="https://harmat22.hu/epitesi-naplo/">Építési napló <span aria-hidden="true">&#8599;</span></a>
+          </div>
+          <p class="hpf-image-label">Látványterv / illusztráció</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="hpf-facts" aria-label="A projekt fő adatai">
+      <div class="hpf-container">
+        <dl class="hpf-facts-grid">
+          <div class="hpf-fact">
+            <dt>Összes tervezett lakás</dt>
+            <dd><span class="hpf-fact-value"><span class="hpf-fact-number">398</span></span><span class="hpf-fact-detail">a teljes projektben</span></dd>
+          </div>
+          <div class="hpf-fact">
+            <dt>Első ütem</dt>
+            <dd><span class="hpf-fact-value"><span class="hpf-fact-number">124</span></span><span class="hpf-fact-detail">tervezett lakás</span></dd>
+          </div>
+          <div class="hpf-fact">
+            <dt>Első ütem összterülete</dt>
+            <dd><span class="hpf-fact-value"><span class="hpf-fact-number">8388</span><span class="hpf-fact-unit">m²</span></span><span class="hpf-fact-detail">az első ütemben</span></dd>
+          </div>
+          <div class="hpf-fact">
+            <dt>Első ütem várható átadása</dt>
+            <dd><span class="hpf-fact-value"><span class="hpf-fact-number">2028</span></span><span class="hpf-fact-detail">II. negyedév</span></dd>
+          </div>
+        </dl>
+        <p class="hpf-facts-note">Az átadás tervezett időpontja tájékoztató jellegű; a pontos időpont az építési ütemezés és a szerződés függvénye.</p>
+      </div>
+    </section>
+
+    <section class="hpf-section hpf-courtyard" aria-labelledby="hpf-courtyard-title">
+      <div class="hpf-container">
+        <div class="hpf-section-intro">
+          <div>
+            <p class="hpf-kicker">A projekt</p>
+            <h2 id="hpf-courtyard-title">Otthonok egy belső udvar körül.</h2>
+          </div>
+          <p>A Harmat utca 22. alatt tervezett lakópark lakásait és belső udvarát együtt mutatják be a tervek. A különböző elrendezések között a családjuk igényeihez illő otthont kereshetnek.</p>
+        </div>
+        <figure class="hpf-wide-figure">
+          <img src="assets/project-courtyard.jpg" width="1920" height="1080" alt="A tervezett belső udvar növényzettel és a körülötte álló lakóépületekkel." loading="lazy" decoding="async">
+          <figcaption>Látványterv / illusztráció. A tervezett megjelenést szemlélteti, nem az elkészült lakóparkot.</figcaption>
+        </figure>
+        <div class="hpf-project-rows">
+          <div class="hpf-project-row">
+            <p class="hpf-row-index" aria-hidden="true">01</p>
+            <h3>Lakások és alaprajzok</h3>
+            <div><p>Különböző méretű és elrendezésű otthonok. Az erkély, a terasz vagy a kertkapcsolat kialakítása az adott lakás tervétől függ.</p><div class="hpf-actions"><a class="hpf-text-link" href="https://harmat22.hu/lakaskereso/">Lakáskereső <span aria-hidden="true">&#8599;</span></a><a class="hpf-text-link" href="https://harmat22.hu/virtualis-lakasvalaszto/">Virtuális lakásválasztó <span aria-hidden="true">&#8599;</span></a></div></div>
+          </div>
+          <div class="hpf-project-row">
+            <p class="hpf-row-index" aria-hidden="true">02</p>
+            <h3>Mélygarázs és tárolók</h3>
+            <div><p>Az első ütem terveiben 124 mélygarázs-beálló és 92 tároló szerepel. Az adott lakáshoz kapcsolódó lehetőségekről értékesítőink adnak tájékoztatást.</p></div>
+          </div>
+          <div class="hpf-project-row">
+            <p class="hpf-row-index" aria-hidden="true">03</p>
+            <h3>Óhegy, Budapest részeként</h3>
+            <div><p>X. kerületi cím, városi kapcsolatok és az Óhegy park közelsége. A környezetet érdemes személyesen is megismerni.</p><a class="hpf-text-link" href="https://harmat22.hu/elerhetosegeink/">Elérhetőségek és helyszín <span aria-hidden="true">&#8599;</span></a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hpf-section hpf-construction" aria-labelledby="hpf-construction-title">
+      <div class="hpf-container hpf-construction-grid">
+        <div class="hpf-construction-copy">
+          <p class="hpf-kicker">Az építési naplóból</p>
+          <h2 id="hpf-construction-title">A tervektől a megvalósulásig.</h2>
+          <p>Valódi helyszíni felvételek dokumentálják az építkezést. Az itt bemutatott kép az építési napló <strong>archív részlete</strong>, nem a jelenlegi készültséget mutatja.</p>
+          <p class="hpf-milestone"><span>Korábbi mérföldkő</span>Az értékesítés <time datetime="2026-06-12">2026. június 12-én</time> indult.</p>
+          <a class="hpf-text-link" href="https://harmat22.hu/epitesi-naplo/">Megnézem az építési naplót <span aria-hidden="true">&#8599;</span></a>
+        </div>
+        <figure class="hpf-construction-figure">
+          <img src="assets/construction-site.webp" width="1920" height="1440" alt="A Harmat utca 22. építési területe a 2026. október 2-án készült helyszíni felvételen." loading="lazy" decoding="async">
+          <figcaption>Helyszíni felvétel <time datetime="2026-10-02">2026. október 2.</time> <span>Archív kép az építési naplóból.</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="hpf-section hpf-interiors" aria-labelledby="hpf-interiors-title">
+      <div class="hpf-container hpf-interiors-grid">
+        <figure class="hpf-interiors-figure">
+          <img src="assets/project-living-room.jpg" width="1920" height="1080" alt="Nappali tervezett berendezéssel, nagy üvegfelületekkel és teraszkapcsolattal." loading="lazy" decoding="async">
+          <figcaption>Látványterv / illusztráció. A berendezés szemléltető jellegű.</figcaption>
+        </figure>
+        <div class="hpf-interiors-copy">
+          <p class="hpf-kicker">Az otthon belülről</p>
+          <h2 id="hpf-interiors-title">Az alaprajz a kiindulópont.</h2>
+          <p>A nappali, a szobák és a kültéri kapcsolatok elrendezése együtt határozza meg, hogyan használható egy otthon. A kiválasztott lakás részleteit az alaprajz és a műszaki leírás alapján érdemes áttekinteni.</p>
+          <a class="hpf-text-link" href="https://harmat22.hu/lakaskereso/">Megnézem az alaprajzokat <span aria-hidden="true">&#8599;</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="hpf-section hpf-contact" aria-labelledby="hpf-contact-title">
+      <div class="hpf-container hpf-contact-grid">
+        <div>
+          <p class="hpf-kicker">A következő lépés</p>
+          <h2 id="hpf-contact-title">Találják meg a saját otthonukat.</h2>
+          <p>Nézzék át a lakásokat, vagy beszéljék át kérdéseiket értékesítési csapatunkkal.</p>
+          <div class="hpf-actions">
+            <a class="hpf-button hpf-button-light" href="https://harmat22.hu/lakaskereso/">Lakást választok <span aria-hidden="true">&#8599;</span></a>
+            <a class="hpf-contact-link" href="https://harmat22.hu/elerhetosegeink/">Kapcsolatfelvétel <span aria-hidden="true">&#8599;</span></a>
+          </div>
+        </div>
+        <address class="hpf-contact-details">
+          <p>Értékesítés</p>
+          <a class="hpf-phone" href="tel:+36300733375">+36 30 073 3375</a>
+          <a class="hpf-email" href="mailto:ertekesites@harmat22.hu">ertekesites@harmat22.hu</a>
+          <p class="hpf-contact-address">1105 Budapest,<br>Harmat utca 22.</p>
+        </address>
+      </div>
+    </section>
+  </div></main>
+HARMAT_PROJECT_FAMILY_BODY;

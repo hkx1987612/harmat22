@@ -1,5 +1,7 @@
 # Project Page Family Preview
 
+Subsequent approved release: the user reviewed this preview and explicitly authorized production replacement. Current stable tag `stable-2026-10-17-project-family-current`; see `2026-10-17-project-family-release.md`. Preview-only statements below describe the historical checkpoint, not the current live status.
+
 ## Scope and Status
 - User approves the proposed redesign direction for `/harmat-lakopark/` after a read-only assessment. This approval is for the offered visual-preview checkpoint, NOT production activation.
 - Current production remains the verified Contact release `c5bfb8a`, stable tag `stable-2026-10-17-contact-family-current`. No server connection, database write, WordPress/page/MU update, cache invalidation, form submission, customer record, email, advertising or security change in this preview task.
