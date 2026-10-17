@@ -67,7 +67,7 @@ function render_lakaspark_360_viewer($atts) {
     }
 
     wp_enqueue_style('lakaspark-360-css', plugin_dir_url(__FILE__) . 'viewer.css', array(), '6.2');
-    wp_enqueue_script('lakaspark-360-js', plugin_dir_url(__FILE__) . 'viewer.js', array(), '6.4', true);
+    wp_enqueue_script('lakaspark-360-js', plugin_dir_url(__FILE__) . 'viewer.js', array(), '6.5', true);
 
     $apartment_data = array();
     $filter_rooms = array();

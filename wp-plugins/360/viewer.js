@@ -46,11 +46,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFrame = 1;
 
     // --- PROGRESSZIV, DE ELES KEPBETOLTES ---
-    let loadedImages = 0;
     const INITIAL_PRELOAD_RADIUS = 0;
-    const INITIAL_LOAD_TARGET = Math.min(CONFIG.totalFrames, (INITIAL_PRELOAD_RADIUS * 2) + 1);
+    const LOAD_TIMEOUT_MS = 10000;
+    const MAX_RESIDENT_FRAMES = 9;
     let loaderDismissed = false;
-    let backgroundPreloadStarted = false;
+    let initialRecoveryStarted = false;
+    let imageProblem = false;
+    let jsonProblem = false;
     let pendingFrame = null;
     let frameSurface = null;
     let frameContext = null;
@@ -58,6 +60,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const loaderBarFill = document.getElementById('loaderBarFill');
     const loaderPercent = document.getElementById('loaderPercent');
     const loaderText = document.getElementById('loaderText');
+    const hasBuildingLinks = !!document.querySelector('.lakaspark-building-links');
+    // Loading feedback must never intercept the existing building navigation.
+    if (loaderOverlay) loaderOverlay.style.pointerEvents = 'none';
+    const loadStatus = document.createElement('div');
+    loadStatus.className = 'viewer-load-status';
+    loadStatus.setAttribute('role', 'status');
+    loadStatus.setAttribute('aria-live', 'polite');
+    Object.assign(loadStatus.style, {
+        display: 'none', position: 'absolute', top: '58px', left: '12px', right: '12px',
+        zIndex: '25', padding: '8px', background: 'rgba(255,255,255,0.94)',
+        color: '#333', fontSize: '12px', lineHeight: '1.4', pointerEvents: 'none'
+    });
+    viewer.appendChild(loadStatus);
+
+    function refreshLoadStatus() {
+        loadStatus.textContent = jsonProblem
+            ? (hasBuildingLinks
+                ? 'Az interaktív kijelölés most nem érhető el. Kérjük, használja az épületgombokat vagy lépjen kapcsolatba értékesítőinkkel.'
+                : 'Az interaktív kijelölés most nem érhető el. Kérjük, lépjen kapcsolatba értékesítőinkkel.')
+            : imageProblem
+                ? (hasBuildingLinks
+                    ? 'A nézet lassabban töltődik. Az épületgombokkal közvetlenül továbbléphet.'
+                    : (hitboxData && listContainer
+                        ? 'A nézet lassabban töltődik. A lakáslistából megnyithatja az adatlapokat.'
+                        : 'A nézet lassabban töltődik. Kérjük, várjon, vagy lépjen kapcsolatba értékesítőinkkel.'))
+                : '';
+        loadStatus.style.display = imageProblem || jsonProblem ? 'block' : 'none';
+    }
     
     const loadingTexts = [
         "Az interaktív lakásválasztó betöltése folyamatban...",
@@ -71,23 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if(loaderText) loaderText.innerText = loadingTexts[textIdx];
     }, 5000);
 
-    function onImageLoadProgress() {
-        loadedImages++;
-        const p = Math.min(100, Math.round((loadedImages / INITIAL_LOAD_TARGET) * 100));
-        if(loaderPercent) loaderPercent.innerText = p + '%';
-        if(loaderBarFill) loaderBarFill.style.width = p + '%';
-
-        if (!loaderDismissed && loadedImages >= INITIAL_LOAD_TARGET) {
+    function dismissLoader(success = false) {
+        if (success) {
+            if (loaderPercent) loaderPercent.innerText = '100%';
+            if (loaderBarFill) loaderBarFill.style.width = '100%';
+        }
+        if (!loaderDismissed) {
             loaderDismissed = true;
+            clearTimeout(initialLoadTimer);
             clearInterval(textInterval);
             if(loaderOverlay) loaderOverlay.style.opacity = '0';
             setTimeout(() => { if(loaderOverlay) loaderOverlay.style.display = 'none'; }, 500);
-            window.setTimeout(() => {
-                if (pendingFrame === null) updateFrame(currentFrame);
-            }, 0);
-            startBackgroundPreload();
         }
     }
+    const initialLoadTimer = window.setTimeout(() => {
+        imageProblem = true;
+        dismissLoader();
+        refreshLoadStatus();
+    }, LOAD_TIMEOUT_MS);
     // --- LAZY LOADING VÉGE ---
 
     function toggleList() {
@@ -183,9 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        if (!presentFrame(img)) return false;
+        if (!presentFrame(img)) {
+            markImageFailed(img, frameIndex);
+            return false;
+        }
         pendingFrame = null;
         currentFrame = frameIndex;
+        imageProblem = false;
+        dismissLoader(true);
+        refreshLoadStatus();
         preloadAround(frameIndex, 1);
         
         if (compassSlider) compassSlider.value = frameIndex;
@@ -351,6 +388,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(rotateRightBtn) rotateRightBtn.addEventListener('click', () => animateRotation(4));
 
     const imageElements = new Array(CONFIG.totalFrames);
+    const frameCache = new Map();
+    let cacheClock = 0;
     const posterImage = document.getElementById('lakasparkPoster');
     // Keep one painted surface: async image layers can briefly expose the white page.
     try {
@@ -393,34 +432,98 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
+    function isResident(img, frame) {
+        return imageElements[frame - 1] === img && img.dataset.retired !== '1';
+    }
+
+    function watchFrame(img, frame) {
+        const entry = { img, used: ++cacheClock, timer: null };
+        frameCache.set(frame, entry);
+        entry.timer = window.setTimeout(() => {
+            if (isResident(img, frame) && img.dataset.loaded !== '1') markImageFailed(img, frame);
+        }, LOAD_TIMEOUT_MS);
+    }
+
+    function clearFrameTimer(frame) {
+        const entry = frameCache.get(frame);
+        if (entry) clearTimeout(entry.timer);
+    }
+
+    function makeFrameRoom() {
+        if (frameCache.size < MAX_RESIDENT_FRAMES) return;
+        let oldestFrame = null;
+        let oldestUse = Infinity;
+        frameCache.forEach((entry, frame) => {
+            if (frame === 1 || frame === currentFrame || frame === pendingFrame) return;
+            if (entry.used < oldestUse) {
+                oldestFrame = frame;
+                oldestUse = entry.used;
+            }
+        });
+        if (oldestFrame === null) return;
+        const entry = frameCache.get(oldestFrame);
+        clearTimeout(entry.timer);
+        entry.img.dataset.retired = '1';
+        entry.img.onload = null;
+        entry.img.onerror = null;
+        imageElements[oldestFrame - 1] = null;
+        frameCache.delete(oldestFrame);
+        if (entry.img.parentNode) entry.img.parentNode.removeChild(entry.img);
+        // Drop the decoded bitmap and cancel an outstanding request, not just the DOM node.
+        entry.img.removeAttribute('src');
+    }
+
     function markImageReady(img, frame) {
+        if (!isResident(img, frame)) return;
         if (img.dataset.progressDone || img.dataset.decoding) return;
         if (!img.complete || !img.naturalWidth || !img.naturalHeight) return;
         img.dataset.decoding = '1';
-        const decoded = typeof img.decode === 'function' ? img.decode() : Promise.resolve();
+        let decoded;
+        try {
+            decoded = typeof img.decode === 'function' ? img.decode() : Promise.resolve();
+        } catch (error) {
+            delete img.dataset.decoding;
+            markImageFailed(img, frame);
+            return;
+        }
         decoded.then(() => {
+            if (!isResident(img, frame)) return;
             delete img.dataset.decoding;
             if (!img.naturalWidth || !img.naturalHeight) return;
+            clearFrameTimer(frame);
             img.dataset.loaded = '1';
+            delete img.dataset.failed;
             img.dataset.progressDone = '1';
-            onImageLoadProgress();
-            if (pendingFrame === frame) updateFrame(frame);
+            if (pendingFrame === frame || (pendingFrame === null && currentFrame === frame)) updateFrame(frame);
         }).catch(() => {
+            if (!isResident(img, frame)) return;
             delete img.dataset.decoding;
             markImageFailed(img, frame);
         });
     }
 
     function markImageFailed(img, frame) {
+        if (!isResident(img, frame)) return;
+        clearFrameTimer(frame);
         img.dataset.loaded = '';
         img.dataset.failed = '1';
         // A failed request is not a usable frame. Keep the last painted view.
-        if (frame === 1 && !loaderDismissed) updateFrame(2);
+        if (pendingFrame === frame || (!loaderDismissed && frame === currentFrame)) {
+            imageProblem = true;
+            dismissLoader();
+            refreshLoadStatus();
+        }
+        if (frame === 1 && !initialRecoveryStarted && !frameSurface?.dataset.painted
+            && (pendingFrame === null || pendingFrame === 1)) {
+            initialRecoveryStarted = true;
+            updateFrame(2);
+        }
     }
 
     if (posterImage) {
         imageElements[0] = posterImage;
         posterImage.dataset.loaded = '';
+        watchFrame(posterImage, 1);
         const markPosterReady = () => markImageReady(posterImage, 1);
         if (posterImage.complete) {
             window.setTimeout(() => {
@@ -448,10 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const normalizedFrame = normalizeFrameIndex(frame);
         const index = normalizedFrame - 1;
         if (imageElements[index]) {
+            frameCache.get(normalizedFrame).used = ++cacheClock;
             if (highPriority) imageElements[index].fetchPriority = 'high';
             return imageElements[index];
         }
 
+        makeFrameRoom();
         const img = new Image();
         img.onload = () => markImageReady(img, normalizedFrame);
         img.onerror = () => markImageFailed(img, normalizedFrame);
@@ -463,74 +568,61 @@ document.addEventListener('DOMContentLoaded', () => {
         img.setAttribute('aria-hidden', 'true');
         img.decoding = 'async';
         img.style.opacity = '0';
-        img.src = buildFrameUrl(normalizedFrame);
-        viewer.insertBefore(img, svgLayer);
         imageElements[index] = img;
+        watchFrame(img, normalizedFrame);
+        if (!frameContext) viewer.insertBefore(img, svgLayer);
+        img.src = buildFrameUrl(normalizedFrame);
         return img;
     }
 
     function preloadAround(frame, radius = INITIAL_PRELOAD_RADIUS) {
-        for (let offset = -radius; offset <= radius; offset++) {
-            ensureFrameLoaded(frame + offset, Math.abs(offset) <= 1);
-        }
-    }
-
-    function startBackgroundPreload() {
-        if (backgroundPreloadStarted) return;
-        backgroundPreloadStarted = true;
-
-        preloadAround(currentFrame, 1);
-
         const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-        const conserveData = connection && (
-            connection.saveData
-            || /(^|-)2g$/.test(connection.effectiveType || '')
-        );
-        if (conserveData) return;
-
-        const queue = [];
-        const queued = new Set([currentFrame]);
-        for (let distance = 1; distance < CONFIG.totalFrames; distance++) {
-            [currentFrame + distance, currentFrame - distance].forEach((frame) => {
-                const normalized = normalizeFrameIndex(frame);
-                if (queued.has(normalized)) return;
-                queued.add(normalized);
-                queue.push(normalized);
-            });
+        if (connection && (connection.saveData || /(^|-)2g$/.test(connection.effectiveType || ''))) radius = 0;
+        for (let offset = -radius; offset <= radius; offset++) {
+            ensureFrameLoaded(frame + offset, offset === 0);
         }
-
-        const delay = connection && connection.effectiveType === '3g' ? 850 : 500;
-        let index = 0;
-        function loadNext() {
-            if (index >= queue.length) return;
-            if (document.hidden) {
-                window.setTimeout(loadNext, 1200);
-                return;
-            }
-
-            ensureFrameLoaded(queue[index], false);
-            index++;
-            window.setTimeout(loadNext, delay);
-        }
-        window.setTimeout(loadNext, 1400);
     }
 
     preloadAround(currentFrame, 0);
 
-    // A renderelés bekerült a fetch belsejébe, hogy biztosan meglegyen a JSON adat!
+    let jsonFinished = false;
+    const jsonAbort = typeof AbortController === 'function' ? new AbortController() : null;
+    function jsonFailed() {
+        if (jsonFinished) return;
+        jsonFinished = true;
+        clearTimeout(jsonTimer);
+        jsonProblem = true;
+        dismissLoader();
+        refreshLoadStatus();
+        if (jsonAbort) jsonAbort.abort();
+    }
+    const jsonTimer = window.setTimeout(jsonFailed, LOAD_TIMEOUT_MS);
     fetch(
         CONFIG.jsonUrl
             + (CONFIG.jsonUrl.includes('?') ? '&' : '?')
             + 'v=' + encodeURIComponent(CONFIG.jsonVersion),
-        { cache: 'force-cache', credentials: 'same-origin' }
+        { cache: 'force-cache', credentials: 'same-origin', ...(jsonAbort ? { signal: jsonAbort.signal } : {}) }
     )
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error('JSON HTTP error');
+            return res.json();
+        })
         .then(data => {
+            if (jsonFinished) return;
+            // A4 uses a 1-indexed JSON array; other scenes use keyed objects.
+            if (!data || typeof data !== 'object'
+                || !Object.values(data).every(frame => frame && typeof frame === 'object'
+                    && Object.values(frame).every(path => typeof path === 'string'))) {
+                throw new Error('Invalid hitbox data');
+            }
+            jsonFinished = true;
+            clearTimeout(jsonTimer);
             hitboxData = data;
             renderApartmentList(); 
-            updateFrame(currentFrame);
+            refreshLoadStatus();
+            updateFrame(pendingFrame === null ? currentFrame : pendingFrame);
         })
-        .catch(err => console.error("JSON hiba:", err));
+        .catch(jsonFailed);
 
     if (compassSlider) compassSlider.addEventListener('input', (e) => {
         updateFrame(parseInt(e.target.value));

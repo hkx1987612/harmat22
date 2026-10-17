@@ -30,6 +30,7 @@ function harness({ canvas = true, brokenPoster = false, decode = true } = {}) {
     emit(name, data = {}) { for (const listener of this.listeners[name] || []) listener({ target: this, ...data }); }
     setAttribute(name, value) { this.attributes[name] = value; }
     getAttribute(name) { return this.attributes[name]; }
+    removeAttribute(name) { delete this.attributes[name]; if (name === 'src') this.src = ''; }
     insertBefore(child) { this.children.push(child); }
     appendChild(child) { this.children.push(child); }
   }
@@ -112,11 +113,11 @@ function harness({ canvas = true, brokenPoster = false, decode = true } = {}) {
     setInterval: fn => { intervals.push(fn); return intervals.length - 1; },
     clearInterval: id => { intervals[id] = null; },
     setTimeout: window.setTimeout, clearTimeout: () => {},
-    fetch: async () => ({ json: async () => Object.fromEntries(Array.from({ length: 72 }, (_, i) => [i + 1, {}])) }),
+    fetch: async () => ({ ok: true, json: async () => Object.fromEntries(Array.from({ length: 72 }, (_, i) => [i + 1, {}])) }),
   });
   vm.runInContext(source, context);
   document.start();
-  const image = frame => images.find(img => img.src.endsWith(`-${String(frame).padStart(2, '0')}.webp`));
+  const image = frame => images.findLast(img => img.src.endsWith(`-${String(frame).padStart(2, '0')}.webp`));
   const go = frame => { ids.compassSlider.value = frame; ids.compassSlider.emit('input'); };
   const ready = async frame => { image(frame).load(); image(frame).resolveDecode(); await flush(); };
   const tick = delay => {
@@ -251,7 +252,12 @@ test('full 72-frame cycles reuse one surface without clear, resize or resolution
     await h.ready(frame);
     assert.equal(h.surface.dataset.frame, String(frame));
   }
-  for (let frame = 71; frame >= 1; frame--) h.go(frame);
+  // Evicted frames may reload; every completed transition must retain a painted surface.
+  for (let frame = 71; frame >= 1; frame--) {
+    h.go(frame);
+    if (h.image(frame).dataset.loaded !== '1') await h.ready(frame);
+    assert.equal(h.surface.dataset.frame, String(frame));
+  }
   assert.equal(h.surface.dataset.frame, '1');
   assert.equal(h.surface.clears, 2);
   assert.equal(h.surface.width, 1920);
