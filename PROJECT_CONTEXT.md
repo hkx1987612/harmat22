@@ -2,6 +2,10 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Chinese Switch - Local Test Only
+
+- October17 user explicitly selects internal reviewed Chinese translations, no external provider. New `server-config/previews/chinese-switch/`95-entry dictionary/reversible DOM switch, scoped Chinese typography and isolated non-submitting form fixture reuse approved Project preview; self-contained ignored `outputs/2026-10-17-chinese-switch/harmat-chinese-switch-v1.html`.14 jsdom DOM/behavior cases pass including20 toggles, unchanged values/data/handlers, exact five native lead-source payloads, dynamic/restoration and CSP/no-send bounds. NOT native/browser/mobile/whole-site or successful-booking evidence; native text-dependent quote triggers and full-page coverage/integration remain release gates. No production edits/data/cache/mail/ads/security, no new stable website tag. Current live Project release below remains unchanged. Evidence `server-config/maintenance/2026-10-17-chinese-switch-preview.md`.
+
 ## Project Page Preview - Approved And Released
 
 - User subsequently approves replacement; the preview-only bullet below is historical. Production status, exact backups and regression are in `2026-10-17-project-family-release.md` and the Current Stable State below. Do not redeploy the standalone preview shell.

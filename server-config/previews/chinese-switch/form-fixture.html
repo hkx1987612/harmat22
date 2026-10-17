@@ -1,0 +1,31 @@
+<section class="hpf-section hlp-lab" aria-labelledby="hlp-lab-title">
+  <div class="hpf-container">
+    <h2 id="hlp-lab-title">Ajánlatkérés</h2>
+    <p class="hlp-test-status">Teszt - nincs elküldés</p>
+    <p data-language-protect>A3-4-L5 · 47,83 m²</p>
+    <form id="hlp-test-form" autocomplete="off">
+      <div class="hlp-fields">
+        <label class="hlp-field"><span>Épület</span><select name="selected-building"><option value="">Válasszon</option><option value="A3">A3</option></select></label>
+        <label class="hlp-field"><span>Emelet</span><select name="selected-floor"><option value="">Válasszon</option><option value="4">4</option></select></label>
+        <label class="hlp-field"><span>Lakás</span><select name="selected-apartment"><option value="">Válasszon</option><option value="A3-4-L5">A3-4-L5</option></select></label>
+        <label class="hlp-field"><span>Név</span><input name="your-name" type="text" required></label>
+        <label class="hlp-field"><span>E-mail</span><input name="your-email" type="email" required></label>
+        <label class="hlp-field"><span>Telefonszám</span><input name="your-phone" type="tel" required></label>
+        <label class="hlp-field"><span>Látogatás dátuma</span><input name="your-date" type="date" required></label>
+        <label class="hlp-field"><span>Idősáv</span><select name="your-time"><option value="">Idősáv</option><option value="09:00-12:00">09:00-12:00</option><option value="12:00-15:00">12:00-15:00</option><option value="15:00-18:00">15:00-18:00</option></select></label>
+      </div>
+      <fieldset><legend>Honnan hallott rólunk?</legend><div class="hlp-sources">
+        <label><input type="radio" name="lead_source" value="Kültéri hirdetés"><span>Kültéri hirdetés</span></label>
+        <label><input type="radio" name="lead_source" value="Google keresés"><span>Google keresés</span></label>
+        <label><input type="radio" name="lead_source" value="ingatlan.com"><span>ingatlan.com</span></label>
+        <label><input type="radio" name="lead_source" value="Közösségi média"><span>Közösségi média</span></label>
+        <label><input type="radio" name="lead_source" value="Egyéb"><span>Egyéb</span></label>
+      </div></fieldset>
+      <label class="hlp-field"><span>Üzenet</span><textarea name="your-message"></textarea></label>
+      <label class="hlp-privacy"><input type="checkbox" name="privacy-acceptance" value="1" required><span>Elfogadom az adatvédelmi tájékoztatót.</span></label>
+      <input type="hidden" name="selected-area" value="47.83">
+      <input type="hidden" name="selected-price" value="">
+      <button type="submit" class="hpf-button" disabled>Küldés</button>
+    </form>
+  </div>
+</section>

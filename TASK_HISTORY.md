@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-17 - Internal Chinese Switch Local Test
+- User approves language-switch testing before release and explicitly chooses internal translations without external services. Clean tracked mainee377a9 synchronized. Sol bounded95-entry dictionary reviewed/closed; parent adds independent reversible text/description switch, scoped system-font CSS, isolated non-submitting actual-name/five-native-source fixture, hash-CSP offline exporter and14 DOM tests. Existing approved Project sources/assets unchanged; no new photo download or private input.
+- HU default, exact roundtrip/20 toggles, customer-field/value/amount/area/privacy/node/handler retention, native five-source values, dynamic text/attribute updates/restoration, protected native/editable/implicit-option contexts, unknown fallback/no HTML injection, cleanup/locale guards, embedded assets/script-hash/no-network/no-send boot pass in jsdom26.1.0. Dev-only package ignored under outputs. No actual pixel/mobile/WordPress integration/end-to-end booking claim; existing native HU-text-dependent offer triggers explicitly remain release gate.
+- Self-contained ignored `outputs/2026-10-17-chinese-switch/harmat-chinese-switch-v1.html`, SHA25672fefb65360b3ecde6a83dbe1dd5cab3c95941afb6230e9e0929d202e4909a5d, user can open manually. Prior local-file browser refusal respected without alternate route/rendering. Original destination links still HU; no cross-page language persistence yet. No production backup/edit/upload/cache/data/CRM/mail/form dispatch/new positive inquiry or ads/social/security/automation/shutdown. Website stable tag remains stable-2026-10-17-project-family-current. Share only own prototype/tests/notes, not ignored export/dependencies/private artifacts. Remaining gates and evidence: `2026-10-17-chinese-switch-preview.md`.
+
 ## Stable Baseline
 
 - Current repository stable snapshot around `v2.5` was pushed as a public-site stable version.
