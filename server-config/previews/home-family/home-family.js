@@ -12,10 +12,22 @@
     skip: '跳转到主要内容',
     brandHome: 'Harmat Lakópark 首页',
     language: '语言',
+    languageHu: '匈牙利语',
+    languageZh: '中文',
     menu: '菜单',
     menuOpen: '打开菜单',
     menuClose: '关闭菜单',
     mainNavigation: '主导航',
+    navHome: '首页',
+    navSearch: '查找公寓',
+    navProject: 'Harmat Lakópark 项目',
+    navAbout: '关于我们',
+    navNeighborhood: '周边环境',
+    navGallery: '图片集',
+    navContacts: '联系方式',
+    appointment: '预约参观',
+    appointmentShort: '预约',
+    appointmentOpen: '在新标签页打开官方网站的预约页面',
     navApartments: '公寓',
     navJournal: '施工日志',
     navEveryday: '日常生活',
@@ -161,6 +173,7 @@
     const label = controlText(menu.open ? 'menuClose' : 'menuOpen');
     menuSummary.setAttribute('aria-label', label);
     menuSummary.title = label;
+    menuSummary.setAttribute('aria-expanded', String(menu.open));
   }
 
   function updateVideoControl() {

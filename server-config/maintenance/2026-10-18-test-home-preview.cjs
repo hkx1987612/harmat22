@@ -42,6 +42,17 @@ function boot(f) {
 test('production WordPress/quote/appointment sources remain exactly the current stable checkout', () => {
   const changed = execFileSync('git', ['diff', '--name-only', '2e3f738', '--', 'wp-mu-plugins', 'wp-plugins'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(changed.trim(), '');
+  const previous = execFileSync('git', ['show', '26fca6c:server-config/previews/home-family/index.html'], { cwd: ROOT, encoding: 'utf8' });
+  const oldPage = new JSDOM(previous), newPage = new JSDOM(html);
+  try {
+    for (const selector of ['main', 'footer']) {
+      assert.equal(newPage.window.document.querySelector(selector).outerHTML,
+        oldPage.window.document.querySelector(selector).outerHTML, 'header revision preserves ' + selector);
+    }
+  } finally {
+    oldPage.window.close();
+    newPage.window.close();
+  }
 });
 
 test('one branded H1, genuine media, no recreated forms or embedded live engines', t => {
@@ -107,9 +118,8 @@ test('local HU/Chinese switch roundtrips copy without changing codes/links or su
   await tick();
   const links = [...f.d.querySelectorAll('a')].map(a => a.getAttribute('href'));
   const before = f.d.querySelector('main').textContent;
-  const buttons = [...f.d.querySelectorAll('button')];
-  const zh = buttons.find(b => b.textContent.trim() === '中文');
-  const hu = buttons.find(b => b.textContent.trim() === 'Magyar');
+  const zh = f.d.querySelector('[data-language="zh"]');
+  const hu = f.d.querySelector('[data-language="hu"]');
   assert(zh && hu, 'always-visible language controls');
   zh.click();
   await tick();
@@ -128,12 +138,24 @@ test('reduced motion never automatically starts the local hero video', async t =
   assert.equal(f.media.plays, 0);
 });
 
-test('desktop navigation is not trapped in a closed mobile details element', t => {
-  const { d } = fixture(t);
-  const desktop = d.querySelector('nav.desktop-nav');
-  assert(desktop && !desktop.closest('details'));
-  assert.equal(desktop.querySelectorAll('a').length, 4);
-  assert(css.includes('.desktop-nav'));
+test('header has an all-width menu and an explicit unchanged official booking destination', async t => {
+  const f = fixture(t);
+  boot(f);
+  await tick();
+  const header = f.d.querySelector('.site-header');
+  const menu = header.querySelector('.site-menu');
+  const summary = menu.querySelector('summary');
+  assert(summary.querySelector('svg'), 'familiar hamburger control');
+  assert(!summary.hidden && !menu.hidden, 'menu not deliberately hidden');
+  assert.equal(header.querySelector('.language-switch').hidden, false);
+  const booking = header.querySelector('.header-cta');
+  assert(booking && !booking.hidden, 'visible appointment control');
+  assert.equal(booking.getAttribute('href'), 'https://harmat22.hu/elerhetosegeink/');
+  assert.match(booking.textContent, /Időpont/i);
+  assert(!/\.header-cta\s*\{[^}]*display\s*:\s*none/.test(css), 'no old breakpoint hides appointment');
+  f.d.querySelector('[data-language="zh"]').click();
+  assert.match(booking.textContent, /预约/);
+  assert.equal(booking.getAttribute('href'), 'https://harmat22.hu/elerhetosegeink/');
 });
 
 test('mobile menu closes after a local navigation link and Escape', async t => {
@@ -157,7 +179,7 @@ test('language remains available while the local menu is open and preserves all 
   boot(f);
   const menu = f.d.querySelector('details.site-menu');
   menu.open = true;
-  const zh = [...f.d.querySelectorAll('button')].find(b => b.textContent.trim() === '中文');
+  const zh = f.d.querySelector('[data-language="zh"]');
   zh.click();
   await tick();
   assert.equal(f.d.documentElement.lang, 'zh-Hans');
@@ -186,7 +208,7 @@ test('video play/pause controls remain local, translated and show the poster aft
   video.dispatchEvent(new f.w.Event('error'));
   assert.equal(video.dataset.revealed, undefined);
   assert.equal(button.disabled, true);
-  [...f.d.querySelectorAll('button')].find(b => b.textContent.trim() === '中文').click();
+  f.d.querySelector('[data-language="zh"]').click();
   assert.match(button.getAttribute('aria-label'), /视频暂时无法播放/);
 });
 
@@ -205,7 +227,6 @@ test('360 panorama stays distinct from apartment selection and uses the original
   const chooser = d.querySelector('#lakasvalaszto');
   assert(section && chooser && section !== chooser);
   assert(section.compareDocumentPosition(chooser) & 4, 'panorama precedes chooser');
-  assert(d.querySelector('.desktop-nav a[href="#panorama"]'));
   assert(d.querySelector('.site-menu nav a[href="#panorama"]'));
   const links = section.querySelectorAll('a[href="https://harmat22.hu/harmat-lakopark-kornyeke/#harmat-3d-tour"]');
   assert(links.length >= 2, 'poster and copy both lead to original official panorama');
@@ -237,4 +258,26 @@ test('panorama HU/Chinese copy and accessible poster link fully roundtrip', asyn
   f.d.querySelector('[data-language="hu"]').click();
   await tick();
   assert.equal(section.outerHTML, before);
+});
+
+test('menu retains main official pages plus distinct 360 and appointment entries', async t => {
+  const f = fixture(t);
+  boot(f);
+  const menu = f.d.querySelector('.site-menu');
+  const hrefs = [...menu.querySelectorAll('nav a')].map(a => a.getAttribute('href'));
+  for (const suffix of ['/lakaskereso/', '/virtualis-lakasvalaszto/', '/harmat-lakopark/', '/magunkrol/', '/harmat-lakopark-kornyeke/', '/galeria/', '/epitesi-naplo/', '/elerhetosegeink/']) {
+    assert(hrefs.includes('https://harmat22.hu' + suffix), 'official page ' + suffix);
+  }
+  assert(hrefs.includes('#kezdolap'));
+  assert(hrefs.includes('#panorama'));
+  const appointment = menu.querySelector('.menu-booking');
+  assert(appointment);
+  assert.equal(appointment.getAttribute('href'), 'https://harmat22.hu/elerhetosegeink/');
+  const before = menu.querySelector('nav').outerHTML;
+  f.d.querySelector('[data-language="zh"]').click();
+  await tick();
+  assert.match(appointment.textContent, /预约/);
+  assert.deepEqual([...menu.querySelectorAll('nav a')].map(a => a.getAttribute('href')), hrefs);
+  f.d.querySelector('[data-language="hu"]').click();
+  assert.equal(menu.querySelector('nav').outerHTML, before);
 });

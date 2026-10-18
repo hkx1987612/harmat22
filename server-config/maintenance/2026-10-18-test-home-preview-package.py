@@ -96,7 +96,7 @@ class PackagingTests(unittest.TestCase):
         (M.OUT / 'index.html').write_text(self.html, encoding='utf-8')
         M.build_bundle()
         M.build_bundle()
-        target = M.OUT / 'harmat-home-family-preview-v1.html'
+        target = M.OUT / M.PREVIEW_NAME
         target.write_text('user edit', encoding='utf-8')
         with self.assertRaises(RuntimeError):
             M.build_bundle()
@@ -106,6 +106,14 @@ class PackagingTests(unittest.TestCase):
         rows = Tags(self.render()).tags
         self.assertFalse(any(tag in ('form', 'input', 'iframe') for tag, attrs in rows))
         self.assertEqual(next(attrs['href'] for tag, attrs in rows if tag == 'a'), '#contact')
+
+    def test_v2_export_preserves_previously_reviewed_v1(self):
+        previous = M.OUT / 'harmat-home-family-preview-v1.html'
+        previous.write_text('previous reviewed preview', encoding='utf-8')
+        (M.OUT / 'index.html').write_text(self.html, encoding='utf-8')
+        M.build_bundle()
+        self.assertEqual(previous.read_text(encoding='utf-8'), 'previous reviewed preview')
+        self.assertTrue((M.OUT / 'harmat-home-family-preview-v2.html').is_file())
 
 
 if __name__ == '__main__':

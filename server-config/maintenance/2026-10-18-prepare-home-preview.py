@@ -18,6 +18,7 @@ OUT = ROOT / 'outputs/2026-10-18-home-family'
 ASSETS = OUT / 'assets'
 SITE = 'https://harmat22.hu'
 CODES = ('A1-1-L6', 'A2-4-L5', 'A1-1-L5')
+PREVIEW_NAME = 'harmat-home-family-preview-v2.html'
 MEDIA = {
     'hero-aerial.jpg': 'wp-mu-plugins/harmat-project-family/project-aerial.jpg',
     'project-courtyard.jpg': 'wp-mu-plugins/harmat-project-family/project-courtyard.jpg',
@@ -219,8 +220,8 @@ class Bundle(HTMLParser):
 
 
 def build_bundle():
-    target = OUT / 'harmat-home-family-preview-v1.html'
-    record = OUT / 'bundle-proof.json'
+    target = OUT / PREVIEW_NAME
+    record = OUT / 'bundle-proof-v2.json'
     if target.exists():
         require(record.is_file() and json.loads(record.read_text())['sha256'] == hashlib.sha256(target.read_bytes()).hexdigest(), 'Refuse unrelated edited preview overwrite')
     parser = Bundle((OUT / 'index.html').read_text(encoding='utf-8'))

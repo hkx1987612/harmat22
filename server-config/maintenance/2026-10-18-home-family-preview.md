@@ -57,3 +57,30 @@ Rebuilt SAME output file, now7,025,742bytes/SHA
 `b72bec36f356ddcd2af5c54af1da392d471f8eda67df0a24bd3a3b7600ad86f5`.
 Previous bundle hash above is historical. Refresh local preview to view revision.
 No live deployment, backup activation, form submission or customer/mail writes.
+
+## User Screenshot Follow-Up: Header and Appointment Entry
+
+User found the top unbalanced and menu/appointment missing in the displayed V1.
+Sol revised only the three presentation files: all-width native details/menu,
+HU/Chinese controls beside it, centered square project logo, white/forest/gold
+header and always-present official appointment CTA. Full menu has eleven entries
+including original main public pages, panorama and appointment. Dropdown has
+viewport-limited scrolling and existing Escape/outside/link closing. Small-screen
+header deliberately uses two rows,44px targets and a compact appointment label.
+Parent restores proper Hungarian Menu accent and recognizable Chinese button.
+
+Official appointment links go to the existing contact page in a new tab, not a
+new form. Main/footer compare exactly with26fca6c DOM; live WordPress sources still
+equal2e3f738. JS syntax,15 no-network DOM/source and11 packaging tests PASS. Older
+test selectors expected full language text; changed to stable data-language IDs
+after compact labels changed. No functionality bypass and no live submission.
+Additional public project/gallery destinations returned200. Worker reviewed/closed.
+
+Fresh V2 output avoids evaluating an already-loaded V1:
+`outputs/2026-10-18-home-family/harmat-home-family-preview-v2.html`,7,029,206bytes,
+SHA256 `b1eadb24d40ab835475bcf62ead5fa70cba30cd3e9c092a8db079d6e7463cf50`.
+Separate ownership proof; packaging test ensures prior V1 is preserved. Previous
+hashes are historical. Local media and generated HTML remain ignored. Actual
+browser/mobile/pixel validation remains pending under the existing file-URL
+restriction; no alternate tool/transport attempted, no visual guarantee. Still
+OFFLINE ONLY, not publication approval. Website/quote/appointment code unchanged.

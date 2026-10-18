@@ -18,7 +18,8 @@ presentation files here; parent review added packaging and no-network tests.
   restores its own section and desktop/mobile navigation, separate from choosing
   an apartment. Its original cube-front poster links to the existing official
   neighborhood panorama; the offline preview does NOT embed a replacement engine.
-- Independent desktop navigation, mobile menu and local HU/Chinese controls.
+- All-width hamburger navigation and local HU/Chinese controls beside it; explicit
+  official appointment destinations in the header and full menu.
 - Public apartment values were checked against the official public inventory on
   October 18. They are a preview snapshot, not a live price feed.
 
@@ -64,21 +65,24 @@ existing panorama script; dragging/WebGL behavior was not newly browser-tested.
 
 Open the generated file directly, without a dev server:
 
-`outputs/2026-10-18-home-family/harmat-home-family-preview-v1.html`
+`outputs/2026-10-18-home-family/harmat-home-family-preview-v2.html`
 
 Images, stylesheet, Lucide and behavior are embedded. The original 39,504,516-byte
 video remains at sibling `assets/hero-video.mp4`; moving only the HTML retains
 the visual poster but loses video playback. No remote display dependency exists.
 Generated exports and media remain ignored; Git shares only source/tools/records.
+V2 is a separate filename after user feedback on header balance and missing menu/
+appointment access. The previous V1 output remains historical and may stay open
+with stale content; use the new file rather than evaluating a previously loaded V1.
 
 ## Verified / Pending
 
-- 14 source/no-network JSDOM tests and 10 synthetic packaging tests passed.
+- 15 source/no-network JSDOM tests and 11 synthetic packaging tests passed.
 - JS syntax passed; production plugin sources equal stable checkout `2e3f738`.
 - Ten official destination routes returned HTTP 200 by read-only GET. This is
   link availability evidence, not a functional quote/appointment submission test.
-- Current panorama-restored bundle: 7,025,742 bytes; SHA256
-  `b72bec36f356ddcd2af5c54af1da392d471f8eda67df0a24bd3a3b7600ad86f5`.
+- Current header-restored V2 bundle: 7,029,206 bytes; SHA256
+  `b1eadb24d40ab835475bcf62ead5fa70cba30cd3e9c092a8db079d6e7463cf50`.
 - Codex opened the local preview for user review. Browser automation explicitly
   disallowed reading file URLs; no alternate transport/browser workaround was
   attempted. Responsive CSS was reviewed, but NO real-browser mobile, pixel,

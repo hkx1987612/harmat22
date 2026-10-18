@@ -15,34 +15,37 @@
   <a class="skip-link" href="#tartalom" data-i18n="skip">Ugrás a tartalomra</a>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="#kezdolap" aria-label="Harmat Lakópark – főoldal" data-i18n-aria-label="brandHome">
-        <img src="assets/harmat-logo.png" width="164" height="56" alt="Harmat Lakópark">
-      </a>
-      <div class="language-switch" role="group" aria-label="Nyelv" data-i18n-aria-label="language" hidden>
-        <button type="button" data-language="hu" lang="hu" aria-pressed="true" title="Magyar">Magyar</button>
-        <button type="button" data-language="zh" lang="zh-Hans" aria-pressed="false" title="中文">中文</button>
-      </div>
-      <nav class="desktop-nav" aria-label="Főmenü" data-i18n-aria-label="mainNavigation">
-        <a href="#lakasok" data-i18n="navApartments">Lakások</a>
-        <a href="#epitesi-naplo" data-i18n="navJournal">Építési napló</a>
-        <a href="#panorama" data-i18n="navPanorama">360° panoráma</a>
-        <a href="#kapcsolat" data-i18n="navContact">Kapcsolat</a>
-      </nav>
+      <div class="header-left">
       <details class="site-menu">
-        <summary aria-label="Menü megnyitása" title="Menü megnyitása">
+        <summary aria-label="Menü megnyitása" title="Menü megnyitása" aria-controls="header-navigation" aria-expanded="false">
           <i class="menu-open-icon" data-lucide="menu" aria-hidden="true"></i>
           <i class="menu-close-icon" data-lucide="x" aria-hidden="true"></i>
           <span class="menu-label" data-i18n="menu">Menü</span>
         </summary>
-        <nav aria-label="Főmenü" data-i18n-aria-label="mainNavigation">
-          <a href="#lakasok" data-i18n="navApartments">Lakások</a>
-          <a href="#epitesi-naplo" data-i18n="navJournal">Építési napló</a>
+        <nav id="header-navigation" aria-label="Főmenü" data-i18n-aria-label="mainNavigation">
+          <a href="#kezdolap" data-i18n="navHome">Főoldal</a>
+          <a href="https://harmat22.hu/lakaskereso/" target="_blank" rel="noopener noreferrer"><span data-i18n="navSearch">Lakáskereső</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/virtualis-lakasvalaszto/" target="_blank" rel="noopener noreferrer"><span data-i18n="chooserLink">Virtuális lakásválasztó</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/harmat-lakopark/" target="_blank" rel="noopener noreferrer"><span data-i18n="navProject">Harmat Lakópark</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/magunkrol/" target="_blank" rel="noopener noreferrer"><span data-i18n="navAbout">Magunkról</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/harmat-lakopark-kornyeke/" target="_blank" rel="noopener noreferrer"><span data-i18n="navNeighborhood">Környékünk</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/galeria/" target="_blank" rel="noopener noreferrer"><span data-i18n="navGallery">Galéria</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/epitesi-naplo/" target="_blank" rel="noopener noreferrer"><span data-i18n="navJournal">Építési napló</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
+          <a href="https://harmat22.hu/elerhetosegeink/" target="_blank" rel="noopener noreferrer"><span data-i18n="navContacts">Elérhetőségek</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
           <a href="#panorama" data-i18n="navPanorama">360° panoráma</a>
-          <a href="#kapcsolat" data-i18n="navContact">Kapcsolat</a>
+          <a class="menu-booking" href="https://harmat22.hu/elerhetosegeink/" target="_blank" rel="noopener noreferrer"><i data-lucide="calendar-days" aria-hidden="true"></i><span data-i18n="appointment">Időpontfoglalás</span><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
         </nav>
       </details>
-      <a class="button button-small header-cta" href="#kapcsolat">
-        <span data-i18n="requestOffer">Ajánlatot kérek</span><i data-lucide="arrow-up-right" aria-hidden="true"></i>
+        <div class="language-switch" role="group" aria-label="Nyelv" data-i18n-aria-label="language">
+          <button type="button" data-language="hu" lang="hu" aria-pressed="true" aria-label="Magyar nyelv" data-i18n-aria-label="languageHu" title="Magyar nyelv" data-i18n-title="languageHu">HU</button>
+          <button type="button" data-language="zh" lang="zh-Hans" aria-pressed="false" aria-label="Kínai nyelv" data-i18n-aria-label="languageZh" title="Kínai nyelv" data-i18n-title="languageZh">中文</button>
+        </div>
+      </div>
+      <a class="brand" href="#kezdolap" aria-label="Harmat Lakópark – főoldal" data-i18n-aria-label="brandHome">
+        <img src="assets/harmat-logo.png" width="250" height="250" alt="Harmat Lakópark">
+      </a>
+      <a class="button button-small header-cta" href="https://harmat22.hu/elerhetosegeink/" target="_blank" rel="noopener noreferrer" aria-label="Időpontfoglalás a hivatalos weboldalon, új lapon" data-i18n-aria-label="appointmentOpen" title="Időpontfoglalás a hivatalos weboldalon, új lapon" data-i18n-title="appointmentOpen">
+        <i data-lucide="calendar-days" aria-hidden="true"></i><span class="booking-full" data-i18n="appointment">Időpontfoglalás</span><span class="booking-compact" data-i18n="appointmentShort">Időpont</span>
       </a>
     </div>
   </header>
