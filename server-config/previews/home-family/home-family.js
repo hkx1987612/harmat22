@@ -228,6 +228,7 @@
   const menu = document.querySelector('.site-menu');
   const menuSummary = menu.querySelector('summary');
   const video = document.querySelector('.hero-video');
+  const hero = video.closest('.hero');
   const videoControl = document.querySelector('.video-control');
   const videoButton = document.querySelector('.video-button');
   const videoTooltip = document.getElementById('video-tooltip');
@@ -238,6 +239,8 @@
   let language = 'hu';
   let videoFailed = false;
   let userPaused = false;
+  let heroInViewport = false;
+  let manualVideoPlayback = false;
   let updatePanoramaLanguage = () => {};
 
   function controlText(key) {
@@ -308,8 +311,24 @@
     if (menu.open && !menu.contains(event.target) && !languageSwitch.contains(event.target)) menu.open = false;
   });
 
+  function heroWithinViewport() {
+    const bounds = hero.getBoundingClientRect();
+    return bounds.width > 0 && bounds.height > 0 && bounds.bottom > 0 && bounds.top < window.innerHeight
+      && bounds.right > 0 && bounds.left < window.innerWidth;
+  }
+
+  function canPlayVideo() {
+    return !videoFailed && heroInViewport && heroWithinViewport() && !document.hidden && !userPaused
+      && (!reducedMotion.matches || manualVideoPlayback);
+  }
+
+  function pauseHeroVideo() {
+    manualVideoPlayback = false;
+    if (!video.paused) video.pause();
+  }
+
   function playVideo() {
-    if (videoFailed) return;
+    if (!canPlayVideo()) { pauseHeroVideo(); return; }
     video.muted = true;
     if (!video.getAttribute('src')) video.src = video.dataset.src;
     try {
@@ -320,16 +339,24 @@
     }
   }
 
+  function syncHeroPlayback() {
+    if (!canPlayVideo()) pauseHeroVideo();
+    else if (video.paused) playVideo();
+  }
+
   videoButton.addEventListener('click', () => {
     if (video.paused) {
       userPaused = false;
+      manualVideoPlayback = true;
       playVideo();
     } else {
       userPaused = true;
-      video.pause();
+      pauseHeroVideo();
     }
   });
   video.addEventListener('playing', () => {
+    // A pending play request can settle after the hero or document becomes hidden.
+    if (!canPlayVideo()) { pauseHeroVideo(); updateVideoControl(); return; }
     video.dataset.revealed = 'true';
     updateVideoControl();
   });
@@ -339,13 +366,11 @@
     delete video.dataset.revealed;
     updateVideoControl();
   });
-  reducedMotion.addEventListener('change', event => {
-    if (event.matches) video.pause();
+  reducedMotion.addEventListener('change', () => {
+    manualVideoPlayback = false;
+    syncHeroPlayback();
   });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) video.pause();
-    else if (!userPaused && !reducedMotion.matches) playVideo();
-  });
+  document.addEventListener('visibilitychange', syncHeroPlayback);
 
   function initPanorama() {
     const root = document.querySelector('[data-panorama-console]');
@@ -466,6 +491,16 @@
         } catch { failViewer(); return; }
       }
       rotating = next;
+      updateLanguage();
+    }
+
+    function pauseOwnedRotation() {
+      rotateWanted = false;
+      rotating = false;
+      if (viewer) {
+        try { viewer.stopAutoRotate(); viewer.stopMovement(); }
+        catch { failViewer(); return; }
+      }
       updateLanguage();
     }
 
@@ -618,14 +653,48 @@
       syncRotation();
     });
 
+    host.addEventListener('mousedown', pauseOwnedRotation, { capture: true, passive: true });
+    host.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'touch') pauseOwnedRotation();
+    }, { capture: true, passive: true });
+    // The vendor stops rotation on every keydown, including uncaptured keys.
+    host.addEventListener('keydown', pauseOwnedRotation, { capture: true });
+    for (const type of ['mousewheel', 'DOMMouseScroll']) {
+      host.addEventListener(type, () => {
+        if (isFullscreen()) pauseOwnedRotation();
+      }, { capture: true, passive: true });
+    }
+
     // Let a vertical one-finger gesture scroll the page before the legacy touch handler consumes it.
     host.addEventListener('touchstart', event => {
+      pauseOwnedRotation();
       touchStart = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
     }, { capture: true, passive: true });
     host.addEventListener('touchmove', event => {
       if (isFullscreen() || !touchStart || event.touches.length !== 1) return;
       const touch = event.touches[0];
       if (Math.abs(touch.clientY - touchStart.y) >= Math.abs(touch.clientX - touchStart.x)) event.stopImmediatePropagation();
+    }, { capture: true, passive: true });
+    host.addEventListener('touchend', () => { touchStart = null; }, { capture: true, passive: true });
+    host.addEventListener('touchcancel', event => {
+      touchStart = null;
+      pauseOwnedRotation();
+      // Pannellum 2.5.6 ends drags on .pnlm-dragfix, not on the host.
+      const dragfix = host.querySelector('.pnlm-dragfix');
+      const target = dragfix && dragfix.contains(event.target) ? event.target : dragfix || host;
+      let ended;
+      try {
+        ended = new TouchEvent('touchend', { bubbles: true, touches: [], targetTouches: [], changedTouches: [] });
+      } catch {
+        ended = new Event('touchend', { bubbles: true });
+        for (const key of ['touches', 'targetTouches', 'changedTouches']) {
+          Object.defineProperty(ended, key, { value: [] });
+        }
+      }
+      target.dispatchEvent(ended);
+      if (viewer) {
+        try { viewer.stopMovement(); } catch { failViewer(); }
+      }
     }, { capture: true, passive: true });
 
     if ('IntersectionObserver' in window) {
@@ -672,5 +741,19 @@
   videoControl.hidden = false;
   updateMenuLabel();
   updateVideoControl();
-  if (!reducedMotion.matches && !document.hidden) playVideo();
+  if ('IntersectionObserver' in window) {
+    const heroObserver = new IntersectionObserver(entries => {
+      heroInViewport = entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0);
+      syncHeroPlayback();
+    }, { threshold: 0 });
+    heroObserver.observe(hero);
+  } else {
+    const updateHeroVisibility = () => {
+      heroInViewport = heroWithinViewport();
+      syncHeroPlayback();
+    };
+    window.addEventListener('scroll', updateHeroVisibility, { passive: true });
+    window.addEventListener('resize', updateHeroVisibility);
+    updateHeroVisibility();
+  }
 })();

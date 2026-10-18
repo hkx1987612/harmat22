@@ -141,15 +141,15 @@ class PackagingTests(unittest.TestCase):
         self.assertFalse(any(tag in ('form', 'input', 'iframe') for tag, attrs in rows))
         self.assertEqual(next(attrs['href'] for tag, attrs in rows if tag == 'a'), '#contact')
 
-    def test_v3_export_preserves_previously_reviewed_versions(self):
-        previous = [M.OUT / ('harmat-home-family-preview-v' + version + '.html') for version in ('1', '2')]
+    def test_v3_revision_export_preserves_previously_reviewed_versions(self):
+        previous = [M.OUT / ('harmat-home-family-preview-v' + version + '.html') for version in ('1', '2', '3')]
         for item in previous:
             item.write_text('previous reviewed preview', encoding='utf-8')
         (M.OUT / 'index.html').write_text(self.html, encoding='utf-8')
         M.build_bundle()
         for item in previous:
             self.assertEqual(item.read_text(encoding='utf-8'), 'previous reviewed preview')
-        self.assertTrue((M.OUT / 'harmat-home-family-preview-v3.html').is_file())
+        self.assertTrue((M.OUT / 'harmat-home-family-preview-v3-r1.html').is_file())
 
 
 if __name__ == '__main__':

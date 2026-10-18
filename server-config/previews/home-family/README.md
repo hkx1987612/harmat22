@@ -71,28 +71,31 @@ API reference: [Pannellum documentation](https://pannellum.org/documentation/ref
 
 Open the generated file directly, without a dev server:
 
-`outputs/2026-10-18-home-family/harmat-home-family-preview-v3.html`
+`outputs/2026-10-18-home-family/harmat-home-family-preview-v3-r1.html`
 
 Images/cube faces, stylesheets, libraries and behavior are embedded. Videos remain
 at sibling `assets/hero-video.mp4` (39,504,516 bytes) and
 `assets/panorama-project-video.mp4` (10,088,966 bytes); moving only the HTML loses
 video playback, not the embedded images. No remote display dependency exists.
 Generated exports and media remain ignored; Git shares only source/tools/records.
-V3 is a separate filename after user feedback on hero copy and inline 360 viewing.
-V1/V2 remain historical; use the new file rather than a previously loaded version.
+V3-R1 is a separate filename after the interaction audit. V1/V2/V3 are preserved;
+use the new file rather than a previously loaded version.
 The embedded offline package is intentionally larger than a production HTML page.
 Do NOT deploy that base64 export: future integration must reuse original lazy
 asset URLs, defer panorama GPU initialization and retain manual video playback.
 
 ## Verified / Pending
 
-- 24 source/no-network DOM/API-stub/export tests and 15 synthetic packaging tests
+- 31 source/no-network DOM/API-stub/export tests and 15 synthetic packaging tests
   passed. API stubs are NOT real WebGL, native fullscreen or device evidence.
 - JS syntax passed; production plugin sources equal stable checkout `2e3f738`.
 - Ten official destination routes returned HTTP 200 by read-only GET. This is
   link availability evidence, not a functional quote/appointment submission test.
-- Current compact-hero/inline-interactive V3 bundle: 27,637,032 bytes; SHA256
-  `d1990e217b4446b4f78845821527c3442a3c9aa1a76defdbaa95ed929cfda1c6`.
+- Current compact-hero/inline-interactive V3-R1 bundle: 27,640,339 bytes; SHA256
+  `1ece519906ba675df0b8c98c4f82af69b1b4657b2971024f1a55e59e3a25576b`.
+- R1 fixes legacy touch-cancel cleanup, manual-drag rotation-button state, and
+  offscreen hero playback, including background return and no-observer fallback.
+  Vendor bytes, HTML and CSS remain unchanged; native production sources unchanged.
 - All six cube-face bytes and embedded behavior in the actual export were checked;
   libraries retain their exact pinned package bytes and local license files.
 - Original camera is pitch -27/yaw0/hfov92, faces front/right/back/left/up/down.
@@ -105,9 +108,13 @@ asset URLs, defer panorama GPU initialization and retain manual video playback.
   attempted. Responsive CSS was reviewed, but NO real-browser mobile, pixel,
   screenshot, actual video decoding or device test is certified.
 
-User design review and real desktop/mobile visual checks remain pending. This
-is NOT deployment approval. Future integration needs a separate live backup,
+User conditionally authorizes release after real mobile/3D checks and backup.
+Those checks remain pending; an opened local tab is not verification. Future
+integration needs a separate live backup,
 scoped integration preserving native quote/appointment owners and live HU/Chinese
 controls, staged/formal PHP lint where applicable, cache handling, and real
 desktop/mobile/core-flow regression before publication. Existing stable live
 release/tag remains unchanged. No rollback is needed for this offline phase.
+Production integration must also namespace preview styles, retain the native
+language/header/form owners, use live apartment data and never apply the offline
+CSP to the production document. No integration adapter has been released.

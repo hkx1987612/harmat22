@@ -129,3 +129,41 @@ reuse lazy original media URLs and preserve native quote/appointment and live
 language ownership, with backup/lint/cache/real mobile+core-flow regression.
 Only source/tools/accurate records to Git; media, generated HTML and manifests
 remain ignored. Live stable tag unchanged. User actual visual/3D approval pending.
+
+## V3-R1 Interaction Audit and Conditional Release Hold
+
+User requests mobile/3D verification, then fresh backup and release without quote
+or appointment changes. The browser inventory confirms an open V3 local tab, but
+file-URL observation remains explicitly unavailable. No retry or alternate
+browser/transport/headless workaround, and no actual mobile/WebGL/fullscreen/
+video-decoding or screenshot result is claimed. Opening a tab is not acceptance.
+
+Sol read-only review identified three interaction defects, then fixed only
+`home-family.js`: cancelled touch now reaches legacy touchend cleanup; manual
+drag/key interaction synchronizes the rotation button and one-click restart;
+hero playback stops offscreen and cannot revive through background return or
+late playing events. TouchEvent fallback and no-IntersectionObserver hero bounds
+are covered. Parent reviewed the diff and closed the worker. Pinned Pannellum
+bytes remain unchanged, as do HTML/CSS and all production plugins.
+
+31 Node source/DOM/API-stub/actual-export tests plus15 packaging tests PASS.
+Media, visibility, renderer, dialog and fullscreen APIs in the harness are MOCKS,
+not real-device verification. V1/V2/V3 preserved. Current output:
+`outputs/2026-10-18-home-family/harmat-home-family-preview-v3-r1.html`,
+27,640,339 bytes, SHA256
+`1ece519906ba675df0b8c98c4f82af69b1b4657b2971024f1a55e59e3a25576b`.
+Both original sibling videos are retained. Generated media/export stay ignored.
+
+Read-only homepage and contact GETs return200, each with one native offer form,
+modal, masthead and privacy-settings button. This proves presence/availability,
+NOT a complete quote or appointment transaction. No form submission was made.
+
+Production adapter is still pending. It must namespace preview global styles,
+preserve native header/language/form ownership, read unified live apartment facts,
+reuse original lazy asset URLs, and never apply offline form-action/connect-src
+restrictions to live HTML. The27MB base64 offline export is NOT a deployment.
+Actual mobile/3D QA, fresh backup, staged/formal PHP lint where applicable, cache
+and native-flow regression remain release gates. No SSH/server edit/backup,
+customer/CRM/mail write or release occurred. Stable live tag remains unchanged.
+Only owned sources/tests/accurate notes shared; no old ads/social/Messenger/
+security/automation/shutdown tasks resumed.

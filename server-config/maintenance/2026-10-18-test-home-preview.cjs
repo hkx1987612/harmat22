@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const ROOT = path.resolve(__dirname, '../..');
 const OUT = path.join(ROOT, 'outputs/2026-10-18-home-family');
@@ -15,9 +16,12 @@ const js = fs.readFileSync(path.join(SOURCE, 'home-family.js'), 'utf8');
 const facts = JSON.parse(fs.readFileSync(path.join(OUT, 'facts.json'), 'utf8'));
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function fixture(t, reduced = true) {
+function fixture(t, reduced = true, initialHeroVisible = true) {
   const dom = new JSDOM(html, { url: 'file:///' + path.join(OUT, 'index.html').replace(/\\/g, '/'), runScripts: 'outside-only', pretendToBeVisual: true });
   const w = dom.window, requests = [], media = { plays: 0, pauses: 0 };
+  let heroVisible = initialHeroVisible;
+  w.document.querySelector('.hero').getBoundingClientRect = () => ({ width: 900, height: 570, left: 0, right: 900,
+    top: heroVisible ? 80 : -650, bottom: heroVisible ? 650 : -80 });
   for (const key of ['fetch', 'XMLHttpRequest', 'WebSocket', 'EventSource']) {
     w[key] = () => { requests.push(key); throw new Error('NETWORK_FORBIDDEN'); };
   }
@@ -39,12 +43,20 @@ function fixture(t, reduced = true) {
   };
   w.pannellum = { viewer: (host, config) => {
     const handlers = {}, calls = [];
+    const gestureTarget = w.document.createElement('div');
+    gestureTarget.className = 'pnlm-dragfix';
+    host.appendChild(gestureTarget);
+    let legacyTouchDown = false, endEvents = 0;
+    host.addEventListener('mousedown', () => { config.autoRotate = false; });
+    host.addEventListener('touchstart', () => { config.autoRotate = false; legacyTouchDown = true; });
+    host.addEventListener('touchend', event => { if (event.touches?.length === 0) legacyTouchDown = false; endEvents++; });
     const api = { on: (event, callback) => { handlers[event] = callback; return api; },
       resize: () => calls.push('resize'), lookAt: (...args) => calls.push(['lookAt', ...args]),
-      startAutoRotate: (...args) => calls.push(['startAutoRotate', ...args]), stopAutoRotate: () => calls.push('stopAutoRotate'), stopMovement: () => calls.push('stopMovement'),
+      startAutoRotate: (...args) => { config.autoRotate = args[0]; calls.push(['startAutoRotate', ...args]); }, stopAutoRotate: () => { config.autoRotate = false; calls.push('stopAutoRotate'); }, stopMovement: () => calls.push('stopMovement'),
       getHfov: () => 92, setHfov: (...args) => calls.push(['setHfov', ...args]),
       getConfig: () => config, destroy: () => calls.push('destroy') };
-    viewers.push({ host, config, handlers, calls, api });
+    viewers.push({ host, config, handlers, calls, api, gestureTarget,
+      gesture: () => ({ touching: legacyTouchDown, endEvents }) });
     return api;
   } };
   w.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
@@ -57,19 +69,29 @@ function fixture(t, reduced = true) {
   w.document.exitFullscreen = () => { fullscreen = null; w.document.dispatchEvent(new w.Event('fullscreenchange')); return Promise.resolve(); };
   t.after(() => { w.close(); assert.deepEqual(requests, []); });
   return { w, d: w.document, media, observers, viewers,
-    setNear: value => observers.forEach(o => o.callback([{ target: o.target, isIntersecting: value, intersectionRatio: value ? 1 : 0 }])),
+    initialHeroVisible,
+    setNear: value => observers.filter(o => o.target?.matches('[data-panorama-console]')).forEach(o => o.callback([{ target: o.target, isIntersecting: value, intersectionRatio: value ? 1 : 0 }])),
+    setHeroVisible: value => { heroVisible = value;
+      observers.filter(o => o.target?.matches('.hero')).forEach(o => o.callback([{ target: o.target, isIntersecting: value, intersectionRatio: value ? 1 : 0 }])); },
     setHidden: value => { pageHidden = value; w.document.dispatchEvent(new w.Event('visibilitychange')); } };
 }
 
 function boot(f) {
   f.w.eval(fs.readFileSync(path.join(OUT, 'assets/lucide.min.js'), 'utf8'));
   f.w.eval(js);
+  f.setHeroVisible(f.initialHeroVisible);
   f.d.dispatchEvent(new f.w.Event('DOMContentLoaded'));
 }
 
 test('production WordPress/quote/appointment sources remain exactly the current stable checkout', () => {
   const changed = execFileSync('git', ['diff', '--name-only', '2e3f738', '--', 'wp-mu-plugins', 'wp-plugins'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(changed.trim(), '');
+  for (const name of ['index.html', 'home-family.css']) {
+    const prior = execFileSync('git', ['show', '9ff2b5a:server-config/previews/home-family/' + name], { cwd: ROOT, encoding: 'utf8' });
+    assert.equal(fs.readFileSync(path.join(SOURCE, name), 'utf8').replace(/\r\n/g, '\n'), prior.replace(/\r\n/g, '\n'), name + ' unchanged in interaction-only revision');
+  }
+  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT, 'assets/pannellum.js'))).digest('hex'),
+    'a28b2f7b339fd0a602c6769df1dca6ad43af73bc8c6a5be67209715289c12a9a', 'pinned vendor not patched');
   const previous = execFileSync('git', ['show', 'b9809de:server-config/previews/home-family/index.html'], { cwd: ROOT, encoding: 'utf8' });
   const oldPage = new JSDOM(previous), newPage = new JSDOM(html);
   try {
@@ -476,8 +498,115 @@ test('browsers without IntersectionObserver initialize the inline viewer when it
   assert.equal(f.d.querySelector('#panorama-viewer').dataset.panoramaState, 'loading');
 });
 
+test('hero plays only while visible and never restarts offscreen after background return', t => {
+  const f = fixture(t, false, false);
+  boot(f);
+  const hero = f.d.querySelector('.hero-video');
+  assert.equal(f.media.plays, 0);
+  f.setHeroVisible(true);
+  assert.equal(f.media.plays, 1);
+  f.setHeroVisible(false);
+  assert.equal(hero.paused, true);
+  f.setHidden(true); f.setHidden(false);
+  assert.equal(f.media.plays, 1);
+  f.setHeroVisible(true);
+  assert.equal(f.media.plays, 2);
+});
+
+test('hero manual pause and reduced-motion choice survive viewport transitions', t => {
+  const f = fixture(t, false);
+  boot(f);
+  f.d.querySelector('.video-button').click();
+  f.setHeroVisible(false); f.setHeroVisible(true);
+  assert.equal(f.d.querySelector('.hero-video').paused, true);
+  assert.equal(f.media.plays, 1);
+  const reduced = fixture(t, true);
+  boot(reduced);
+  assert.equal(reduced.media.plays, 0);
+  reduced.d.querySelector('.video-button').click();
+  assert.equal(reduced.media.plays, 1, 'explicit visible playback remains available');
+  reduced.setHeroVisible(false); reduced.setHeroVisible(true);
+  assert.equal(reduced.d.querySelector('.hero-video').paused, true);
+  assert.equal(reduced.media.plays, 1);
+});
+
+test('late hero playing event cannot revive an offscreen player', t => {
+  const f = fixture(t, false);
+  boot(f);
+  f.setHeroVisible(false);
+  const hero = f.d.querySelector('.hero-video');
+  hero.dispatchEvent(new f.w.Event('playing'));
+  assert.equal(hero.paused, true);
+});
+
+test('manual panorama drag updates the control and one click restarts rotation', t => {
+  const f = fixture(t, false);
+  boot(f); f.setNear(true); f.viewers[0].handlers.load();
+  const player = f.viewers[0], button = f.d.querySelector('[data-panorama-rotate]');
+  player.gestureTarget.dispatchEvent(new f.w.MouseEvent('mousedown', { bubbles: true }));
+  assert.equal(button.getAttribute('aria-pressed'), 'false');
+  assert.equal(player.config.autoRotate, false);
+  const starts = () => player.calls.filter(call => Array.isArray(call) && call[0] === 'startAutoRotate').length;
+  const before = starts();
+  button.click();
+  assert.equal(button.getAttribute('aria-pressed'), 'true');
+  assert.equal(starts(), before + 1);
+});
+
+test('touch cancellation reaches the legacy touchend listener without modifying the vendor', t => {
+  const f = fixture(t, false);
+  boot(f); f.setNear(true); f.viewers[0].handlers.load();
+  const player = f.viewers[0];
+  const start = new f.w.Event('touchstart', { bubbles: true });
+  Object.defineProperty(start, 'touches', { value: [{ clientX: 30, clientY: 40 }] });
+  player.gestureTarget.dispatchEvent(start);
+  assert.equal(player.gesture().touching, true);
+  const cancel = new f.w.Event('touchcancel', { bubbles: true });
+  Object.defineProperty(cancel, 'touches', { value: [] });
+  Object.defineProperty(cancel, 'changedTouches', { value: [] });
+  player.gestureTarget.dispatchEvent(cancel);
+  assert.equal(player.gesture().touching, false);
+  assert.equal(player.gesture().endEvents, 1);
+  assert.equal(f.d.querySelector('[data-panorama-rotate]').getAttribute('aria-pressed'), 'false');
+});
+
+test('touchcancel fallback reaches dragfix for descendant or retargeted host events', t => {
+  const f = fixture(t, false);
+  boot(f); f.setNear(true); f.viewers[0].handlers.load();
+  f.w.TouchEvent = class { constructor() { throw new Error('TouchEvent constructor unavailable'); } };
+  const player = f.viewers[0], child = f.d.createElement('span'), ends = [];
+  player.gestureTarget.appendChild(child);
+  player.gestureTarget.addEventListener('touchend', event => ends.push({ target: event.target,
+    lengths: [event.touches.length, event.targetTouches.length, event.changedTouches.length] }));
+  for (const target of [player.gestureTarget, child, player.host]) {
+    const start = new f.w.Event('touchstart', { bubbles: true });
+    Object.defineProperty(start, 'touches', { value: [{ clientX: 30, clientY: 40 }] });
+    player.gestureTarget.dispatchEvent(start);
+    target.dispatchEvent(new f.w.Event('touchcancel', { bubbles: true }));
+    assert.equal(player.gesture().touching, false);
+    assert.deepEqual(ends.at(-1).lengths, [0, 0, 0]);
+    assert.equal(ends.at(-1).target, target === player.host ? player.gestureTarget : target);
+  }
+  assert.equal(ends.length, 3);
+});
+
+test('hero bounds fallback pauses offscreen and resumes only when scrolled back visibly', t => {
+  const f = fixture(t, false, false);
+  delete f.w.IntersectionObserver;
+  boot(f);
+  assert.equal(f.media.plays, 0);
+  f.setHeroVisible(true);
+  f.w.dispatchEvent(new f.w.Event('scroll'));
+  assert.equal(f.media.plays, 1);
+  f.setHeroVisible(false);
+  f.w.dispatchEvent(new f.w.Event('resize'));
+  f.setHidden(true); f.setHidden(false);
+  assert.equal(f.d.querySelector('.hero-video').paused, true);
+  assert.equal(f.media.plays, 1);
+});
+
 test('actual V3 export embeds all original cube faces, local images and scripts byte-exact', t => {
-  const bundle = fs.readFileSync(path.join(OUT, 'harmat-home-family-preview-v3.html'), 'utf8');
+  const bundle = fs.readFileSync(path.join(OUT, 'harmat-home-family-preview-v3-r1.html'), 'utf8');
   const dom = new JSDOM(bundle, { runScripts: 'outside-only' });
   t.after(() => dom.window.close());
   const d = dom.window.document, host = d.querySelector('#panorama-viewer');
