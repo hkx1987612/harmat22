@@ -16,6 +16,11 @@ No server-side content/CRM/property writes, REST route or external translation.
   mutation handling. No broad string substitution or HTML reconstruction.
 - Original field names, input values, option values, units, numbers, money, URLs,
   consent values, handlers and selected property data stay authoritative.
+  v1.1.0 explicitly localizes ONLY the exact untouched native generated offer
+  message plus its auto marker. A captured customer input/change makes that
+  textarea permanently dirty for this node, even across runtime recreation;
+  its value is never translated. Dirty auto markers are cleared so native
+  equality checks cannot overwrite a customer draft that matches a default.
   Numeric auto-property prose and offer summaries use anchored parsers and token
   preservation, not stale translated price snapshots. Unknown prose stays original.
 - Native text-dependent quote triggers have a narrow compatibility bridge, only
@@ -29,6 +34,11 @@ No server-side content/CRM/property writes, REST route or external translation.
   Hungarian website. Controller is activated last after private/temp/formal lint.
 - Ordinary image/PDF/video content, original names/addresses, customer messages,
   private portals and independently multilingual AI chat are not auto-translated.
+  Only the native launch button's exact leaf label has a narrow text exception;
+  avatar/ARIA state/conversation/input/chat-language controls remain excluded.
+  A second narrow exception covers the exact property disclaimer DIV emitted
+  directly under HTML on exact public unit routes/single-property bodies, without
+  moving it or expanding translation permission to other outside-body nodes.
   This does not create indexable `/zh/` URLs or change canonical/SEO metadata.
 - New/changed Hungarian prose requires reviewed dictionary maintenance. There is
   no external provider to fill missing phrases automatically and no new API fee.
@@ -54,10 +64,11 @@ do not run preview deployment against the now-public source.
 
 Actual release/backup/gates/recovery live in
 `server-config/maintenance/2026-10-17-internal-language-release.md`.
-The header-only follow-up is in `2026-10-17-language-header.md`. The later
-dictionary-only v1.0.4 release and exact backup/verification/rollback commands
-are in `2026-10-17-chinese-coverage-release.md`; use that release's verifier for
-current hashes, not the superseded header verifier. The older publisher pins the first release,
+The header-only follow-up is in `2026-10-17-language-header.md`; dictionary-only
+v1.0.4 is in `2026-10-17-chinese-coverage-release.md`. Current v1.1.0 narrow
+bridges, backup/verification/rollback and exact test/browser outcomes are in
+`2026-10-18-language-narrow-bridges.md`; use that release's verifier for current
+hashes, not superseded dictionary/header verifiers. The older publisher pins the first release,
 so it intentionally rejects later presentation hashes. The freshly approved ONE
 positive TEST is NEVER replayed from B;
 the one-shot intent/result is private and deliberately not in Git.

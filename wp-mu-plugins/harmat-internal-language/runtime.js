@@ -3,10 +3,11 @@
   'use strict';
 
   const instances = new WeakMap();
+  const editedMessages = new WeakSet();
   const storageKey = 'harmat.public.language.v1';
   const actionable = 'a, button, [role="button"]';
   const offerScope = '.hm-lakas-card, .apt-card, .apartment-card, .property, article, .elementor-widget-container';
-  const blocked = [
+  const blockedSelectors = [
     'head', 'script', 'style', 'noscript', 'template', 'input', 'textarea',
     'svg', 'canvas', 'code', 'pre', 'output', '#wpadminbar',
     '[contenteditable]:not([contenteditable="false"])', '[translate="no"]',
@@ -16,7 +17,10 @@
     '#harmat22-ai-widget', '#harmat22-ai-root', '#harmat22-ai-widget-root',
     '.fb-customerchat', '.fb_dialog', '#fb-root', '[data-customer-chat]',
     '[data-customerchat]', '[data-harmat-customer-chat]', '[data-harmat-local-ai-body]'
-  ].join(',');
+  ];
+  const blocked = blockedSelectors.join(',');
+  const launcherBlocked = blockedSelectors.filter(selector => selector !== '.harmat-local-ai-launch'
+    && selector !== '[class^="harmat-local-ai-"]').join(',');
   const attributeNames = ['alt', 'aria-label', 'title', 'placeholder'];
 
   function create(document, dictionary, options) {
@@ -44,6 +48,8 @@
     let language = 'hu';
     let disposed = false;
     let rendering = false;
+    let originalMessage = null;
+    let ownedMessage = null;
 
     let control = document.getElementById('harmat-internal-language');
     const createdControl = !control;
@@ -69,10 +75,91 @@
       buttonState.set(button, button.getAttribute('aria-pressed'));
     });
 
+    function outsideDisclaimers() {
+      return Array.from(html.children).filter(element => element.matches('div.harmat-property-disclaimer'));
+    }
+
+    function presentationRoots() {
+      return [document.body].concat(outsideDisclaimers());
+    }
+
     function permitted(element) {
-      if (!element || !document.body.contains(element) || element.closest(blocked)) return false;
+      if (!element || element.closest(blocked)) return false;
+      if (!document.body.contains(element)) {
+        const disclaimer = element.closest('div.harmat-property-disclaimer');
+        if (!disclaimer || disclaimer.parentElement !== html || !document.body.matches('.single-property')
+          || !/^\/property\/a[1-4]-(?:f|[1-4])-l[0-9]+\/$/.test(win.location.pathname)) return false;
+      }
       const option = element.closest('option');
       return !option || option.hasAttribute('value');
+    }
+
+    function launcherLabel(element) {
+      if (!element || !element.matches('span') || element.childElementCount || element.hasAttribute('aria-hidden')
+        || element.closest('[aria-hidden="true"]')
+        || Array.from(element.classList).some(name => /avatar/i.test(name)) || element.matches(blocked)) return false;
+      const button = element.parentElement;
+      return !!button && button.matches('button.harmat-local-ai-launch[type="button"][aria-controls="harmat-local-ai-panel"]')
+        && document.body.contains(button) && !button.matches(launcherBlocked)
+        && !Array.from(button.classList).some(name => name.indexOf('harmat-local-ai-') === 0 && name !== 'harmat-local-ai-launch')
+        && !button.parentElement.closest(blocked) && !button.parentElement.closest('[class*="harmat-local-ai-"]');
+    }
+
+    function offerMessage() {
+      if (originalMessage) return originalMessage;
+      const form = document.getElementById('h22-offer-form');
+      const field = document.getElementById('h22-offer-message');
+      if (form && form.matches('form') && document.body.contains(form) && permitted(form)
+        && field && field.matches('textarea[name="your-message"]') && field.closest('form') === form && field.form === form) {
+        originalMessage = field;
+      }
+      return originalMessage;
+    }
+
+    function syncOfferMessage() {
+      const field = offerMessage();
+      if (!field) return;
+      const marker = 'data-h22-auto-message';
+      // A dirty draft can equal either generated language. Do not let the native
+      // equality check mistake it for a replaceable default on a later opening.
+      if (editedMessages.has(field)) {
+        if (field.hasAttribute(marker)) field.removeAttribute(marker);
+        ownedMessage = null;
+        return;
+      }
+      const form = document.getElementById('h22-offer-form');
+      const valid = form && form.matches('form') && document.body.contains(form) && permitted(form)
+        && document.getElementById('h22-offer-message') === field && field.matches('textarea[name="your-message"]')
+        && field.closest('form') === form && field.form === form
+        && permittedAttributes(field);
+      const apartment = valid && form.querySelector('select#h22-offer-apartment[name="selected-apartment"]');
+      const code = apartment && apartment.form === form ? apartment.value : '';
+      const source = /^A[1-4]-(?:F|[1-4])-L[1-9][0-9]*$/.test(code)
+        ? 'A ' + code + ' lak\u00e1s ir\u00e1nt \u00e9rdekl\u0151d\u00f6m.' : null;
+      // The native owner compares value to its marker before selecting another unit.
+      if (ownedMessage) {
+        if (field.getAttribute(marker) === ownedMessage.last) {
+          const untouched = field.value === ownedMessage.last;
+          if (untouched && language === 'zh-Hans' && source === ownedMessage.source) return;
+          if (untouched) field.value = ownedMessage.source;
+          field.setAttribute(marker, ownedMessage.source);
+        }
+        ownedMessage = null;
+      }
+      if (language !== 'zh-Hans' || !source
+        || field.getAttribute(marker) !== source || field.value !== source) return;
+      const translated = '\u6211\u60f3\u4e86\u89e3 ' + code + ' \u8fd9\u5957\u516c\u5bd3\u3002';
+      field.value = translated;
+      field.setAttribute(marker, translated);
+      ownedMessage = { source, last: translated };
+    }
+
+    function messageEdit(event) {
+      if (disposed || rendering) return;
+      const field = offerMessage();
+      if (!field) return;
+      if (event.target === field) editedMessages.add(field);
+      if (editedMessages.has(field)) apply([]);
     }
 
     function normalize(value) {
@@ -84,7 +171,7 @@
     function permittedAttributes(element) {
       if (permitted(element)) return true;
       // Descriptive attributes can change without touching customer-entered values.
-      return !!element && element.matches('textarea,input:not([type="hidden"]):not([type="password"])')
+      return !!element && document.body.contains(element) && element.matches('textarea,input:not([type="hidden"]):not([type="password"])')
         && permitted(element.parentElement) && !element.matches('[translate="no"],.notranslate,[data-language-protect]');
     }
 
@@ -175,8 +262,11 @@
     function renderNode(node) {
       if (node.nodeType === 3) {
         const previous = originals.get(node);
-        if (!previous && (!node.data.trim() || !permitted(node.parentElement))) return;
-        const state = stateFor(node.data, previous, permitted(node.parentElement));
+        const allowed = permitted(node.parentElement) || (launcherLabel(node.parentElement)
+          && (previous && node.data === previous.last ? previous.source : node.data).trim() === 'K\u00e9rdezzen'
+          && sourceText(node.parentElement).trim() === 'K\u00e9rdezzen' && entries.has('K\u00e9rdezzen'));
+        if (!previous && (!node.data.trim() || !allowed)) return;
+        const state = stateFor(node.data, previous, allowed);
         originals.set(node, state);
         if (node.data !== state.last) node.data = state.last;
         if (state.source !== state.last) changedText.add(node);
@@ -211,8 +301,11 @@
       records.forEach(record => {
         if (record.type === 'childList') roots.push(...record.addedNodes, ...record.removedNodes);
         else roots.push(record.target);
+        if (record.target === document.body || record.target === html) roots.push(...outsideDisclaimers());
         // A child replacement may change the source of an already translated CTA.
         if (record.type === 'childList') {
+          if (record.target.nodeType === 1 && record.target.matches('span') && record.target.parentElement
+            && record.target.parentElement.matches('button.harmat-local-ai-launch')) roots.push(record.target);
           let ancestor = record.target.nodeType === 1 ? record.target : record.target.parentElement;
           while (ancestor) { cacheTrigger(ancestor); ancestor = ancestor.parentElement; }
         }
@@ -223,7 +316,8 @@
     function watch() {
       observer.observe(html, {
         subtree: true, childList: true, characterData: true, attributes: true,
-        attributeFilter: attributeNames.concat(['class', 'id', 'translate', 'contenteditable', 'value', 'href', 'data-mfp-src', 'role', 'data-language-protect'])
+        attributeFilter: attributeNames.concat(['class', 'id', 'translate', 'contenteditable', 'value', 'href', 'data-mfp-src', 'role', 'data-language-protect',
+          'data-h22-auto-message', 'type', 'aria-controls', 'aria-hidden', 'name', 'form'])
       });
     }
 
@@ -238,6 +332,7 @@
         const minimal = unique.filter(root => !unique.some(other => other !== root && other.contains(root)));
         minimal.forEach(cacheTriggers);
         minimal.forEach(scan);
+        syncOfferMessage();
         html.setAttribute('lang', language);
         html.setAttribute('data-harmat-language', language);
         control.querySelectorAll('button[data-hil-language]').forEach(button => {
@@ -255,7 +350,7 @@
       if (disposed) throw new Error('Disposed language runtime');
       if (next !== 'hu' && next !== 'zh-Hans') throw new Error('Unsupported language');
       language = next;
-      apply([document.body].concat(Array.from(changedText), Array.from(changedAttributes)));
+      apply(presentationRoots().concat(Array.from(changedText), Array.from(changedAttributes)));
       if (options.storage !== false) {
         try { win.sessionStorage.setItem(storageKey, language); } catch (error) {}
       }
@@ -263,6 +358,7 @@
     }
 
     function click(event) {
+      if (!disposed && editedMessages.has(offerMessage())) apply([]);
       if (disposed || event.defaultPrevented) return;
       const target = event.target && (event.target.nodeType === 1 ? event.target : event.target.parentElement);
       if (!target || !target.closest) return;
@@ -296,18 +392,19 @@
       translateText,
       refresh(root) {
         if (disposed) throw new Error('Disposed language runtime');
-        root = root || document.body;
-        if (root === document || root === html) root = document.body;
+        if (!root || root === document || root === html) { apply(presentationRoots()); return; }
         if (root.ownerDocument !== document) throw new Error('Foreign document root');
         apply([root]);
       },
       destroy() {
         if (disposed) return;
         language = 'hu';
-        apply([document.body].concat(Array.from(changedText), Array.from(changedAttributes)));
+        apply(presentationRoots().concat(Array.from(changedText), Array.from(changedAttributes)));
         disposed = true;
         observer.disconnect();
         document.removeEventListener('click', click, true);
+        document.removeEventListener('input', messageEdit, true);
+        document.removeEventListener('change', messageEdit, true);
         restoreAttribute(html, 'lang', initialLang);
         restoreAttribute(html, 'data-harmat-language', initialMarker);
         if (createdControl) control.remove();
@@ -318,8 +415,10 @@
       }
     });
     document.addEventListener('click', click, true);
+    document.addEventListener('input', messageEdit, true);
+    document.addEventListener('change', messageEdit, true);
     instances.set(document, api);
-    apply([document.body]);
+    apply(presentationRoots());
     return api;
   }
 
