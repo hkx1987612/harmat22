@@ -152,3 +152,12 @@ and the user's no-quote/no-appointment boundary was maintained throughout.
    historical quotes or customer payment schedules from this audit.
 
 Production stable tag remains `stable-2026-10-18-assistant-ui-payment-current`.
+
+## Subsequent Authorized Implementation Check
+
+Actual IAB financing inspection on the approved follow-up also exposed the legacy
+`harmat_audit_financing_html` month-based project milestones, unlike the generic
+migrated article in the earlier static snapshot. This is additional runtime/cache
+coverage, not evidence that the old private June1 default was changed. Exact live
+implementation, preflight failures and final release status are tracked separately
+in `2026-10-18-public-payment-copy.md`; the audit above remains historical evidence.

@@ -47,7 +47,7 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.4.2';
+    const VERSION = '0.4.3';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
     const CONTACT_PHONE = '+36300733375';
@@ -1684,7 +1684,8 @@ final class Harmat_Local_Assistant {
     }
 
     private function is_payment_schedule_question($text) {
-        if ($this->has_any($text, array('kedvezmeny', 'discount', $this->u('\u4f18\u60e0'), $this->u('\u6298\u6263')))
+        if (($this->has_any($text, array('kedvezmeny', 'discount', $this->u('\u4f18\u60e0'), $this->u('\u6298\u6263'), $this->u('\u7279\u4ef7')))
+            || preg_match('/\b(?:akcio(?:k|s)?|promotions?)\b/u', $text))
             && !$this->has_any($text, array('afa', 'vat', 'ado', 'illetek', 'tax', 'duty', $this->u('\u7a0e')))) {
             return true;
         }
