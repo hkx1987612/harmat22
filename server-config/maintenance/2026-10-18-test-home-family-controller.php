@@ -56,9 +56,9 @@ $actions=$xpath->query('//div[contains(concat(" ",normalize-space(@class)," "),"
 check($actions->length===2,'exactly two hero actions');
 check($actions->item(0)->getAttribute('href')==='https://harmat22.hu/virtualis-lakasvalaszto/'
     && $actions->item(0)->getElementsByTagName('span')->item(0)->getAttribute('data-i18n')==='chooserLink','hero selector reuses public destination and Chinese key');
-check($actions->item(1)->getAttribute('href')==='#opal-contactform-popup-56f08cc'
-    && $actions->item(1)->getElementsByTagName('span')->item(0)->getAttribute('data-i18n')==='appointment','hero appointment reuses unchanged native popup convention');
-check($actions->item(1)->getElementsByTagName('path')->item(0)->getAttribute('d')==='M5 12h14','booking uses existing directional action icon');
+check($actions->item(1)->getAttribute('href')==='https://harmat22.hu/lakaskereso/'
+    && $actions->item(1)->getElementsByTagName('span')->item(0)->getAttribute('data-i18n')==='navSearch','hero search reuses public destination and existing Chinese key');
+check($actions->item(1)->getElementsByTagName('path')->item(0)->getAttribute('d')==='M5 12h14','search uses existing directional action icon');
 check($xpath->query('//*[@id="hhf-epitesi-naplo"]')->length===1,'construction journal section retained');
 $harmat_home_family_units=harmat_home_family_units();
 $original_owned=include dirname($candidate).'/harmat-home-family/body.php';
@@ -94,6 +94,10 @@ check(strpos($flow,'.hhf-highlight-grid dd>strong{min-height:46px}')!==false
     && strpos($flow,'.hhf-highlight-grid dd>strong{min-height:60px}')!==false,'summary caption alignment allows longer wrapped values');
 check(strpos($flow,'.hhf-price strong:not(.hhf-price-hidden){font-size:24px}')!==false
     && strpos($flow,'.hhf-panorama-video-card h3{font-size:23px}')!==false,'readable card values and compact panorama heading exceptions');
+check(strpos($flow,'#harmat-home-family{--muted:#47574e;--body:#35463c}')!==false,'stronger owned text contrast');
+check(strpos($flow,'grid-template-columns:minmax(133px,1fr) 36px minmax(100px,1fr)')!==false
+    && strpos($flow,'@media(max-width:767px)')!==false,'phone native header columns remain on one row');
+check(strpos($flow,'#harmat-internal-language[data-hil-anchor=fallback]{left:62px!important;right:auto!important;top:16px!important;bottom:auto!important}')!==false,'phone fallback language stays beside menu, not logo');
 check(substr_count($output,'id="harmat-home-family"')===1,'one root');
 check(substr_count($output,'<h1 ')===1,'one h1');
 foreach(array('header','footer','form') as $tag){preg_match('~<'.$tag.'\b[\s\S]*?</'.$tag.'>~',$input,$a);preg_match('~<'.$tag.'\b[\s\S]*?</'.$tag.'>~',$output,$b);check($a[0]===$b[0],'native '.$tag.' byte exact');}

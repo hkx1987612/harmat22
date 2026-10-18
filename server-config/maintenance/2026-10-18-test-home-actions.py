@@ -35,6 +35,13 @@ class ActionsTests(unittest.TestCase):
         self.stack = contextlib.ExitStack()
         self.addCleanup(self.stack.close)
         self.stack.enter_context(patch.object(socket.socket, 'connect', side_effect=AssertionError('NETWORK FORBIDDEN')))
+        base = subprocess.check_output(['git', 'show', A.BASE + ':wp-mu-plugins/' + A.U.D.MAIN], cwd=A.ROOT)
+        historical = A.patch(base)
+        controller = (A.ROOT / 'wp-mu-plugins' / A.U.D.MAIN).resolve()
+        real_read = Path.read_bytes
+        # Keep the historical v1.0.4 release fixture without loosening production pins.
+        self.stack.enter_context(patch.object(Path, 'read_bytes', autospec=True,
+            side_effect=lambda path: historical if path.resolve() == controller else real_read(path)))
         self.original, self.candidate, self.files, self.hashes, self.checker = A.local_release()
         self.assets = {U.D.DIR + '/' + name: (A.ROOT / 'wp-mu-plugins' / name).read_bytes().replace(b'\r\n', b'\n')
                        for name in self.files if name != U.D.MAIN}

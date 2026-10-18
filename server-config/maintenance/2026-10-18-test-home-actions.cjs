@@ -13,13 +13,15 @@ const html = execFileSync(PHP, [path.join(__dirname, '2026-10-18-test-home-famil
 const js = fs.readFileSync(path.join(ROOT, 'wp-mu-plugins/harmat-home-family/home-family.js'), 'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-test('rendered hero uses original selector and native booking destinations with only two anchors', () => {
+test('rendered hero keeps virtual selector and opens property search with only two anchors', () => {
   const dom = new JSDOM(html);
   try {
     const d = dom.window.document, hero = d.querySelector('.hhf-hero-actions'), anchors = [...hero.querySelectorAll('a')];
     assert.equal(anchors.length, 2);
-    assert.deepEqual(anchors.map(a => a.getAttribute('href')), ['https://harmat22.hu/virtualis-lakasvalaszto/', '#opal-contactform-popup-56f08cc']);
-    assert.deepEqual(anchors.map(a => a.querySelector('span').textContent), ['Virtuális lakásválasztó', 'Időpontkérés']);
+    assert.deepEqual(anchors.map(a => a.getAttribute('href')), ['https://harmat22.hu/virtualis-lakasvalaszto/', 'https://harmat22.hu/lakaskereso/']);
+    assert.deepEqual(anchors.map(a => a.querySelector('span').textContent), ['Virtuális lakásválasztó', 'Lakáskereső']);
+    assert.equal(anchors[1].querySelector('span').dataset.i18n, 'navSearch');
+    assert(anchors[1].classList.contains('hhf-hero-booking'), 'outlined style hook retained');
     assert.equal(hero.querySelectorAll('.hhf-button-white').length, 2);
     assert(!hero.querySelector('[target],form,input,iframe,script'));
     assert(d.getElementById('hhf-epitesi-naplo'));
@@ -43,26 +45,35 @@ test('unchanged owned runtime translates both action labels HU-ZH-HU without cha
     w.eval(js);
     for (let i=0; i<3; i++) {
       d.documentElement.setAttribute('data-harmat-language', 'zh-Hans'); await tick();
-      assert.deepEqual(links.map(a => a.querySelector('span').textContent), ['虚拟选房','预约参观']);
+      assert.deepEqual(links.map(a => a.querySelector('span').textContent), ['虚拟选房','查找公寓']);
       d.documentElement.setAttribute('data-harmat-language', 'hu'); await tick();
-      assert.deepEqual(links.map(a => a.querySelector('span').textContent), ['Virtuális lakásválasztó','Időpontkérés']);
+      assert.deepEqual(links.map(a => a.querySelector('span').textContent), ['Virtuális lakásválasztó','Lakáskereső']);
     }
     assert.deepEqual(links.map(a => a.getAttribute('href')), hrefs);
     assert.equal(form.outerHTML, native);
     assert.equal(form.querySelector('input').value, 'Unsent draft');
     assert.equal(form.querySelector('[required]').checked, false);
     assert.deepEqual(requests, []);
-    let nativeDelegated = 0;
-    d.addEventListener('click', e => {if(e.target.closest('a')?.getAttribute('href') === '#opal-contactform-popup-56f08cc'){nativeDelegated++; e.preventDefault();}});
+    let nativeDelegated = 0, searchDelegated = 0;
+    d.addEventListener('click', e => {
+      const href = e.target.closest('a')?.getAttribute('href');
+      if (href === '#opal-contactform-popup-56f08cc') nativeDelegated++;
+      if (href === 'https://harmat22.hu/lakaskereso/') searchDelegated++;
+      e.preventDefault();
+    });
     links[1].click();
+    assert.equal(nativeDelegated, 0, 'search action no longer invokes native popup');
+    assert.equal(searchDelegated, 1);
+    const nativeLink = d.createElement('a');
+    nativeLink.href = '#opal-contactform-popup-56f08cc'; d.body.append(nativeLink); nativeLink.click();
     assert.equal(nativeDelegated, 1, 'owned runtime leaves native delegated click available; native popup itself requires live QA');
   } finally { w.close(); }
 });
 
-test('new CSS is scoped to hero actions and summary minimum sizing only', () => {
+test('previous action CSS remains scoped and preserves phone stacking and summary sizing', () => {
   const source = fs.readFileSync(controller, 'utf8');
   const lines = source.split('\n');
-  const additions = lines.filter(l => l.includes(".hhf-hero-booking{") || l.includes(".hhf-hero-booking:hover{") || l.includes('max-width:320px'));
+  const additions = lines.filter(l => l.includes("background:transparent;border-color:#fff;color:#fff") || l.includes(".hhf-hero-booking:hover{") || l.includes('max-width:320px'));
   assert.equal(additions.length, 3);
   const css = additions.map(l => l.match(/\. '([^']*)'/)[1]).join('');
   const dom = new JSDOM('<style>' + css + '</style>');

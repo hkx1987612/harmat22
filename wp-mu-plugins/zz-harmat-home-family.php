@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.4
+ * Version: 1.0.6
  */
 defined('ABSPATH') || exit;
 
@@ -113,8 +113,8 @@ function harmat_home_family_hero_actions($html) {
         || substr_count($html,$choose)!==1 || substr_count($html,$journal)!==1) return false;
     $selector='<a class="hhf-button hhf-button-white" href="https://harmat22.hu/virtualis-lakasvalaszto/"><span data-i18n="chooserLink">'
         . "Virtu\u{00e1}lis lak\u{00e1}sv\u{00e1}laszt\u{00f3}</span>";
-    $booking='<a class="hhf-button hhf-button-white hhf-hero-booking" href="#opal-contactform-popup-56f08cc"><span data-i18n="appointment">'
-        . "Id\u{0151}pontk\u{00e9}r\u{00e9}s</span>"
+    $booking='<a class="hhf-button hhf-button-white hhf-hero-booking" href="https://harmat22.hu/lakaskereso/"><span data-i18n="navSearch">'
+        . "Lak\u{00e1}skeres\u{0151}</span>"
         . '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></a>';
     return str_replace(array($choose,$journal),array($selector,$booking),$html);
 }
@@ -207,6 +207,17 @@ function harmat_home_family_output($html) {
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero-booking{background:transparent;border-color:#fff;color:#fff}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero-booking:hover{background:#fff;color:var(--forest)}'
             . '@media(max-width:620px){body.home.page-id-164 #harmat-home-family .hhf-hero-actions{flex-direction:column;align-items:stretch;max-width:320px}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid .hhf-highlight-unit{display:block;font-size:16px;line-height:1.25}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong{min-height:64px}}'
+            . 'body.home.page-id-164 #harmat-home-family{--muted:#47574e;--body:#35463c}'
+            . 'body.home.page-id-164 #harmat-home-family h1,body.home.page-id-164 #harmat-home-family h2,body.home.page-id-164 #harmat-home-family h3{font-weight:600}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong{font-weight:500}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-eyebrow,body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dt,body.home.page-id-164 #harmat-home-family .hhf-apartment-facts dt,body.home.page-id-164 #harmat-home-family .hhf-apartment-floor,body.home.page-id-164 #harmat-home-family .hhf-journal-date{font-weight:500}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero h1{font-size:38px;text-shadow:0 1px 3px rgba(15,33,24,.55)}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero-actions .hhf-button{font-size:16px;font-weight:600}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero-booking{background:rgba(15,33,24,.3)}'
+            . '@media(max-width:620px){body.home.page-id-164 #harmat-home-family .hhf-hero h1{font-size:32px}}'
+            . '@media(max-width:360px){body.home.page-id-164 #harmat-home-family .hhf-hero h1{font-size:30px}}'
+            . '@media(max-width:767px){body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner{display:grid!important;grid-template-columns:minmax(133px,1fr) 36px minmax(100px,1fr);gap:4px;padding-inline:12px!important;width:100%!important;box-sizing:border-box;flex-wrap:nowrap}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.e-con{width:auto!important;min-width:0;padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.elementor-element-58842f8{align-items:flex-start}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.elementor-element-fba2323{align-items:flex-end}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-opal-site-logo img{width:36px!important;height:36px!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc{display:block!important;width:100px!important;max-width:100%!important;min-width:0;gap:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc .elementor-button-wrapper{display:block!important;width:100%!important;max-width:100%!important;min-width:0;gap:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc a.elementor-button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:40px;padding:8px 6px;font-size:12px;line-height:1.2;letter-spacing:0;text-transform:none!important;white-space:nowrap}body.home.page-id-164 #harmat-internal-language[data-hil-anchor=menu],body.home.page-id-164 #harmat-internal-language[data-hil-anchor=held],body.home.page-id-164 #harmat-internal-language[data-hil-anchor=fallback]{width:84px!important;max-width:84px!important}body.home.page-id-164 #harmat-internal-language[data-hil-anchor=fallback]{left:62px!important;right:auto!important;top:16px!important;bottom:auto!important}body.home.page-id-164 #harmat-internal-language>button[data-hil-language]{flex:1 1 0;width:auto;padding-inline:1px}body.home.page-id-164 #harmat-internal-language>button[data-hil-language=hu]{flex:1.3 1 0}}'
+            . '@media(max-width:767px){body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow{padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-icon{padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc{padding-inline:0!important}body.home.page-id-164 #harmat-internal-language>button[data-hil-language=hu]{flex:1.4 1 0}}'
             . '</style>';
         foreach (array('pannellum.css','home-family.css') as $name) {
             if (!isset($pins[$name])) return $html;
