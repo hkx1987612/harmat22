@@ -47,7 +47,7 @@ if (!function_exists('mb_strpos')) {
 }
 
 final class Harmat_Local_Assistant {
-    const VERSION = '0.4.1';
+    const VERSION = '0.4.2';
     const REST_NAMESPACE = 'harmat-local-assistant/v1';
     const CONTACT_EMAIL = 'ertekesites@harmat22.hu';
     const CONTACT_PHONE = '+36300733375';
@@ -1669,9 +1669,9 @@ final class Harmat_Local_Assistant {
 
     private function payment_schedule_answer($lang) {
         return $this->by_lang($lang,
-            $this->u('T\u00e1j\u00e9koztat\u00f3 r\u00e9szletfizet\u00e9si \u00fctemez\u00e9s:\n1. V\u00e9teli biztos\u00edt\u00e9k: 1.000.000 Ft, az aj\u00e1nlat al\u00e1\u00edr\u00e1sakor vagy 3 napon bel\u00fcl.\n2. El\u0151szerz\u0151d\u00e9s al\u00e1\u00edr\u00e1s\u00e1t\u00f3l 3 napon bel\u00fcl: a v\u00e9tel\u00e1r 25%-a.\n3. M\u00e1sodik r\u00e9szlet: 25%, 2027.05.31-ig.\n4. Harmadik r\u00e9szlet: 25%, a bels\u0151\u00e9p\u00edt\u00e9szeti munk\u00e1k kezdetekor.\n5. Negyedik r\u00e9szlet: 20%, a lak\u00e1s elk\u00e9sz\u00fclt\u00e9r\u0151l sz\u00f3l\u00f3 \u00e9rtes\u00edt\u00e9s ut\u00e1n.\n6. Kulcsrak\u00e9sz \u00e1llapotn\u00e1l: 5%.\n\nA tov\u00e1bbi r\u00e9szletekhez nem k\u00f6zl\u00fcnk meg nem er\u0151s\u00edtett napt\u00e1ri d\u00e1tumot. A v\u00e9gleges ar\u00e1nyokat, hat\u00e1rid\u0151ket \u00e9s felt\u00e9teleket mindig az adott lak\u00e1s aj\u00e1nlata \u00e9s a szerz\u0151d\u00e9s r\u00f6gz\u00edti.'),
-            $this->u('\u5206\u671f\u4ed8\u6b3e\u8282\u70b9\u53c2\u8003\uff1a\n1. \u8d2d\u623f\u610f\u5411\u4fdd\u8bc1\u91d1\uff1a1,000,000 Ft\uff0c\u7b7e\u7f72\u610f\u5411\u4e66\u65f6\u62163\u5929\u5185\u652f\u4ed8\u3002\n2. \u7b7e\u8ba2\u9884\u552e\u5408\u540c\u540e3\u5929\u5185\uff1a\u623f\u4ef7\u768425%\u3002\n3. \u7b2c\u4e8c\u671f\u4ed8\u6b3e\uff1a25%\uff0c2027\u5e745\u670831\u65e5\u524d\u652f\u4ed8\u3002\n4. \u7b2c\u4e09\u671f\u4ed8\u6b3e\uff1a25%\uff0c\u5ba4\u5185\u5de5\u7a0b\u5f00\u59cb\u65f6\u3002\n5. \u7b2c\u56db\u671f\u4ed8\u6b3e\uff1a20%\uff0c\u6536\u5230\u623f\u5c4b\u5b8c\u5de5\u901a\u77e5\u540e\u3002\n6. \u8fbe\u5230\u7cbe\u88c5\uff0f\u4ea4\u94a5\u5319\u72b6\u6001\u65f6\uff1a5%\u3002\n\n\u5176\u4f59\u8282\u70b9\u6682\u4e0d\u5217\u51fa\u672a\u7ecf\u786e\u8ba4\u7684\u5177\u4f53\u65e5\u671f\u3002\u6700\u7ec8\u4ed8\u6b3e\u6bd4\u4f8b\u3001\u671f\u9650\u53ca\u6761\u4ef6\uff0c\u4ee5\u5177\u4f53\u623f\u6e90\u62a5\u4ef7\u548c\u6b63\u5f0f\u5408\u540c\u4e3a\u51c6\u3002'),
-            $this->u('Indicative installment payment schedule:\n1. Purchase-offer security deposit: 1,000,000 Ft, payable at signing or within 3 days.\n2. Within 3 days after signing the preliminary contract: 25% of the purchase price.\n3. Second installment: 25%, by 2027-05-31.\n4. Third installment: 25%, at the start of interior works.\n5. Fourth installment: 20%, after notification that the apartment is complete.\n6. At turnkey condition: 5%.\n\nNo unconfirmed calendar dates are stated for the remaining milestones. Final percentages, deadlines and conditions are confirmed in the selected apartment offer and contract.')
+            $this->u('T\u00e1j\u00e9koztat\u00f3 fizet\u00e9si lehet\u0151s\u00e9gek:\n1. Teljes fizet\u00e9s: a lak\u00e1s teljes v\u00e9tel\u00e1r\u00e1nak megfizet\u00e9se 2026.12.31-ig, 8% kedvezm\u00e9nnyel a lak\u00e1s v\u00e9tel\u00e1r\u00e1b\u00f3l.\n\n2. 50/50 fizet\u00e9s: 50% megfizet\u00e9se 2026.12.31-ig, a fennmarad\u00f3 50% megfizet\u00e9se 2027.06.30-ig, 4% kedvezm\u00e9nnyel a lak\u00e1s v\u00e9tel\u00e1r\u00e1b\u00f3l.\n\n3. \u00c9p\u00edt\u00e9si m\u00e9rf\u00f6ldk\u00f6vekhez k\u00f6t\u00f6tt r\u00e9szletfizet\u00e9s, kedvezm\u00e9ny n\u00e9lk\u00fcl:\n- 25%: foglal\u00f3 \u00e9s el\u0151leg.\n- 25%: szerkezetk\u00e9sz \u00e1llapot / tet\u0151szint.\n- 25%: bels\u0151\u00e9p\u00edt\u00e9szeti munk\u00e1k.\n- 20%: kulcs\u00e1tv\u00e9teli \u00e9rtes\u00edt\u00e9s.\n- 5%: \u00e1tad\u00e1s.\n\nA v\u00e9gleges felt\u00e9teleket mindig az adott lak\u00e1s al\u00e1\u00edrt v\u00e9gleges aj\u00e1nlata \u00e9s szerz\u0151d\u00e9se r\u00f6gz\u00edti.'),
+            $this->u('\u4ed8\u6b3e\u65b9\u6848\u53c2\u8003\uff1a\n1. \u5168\u989d\u4ed8\u6b3e\uff1a\u4e8e2026\u5e7412\u670831\u65e5\u524d\u4ed8\u6e05\u5168\u90e8\u623f\u6b3e\uff0c\u4eab\u53d7\u623f\u4ef78%\u7684\u6298\u6263\u3002\n\n2. 50/50\u4ed8\u6b3e\uff1a\u4e8e2026\u5e7412\u670831\u65e5\u524d\u652f\u4ed850%\uff0c\u4e8e2027\u5e746\u670830\u65e5\u524d\u652f\u4ed8\u5269\u4f5950%\uff0c\u4eab\u53d7\u623f\u4ef74%\u7684\u6298\u6263\u3002\n\n3. \u6309\u65bd\u5de5\u8282\u70b9\u5206\u671f\u4ed8\u6b3e\uff0c\u65e0\u6298\u6263\uff1a\n- 25%\uff1a\u5b9a\u91d1\u53ca\u9884\u4ed8\u6b3e\u3002\n- 25%\uff1a\u5c01\u9876\u3002\n- 25%\uff1a\u5ba4\u5185\u88c5\u4fee\u3002\n- 20%\uff1a\u6536\u5230\u9886\u53d6\u94a5\u5319\u901a\u77e5\u65f6\u3002\n- 5%\uff1a\u4ea4\u4ed8\u3002\n\n\u6700\u7ec8\u6761\u4ef6\u4ee5\u5177\u4f53\u623f\u6e90\u6700\u7ec8\u7b7e\u7f72\u7684\u62a5\u4ef7\u4e66\u548c\u5408\u540c\u4e3a\u51c6\u3002'),
+            $this->u('Indicative payment options:\n1. Full payment: pay the full apartment price by 2026-12-31 for an 8% discount on the apartment price.\n\n2. 50/50 payment: pay 50% by 2026-12-31 and the remaining 50% by 2027-06-30 for a 4% discount on the apartment price.\n\n3. Construction-milestone installments, with no discount:\n- 25%: deposit and down payment.\n- 25%: topping-out.\n- 25%: interior fitout.\n- 20%: notification to collect the keys.\n- 5%: handover.\n\nFinal conditions are confirmed in the selected apartment\'s final signed offer and contract.')
         );
     }
 
@@ -1684,6 +1684,10 @@ final class Harmat_Local_Assistant {
     }
 
     private function is_payment_schedule_question($text) {
+        if ($this->has_any($text, array('kedvezmeny', 'discount', $this->u('\u4f18\u60e0'), $this->u('\u6298\u6263')))
+            && !$this->has_any($text, array('afa', 'vat', 'ado', 'illetek', 'tax', 'duty', $this->u('\u7a0e')))) {
+            return true;
+        }
         return $this->has_any($text, array(
             'fizetes', 'fizetesi', $this->u('fizet\u00e9s'), $this->u('fizet\u00e9si'), $this->u('\u00fctemez\u00e9s'), 'utemezes', 'reszlet', $this->u('r\u00e9szlet'), 'payment', 'installment', 'schedule', 'milestone',
             $this->u('\u4ed8\u6b3e'), $this->u('\u4ed8\u6b3e\u8282\u70b9'), $this->u('\u4ed8\u6b3e\u65f6\u95f4'), $this->u('\u600e\u4e48\u4ed8\u6b3e'), $this->u('\u5206\u671f'), $this->u('\u9996\u4ed8'), $this->u('\u7b7e\u8ba2\u5408\u540c'), $this->u('\u8d44\u91d1\u8282\u70b9')
