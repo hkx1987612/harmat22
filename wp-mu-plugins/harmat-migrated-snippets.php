@@ -2055,7 +2055,7 @@ add_action('wp_head', function () {
     cleanAutoPageMenu();
     fixOsszesText();
     clarifyHomeStats();
-    addPropertyDisclaimer();
+    if (<?php echo !function_exists('harmat_property_disclaimer_scope') || harmat_property_disclaimer_scope() ? 'true' : 'false'; ?> /* harmat-property-disclaimer-legacy */) addPropertyDisclaimer();
     removeLegacyPropertyTopRows();
     addPropertyStatus();
     normalizeListingData();
