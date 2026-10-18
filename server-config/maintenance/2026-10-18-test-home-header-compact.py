@@ -36,6 +36,13 @@ class CompactTests(unittest.TestCase):
         self.stack = contextlib.ExitStack()
         self.addCleanup(self.stack.close)
         self.stack.enter_context(patch.object(socket.socket, 'connect', side_effect=AssertionError('NETWORK FORBIDDEN')))
+        base = subprocess.check_output(['git', 'show', C.U.BASE + ':wp-mu-plugins/' + C.U.D.MAIN], cwd=C.ROOT)
+        historical = C.patch(C.U.patch(base))
+        controller = (C.ROOT / 'wp-mu-plugins' / C.U.D.MAIN).resolve()
+        real_read = Path.read_bytes
+        # Preserve this version-specific updater's pins after later releases.
+        self.stack.enter_context(patch.object(Path, 'read_bytes', autospec=True,
+            side_effect=lambda path: historical if path.resolve() == controller else real_read(path)))
         self.original, self.candidate, self.files, self.hashes, self.checker = C.local_release()
         self.assets = {U.D.DIR + '/' + name: (C.ROOT / 'wp-mu-plugins' / name).read_bytes().replace(b'\r\n', b'\n')
                        for name in self.files if name != U.D.MAIN}

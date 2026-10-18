@@ -61,6 +61,16 @@ check(strpos($flow,'.elementor-widget-opal-site-logo img{width:60px!important;he
 check(strpos($flow,'body.home.page-id-164 #harmat-home-family h1,body.home.page-id-164 #harmat-home-family h2,body.home.page-id-164 #harmat-home-family h3{padding:0}')!==false,'owned heading theme padding reset');
 check(strpos($flow,'@media(max-width:620px)')!==false && strpos($flow,'@media(max-width:360px)')!==false,'owned compact mobile readability overrides');
 check(strpos($flow,'font-size:32px')!==false && strpos($flow,'font-size:22px')!==false,'fixed readable desktop and narrow screen sizes');
+check(strpos($flow,'#harmat-home-family{--muted:#58645d;background:#f8f8f6}')!==false
+    && strpos($flow,'.hhf-journal{background:#edf2ef}')!==false,'homepage readable soft neutral and green bands');
+check(strpos($flow,'#harmat-home-family h2{font-size:36px;line-height:1.3}')!==false
+    && strpos($flow,'#harmat-home-family h2{font-size:28px}')!==false,'unified fixed-size responsive section headings');
+check(strpos($flow,'@media(max-width:1000px) and (min-width:621px)')!==false
+    && strpos($flow,'grid-template-columns:repeat(2,minmax(0,1fr));gap:20px')!==false,'tablet apartment cards avoid cramped three columns');
+check(strpos($flow,'.hhf-highlight-grid dd>strong{min-height:46px}')!==false
+    && strpos($flow,'.hhf-highlight-grid dd>strong{min-height:60px}')!==false,'summary caption alignment allows longer wrapped values');
+check(strpos($flow,'.hhf-price strong:not(.hhf-price-hidden){font-size:24px}')!==false
+    && strpos($flow,'.hhf-panorama-video-card h3{font-size:23px}')!==false,'readable card values and compact panorama heading exceptions');
 check(substr_count($output,'id="harmat-home-family"')===1,'one root');
 check(substr_count($output,'<h1 ')===1,'one h1');
 foreach(array('header','footer','form') as $tag){preg_match('~<'.$tag.'\b[\s\S]*?</'.$tag.'>~',$input,$a);preg_match('~<'.$tag.'\b[\s\S]*?</'.$tag.'>~',$output,$b);check($a[0]===$b[0],'native '.$tag.' byte exact');}

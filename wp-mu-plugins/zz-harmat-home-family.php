@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.2
+ * Version: 1.0.3
  */
 defined('ABSPATH') || exit;
 
@@ -157,6 +157,34 @@ function harmat_home_family_output($html) {
             . 'body.home.page-id-164 #harmat-home-family .hhf-panorama{padding-top:0}'
             . '@media(max-width:620px){body.home.page-id-164 #harmat-home-family .hhf-section{padding-block:40px}body.home.page-id-164 #harmat-home-family .hhf-panorama{padding-top:0}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong,body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-date{font-size:30px}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-word{font-size:24px}body.home.page-id-164 #harmat-home-family figcaption{font-size:13px}}'
             . '@media(max-width:360px){body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-word{font-size:22px}}'
+            . 'body.home.page-id-164 #harmat-home-family{--muted:#58645d;background:#f8f8f6}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlights{background:#f6f5f2}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartments{background:#f5f4f2}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-journal{background:#edf2ef}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-everyday{background:#f8f8f6}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-panorama,body.home.page-id-164 #harmat-home-family .hhf-team{background:#fff}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-chooser{background:#e9f0eb}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-contact{background:#f1f0ed}'
+            . 'body.home.page-id-164 #harmat-home-family h2{font-size:36px;line-height:1.3}'
+            . 'body.home.page-id-164 #harmat-home-family h3{font-size:26px;line-height:1.35}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-top h3{font-size:21px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-panorama-video-card h3{font-size:23px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-panorama-detail h3{font-size:24px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-journal-copy>p:not(.hhf-eyebrow):not(.hhf-journal-date):not(.hhf-planned-note),body.home.page-id-164 #harmat-home-family .hhf-everyday-heading>p,body.home.page-id-164 #harmat-home-family .hhf-everyday-story>p,body.home.page-id-164 #harmat-home-family .hhf-park-row p:not(.hhf-eyebrow),body.home.page-id-164 #harmat-home-family .hhf-showroom-copy>p:not(.hhf-eyebrow),body.home.page-id-164 #harmat-home-family .hhf-chooser p:not(.hhf-eyebrow),body.home.page-id-164 #harmat-home-family .hhf-team p:not(.hhf-eyebrow),body.home.page-id-164 #harmat-home-family .hhf-contact-intro{font-size:16px;line-height:1.75}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-journal-copy .hhf-planned-note{font-size:14px;line-height:1.7}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-media-label{font-size:13px;line-height:1.5}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-facts dt,body.home.page-id-164 #harmat-home-family .hhf-apartment-floor{font-size:14px;line-height:1.6}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-price strong:not(.hhf-price-hidden){font-size:24px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-price strong span{font-size:16px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong{min-height:46px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-section{padding-block:56px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-panorama{padding-top:56px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-section-heading,body.home.page-id-164 #harmat-home-family .hhf-everyday-heading{margin-bottom:24px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-journal-copy h2,body.home.page-id-164 #harmat-home-family .hhf-showroom-copy h2,body.home.page-id-164 #harmat-home-family .hhf-chooser h2{margin-bottom:16px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-journal-grid,body.home.page-id-164 #harmat-home-family .hhf-everyday-heading,body.home.page-id-164 #harmat-home-family .hhf-park-row,body.home.page-id-164 #harmat-home-family .hhf-showroom-row,body.home.page-id-164 #harmat-home-family .hhf-chooser-grid,body.home.page-id-164 #harmat-home-family .hhf-team-grid,body.home.page-id-164 #harmat-home-family .hhf-contact-grid{gap:48px}'
+            . '@media(max-width:1000px) and (min-width:621px){body.home.page-id-164 #harmat-home-family .hhf-apartment-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}}'
+            . '@media(max-width:900px){body.home.page-id-164 #harmat-home-family h2{font-size:32px}body.home.page-id-164 #harmat-home-family .hhf-journal-grid,body.home.page-id-164 #harmat-home-family .hhf-everyday-heading,body.home.page-id-164 #harmat-home-family .hhf-park-row,body.home.page-id-164 #harmat-home-family .hhf-showroom-row,body.home.page-id-164 #harmat-home-family .hhf-chooser-grid,body.home.page-id-164 #harmat-home-family .hhf-team-grid,body.home.page-id-164 #harmat-home-family .hhf-contact-grid{gap:28px}}'
+            . '@media(max-width:620px){body.home.page-id-164 #harmat-home-family h2{font-size:28px}body.home.page-id-164 #harmat-home-family .hhf-everyday-story h3,body.home.page-id-164 #harmat-home-family .hhf-park-row h3{font-size:23px}body.home.page-id-164 #harmat-home-family .hhf-section{padding-block:40px}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong{min-height:60px}body.home.page-id-164 #harmat-home-family .hhf-panorama{padding-top:40px}}'
             . '</style>';
         foreach (array('pannellum.css','home-family.css') as $name) {
             if (!isset($pins[$name])) return $html;
