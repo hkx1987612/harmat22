@@ -198,3 +198,43 @@ test('initialization is idempotent and never duplicates local interactions', t =
   assert.equal(f.d.querySelectorAll('svg').length, before);
   assert.equal(f.d.querySelectorAll('.language-switch').length, 1);
 });
+
+test('360 panorama stays distinct from apartment selection and uses the original official module', t => {
+  const { d } = fixture(t);
+  const section = d.querySelector('#panorama');
+  const chooser = d.querySelector('#lakasvalaszto');
+  assert(section && chooser && section !== chooser);
+  assert(section.compareDocumentPosition(chooser) & 4, 'panorama precedes chooser');
+  assert(d.querySelector('.desktop-nav a[href="#panorama"]'));
+  assert(d.querySelector('.site-menu nav a[href="#panorama"]'));
+  const links = section.querySelectorAll('a[href="https://harmat22.hu/harmat-lakopark-kornyeke/#harmat-3d-tour"]');
+  assert(links.length >= 2, 'poster and copy both lead to original official panorama');
+  for (const a of links) {
+    assert.equal(a.target, '_blank');
+    assert(a.rel.includes('noopener') && a.rel.includes('noreferrer'));
+  }
+  assert(section.querySelector('img[src="assets/project-panorama.jpg"]'));
+  assert.match(section.textContent, /Látványterv/i);
+  assert.equal(d.querySelectorAll('canvas,iframe').length, 0, 'no offline substitute engine');
+});
+
+test('panorama HU/Chinese copy and accessible poster link fully roundtrip', async t => {
+  const f = fixture(t);
+  boot(f);
+  const section = f.d.querySelector('#panorama');
+  const before = section.outerHTML;
+  f.d.querySelector('[data-language="zh"]').click();
+  await tick();
+  assert.match(section.textContent, /360/);
+  assert.match(section.textContent, /全景/);
+  for (const node of section.querySelectorAll('[data-i18n]')) {
+    if (node.dataset.i18n === 'panoramaEyebrow') assert.equal(node.textContent, 'Harmat Lakópark · 3D/360°');
+    else assert.match(node.textContent, /[\u4e00-\u9fff]/, node.dataset.i18n);
+    assert(!node.textContent.includes('undefined'));
+  }
+  for (const node of section.querySelectorAll('[data-i18n-alt]')) assert.match(node.alt, /[\u4e00-\u9fff]/);
+  for (const node of section.querySelectorAll('[data-i18n-aria-label]')) assert.match(node.getAttribute('aria-label'), /[\u4e00-\u9fff]/);
+  f.d.querySelector('[data-language="hu"]').click();
+  await tick();
+  assert.equal(section.outerHTML, before);
+});

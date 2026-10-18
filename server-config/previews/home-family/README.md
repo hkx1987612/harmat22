@@ -14,6 +14,10 @@ presentation files here; parent review added packaging and no-network tests.
 - Project courtyard/living-room renderings are labelled as renderings. The nearby
   public park is explicitly not the development's internal completed garden.
 - Compact showroom, virtual-selector link, team and official sales contacts.
+- User review identified a missing independent 3D/360 panorama entry. The follow-up
+  restores its own section and desktop/mobile navigation, separate from choosing
+  an apartment. Its original cube-front poster links to the existing official
+  neighborhood panorama; the offline preview does NOT embed a replacement engine.
 - Independent desktop navigation, mobile menu and local HU/Chinese controls.
 - Public apartment values were checked against the official public inventory on
   October 18. They are a preview snapshot, not a live price feed.
@@ -49,6 +53,15 @@ do not substitute guessed assets or commit raw video. Public facts/manifests and
 the Lucide license are staged beneath the ignored output folder. DOM tests use
 the existing `outputs/2026-10-17-chinese-switch/node_modules/jsdom` installation.
 
+For an already staged preview, `--panorama` stages only the original official
+`/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/pano_pano_f.jpg`
+as `assets/project-panorama.jpg`. Original bytes are preserved (774,397 bytes,
+SHA256 `d6571b9ceabe2db857b12278e63d19ffab1c550a6401003dd3b74261c2885b19`).
+The image combines project visualization with its surrounding aerial context;
+do not label it completed-development photography. The original official
+`/harmat-lakopark-kornyeke/#harmat-3d-tour` destination returned 200 and loads the
+existing panorama script; dragging/WebGL behavior was not newly browser-tested.
+
 Open the generated file directly, without a dev server:
 
 `outputs/2026-10-18-home-family/harmat-home-family-preview-v1.html`
@@ -60,12 +73,12 @@ Generated exports and media remain ignored; Git shares only source/tools/records
 
 ## Verified / Pending
 
-- 12 source/no-network JSDOM tests and 10 synthetic packaging tests passed.
+- 14 source/no-network JSDOM tests and 10 synthetic packaging tests passed.
 - JS syntax passed; production plugin sources equal stable checkout `2e3f738`.
 - Ten official destination routes returned HTTP 200 by read-only GET. This is
   link availability evidence, not a functional quote/appointment submission test.
-- Final bundle: 5,988,942 bytes; SHA256
-  `95fbf160a1caa1dda4efc2a087b5c02f0a4fe366fdfec491428fd24d6c731086`.
+- Current panorama-restored bundle: 7,025,742 bytes; SHA256
+  `b72bec36f356ddcd2af5c54af1da392d471f8eda67df0a24bd3a3b7600ad86f5`.
 - Codex opened the local preview for user review. Browser automation explicitly
   disallowed reading file URLs; no alternate transport/browser workaround was
   attempted. Responsive CSS was reviewed, but NO real-browser mobile, pixel,

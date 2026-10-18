@@ -66,6 +66,14 @@ def public_media(url, target):
     return {'url': url, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
 
 
+def stage_panorama():
+    ASSETS.mkdir(parents=True, exist_ok=True)
+    source = SITE + '/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/pano_pano_f.jpg'
+    proof = public_media(source, ASSETS / 'project-panorama.jpg')
+    (OUT / 'panorama-manifest.json').write_text(json.dumps(proof, indent=2), encoding='utf-8')
+    print(json.dumps({'status': 'PUBLIC_PANORAMA_POSTER_STAGED', **proof}))
+
+
 def stage():
     ASSETS.mkdir(parents=True, exist_ok=True)
     proof = {}
@@ -120,6 +128,7 @@ def stage():
     proof['lucide.min.js'] = {'package': 'lucide@0.468.0', 'integrity': integrity}
     (OUT / 'facts.json').write_text(json.dumps(facts, ensure_ascii=False, indent=2), encoding='utf-8')
     (OUT / 'asset-manifest.json').write_text(json.dumps(proof, ensure_ascii=True, indent=2), encoding='utf-8')
+    stage_panorama()
     print(json.dumps({'status': 'LOCAL_ASSETS_STAGED', 'directory': str(OUT), 'apartments': facts}, ensure_ascii=False))
 
 
@@ -227,14 +236,17 @@ def build_bundle():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--assets', action='store_true')
+    parser.add_argument('--panorama', action='store_true', help='Stage only the original official panorama poster')
     parser.add_argument('--copy-source', action='store_true')
     parser.add_argument('--bundle', action='store_true')
     args = parser.parse_args()
     if args.assets:
         stage()
+    elif args.panorama:
+        stage_panorama()
     if args.copy_source:
         copy_source()
     if args.bundle:
         build_bundle()
-    if not args.assets and not args.copy_source and not args.bundle:
-        print('OFFLINE_NO_WRITES: use --assets, --copy-source and/or --bundle; no server writes in any mode')
+    if not args.assets and not args.panorama and not args.copy_source and not args.bundle:
+        print('OFFLINE_NO_WRITES: use --assets, --panorama, --copy-source and/or --bundle; no server writes in any mode')
