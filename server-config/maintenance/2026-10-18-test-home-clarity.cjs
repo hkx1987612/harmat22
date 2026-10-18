@@ -17,7 +17,9 @@ const dom = new JSDOM(rendered);
 const all = [...dom.window.document.querySelector('#harmat-home-family-header-flow').sheet.cssRules];
 const start = all.findIndex(r => r.style?.getPropertyValue('--muted') === '#47574e');
 assert(start >= 0);
-const rules = all.slice(start);
+// Bound the earlier clarity/phone rules before the separate desktop-only revision.
+const desktopOffset = all.findIndex(r => r.conditionText === '(min-width:1025px)');
+const rules = all.slice(start, desktopOffset < 0 ? undefined : desktopOffset);
 const flattened = [];
 function collect(list, media = '') {
   for (const r of list) {

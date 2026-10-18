@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.6
+ * Version: 1.0.7
  */
 defined('ABSPATH') || exit;
 
@@ -218,6 +218,7 @@ function harmat_home_family_output($html) {
             . '@media(max-width:360px){body.home.page-id-164 #harmat-home-family .hhf-hero h1{font-size:30px}}'
             . '@media(max-width:767px){body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner{display:grid!important;grid-template-columns:minmax(133px,1fr) 36px minmax(100px,1fr);gap:4px;padding-inline:12px!important;width:100%!important;box-sizing:border-box;flex-wrap:nowrap}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.e-con{width:auto!important;min-width:0;padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.elementor-element-58842f8{align-items:flex-start}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.elementor-element-fba2323{align-items:flex-end}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-opal-site-logo img{width:36px!important;height:36px!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc{display:block!important;width:100px!important;max-width:100%!important;min-width:0;gap:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc .elementor-button-wrapper{display:block!important;width:100%!important;max-width:100%!important;min-width:0;gap:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc a.elementor-button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:40px;padding:8px 6px;font-size:12px;line-height:1.2;letter-spacing:0;text-transform:none!important;white-space:nowrap}body.home.page-id-164 #harmat-internal-language[data-hil-anchor=menu],body.home.page-id-164 #harmat-internal-language[data-hil-anchor=held],body.home.page-id-164 #harmat-internal-language[data-hil-anchor=fallback]{width:84px!important;max-width:84px!important}body.home.page-id-164 #harmat-internal-language[data-hil-anchor=fallback]{left:62px!important;right:auto!important;top:16px!important;bottom:auto!important}body.home.page-id-164 #harmat-internal-language>button[data-hil-language]{flex:1 1 0;width:auto;padding-inline:1px}body.home.page-id-164 #harmat-internal-language>button[data-hil-language=hu]{flex:1.3 1 0}}'
             . '@media(max-width:767px){body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow{padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-icon{padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc{padding-inline:0!important}body.home.page-id-164 #harmat-internal-language>button[data-hil-language=hu]{flex:1.4 1 0}}'
+            . '@media(min-width:1025px){body.home.page-id-164 #harmat-home-family .hhf-hero{margin-top:76px;scroll-margin-top:152px}}'
             . '</style>';
         foreach (array('pannellum.css','home-family.css') as $name) {
             if (!isset($pins[$name])) return $html;

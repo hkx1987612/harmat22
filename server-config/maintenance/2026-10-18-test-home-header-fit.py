@@ -34,6 +34,12 @@ class HeaderFitTests(unittest.TestCase):
         self.stack = contextlib.ExitStack()
         self.addCleanup(self.stack.close)
         self.stack.enter_context(patch.object(socket.socket, 'connect', side_effect=AssertionError('NETWORK FORBIDDEN')))
+        controller = (F.ROOT / 'wp-mu-plugins' / U.D.MAIN).resolve()
+        real_read = Path.read_bytes
+        historical = F.patch(F.original_release())
+        # Virtualize only the pinned v1.0.6 test fixture, not production guards.
+        self.stack.enter_context(patch.object(Path, 'read_bytes',
+            new=lambda path: historical if path.resolve() == controller else real_read(path)))
         self.original, self.candidate, self.files, self.hashes, self.checker = F.local_release()
         self.assets = {U.D.DIR + '/' + name: (F.ROOT / 'wp-mu-plugins' / name).read_bytes().replace(b'\r\n', b'\n')
                        for name in self.files if name != U.D.MAIN}
