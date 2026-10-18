@@ -7,8 +7,10 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' file: data:; style-src 'self' file:; script-src 'self' file:; media-src 'self' file:; connect-src 'none'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'">
   <meta name="description" content="Harmat Lakópark: új otthonok Budapest X. kerületében, a Harmat utca 22. alatt. Lakások, építési napló és személyes kapcsolat.">
   <title>Harmat Lakópark | Otthon a közös pillanatoknak</title>
+  <link rel="stylesheet" href="assets/pannellum.css">
   <link rel="stylesheet" href="home-family.css">
   <script src="assets/lucide.min.js" defer></script>
+  <script src="assets/pannellum.js" defer></script>
   <script src="home-family.js" defer></script>
 </head>
 <body>
@@ -56,9 +58,7 @@
       <video class="hero-video" id="hero-video" muted playsinline loop preload="none" poster="assets/hero-aerial.jpg" data-src="assets/hero-video.mp4" aria-hidden="true" tabindex="-1"></video>
       <div class="container hero-inner">
         <div class="hero-copy">
-          <p class="hero-location"><i data-lucide="map-pin" aria-hidden="true"></i><span data-i18n="heroLocation">Budapest X. · Kőbánya · Harmat utca 22.</span></p>
           <h1 id="hero-title">Harmat Lakópark</h1>
-          <p class="hero-description" data-i18n="heroDescription">Új otthon, ahol a közös hétköznapoknak is jut hely.</p>
           <div class="actions hero-actions">
             <a class="button button-white" href="#lakasok"><span data-i18n="chooseApartment">Lakást választok</span><i data-lucide="arrow-right" aria-hidden="true"></i></a>
             <a class="hero-journal" href="#epitesi-naplo"><span data-i18n="readJournal">Építési napló</span><i data-lucide="arrow-down" aria-hidden="true"></i></a>
@@ -182,17 +182,76 @@
       <div class="container">
         <div class="panorama-heading">
           <div><p class="eyebrow" data-i18n="panoramaEyebrow">Harmat Lakópark · 3D/360°</p><h2 id="panorama-title" data-i18n="panoramaTitle">360° panoráma</h2></div>
-          <div class="panorama-copy">
-            <p data-i18n="panoramaDescription">Nézzen körül a tervezett lakóparkban. A 3D/360°-os panoráma a hivatalos weboldalon nyílik meg.</p>
-            <a class="button" href="https://harmat22.hu/harmat-lakopark-kornyeke/#harmat-3d-tour" target="_blank" rel="noopener noreferrer"><i data-lucide="rotate-3d" aria-hidden="true"></i><span data-i18n="panoramaLink">360°-os bejárás megnyitása</span><i data-lucide="arrow-up-right" aria-hidden="true"></i><span class="sr-only" data-i18n="officialNewTab"> (hivatalos weboldal, új lap)</span></a>
-          </div>
         </div>
         <figure class="panorama-figure">
-          <a class="panorama-poster" href="https://harmat22.hu/harmat-lakopark-kornyeke/#harmat-3d-tour" target="_blank" rel="noopener noreferrer" aria-label="360° panoráma megnyitása a hivatalos weboldalon, új lapon" data-i18n-aria-label="panoramaOpen" title="360° panoráma megnyitása a hivatalos weboldalon, új lapon" data-i18n-title="panoramaOpen">
-            <img src="assets/project-panorama.jpg" width="2048" height="2048" alt="A Harmat Lakópark tervezett épületeinek külső látványterve a 360°-os panorámából" data-i18n-alt="panoramaAlt" loading="lazy" decoding="async">
-            <span class="panorama-view" aria-hidden="true"><i data-lucide="view" aria-hidden="true"></i><span>360°</span></span>
-            <span class="media-label panorama-label" data-i18n="rendering">Látványterv</span>
-          </a>
+          <div class="panorama-console" data-panorama-console aria-label="Harmat Lakópark interaktív bemutató" data-i18n-aria-label="panoramaConsole">
+            <div class="panorama-screen">
+              <div class="panorama-panel" id="panorama-panel-panorama" data-panorama-panel="panorama" role="tabpanel" aria-labelledby="panorama-tab-panorama">
+                <div class="panorama-viewer" id="panorama-viewer" data-panorama-state="idle" data-cube-f="assets/panorama-f.jpg" data-cube-r="assets/panorama-r.jpg" data-cube-b="assets/panorama-b.jpg" data-cube-l="assets/panorama-l.jpg" data-cube-u="assets/panorama-u.jpg" data-cube-d="assets/panorama-d.jpg" aria-label="Panorámás látványtér" data-i18n-aria-label="panoramaView" tabindex="0"></div>
+                <img class="panorama-fallback" src="assets/project-panorama.jpg" width="2048" height="2048" alt="A Harmat Lakópark tervezett épületeinek külső látványterve a 360°-os panorámából" data-i18n-alt="panoramaAlt" loading="lazy" decoding="async">
+                <span class="media-label panorama-label" data-i18n="rendering">Látványterv</span>
+                <p class="panorama-status" data-panorama-status role="status" hidden></p>
+              </div>
+              <div class="panorama-panel" id="panorama-panel-video" data-panorama-panel="video" role="tabpanel" aria-labelledby="panorama-tab-video" tabindex="0" hidden>
+                <div class="panorama-videos">
+                  <article class="panorama-video-card">
+                    <video controls playsinline preload="none" poster="assets/panorama-overview.jpg" src="assets/panorama-project-video.mp4" data-playback-rate="0.25" aria-label="Projektbemutató" data-i18n-aria-label="panoramaProjectVideo"></video>
+                    <div><h3 data-i18n="panoramaProjectVideo">Projektbemutató</h3><p data-i18n="panoramaProjectVideoCopy">A lakópark elhelyezkedése, épülettömege és környezeti kapcsolatai.</p><p class="panorama-video-error" role="status" hidden></p></div>
+                  </article>
+                  <article class="panorama-video-card">
+                    <video controls playsinline preload="none" poster="assets/hero-aerial.jpg" src="assets/hero-video.mp4" data-playback-rate="1" aria-label="Látványvideó" data-i18n-aria-label="panoramaVisualVideo"></video>
+                    <div><h3 data-i18n="panoramaVisualVideo">Látványvideó</h3><p data-i18n="panoramaVisualVideoCopy">A tervezett lakókörnyezet és a projekt hangulata.</p><p class="panorama-video-error" role="status" hidden></p></div>
+                  </article>
+                </div>
+              </div>
+              <div class="panorama-panel" id="panorama-panel-plans" data-panorama-panel="plans" role="tabpanel" aria-labelledby="panorama-tab-plans" tabindex="0" hidden>
+                <div class="panorama-split">
+                  <div class="panorama-detail"><p class="eyebrow" data-i18n="panoramaProjectOverview">Projektáttekintés</p><h3 data-i18n="panoramaProjectTitle">Modern lakókörnyezet Kőbányán</h3><p data-i18n="panoramaProjectCopy">A Harmat Lakópark a X. kerületben, a Harmat utca 22. szám alatt kínál új építésű otthonokat átgondolt alaprajzokkal, zöld környezettel és kényelmes városi kapcsolatokkal.</p><dl class="panorama-facts"><div><dt data-i18n="phaseLabel">Az első ütemben</dt><dd>124 <span data-i18n="homes">lakás</span></dd></div><div><dt data-i18n="panoramaLocation">Környezet</dt><dd>Harmat utca 22.</dd></div><div><dt data-i18n="panoramaGreen">Zöld környezet</dt><dd data-i18n="panoramaUrban">Élhető városi ritmus</dd></div></dl></div>
+                  <button class="panorama-image" type="button" data-gallery aria-label="Madártávlati nézet nagyítása" data-i18n-aria-label="panoramaAerialZoom" title="Madártávlati nézet nagyítása" data-i18n-title="panoramaAerialZoom"><img src="assets/panorama-gallery-8.jpg" width="1920" height="1080" alt="Madártávlati nézet" data-i18n-alt="panoramaGallery8" loading="lazy" decoding="async"><i data-lucide="zoom-in" aria-hidden="true"></i></button>
+                </div>
+              </div>
+              <div class="panorama-panel" id="panorama-panel-gallery" data-panorama-panel="gallery" role="tabpanel" aria-labelledby="panorama-tab-gallery" tabindex="0" hidden>
+                <div class="panorama-gallery">
+                  <button type="button" data-gallery aria-label="Áttekintő látvány nagyítása" data-i18n-aria-label="panoramaGallery0Zoom" title="Áttekintő látvány nagyítása" data-i18n-title="panoramaGallery0Zoom"><img src="assets/panorama-gallery-0.jpg" width="1920" height="1080" alt="Áttekintő látvány" data-i18n-alt="panoramaGallery0" loading="lazy" decoding="async"><span data-i18n="panoramaGallery0">Áttekintő látvány</span></button>
+                  <button type="button" data-gallery aria-label="Épülethomlokzat nagyítása" data-i18n-aria-label="panoramaGallery1Zoom" title="Épülethomlokzat nagyítása" data-i18n-title="panoramaGallery1Zoom"><img src="assets/panorama-gallery-1.jpg" width="1920" height="1080" alt="Épülethomlokzat" data-i18n-alt="panoramaGallery1" loading="lazy" decoding="async"><span data-i18n="panoramaGallery1">Épülethomlokzat</span></button>
+                  <button type="button" data-gallery aria-label="Lakókörnyezeti tér nagyítása" data-i18n-aria-label="panoramaGallery4Zoom" title="Lakókörnyezeti tér nagyítása" data-i18n-title="panoramaGallery4Zoom"><img src="assets/panorama-gallery-4.jpg" width="1920" height="1080" alt="Lakókörnyezeti tér" data-i18n-alt="panoramaGallery4" loading="lazy" decoding="async"><span data-i18n="panoramaGallery4">Lakókörnyezeti tér</span></button>
+                  <button type="button" data-gallery aria-label="Madártávlati nézet nagyítása" data-i18n-aria-label="panoramaAerialZoom" title="Madártávlati nézet nagyítása" data-i18n-title="panoramaAerialZoom"><img src="assets/panorama-gallery-8.jpg" width="1920" height="1080" alt="Madártávlati nézet" data-i18n-alt="panoramaGallery8" loading="lazy" decoding="async"><span data-i18n="panoramaGallery8">Madártávlati nézet</span></button>
+                  <button type="button" data-gallery aria-label="Lakóépületi részlet nagyítása" data-i18n-aria-label="panoramaGallery10Zoom" title="Lakóépületi részlet nagyítása" data-i18n-title="panoramaGallery10Zoom"><img src="assets/panorama-gallery-10.jpg" width="1920" height="1080" alt="Lakóépületi részlet" data-i18n-alt="panoramaGallery10" loading="lazy" decoding="async"><span data-i18n="panoramaGallery10">Lakóépületi részlet</span></button>
+                  <button type="button" data-gallery aria-label="Kert és közösségi tér nagyítása" data-i18n-aria-label="panoramaGallery5Zoom" title="Kert és közösségi tér nagyítása" data-i18n-title="panoramaGallery5Zoom"><img src="assets/panorama-gallery-5.jpg" width="1920" height="1080" alt="Kert és közösségi tér" data-i18n-alt="panoramaGallery5" loading="lazy" decoding="async"><span data-i18n="panoramaGallery5">Kert és közösségi tér</span></button>
+                </div>
+              </div>
+              <div class="panorama-panel" id="panorama-panel-location" data-panorama-panel="location" role="tabpanel" aria-labelledby="panorama-tab-location" tabindex="0" hidden>
+                <div class="panorama-split">
+                  <button class="panorama-image" type="button" data-gallery aria-label="Környezeti áttekintő nagyítása" data-i18n-aria-label="panoramaOverviewZoom" title="Környezeti áttekintő nagyítása" data-i18n-title="panoramaOverviewZoom"><img src="assets/panorama-overview.jpg" width="1920" height="1080" alt="Harmat Lakópark környezeti áttekintő" data-i18n-alt="panoramaOverviewAlt" loading="lazy" decoding="async"><i data-lucide="zoom-in" aria-hidden="true"></i></button>
+                  <div class="panorama-detail"><p class="eyebrow" data-i18n="panoramaLocation">Környezet</p><h3 data-i18n="panoramaLocationTitle">A város és a természet találkozása</h3><p data-i18n="panoramaLocationCopy">A környék mindennapi élethez szükséges szolgáltatásokat, zöldterületeket és jó városi kapcsolatokat kínál.</p><ul><li data-i18n="panoramaAddress">Budapest X. kerület, Harmat utca 22.</li><li data-i18n="panoramaLocationServices">Közeli bevásárlási, oktatási és egészségügyi lehetőségek</li></ul></div>
+                </div>
+              </div>
+              <div class="panorama-panel" id="panorama-panel-notice" data-panorama-panel="notice" role="tabpanel" aria-labelledby="panorama-tab-notice" tabindex="0" hidden>
+                <div class="panorama-detail panorama-notice"><p class="eyebrow" data-i18n="panoramaNotice">Tájékoztató</p><h3 data-i18n="panoramaNoticeTitle">Fontos információk</h3><p data-i18n="panoramaNoticeCopy">A látványtervek, videók és bemutatóanyagok tájékoztató jellegűek. Az árak, műszaki tartalom, alapterületek, átadási határidők és felszereltség minden esetben a hivatalos dokumentáció és a szerződés szerint irányadók.</p><ul><li data-i18n="panoramaNoticeVisual">A látványtervek illusztrációk</li><li data-i18n="panoramaNoticeData">Az adatok tájékoztató jellegűek</li><li data-i18n="panoramaNoticeContract">A szerződés az irányadó</li></ul></div>
+              </div>
+            </div>
+            <div class="panorama-dock">
+              <div class="panorama-tabs" role="tablist" aria-label="Harmat Lakópark bemutató menü" data-i18n-aria-label="panoramaTabs">
+                <button type="button" id="panorama-tab-panorama" data-panorama-tab="panorama" role="tab" aria-controls="panorama-panel-panorama" aria-selected="true"><i data-lucide="view" aria-hidden="true"></i><span data-i18n="panoramaTab">Panoráma</span></button>
+                <button type="button" id="panorama-tab-video" data-panorama-tab="video" role="tab" aria-controls="panorama-panel-video" aria-selected="false" tabindex="-1"><i data-lucide="clapperboard" aria-hidden="true"></i><span data-i18n="panoramaVideos">Videók</span></button>
+                <button type="button" id="panorama-tab-plans" data-panorama-tab="plans" role="tab" aria-controls="panorama-panel-plans" aria-selected="false" tabindex="-1"><i data-lucide="building-2" aria-hidden="true"></i><span data-i18n="panoramaProject">Projekt</span></button>
+                <button type="button" id="panorama-tab-gallery" data-panorama-tab="gallery" role="tab" aria-controls="panorama-panel-gallery" aria-selected="false" tabindex="-1"><i data-lucide="images" aria-hidden="true"></i><span data-i18n="navGallery">Galéria</span></button>
+                <button type="button" id="panorama-tab-location" data-panorama-tab="location" role="tab" aria-controls="panorama-panel-location" aria-selected="false" tabindex="-1"><i data-lucide="map-pin" aria-hidden="true"></i><span data-i18n="panoramaLocation">Környezet</span></button>
+                <button type="button" id="panorama-tab-notice" data-panorama-tab="notice" role="tab" aria-controls="panorama-panel-notice" aria-selected="false" tabindex="-1"><i data-lucide="info" aria-hidden="true"></i><span data-i18n="panoramaNotice">Tájékoztató</span></button>
+              </div>
+              <div class="panorama-controls">
+                <button type="button" class="panorama-tool" data-panorama-rotate aria-label="Forgatás" title="Forgatás" aria-pressed="false"><i data-lucide="rotate-3d" data-rotate-icon aria-hidden="true"></i><i data-lucide="pause" data-rotate-pause aria-hidden="true" hidden></i><span class="panorama-tooltip">Forgatás</span></button>
+                <button type="button" class="panorama-tool" data-panorama-reset aria-label="Alaphelyzet" data-i18n-aria-label="panoramaReset" title="Alaphelyzet" data-i18n-title="panoramaReset"><i data-lucide="rotate-ccw" aria-hidden="true"></i><span class="panorama-tooltip" data-i18n="panoramaReset">Alaphelyzet</span></button>
+                <button type="button" class="panorama-tool" data-panorama-fullscreen aria-label="Teljes képernyő" title="Teljes képernyő" aria-pressed="false"><i data-lucide="maximize" data-fullscreen-enter aria-hidden="true"></i><i data-lucide="minimize" data-fullscreen-exit aria-hidden="true" hidden></i><span class="panorama-tooltip">Teljes képernyő</span></button>
+              </div>
+              <p class="panorama-action-status" data-panorama-action-status role="status" hidden></p>
+            </div>
+            <dialog class="panorama-lightbox" aria-label="Látványterv nagyítása" data-i18n-aria-label="panoramaZoom">
+              <button type="button" class="panorama-tool" data-panorama-close aria-label="Bezárás" data-i18n-aria-label="panoramaClose" title="Bezárás" data-i18n-title="panoramaClose" autofocus><i data-lucide="x" aria-hidden="true"></i><span class="panorama-tooltip" data-i18n="panoramaClose">Bezárás</span></button>
+              <img src="assets/project-panorama.jpg" width="2048" height="2048" alt="A Harmat Lakópark tervezett épületeinek külső látványterve a 360°-os panorámából" data-i18n-alt="panoramaAlt">
+              <p class="panorama-lightbox-caption"></p>
+            </dialog>
+          </div>
           <figcaption data-i18n="panoramaCaption">A panoráma a tervezett lakópark látványterve, nem az elkészült épületekről készült fénykép.</figcaption>
         </figure>
       </div>

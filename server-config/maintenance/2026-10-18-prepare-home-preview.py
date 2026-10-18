@@ -8,6 +8,7 @@ import io
 import json
 import mimetypes
 from pathlib import Path
+import re
 import shutil
 import tarfile
 import urllib.parse
@@ -18,7 +19,7 @@ OUT = ROOT / 'outputs/2026-10-18-home-family'
 ASSETS = OUT / 'assets'
 SITE = 'https://harmat22.hu'
 CODES = ('A1-1-L6', 'A2-4-L5', 'A1-1-L5')
-PREVIEW_NAME = 'harmat-home-family-preview-v2.html'
+PREVIEW_NAME = 'harmat-home-family-preview-v3.html'
 MEDIA = {
     'hero-aerial.jpg': 'wp-mu-plugins/harmat-project-family/project-aerial.jpg',
     'project-courtyard.jpg': 'wp-mu-plugins/harmat-project-family/project-courtyard.jpg',
@@ -75,6 +76,34 @@ def stage_panorama():
     print(json.dumps({'status': 'PUBLIC_PANORAMA_POSTER_STAGED', **proof}))
 
 
+def stage_interactive():
+    stage_panorama()
+    base = SITE + '/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/'
+    sources = {**{'panorama-' + face + '.jpg': 'pano_pano_' + face + '.jpg' for face in 'frblud'},
+        **{'panorama-gallery-' + number + '.jpg': 'xgt_' + number + '.jpg' for number in ('0', '1', '4', '8', '10', '5')},
+        'panorama-overview.jpg': 'video_swsp_xmsp.jpg'}
+    proof = {name: public_media(base + source, ASSETS / name) for name, source in sources.items()}
+    video, mime = fetch(base + 'swsp_xmsp.mp4', 20 * 1024 * 1024)
+    require(mime.startswith('video/mp4'), 'Original project video MIME')
+    (ASSETS / 'panorama-project-video.mp4').write_bytes(video)
+    proof['panorama-project-video.mp4'] = {'url': base + 'swsp_xmsp.mp4', 'bytes': len(video), 'sha256': hashlib.sha256(video).hexdigest()}
+    metadata, _ = fetch('https://registry.npmjs.org/pannellum/2.5.6')
+    distribution = json.loads(metadata)['dist']
+    require(distribution['tarball'] == 'https://registry.npmjs.org/pannellum/-/pannellum-2.5.6.tgz', 'Pinned panorama package origin')
+    archive, _ = fetch(distribution['tarball'], 4 * 1024 * 1024)
+    integrity = 'sha512-' + base64.b64encode(hashlib.sha512(archive).digest()).decode()
+    require(distribution['integrity'] == integrity, 'Panorama package integrity')
+    with tarfile.open(fileobj=io.BytesIO(archive), mode='r:gz') as package:
+        for source, name in (('package/build/pannellum.js', 'pannellum.js'),
+                ('package/build/pannellum.css', 'pannellum.css'), ('package/COPYING', 'pannellum.LICENSE')):
+            member = package.getmember(source)
+            require(member.isfile() and member.size < 1024 * 1024, 'Exact panorama package member')
+            (ASSETS / name).write_bytes(package.extractfile(member).read())
+    proof['pannellum.js'] = {'package': 'pannellum@2.5.6', 'integrity': integrity}
+    (OUT / 'interactive-manifest.json').write_text(json.dumps(proof, indent=2), encoding='utf-8')
+    print(json.dumps({'status': 'ORIGINAL_INTERACTIVE_ASSETS_STAGED', 'images': len(sources), 'video_bytes': len(video), 'package': 'pannellum@2.5.6'}))
+
+
 def stage():
     ASSETS.mkdir(parents=True, exist_ok=True)
     proof = {}
@@ -129,7 +158,7 @@ def stage():
     proof['lucide.min.js'] = {'package': 'lucide@0.468.0', 'integrity': integrity}
     (OUT / 'facts.json').write_text(json.dumps(facts, ensure_ascii=False, indent=2), encoding='utf-8')
     (OUT / 'asset-manifest.json').write_text(json.dumps(proof, ensure_ascii=True, indent=2), encoding='utf-8')
-    stage_panorama()
+    stage_interactive()
     print(json.dumps({'status': 'LOCAL_ASSETS_STAGED', 'directory': str(OUT), 'apartments': facts}, ensure_ascii=False))
 
 
@@ -144,11 +173,12 @@ def copy_source():
 
 
 class Bundle(HTMLParser):
-    """Inline local presentation assets, keeping only the local video as a sibling."""
+    """Inline presentation assets and original cube faces, keeping native videos as siblings."""
     def __init__(self, source):
         super().__init__(convert_charrefs=False)
         self.parts = []
         self.scripts = []
+        self.videos = set()
         self.skip_script = False
         self.feed(source)
         self.close()
@@ -172,13 +202,18 @@ class Bundle(HTMLParser):
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         if tag == 'link' and a.get('rel') == 'stylesheet':
-            require(a.get('href') == 'home-family.css', 'Exact stylesheet only')
+            require(a.get('href') in ('home-family.css', 'assets/pannellum.css'), 'Exact stylesheet only')
             css = self.asset(a['href']).read_text(encoding='utf-8')
-            require('</style' not in css.lower() and 'url(' not in css.lower(), 'Unexpected style resource/terminator')
+            require('</style' not in css.lower(), 'Unexpected style terminator')
+            if a['href'] == 'assets/pannellum.css':
+                without_data = re.sub(r'url\(\s*([\"\x27])data:image/(?:svg\+xml|png)(?:;base64)?,[^\"\x27]*\1\s*\)', '', css)
+                require('url(' not in without_data.lower() and '@import' not in css.lower(), 'Panorama CSS must be self-contained')
+            else:
+                require('url(' not in css.lower(), 'Unexpected style resource')
             self.parts.append('<style>' + css + '</style>')
             return
         if tag == 'script' and 'src' in a:
-            require(a['src'] in ('home-family.js', 'assets/lucide.min.js'), 'Exact local scripts only')
+            require(a['src'] in ('home-family.js', 'assets/lucide.min.js', 'assets/pannellum.js'), 'Exact local scripts only')
             script = self.asset(a['src']).read_text(encoding='utf-8')
             require('</script' not in script.lower(), 'Unexpected script terminator')
             self.scripts.append(script)
@@ -191,6 +226,19 @@ class Bundle(HTMLParser):
             a['src'] = self.image(a['src'])
         if tag == 'video' and a.get('poster'):
             a['poster'] = self.image(a['poster'])
+        if tag in ('video', 'source'):
+            for key in ('src', 'data-src'):
+                if a.get(key):
+                    require(a[key] in ('assets/hero-video.mp4', 'assets/panorama-project-video.mp4'), 'Exact local videos only')
+                    self.asset(a[key])
+                    self.videos.add(a[key])
+        for face in 'frblud':
+            key = 'data-cube-' + face
+            if key in a:
+                require(a[key] == 'assets/panorama-' + face + '.jpg', 'Exact cube face source')
+                a[key] = self.image(a[key])
+        if a.get('data-full'):
+            a['data-full'] = self.image(a['data-full'])
         self.parts.append('<' + tag + ''.join(' ' + k + ('="' + escape(v, quote=True) + '"' if v is not None else '') for k, v in a.items()) + '>')
 
     def handle_startendtag(self, tag, attrs):
@@ -221,7 +269,7 @@ class Bundle(HTMLParser):
 
 def build_bundle():
     target = OUT / PREVIEW_NAME
-    record = OUT / 'bundle-proof-v2.json'
+    record = OUT / 'bundle-proof-v3.json'
     if target.exists():
         require(record.is_file() and json.loads(record.read_text())['sha256'] == hashlib.sha256(target.read_bytes()).hexdigest(), 'Refuse unrelated edited preview overwrite')
     parser = Bundle((OUT / 'index.html').read_text(encoding='utf-8'))
@@ -229,7 +277,7 @@ def build_bundle():
     target.write_bytes(data)
     require(target.read_bytes() == data, 'Bundle readback')
     proof = {'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data),
-        'images_css_js_embedded': True, 'video': 'assets/hero-video.mp4', 'no_server_writes': True}
+        'images_css_js_embedded': True, 'video_files': sorted(parser.videos), 'no_server_writes': True}
     record.write_text(json.dumps(proof, indent=2), encoding='utf-8')
     print(json.dumps({'status': 'LOCAL_IMAGE_EMBEDDED_PREVIEW_READY', 'file': str(target), **proof}))
 
@@ -238,16 +286,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--assets', action='store_true')
     parser.add_argument('--panorama', action='store_true', help='Stage only the original official panorama poster')
+    parser.add_argument('--interactive', action='store_true', help='Stage original cube/gallery/video and pinned panorama library')
     parser.add_argument('--copy-source', action='store_true')
     parser.add_argument('--bundle', action='store_true')
     args = parser.parse_args()
     if args.assets:
         stage()
+    elif args.interactive:
+        stage_interactive()
     elif args.panorama:
         stage_panorama()
     if args.copy_source:
         copy_source()
     if args.bundle:
         build_bundle()
-    if not args.assets and not args.panorama and not args.copy_source and not args.bundle:
-        print('OFFLINE_NO_WRITES: use --assets, --panorama, --copy-source and/or --bundle; no server writes in any mode')
+    if not args.assets and not args.interactive and not args.panorama and not args.copy_source and not args.bundle:
+        print('OFFLINE_NO_WRITES: use --assets, --interactive, --panorama, --copy-source and/or --bundle; no server writes in any mode')

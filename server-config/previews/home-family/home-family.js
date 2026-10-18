@@ -34,9 +34,7 @@
     navPanorama: '360°全景',
     navContact: '联系我们',
     requestOffer: '咨询报价',
-    heroLocation: '布达佩斯第十区 · Kőbánya · Harmat utca 22.',
     heroAlt: 'Harmat Lakópark 规划建筑与绿色庭院的鸟瞰效果图',
-    heroDescription: '为共同的日常生活，留一处温暖的新家。',
     chooseApartment: '选择公寓',
     readJournal: '施工日志',
     rendering: '渲染效果图',
@@ -106,10 +104,68 @@
     showroomAlt: 'Harmat Lakópark 展示中心会客区',
     showroomCaption: '实景拍摄 · 展示中心',
     panoramaEyebrow: 'Harmat Lakópark · 3D/360°',
-    panoramaTitle: '项目全景（3D/360°）',
-    panoramaDescription: '环顾规划中的住宅区。3D/360°全景将在官方网站打开。',
-    panoramaLink: '打开360°漫游',
-    panoramaOpen: '在新标签页打开官方网站的360°全景',
+    panoramaTitle: '360°全景',
+    panoramaConsole: 'Harmat Lakópark 互动展示',
+    panoramaView: '项目全景效果图',
+    panoramaTabs: 'Harmat Lakópark 展示菜单',
+    panoramaTab: '全景',
+    panoramaVideos: '视频',
+    panoramaProject: '项目',
+    panoramaLocation: '周边环境',
+    panoramaNotice: '重要信息',
+    panoramaProjectVideo: '项目介绍',
+    panoramaProjectVideoCopy: '住宅区的位置、建筑体量及周边联系。',
+    panoramaVisualVideo: '效果视频',
+    panoramaVisualVideoCopy: '规划中的居住环境与项目氛围。',
+    panoramaProjectOverview: '项目概况',
+    panoramaProjectTitle: 'Kőbánya 的现代居住环境',
+    panoramaProjectCopy: 'Harmat Lakópark 位于布达佩斯第十区 Harmat utca 22.，提供户型周全、周边绿意充盈、城市交通便捷的新建住宅。',
+    panoramaGreen: '绿色环境',
+    panoramaUrban: '宜居的城市节奏',
+    panoramaGallery0: '项目概览',
+    panoramaGallery1: '建筑立面',
+    panoramaGallery4: '居住空间',
+    panoramaGallery8: '鸟瞰视角',
+    panoramaGallery10: '住宅细节',
+    panoramaGallery5: '花园与公共空间',
+    panoramaGallery0Zoom: '放大项目概览',
+    panoramaGallery1Zoom: '放大建筑立面',
+    panoramaGallery4Zoom: '放大居住空间',
+    panoramaAerialZoom: '放大鸟瞰视角',
+    panoramaGallery10Zoom: '放大住宅细节',
+    panoramaGallery5Zoom: '放大花园与公共空间',
+    panoramaOverviewZoom: '放大周边概览',
+    panoramaOverviewAlt: 'Harmat Lakópark 周边概览',
+    panoramaLocationTitle: '城市与自然相遇之处',
+    panoramaLocationCopy: '周边提供日常所需服务、绿地与便捷的城市联系。',
+    panoramaAddress: '布达佩斯第十区，Harmat utca 22.',
+    panoramaLocationServices: '附近的购物、教育和医疗设施',
+    panoramaNoticeTitle: '重要信息',
+    panoramaNoticeCopy: '效果图、视频与展示资料仅供参考。价格、技术内容、面积、交付时间及配置均以官方文件和合同为准。',
+    panoramaNoticeVisual: '效果图为示意图',
+    panoramaNoticeData: '数据仅供参考',
+    panoramaNoticeContract: '以合同为准',
+    panoramaReset: '恢复初始视角',
+    panoramaZoom: '放大效果图',
+    panoramaClose: '关闭',
+    panoramaRotate: '开始旋转',
+    panoramaPause: '暂停旋转',
+    panoramaFullscreen: '全屏',
+    panoramaExitFullscreen: '退出全屏',
+    panoramaFullscreenUnavailable: '全屏暂不可用',
+    panoramaFullscreenError: '无法进入全屏，当前保持页面内显示。',
+    panoramaError: '360°全景暂不可用，当前显示项目效果图。',
+    panoramaVideoError: '此视频暂不可用。',
+    panoramaLoadButton: '加载全景',
+    panoramaLoading: '全景加载中…',
+    panoramaByline: '作者：%s',
+    panoramaMissingError: '未提供全景图片。',
+    panoramaFileError: '无法读取全景图片。',
+    panoramaUrlError: '全景图片地址无效。',
+    panoramaIosError: '此设备无法显示全景图片。',
+    panoramaWebglError: '此浏览器不支持显示全景所需的 WebGL。',
+    panoramaSizeError: '全景宽度为 %s 像素，此设备最多支持 %s 像素。',
+    panoramaUnknownError: '无法加载全景。',
     panoramaAlt: 'Harmat Lakópark 360°全景中的规划建筑外观效果图',
     panoramaCaption: '此全景为规划中的项目效果图，并非已建成建筑的实景照片。',
     chooserEyebrow: '换个角度看新家',
@@ -138,7 +194,25 @@
     menuClose: 'Menü bezárása',
     videoPlay: 'Videó lejátszása',
     videoPause: 'Videó szüneteltetése',
-    videoUnavailable: 'A videó nem érhető el. A projekt látványterve látható.'
+    videoUnavailable: 'A videó nem érhető el. A projekt látványterve látható.',
+    panoramaRotate: 'Forgatás',
+    panoramaPause: 'Forgatás szüneteltetése',
+    panoramaFullscreen: 'Teljes képernyő',
+    panoramaExitFullscreen: 'Kilépés a teljes képernyőből',
+    panoramaFullscreenUnavailable: 'A teljes képernyő nem érhető el',
+    panoramaFullscreenError: 'A teljes képernyő nem érhető el. A bemutató az oldalon marad.',
+    panoramaError: 'A 360°-os panoráma nem érhető el. A projekt látványterve látható.',
+    panoramaVideoError: 'Ez a videó nem érhető el.',
+    panoramaLoadButton: 'Panoráma betöltése',
+    panoramaLoading: 'Panoráma betöltése…',
+    panoramaByline: 'Készítette: %s',
+    panoramaMissingError: 'Nincs megadva panorámakép.',
+    panoramaFileError: 'A panorámakép nem érhető el.',
+    panoramaUrlError: 'A panorámakép címe érvénytelen.',
+    panoramaIosError: 'Ez az eszköz nem tudja megjeleníteni a panorámaképet.',
+    panoramaWebglError: 'A böngésző nem támogatja a panorámához szükséges WebGL megjelenítést.',
+    panoramaSizeError: 'A panoráma szélessége %s képpont, az eszköz legfeljebb %s képpontot támogat.',
+    panoramaUnknownError: 'A panoráma nem tölthető be.'
   };
   const translatedNodes = Array.from(document.querySelectorAll('[data-i18n]'), node => ({
     node, key: node.dataset.i18n, original: node.innerHTML
@@ -164,6 +238,7 @@
   let language = 'hu';
   let videoFailed = false;
   let userPaused = false;
+  let updatePanoramaLanguage = () => {};
 
   function controlText(key) {
     return language === 'zh' ? zh[key] : huControls[key];
@@ -207,6 +282,7 @@
       : originalDescription;
     updateMenuLabel();
     updateVideoControl();
+    updatePanoramaLanguage();
   }
 
   // Do not expose a language choice if any marked copy is missing.
@@ -271,6 +347,328 @@
     else if (!userPaused && !reducedMotion.matches) playVideo();
   });
 
+  function initPanorama() {
+    const root = document.querySelector('[data-panorama-console]');
+    if (!root) return () => {};
+    const host = root.querySelector('.panorama-viewer');
+    const fallback = root.querySelector('.panorama-fallback');
+    const status = root.querySelector('[data-panorama-status]');
+    const actionStatus = root.querySelector('[data-panorama-action-status]');
+    const tabs = Array.from(root.querySelectorAll('[data-panorama-tab]'));
+    const panels = Array.from(root.querySelectorAll('[data-panorama-panel]'));
+    const clips = Array.from(root.querySelectorAll('.panorama-video-card video'));
+    const rotateButton = root.querySelector('[data-panorama-rotate]');
+    const fullscreenButton = root.querySelector('[data-panorama-fullscreen]');
+    const dialog = root.querySelector('.panorama-lightbox');
+    const lightImage = dialog.querySelector('img');
+    const lightCaption = dialog.querySelector('.panorama-lightbox-caption');
+    const startPitch = -27;
+    const startYaw = 0;
+    const startHfov = 92;
+    let viewer = null;
+    let activePanel = 'panorama';
+    let inViewport = false;
+    let rotateWanted = !reducedMotion.matches;
+    let rotating = false;
+    let loadTimer;
+    let actionMessage = '';
+    let lightTrigger = null;
+    let touchStart = null;
+
+    function isFullscreen() {
+      return document.fullscreenElement === root;
+    }
+
+    function vendorStrings() {
+      return {
+        loadButtonLabel: controlText('panoramaLoadButton'),
+        loadingLabel: controlText('panoramaLoading'),
+        bylineLabel: controlText('panoramaByline'),
+        noPanoramaError: controlText('panoramaMissingError'),
+        fileAccessError: controlText('panoramaFileError'),
+        malformedURLError: controlText('panoramaUrlError'),
+        iOS8WebGLError: controlText('panoramaIosError'),
+        genericWebGLError: controlText('panoramaWebglError'),
+        textureSizeError: controlText('panoramaSizeError'),
+        unknownError: controlText('panoramaUnknownError')
+      };
+    }
+
+    function setToolLabel(button, key) {
+      const label = controlText(key);
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.querySelector('.panorama-tooltip').textContent = label;
+    }
+
+    function updateLightbox() {
+      if (!lightTrigger) return;
+      const sourceImage = lightTrigger.querySelector('img');
+      lightImage.alt = sourceImage.alt;
+      lightCaption.textContent = sourceImage.alt;
+    }
+
+    function updateLanguage() {
+      const state = host.dataset.panoramaState;
+      status.hidden = state !== 'loading' && state !== 'error';
+      status.textContent = status.hidden ? '' : controlText(state === 'error' ? 'panoramaError' : 'panoramaLoading');
+      actionStatus.hidden = !actionMessage;
+      actionStatus.textContent = actionMessage ? controlText(actionMessage) : '';
+      setToolLabel(rotateButton, rotating ? 'panoramaPause' : 'panoramaRotate');
+      rotateButton.setAttribute('aria-pressed', String(rotating));
+      rotateButton.querySelector('[data-rotate-icon]').toggleAttribute('hidden', rotating);
+      rotateButton.querySelector('[data-rotate-pause]').toggleAttribute('hidden', !rotating);
+      rotateButton.disabled = state === 'error' || reducedMotion.matches;
+      const canFullscreen = typeof root.requestFullscreen === 'function';
+      setToolLabel(fullscreenButton, !canFullscreen ? 'panoramaFullscreenUnavailable'
+        : isFullscreen() ? 'panoramaExitFullscreen' : 'panoramaFullscreen');
+      fullscreenButton.disabled = !canFullscreen;
+      fullscreenButton.setAttribute('aria-pressed', String(isFullscreen()));
+      fullscreenButton.querySelector('[data-fullscreen-enter]').toggleAttribute('hidden', isFullscreen());
+      fullscreenButton.querySelector('[data-fullscreen-exit]').toggleAttribute('hidden', !isFullscreen());
+      clips.forEach(clip => {
+        const error = clip.closest('article').querySelector('.panorama-video-error');
+        if (!error.hidden) error.textContent = controlText('panoramaVideoError');
+      });
+      // Mutate vendor strings, never replace the viewer DOM or its event handlers.
+      if (viewer && typeof viewer.getConfig === 'function') {
+        Object.assign(viewer.getConfig().strings, vendorStrings());
+      }
+      const loadLabel = host.querySelector('.pnlm-load-box > p');
+      const loadButton = host.querySelector('.pnlm-load-button p');
+      const errorLabel = host.querySelector('.pnlm-error-msg p');
+      if (loadLabel) loadLabel.textContent = controlText('panoramaLoading');
+      if (loadButton) loadButton.textContent = controlText('panoramaLoadButton');
+      if (errorLabel) errorLabel.textContent = controlText('panoramaError');
+      updateLightbox();
+    }
+
+    function failViewer() {
+      window.clearTimeout(loadTimer);
+      host.dataset.panoramaState = 'error';
+      host.setAttribute('aria-busy', 'false');
+      host.hidden = true;
+      fallback.hidden = false;
+      rotating = false;
+      if (viewer) {
+        try { viewer.stopAutoRotate(); viewer.stopMovement(); } catch { /* The poster remains available. */ }
+      }
+      updateLanguage();
+    }
+
+    function syncRotation() {
+      const next = Boolean(viewer && host.dataset.panoramaState === 'loaded' && rotateWanted
+        && inViewport && activePanel === 'panorama' && !document.hidden && !reducedMotion.matches && !dialog.open);
+      if (viewer && next !== rotating) {
+        try {
+          if (next) viewer.startAutoRotate(-1);
+          else { viewer.stopAutoRotate(); viewer.stopMovement(); }
+        } catch { failViewer(); return; }
+      }
+      rotating = next;
+      updateLanguage();
+    }
+
+    function resizeViewer() {
+      if (!viewer || host.dataset.panoramaState !== 'loaded' || activePanel !== 'panorama') return;
+      try {
+        // The fullscreen element is the console, not Pannellum's inner host.
+        viewer.getConfig().mouseZoom = isFullscreen() ? true : 'fullscreenonly';
+        viewer.resize();
+      } catch { failViewer(); }
+    }
+
+    function ensureViewer() {
+      if (host.dataset.panoramaState !== 'idle') return;
+      host.dataset.panoramaState = 'loading';
+      host.setAttribute('aria-busy', 'true');
+      updateLanguage();
+      try {
+        if (!window.pannellum || typeof window.pannellum.viewer !== 'function') throw new Error('Pannellum unavailable');
+        const cubeMap = ['f', 'r', 'b', 'l', 'u', 'd'].map(face => host.dataset[`cube${face.toUpperCase()}`]);
+        if (cubeMap.some(url => !url)) throw new Error('Missing cubemap face');
+        viewer = window.pannellum.viewer(host, {
+          type: 'cubemap', cubeMap, crossOrigin: 'anonymous', autoLoad: true,
+          showControls: false, showFullscreenCtrl: false, showZoomCtrl: false,
+          autoRotate: false, autoRotateInactivityDelay: -1, compass: false,
+          hfov: startHfov, pitch: startPitch, yaw: startYaw, minHfov: 44, maxHfov: 112,
+          mouseZoom: 'fullscreenonly', doubleClickZoom: false, strings: vendorStrings()
+        });
+        viewer.on('load', () => {
+          if (host.dataset.panoramaState === 'error') {
+            try { viewer.destroy(); } catch { /* A late load cannot replace the fallback. */ }
+            return;
+          }
+          window.clearTimeout(loadTimer);
+          host.dataset.panoramaState = 'loaded';
+          host.setAttribute('aria-busy', 'false');
+          fallback.hidden = true;
+          resizeViewer();
+          syncRotation();
+        });
+        viewer.on('error', failViewer);
+        if (host.dataset.panoramaState === 'loading') loadTimer = window.setTimeout(failViewer, 25000);
+        updateLanguage();
+      } catch { failViewer(); }
+    }
+
+    function pauseClips() {
+      clips.forEach(clip => { try { clip.pause(); } catch { /* No playback is started here. */ } });
+    }
+
+    function showPanel(name) {
+      activePanel = name;
+      panels.forEach(panel => { panel.hidden = panel.dataset.panoramaPanel !== name; });
+      tabs.forEach(tab => {
+        const selected = tab.dataset.panoramaTab === name;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+      });
+      if (name !== 'video') pauseClips();
+      if (name === 'panorama') { ensureViewer(); resizeViewer(); }
+      syncRotation();
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => showPanel(tab.dataset.panoramaTab));
+      tab.addEventListener('keydown', event => {
+        let next;
+        if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+        else if (event.key === 'Home') next = 0;
+        else if (event.key === 'End') next = tabs.length - 1;
+        else return;
+        event.preventDefault();
+        tabs[next].focus();
+        showPanel(tabs[next].dataset.panoramaTab);
+      });
+    });
+
+    clips.forEach(clip => {
+      const rate = Number(clip.dataset.playbackRate);
+      function applyRate() {
+        try {
+          if (Math.abs(clip.defaultPlaybackRate - rate) > 0.01) clip.defaultPlaybackRate = rate;
+          if (Math.abs(clip.playbackRate - rate) > 0.01) clip.playbackRate = rate;
+        } catch { /* Native controls remain available if a rate is unsupported. */ }
+      }
+      applyRate();
+      clip.addEventListener('loadedmetadata', applyRate);
+      clip.addEventListener('ratechange', applyRate);
+      clip.addEventListener('play', () => {
+        applyRate();
+        if (activePanel !== 'video' || document.hidden || !inViewport) {
+          try { clip.pause(); } catch { /* Never resume a hidden video. */ }
+        } else clips.filter(other => other !== clip).forEach(other => {
+          try { other.pause(); } catch { /* Keep one native player active. */ }
+        });
+      });
+      clip.addEventListener('error', () => {
+        clip.closest('article').querySelector('.panorama-video-error').hidden = false;
+        updateLanguage();
+      });
+    });
+
+    rotateButton.addEventListener('click', () => {
+      rotateWanted = !rotating;
+      showPanel('panorama');
+    });
+    root.querySelector('[data-panorama-reset]').addEventListener('click', () => {
+      showPanel('panorama');
+      if (viewer && host.dataset.panoramaState === 'loaded') {
+        try { viewer.lookAt(startPitch, startYaw, startHfov, reducedMotion.matches ? 0 : 900); }
+        catch { failViewer(); }
+      }
+    });
+    fullscreenButton.addEventListener('click', async () => {
+      actionMessage = '';
+      try {
+        if (isFullscreen()) await document.exitFullscreen();
+        else await root.requestFullscreen();
+      } catch { actionMessage = 'panoramaFullscreenError'; }
+      resizeViewer();
+      updateLanguage();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      resizeViewer();
+      updateLanguage();
+    });
+
+    root.addEventListener('click', event => {
+      const trigger = event.target.closest('[data-gallery]');
+      if (!trigger || !root.contains(trigger)) return;
+      const image = trigger.querySelector('img');
+      lightTrigger = trigger;
+      lightImage.src = image.currentSrc || image.src;
+      updateLightbox();
+      try { dialog.showModal(); }
+      catch { lightTrigger = null; return; }
+      syncRotation();
+    });
+    root.querySelector('[data-panorama-close]').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', event => {
+      if (event.target !== dialog) return;
+      const bounds = dialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+    });
+    dialog.addEventListener('close', () => {
+      const trigger = lightTrigger;
+      lightTrigger = null;
+      if (trigger && trigger.isConnected) trigger.focus();
+      syncRotation();
+    });
+
+    // Let a vertical one-finger gesture scroll the page before the legacy touch handler consumes it.
+    host.addEventListener('touchstart', event => {
+      touchStart = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+    }, { capture: true, passive: true });
+    host.addEventListener('touchmove', event => {
+      if (isFullscreen() || !touchStart || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      if (Math.abs(touch.clientY - touchStart.y) >= Math.abs(touch.clientX - touchStart.x)) event.stopImmediatePropagation();
+    }, { capture: true, passive: true });
+
+    if ('IntersectionObserver' in window) {
+      const nearObserver = new IntersectionObserver(entries => {
+        if (entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0)) {
+          nearObserver.disconnect();
+          if (activePanel === 'panorama') ensureViewer();
+        }
+      }, { rootMargin: '420px 0px', threshold: 0.01 });
+      nearObserver.observe(root);
+      const visibleObserver = new IntersectionObserver(entries => {
+        inViewport = entries.some(entry => entry.isIntersecting || entry.intersectionRatio > 0);
+        if (!inViewport) pauseClips();
+        syncRotation();
+      }, { threshold: 0.01 });
+      visibleObserver.observe(root);
+    } else {
+      const updateVisibility = () => {
+        const bounds = root.getBoundingClientRect();
+        inViewport = bounds.bottom > 0 && bounds.top < window.innerHeight && bounds.width > 0;
+        if (inViewport && activePanel === 'panorama') ensureViewer();
+        if (!inViewport) pauseClips();
+        syncRotation();
+      };
+      window.addEventListener('scroll', updateVisibility, { passive: true });
+      window.addEventListener('resize', updateVisibility);
+      updateVisibility();
+    }
+    if ('ResizeObserver' in window) new ResizeObserver(resizeViewer).observe(root);
+    window.addEventListener('resize', resizeViewer);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) pauseClips();
+      syncRotation();
+    });
+    reducedMotion.addEventListener('change', () => {
+      if (reducedMotion.matches) rotateWanted = false;
+      syncRotation();
+    });
+    updateLanguage();
+    return updateLanguage;
+  }
+
+  updatePanoramaLanguage = initPanorama();
   videoControl.hidden = false;
   updateMenuLabel();
   updateVideoControl();

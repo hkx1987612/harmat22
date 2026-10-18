@@ -25,12 +25,40 @@ function fixture(t, reduced = true) {
   w.HTMLFormElement.prototype.submit = () => { throw new Error('FORM_FORBIDDEN'); };
   w.HTMLFormElement.prototype.requestSubmit = () => { throw new Error('FORM_FORBIDDEN'); };
   w.matchMedia = () => ({ matches: reduced, addEventListener() {}, removeEventListener() {} });
-  let paused = true;
-  Object.defineProperty(w.HTMLMediaElement.prototype, 'paused', { configurable: true, get() { return paused; } });
-  w.HTMLMediaElement.prototype.play = function () { paused = false; media.plays++; this.dispatchEvent(new w.Event('playing')); return Promise.resolve(); };
-  w.HTMLMediaElement.prototype.pause = function () { paused = true; media.pauses++; this.dispatchEvent(new w.Event('pause')); };
+  const paused = new WeakMap();
+  Object.defineProperty(w.HTMLMediaElement.prototype, 'paused', { configurable: true, get() { return paused.get(this) !== false; } });
+  w.HTMLMediaElement.prototype.play = function () { paused.set(this, false); if (this.classList.contains('hero-video')) media.plays++; this.dispatchEvent(new w.Event('play')); if (!this.paused) this.dispatchEvent(new w.Event('playing')); return Promise.resolve(); };
+  w.HTMLMediaElement.prototype.pause = function () { paused.set(this, true); if (this.classList.contains('hero-video')) media.pauses++; this.dispatchEvent(new w.Event('pause')); };
+  w.HTMLMediaElement.prototype.load = function () {};
+  const observers = [], viewers = [];
+  w.IntersectionObserver = class {
+    constructor(callback) { this.callback = callback; observers.push(this); }
+    observe(target) { this.target = target; }
+    unobserve() {}
+    disconnect() {}
+  };
+  w.pannellum = { viewer: (host, config) => {
+    const handlers = {}, calls = [];
+    const api = { on: (event, callback) => { handlers[event] = callback; return api; },
+      resize: () => calls.push('resize'), lookAt: (...args) => calls.push(['lookAt', ...args]),
+      startAutoRotate: (...args) => calls.push(['startAutoRotate', ...args]), stopAutoRotate: () => calls.push('stopAutoRotate'), stopMovement: () => calls.push('stopMovement'),
+      getHfov: () => 92, setHfov: (...args) => calls.push(['setHfov', ...args]),
+      getConfig: () => config, destroy: () => calls.push('destroy') };
+    viewers.push({ host, config, handlers, calls, api });
+    return api;
+  } };
+  w.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  w.HTMLDialogElement.prototype.close = function () { this.open = false; this.dispatchEvent(new w.Event('close')); };
+  let pageHidden = false, fullscreen = null;
+  Object.defineProperty(w.document, 'hidden', { configurable: true, get: () => pageHidden });
+  Object.defineProperty(w.document, 'fullscreenElement', { configurable: true, get: () => fullscreen });
+  w.document.fullscreenEnabled = true;
+  w.HTMLElement.prototype.requestFullscreen = function () { fullscreen = this; w.document.dispatchEvent(new w.Event('fullscreenchange')); return Promise.resolve(); };
+  w.document.exitFullscreen = () => { fullscreen = null; w.document.dispatchEvent(new w.Event('fullscreenchange')); return Promise.resolve(); };
   t.after(() => { w.close(); assert.deepEqual(requests, []); });
-  return { w, d: w.document, media };
+  return { w, d: w.document, media, observers, viewers,
+    setNear: value => observers.forEach(o => o.callback([{ target: o.target, isIntersecting: value, intersectionRatio: value ? 1 : 0 }])),
+    setHidden: value => { pageHidden = value; w.document.dispatchEvent(new w.Event('visibilitychange')); } };
 }
 
 function boot(f) {
@@ -42,20 +70,26 @@ function boot(f) {
 test('production WordPress/quote/appointment sources remain exactly the current stable checkout', () => {
   const changed = execFileSync('git', ['diff', '--name-only', '2e3f738', '--', 'wp-mu-plugins', 'wp-plugins'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(changed.trim(), '');
-  const previous = execFileSync('git', ['show', '26fca6c:server-config/previews/home-family/index.html'], { cwd: ROOT, encoding: 'utf8' });
+  const previous = execFileSync('git', ['show', 'b9809de:server-config/previews/home-family/index.html'], { cwd: ROOT, encoding: 'utf8' });
   const oldPage = new JSDOM(previous), newPage = new JSDOM(html);
   try {
-    for (const selector of ['main', 'footer']) {
+    for (const selector of ['header', 'footer']) {
       assert.equal(newPage.window.document.querySelector(selector).outerHTML,
-        oldPage.window.document.querySelector(selector).outerHTML, 'header revision preserves ' + selector);
+        oldPage.window.document.querySelector(selector).outerHTML, 'hero revision preserves ' + selector);
     }
+    for (const page of [oldPage, newPage]) {
+      page.window.document.querySelector('.hero').remove();
+      page.window.document.querySelector('#panorama').remove();
+    }
+    assert.equal(newPage.window.document.querySelector('main').outerHTML,
+      oldPage.window.document.querySelector('main').outerHTML, 'all nonhero/nonpanorama main content preserved');
   } finally {
     oldPage.window.close();
     newPage.window.close();
   }
 });
 
-test('one branded H1, genuine media, no recreated forms or embedded live engines', t => {
+test('one branded H1, genuine media, no recreated forms or remote embedded frames', t => {
   const { d } = fixture(t);
   assert.equal(d.querySelectorAll('h1').length, 1);
   assert.match(d.querySelector('h1').textContent, /Harmat Lakópark/);
@@ -72,9 +106,9 @@ test('all display dependencies resolve locally; network and submission forbidden
   const { d } = fixture(t);
   const policy = d.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content || '';
   for (const directive of ["connect-src 'none'", "form-action 'none'", "frame-src 'none'", "object-src 'none'"]) assert(policy.includes(directive), directive);
-  for (const selector of ['img[src]', 'video[src]', 'video[poster]', 'source[src]', 'script[src]', 'link[rel="stylesheet"]']) {
+  for (const selector of ['img[src]', 'video[src]', 'video[data-src]', 'video[poster]', 'source[src]', 'script[src]', 'link[rel="stylesheet"]']) {
     for (const node of d.querySelectorAll(selector)) {
-      const names = selector.startsWith('link') ? ['href'] : selector === 'video[poster]' ? ['poster'] : ['src'];
+      const names = selector.startsWith('link') ? ['href'] : selector === 'video[poster]' ? ['poster'] : selector === 'video[data-src]' ? ['data-src'] : ['src'];
       for (const name of names) {
         const value = node.getAttribute(name);
         assert(value && !/^(?:https?:|\/\/|data:)/i.test(value), 'local source ' + value);
@@ -221,22 +255,26 @@ test('initialization is idempotent and never duplicates local interactions', t =
   assert.equal(f.d.querySelectorAll('.language-switch').length, 1);
 });
 
-test('360 panorama stays distinct from apartment selection and uses the original official module', t => {
+test('360 presentation is inline, separate from apartment selection, with all six original columns', t => {
   const { d } = fixture(t);
   const section = d.querySelector('#panorama');
   const chooser = d.querySelector('#lakasvalaszto');
   assert(section && chooser && section !== chooser);
   assert(section.compareDocumentPosition(chooser) & 4, 'panorama precedes chooser');
   assert(d.querySelector('.site-menu nav a[href="#panorama"]'));
-  const links = section.querySelectorAll('a[href="https://harmat22.hu/harmat-lakopark-kornyeke/#harmat-3d-tour"]');
-  assert(links.length >= 2, 'poster and copy both lead to original official panorama');
-  for (const a of links) {
-    assert.equal(a.target, '_blank');
-    assert(a.rel.includes('noopener') && a.rel.includes('noreferrer'));
+  assert.equal(section.querySelectorAll('a[href]').length, 0, 'no navigate-away substitute');
+  assert.deepEqual([...section.querySelectorAll('[data-panorama-tab]')].map(n => n.dataset.panoramaTab), ['panorama', 'video', 'plans', 'gallery', 'location', 'notice']);
+  const viewer = section.querySelector('#panorama-viewer');
+  for (const face of 'frblud') {
+    const source = viewer.getAttribute('data-cube-' + face);
+    assert.equal(source, 'assets/panorama-' + face + '.jpg');
+    assert(fs.existsSync(path.join(OUT, source)));
   }
+  assert(d.querySelector('script[src="assets/pannellum.js"]'));
+  assert(d.querySelector('link[href="assets/pannellum.css"]'));
   assert(section.querySelector('img[src="assets/project-panorama.jpg"]'));
   assert.match(section.textContent, /Látványterv/i);
-  assert.equal(d.querySelectorAll('canvas,iframe').length, 0, 'no offline substitute engine');
+  assert.equal(d.querySelectorAll('iframe').length, 0, 'no remote embedded page');
 });
 
 test('panorama HU/Chinese copy and accessible poster link fully roundtrip', async t => {
@@ -280,4 +318,180 @@ test('menu retains main official pages plus distinct 360 and appointment entries
   assert.deepEqual([...menu.querySelectorAll('nav a')].map(a => a.getAttribute('href')), hrefs);
   f.d.querySelector('[data-language="hu"]').click();
   assert.equal(menu.querySelector('nav').outerHTML, before);
+});
+
+test('hero copy is reduced to the brand and original two working entry points', t => {
+  const { d } = fixture(t);
+  const hero = d.querySelector('.hero');
+  assert.equal(hero.querySelector('h1').textContent.trim(), 'Harmat Lakópark');
+  assert.equal(hero.querySelector('.hero-location'), null);
+  assert.equal(hero.querySelector('.hero-description'), null);
+  assert(hero.querySelector('.hero-copy').textContent.replace(/\s+/g, ' ').trim().length < 90);
+  assert.deepEqual([...hero.querySelectorAll('.hero-actions a')].map(a => a.getAttribute('href')), ['#lakasok', '#epitesi-naplo']);
+  assert(hero.querySelector('.video-button'));
+  assert(hero.querySelector('[data-i18n="rendering"]'));
+  assert.match(css, /\.hero h1\s*\{[^}]*font-size:\s*36px/);
+});
+
+test('original cubemap configuration initializes lazily and preserves viewer identity across languages', async t => {
+  const f = fixture(t, false);
+  boot(f);
+  assert.equal(f.viewers.length, 0, 'no eager GPU initialization at the top of homepage');
+  f.setNear(true);
+  assert.equal(f.viewers.length, 1);
+  const player = f.viewers[0], host = f.d.querySelector('#panorama-viewer');
+  assert.equal(player.config.type, 'cubemap');
+  assert.deepEqual(Array.from(player.config.cubeMap), [...'frblud'].map(face => 'assets/panorama-' + face + '.jpg'));
+  assert.equal(player.config.pitch, -27);
+  assert.equal(player.config.hfov, 92);
+  assert.equal(player.config.mouseZoom, 'fullscreenonly');
+  assert.equal(f.d.querySelector('.panorama-fallback').hidden, false);
+  player.handlers.load();
+  assert.equal(host.dataset.panoramaState, 'loaded');
+  assert.equal(f.d.querySelector('.panorama-fallback').hidden, true);
+  assert(player.calls.some(call => Array.isArray(call) && call[0] === 'startAutoRotate'));
+  f.d.querySelector('[data-language="zh"]').click();
+  await tick();
+  assert.equal(f.d.querySelector('#panorama-viewer'), host);
+  assert.equal(f.viewers.length, 1);
+  assert.match(player.config.strings.loadingLabel, /全景/);
+  f.d.querySelector('[data-language="hu"]').click();
+  assert.equal(f.viewers.length, 1);
+});
+
+test('six inline panels switch with pointer and keyboard without navigation; hidden videos pause', async t => {
+  const f = fixture(t);
+  boot(f);
+  f.setNear(true);
+  const select = name => f.d.querySelector('[data-panorama-tab="' + name + '"]').click();
+  for (const name of ['video', 'plans', 'gallery', 'location', 'notice', 'panorama']) {
+    select(name);
+    assert.deepEqual([...f.d.querySelectorAll('[data-panorama-panel]')].filter(n => !n.hidden).map(n => n.dataset.panoramaPanel), [name]);
+    assert.equal(f.d.querySelector('[data-panorama-tab="' + name + '"]').getAttribute('aria-selected'), 'true');
+  }
+  const current = f.d.querySelector('[data-panorama-tab="panorama"]');
+  current.dispatchEvent(new f.w.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  assert.equal(f.d.querySelector('[data-panorama-tab="video"]').getAttribute('aria-selected'), 'true');
+  const [clip, other] = f.d.querySelectorAll('.panorama-video-card video');
+  assert.equal(clip.autoplay, false);
+  assert.equal(clip.preload, 'none');
+  assert.equal(clip.playbackRate, 0.25);
+  await clip.play();
+  assert.equal(clip.paused, false);
+  await other.play();
+  assert.equal(clip.paused, true);
+  assert.equal(other.paused, false);
+  select('gallery');
+  assert.equal(other.paused, true);
+  assert.equal(f.viewers.length, 1);
+});
+
+test('rotate/reset/fullscreen controls preserve pause preference and stop offscreen/background movement', async t => {
+  const f = fixture(t, false);
+  boot(f); f.setNear(true); f.viewers[0].handlers.load();
+  const rotate = f.d.querySelector('[data-panorama-rotate]'), player = f.viewers[0];
+  assert.equal(rotate.getAttribute('aria-pressed'), 'true');
+  f.setHidden(true);
+  assert.equal(rotate.getAttribute('aria-pressed'), 'false');
+  assert(player.calls.includes('stopAutoRotate'));
+  f.setHidden(false);
+  assert.equal(rotate.getAttribute('aria-pressed'), 'true');
+  rotate.click();
+  f.setNear(false); f.setNear(true);
+  assert.equal(rotate.getAttribute('aria-pressed'), 'false', 'manual pause survives leaving and returning');
+  f.d.querySelector('[data-panorama-reset]').click();
+  assert(player.calls.some(call => Array.isArray(call) && call[0] === 'lookAt' && call[1] === -27));
+  const full = f.d.querySelector('[data-panorama-fullscreen]');
+  full.click(); await tick();
+  assert.equal(f.d.fullscreenElement, f.d.querySelector('[data-panorama-console]'));
+  assert.equal(player.config.mouseZoom, true);
+  full.click(); await tick();
+  assert.equal(f.d.fullscreenElement, null);
+  assert.equal(player.config.mouseZoom, 'fullscreenonly');
+});
+
+test('gallery enlarges locally, translates while open and restores the triggering control', async t => {
+  const f = fixture(t);
+  boot(f);
+  f.d.querySelector('[data-panorama-tab="gallery"]').click();
+  const trigger = f.d.querySelector('[data-panorama-panel="gallery"] [data-gallery]');
+  trigger.click();
+  const dialog = f.d.querySelector('.panorama-lightbox');
+  assert(dialog.open);
+  assert.equal(dialog.querySelector('img').src, trigger.querySelector('img').src);
+  f.d.querySelector('[data-language="zh"]').click();
+  await tick();
+  assert.match(dialog.querySelector('img').alt, /项目/);
+  assert.match(dialog.querySelector('.panorama-lightbox-caption').textContent, /项目/);
+  f.d.querySelector('[data-panorama-close]').click();
+  assert.equal(dialog.open, false);
+  assert.equal(f.d.activeElement, trigger);
+});
+
+test('WebGL or constructor failure retains a translated poster instead of an endless loader', async t => {
+  const f = fixture(t);
+  boot(f); f.setNear(true);
+  f.viewers[0].handlers.error();
+  const host = f.d.querySelector('#panorama-viewer'), status = f.d.querySelector('[data-panorama-status]');
+  assert.equal(host.dataset.panoramaState, 'error');
+  assert.equal(host.hidden, true);
+  assert.equal(f.d.querySelector('.panorama-fallback').hidden, false);
+  assert.equal(host.getAttribute('aria-busy'), 'false');
+  f.d.querySelector('[data-language="zh"]').click();
+  await tick();
+  assert.match(status.textContent, /暂不可用/);
+  f.viewers[0].handlers.load();
+  assert(f.viewers[0].calls.includes('destroy'), 'late load cannot replace the safe fallback');
+  assert.equal(host.dataset.panoramaState, 'error');
+  f.d.querySelector('[data-panorama-tab="gallery"]').click();
+  assert.equal(f.d.querySelector('[data-panorama-panel="gallery"]').hidden, false);
+  const broken = fixture(t);
+  broken.w.pannellum.viewer = () => { throw new Error('no WebGL'); };
+  boot(broken); broken.setNear(true);
+  assert.equal(broken.d.querySelector('#panorama-viewer').dataset.panoramaState, 'error');
+  assert.equal(broken.d.querySelector('.panorama-fallback').hidden, false);
+});
+
+test('reduced motion and fullscreen rejection remain safe and fully localized', async t => {
+  const f = fixture(t);
+  boot(f); f.setNear(true); f.viewers[0].handlers.load();
+  assert(!f.viewers[0].calls.some(call => Array.isArray(call) && call[0] === 'startAutoRotate'));
+  const root = f.d.querySelector('[data-panorama-console]');
+  root.requestFullscreen = () => Promise.reject(new Error('fullscreen denied'));
+  f.d.querySelector('[data-panorama-fullscreen]').click(); await tick();
+  const status = f.d.querySelector('[data-panorama-action-status]');
+  assert.equal(status.hidden, false);
+  f.d.querySelector('[data-language="zh"]').click();
+  assert.match(status.textContent, /无法进入全屏/);
+  assert.equal(f.d.querySelector('#panorama-viewer').dataset.panoramaState, 'loaded');
+});
+
+test('browsers without IntersectionObserver initialize the inline viewer when its bounds become visible', t => {
+  const f = fixture(t);
+  delete f.w.IntersectionObserver;
+  const consoleNode = f.d.querySelector('[data-panorama-console]');
+  consoleNode.getBoundingClientRect = () => ({ width: 900, height: 600, top: 50, bottom: 650 });
+  boot(f);
+  assert.equal(f.viewers.length, 1);
+  assert.equal(f.d.querySelector('#panorama-viewer').dataset.panoramaState, 'loading');
+});
+
+test('actual V3 export embeds all original cube faces, local images and scripts byte-exact', t => {
+  const bundle = fs.readFileSync(path.join(OUT, 'harmat-home-family-preview-v3.html'), 'utf8');
+  const dom = new JSDOM(bundle, { runScripts: 'outside-only' });
+  t.after(() => dom.window.close());
+  const d = dom.window.document, host = d.querySelector('#panorama-viewer');
+  for (const face of 'frblud') {
+    const value = host.getAttribute('data-cube-' + face);
+    assert(value.startsWith('data:image/jpeg;base64,'));
+    assert(Buffer.from(value.split(',')[1], 'base64').equals(fs.readFileSync(path.join(OUT, 'assets/panorama-' + face + '.jpg'))));
+  }
+  for (const img of d.querySelectorAll('img')) assert(img.src.startsWith('data:image/'));
+  assert.equal(d.querySelectorAll('script[src],link[rel="stylesheet"],iframe,form').length, 0);
+  const scripts = [...d.querySelectorAll('script')];
+  assert.equal(scripts.length, 3);
+  assert.equal(scripts[2].textContent.replace(/\r\n/g, '\n'), js.replace(/\r\n/g, '\n'));
+  assert(scripts[1].textContent.includes('pannellum'));
+  assert.deepEqual([...new Set([...d.querySelectorAll('video')].map(v => v.getAttribute('src') || v.getAttribute('data-src')))].sort(),
+    ['assets/hero-video.mp4', 'assets/panorama-project-video.mp4']);
 });

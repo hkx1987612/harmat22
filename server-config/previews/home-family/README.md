@@ -8,16 +8,17 @@ presentation files here; parent review added packaging and no-network tests.
 
 ## Design
 
-- Original project video and aerial poster; next section remains discoverable.
+- Original project video and aerial poster, compact lower-left brand/two actions;
+  long hero address and promotional copy removed after user screenshot feedback.
 - White, restrained sage/forest and small gold accents; no invented family photos.
 - Three genuine floorplans before the dated construction report and lifestyle images.
 - Project courtyard/living-room renderings are labelled as renderings. The nearby
   public park is explicitly not the development's internal completed garden.
 - Compact showroom, virtual-selector link, team and official sales contacts.
-- User review identified a missing independent 3D/360 panorama entry. The follow-up
-  restores its own section and desktop/mobile navigation, separate from choosing
-  an apartment. Its original cube-front poster links to the existing official
-  neighborhood panorama; the offline preview does NOT embed a replacement engine.
+- Original interactive 3D/360 presentation is restored inline, separate from
+  apartment selection: panorama, videos, project, gallery, location and notice.
+  The user explicitly rejected a poster that navigates to another page. The
+  existing Pannellum engine is reused, not replaced with hand-built 3D logic.
 - All-width hamburger navigation and local HU/Chinese controls beside it; explicit
   official appointment destinations in the header and full menu.
 - Public apartment values were checked against the official public inventory on
@@ -46,7 +47,8 @@ python server-config/maintenance/2026-10-18-test-home-preview-package.py
 ```
 
 `--assets` makes read-only official public inventory/property/image requests and
-fetches integrity-verified `lucide@0.468.0` from the official npm registry. It also
+fetches integrity-verified `lucide@0.468.0` and `pannellum@2.5.6` from the official
+npm registry, plus the original official cube/gallery/video assets. It also
 requires the previously approved local native video, nearby-park image and prior
 reviewed project preview identified in the helper. These ignored media inputs
 are NOT included in Git. A second computer needs the approved media separately;
@@ -62,27 +64,42 @@ The image combines project visualization with its surrounding aerial context;
 do not label it completed-development photography. The original official
 `/harmat-lakopark-kornyeke/#harmat-3d-tour` destination returned 200 and loads the
 existing panorama script; dragging/WebGL behavior was not newly browser-tested.
+`--interactive` stages the full original six cubemap faces, six gallery images,
+overview poster, 10,088,966-byte native project clip and pinned Pannellum library/
+license. Names/provenance are recorded in the ignored interactive manifest.
+API reference: [Pannellum documentation](https://pannellum.org/documentation/reference/).
 
 Open the generated file directly, without a dev server:
 
-`outputs/2026-10-18-home-family/harmat-home-family-preview-v2.html`
+`outputs/2026-10-18-home-family/harmat-home-family-preview-v3.html`
 
-Images, stylesheet, Lucide and behavior are embedded. The original 39,504,516-byte
-video remains at sibling `assets/hero-video.mp4`; moving only the HTML retains
-the visual poster but loses video playback. No remote display dependency exists.
+Images/cube faces, stylesheets, libraries and behavior are embedded. Videos remain
+at sibling `assets/hero-video.mp4` (39,504,516 bytes) and
+`assets/panorama-project-video.mp4` (10,088,966 bytes); moving only the HTML loses
+video playback, not the embedded images. No remote display dependency exists.
 Generated exports and media remain ignored; Git shares only source/tools/records.
-V2 is a separate filename after user feedback on header balance and missing menu/
-appointment access. The previous V1 output remains historical and may stay open
-with stale content; use the new file rather than evaluating a previously loaded V1.
+V3 is a separate filename after user feedback on hero copy and inline 360 viewing.
+V1/V2 remain historical; use the new file rather than a previously loaded version.
+The embedded offline package is intentionally larger than a production HTML page.
+Do NOT deploy that base64 export: future integration must reuse original lazy
+asset URLs, defer panorama GPU initialization and retain manual video playback.
 
 ## Verified / Pending
 
-- 15 source/no-network JSDOM tests and 11 synthetic packaging tests passed.
+- 24 source/no-network DOM/API-stub/export tests and 15 synthetic packaging tests
+  passed. API stubs are NOT real WebGL, native fullscreen or device evidence.
 - JS syntax passed; production plugin sources equal stable checkout `2e3f738`.
 - Ten official destination routes returned HTTP 200 by read-only GET. This is
   link availability evidence, not a functional quote/appointment submission test.
-- Current header-restored V2 bundle: 7,029,206 bytes; SHA256
-  `b1eadb24d40ab835475bcf62ead5fa70cba30cd3e9c092a8db079d6e7463cf50`.
+- Current compact-hero/inline-interactive V3 bundle: 27,637,032 bytes; SHA256
+  `d1990e217b4446b4f78845821527c3442a3c9aa1a76defdbaa95ed929cfda1c6`.
+- All six cube-face bytes and embedded behavior in the actual export were checked;
+  libraries retain their exact pinned package bytes and local license files.
+- Original camera is pitch -27/yaw0/hfov92, faces front/right/back/left/up/down.
+  Near-viewport initialization; visible-only rotation, reduced-motion preference,
+  one manually played panel video at a time, panel/background pause, error poster
+  and late-load guard. No-IntersectionObserver fallback also initializes visibly.
+  Native dialog zoom, focus return and language changes retain viewer identity.
 - Codex opened the local preview for user review. Browser automation explicitly
   disallowed reading file URLs; no alternate transport/browser workaround was
   attempted. Responsive CSS was reviewed, but NO real-browser mobile, pixel,

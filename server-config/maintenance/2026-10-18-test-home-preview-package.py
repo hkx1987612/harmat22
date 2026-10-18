@@ -68,6 +68,11 @@ class PackagingTests(unittest.TestCase):
         self.assertIn('src="assets/hero-video.mp4"', text)
         self.assertNotIn('data:video', text)
 
+    def test_remote_video_cannot_be_introduced_by_packaging(self):
+        self.html = self.html.replace('src="assets/hero-video.mp4"', 'src="https://example.invalid/video.mp4"')
+        with self.assertRaises(RuntimeError):
+            self.render()
+
     def test_csp_forbids_connect_forms_and_frames(self):
         policy = next(attrs['content'] for tag, attrs in Tags(self.render()).tags if tag == 'meta')
         for directive in ("connect-src 'none'", "form-action 'none'", "frame-src 'none'", "object-src 'none'"):
@@ -92,6 +97,35 @@ class PackagingTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.render()
 
+    def test_original_panorama_cube_and_gallery_bytes_embed_locally(self):
+        attrs = []
+        for face in 'frblud':
+            (M.OUT / ('assets/panorama-' + face + '.jpg')).write_bytes(('original-' + face).encode())
+            attrs.append('data-cube-' + face + '="assets/panorama-' + face + '.jpg"')
+        self.html = self.html.replace('<main>', '<main><div ' + ' '.join(attrs) + '></div><button data-full="assets/test.png">Gallery</button>')
+        rows = Tags(self.render()).tags
+        cube = next(a for tag, a in rows if tag == 'div')
+        for face in 'frblud':
+            self.assertEqual(base64.b64decode(cube['data-cube-' + face].split(',', 1)[1]), ('original-' + face).encode())
+        gallery = next(a for tag, a in rows if tag == 'button')['data-full']
+        self.assertEqual(base64.b64decode(gallery.split(',', 1)[1]), (M.OUT / 'assets/test.png').read_bytes())
+
+    def test_exact_panorama_library_embeds_before_page_behavior(self):
+        (M.OUT / 'assets/pannellum.js').write_text('window.panoramaLibrary=true;', encoding='utf-8')
+        self.html = self.html.replace('<script defer src="home-family.js">', '<script defer src="assets/pannellum.js"></script><script defer src="home-family.js">')
+        text = self.render()
+        self.assertLess(text.index('window.panoramaLibrary'), text.index('window.pageReady'))
+
+    def test_pinned_panorama_css_accepts_only_self_contained_image_urls(self):
+        self.html = self.html.replace('<link rel="stylesheet" href="home-family.css">', '<link rel="stylesheet" href="assets/pannellum.css"><link rel="stylesheet" href="home-family.css">')
+        css = M.OUT / 'assets/pannellum.css'
+        css.write_text(".cursor{background:url('data:image/svg+xml,%3Csvg%2F%3E')}", encoding='utf-8')
+        self.assertIn('data:image/svg+xml', self.render())
+        for invalid in ("a{background:url(https://example.invalid/x.svg)}", 'a{background:url(img/cursor.svg)}', '@import "remote.css";'):
+            css.write_text(invalid, encoding='utf-8')
+            with self.assertRaises(RuntimeError):
+                self.render()
+
     def test_owned_bundle_can_refresh_but_foreign_edit_never_overwritten(self):
         (M.OUT / 'index.html').write_text(self.html, encoding='utf-8')
         M.build_bundle()
@@ -107,13 +141,15 @@ class PackagingTests(unittest.TestCase):
         self.assertFalse(any(tag in ('form', 'input', 'iframe') for tag, attrs in rows))
         self.assertEqual(next(attrs['href'] for tag, attrs in rows if tag == 'a'), '#contact')
 
-    def test_v2_export_preserves_previously_reviewed_v1(self):
-        previous = M.OUT / 'harmat-home-family-preview-v1.html'
-        previous.write_text('previous reviewed preview', encoding='utf-8')
+    def test_v3_export_preserves_previously_reviewed_versions(self):
+        previous = [M.OUT / ('harmat-home-family-preview-v' + version + '.html') for version in ('1', '2')]
+        for item in previous:
+            item.write_text('previous reviewed preview', encoding='utf-8')
         (M.OUT / 'index.html').write_text(self.html, encoding='utf-8')
         M.build_bundle()
-        self.assertEqual(previous.read_text(encoding='utf-8'), 'previous reviewed preview')
-        self.assertTrue((M.OUT / 'harmat-home-family-preview-v2.html').is_file())
+        for item in previous:
+            self.assertEqual(item.read_text(encoding='utf-8'), 'previous reviewed preview')
+        self.assertTrue((M.OUT / 'harmat-home-family-preview-v3.html').is_file())
 
 
 if __name__ == '__main__':

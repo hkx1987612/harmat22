@@ -84,3 +84,48 @@ hashes are historical. Local media and generated HTML remain ignored. Actual
 browser/mobile/pixel validation remains pending under the existing file-URL
 restriction; no alternate tool/transport attempted, no visual guarantee. Still
 OFFLINE ONLY, not publication approval. Website/quote/appointment code unchanged.
+
+## V3: Compact Hero and Original Inline Presentation
+
+Two explicit user screenshot requests: reduce large hero text; put the complete
+original 3D presentation directly on the homepage, not an outbound poster link.
+Sol implements in the same three presentation files, parent reviews and closes
+worker. Hero loses address/promotional paragraph, brand36px/30px/28px and two
+compact44px actions move lower-left; video frame/behavior and separate bottom
+controls remain. Existing header/menu/booking and footer DOM equalb9809de; all
+main content outside the authorized hero/panorama also equalsb9809de.
+
+Inline panel retains original panorama/video/project/gallery/location/notice,
+rotation/reset/fullscreen and local gallery zoom. Original Pannellum2.5.6 is
+vendored from integrity-verified official npm package with COPYING. Original six
+2048px cube faces preserve front/right/back/left/up/down and camera-27/0/92.
+Thirteen official images and10,088,966byte original project video are staged with
+hashes in ignored interactive-manifest. Second panel video reuses local native
+hero, not a remote YouTube iframe; original project clip0.25x/second1x, no panel
+autoplay. No invented photos, live data, new portal or external API.
+
+Near-viewport lazy GPU init, visible/active/document-visible/reduced-motion
+rotation control; loader hidden only on load, errors keep poster,25sec timeout,
+late-load guard. One panel clip at a time, pauses when hidden/offscreen. Native
+fullscreen failure message and dialog focus return, keyboard tabs, translated
+dynamic/vendor labels without replacing canvas/handlers. Vertical touch guard
+and CSS reviewed only; actual touch behavior not certified. Parent finds and
+Sol fixes no-IntersectionObserver visible initialization fallback; actual engine
+API stopMovement confirmed, parent stub includes it.
+
+24 no-network source/DOM/API-stub/export tests +15 packaging tests and source/
+vendor JS syntax PASS. All six actual exported cube bytes match original assets;
+actual page script exact, images inline, two explicit local video paths, no forms
+or remote frames. Test native media/visibility/fullscreen/dialog are MOCKS, not
+browser/device/GPU checks. No file-URL browser workaround. No real quote,
+appointment, customer/mail/CRM/server write or source change occurred.
+
+Output `outputs/2026-10-18-home-family/harmat-home-family-preview-v3.html`,
+27,637,032bytes/SHA256
+`d1990e217b4446b4f78845821527c3442a3c9aa1a76defdbaa95ed929cfda1c6`.
+Original videos remain sibling files, and priorV1/V2 preserved. Large offline
+base64 export is NOT production delivery: future authorized integration must
+reuse lazy original media URLs and preserve native quote/appointment and live
+language ownership, with backup/lint/cache/real mobile+core-flow regression.
+Only source/tools/accurate records to Git; media, generated HTML and manifests
+remain ignored. Live stable tag unchanged. User actual visual/3D approval pending.
