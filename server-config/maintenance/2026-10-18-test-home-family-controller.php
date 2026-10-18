@@ -50,6 +50,29 @@ check(harmat_home_family_context(),'normal context');
 check((bool)harmat_home_family_assets(),'real asset pins');
 $input=fixture();$output=harmat_home_family_output($input);
 check($output!==$input,'positive replacement');
+$parsed=harmat_home_family_document($output);
+$xpath=new \DOMXPath($parsed[0]);
+$actions=$xpath->query('//div[contains(concat(" ",normalize-space(@class)," ")," hhf-hero-actions ")]/a');
+check($actions->length===2,'exactly two hero actions');
+check($actions->item(0)->getAttribute('href')==='https://harmat22.hu/virtualis-lakasvalaszto/'
+    && $actions->item(0)->getElementsByTagName('span')->item(0)->getAttribute('data-i18n')==='chooserLink','hero selector reuses public destination and Chinese key');
+check($actions->item(1)->getAttribute('href')==='#opal-contactform-popup-56f08cc'
+    && $actions->item(1)->getElementsByTagName('span')->item(0)->getAttribute('data-i18n')==='appointment','hero appointment reuses unchanged native popup convention');
+check($actions->item(1)->getElementsByTagName('path')->item(0)->getAttribute('d')==='M5 12h14','booking uses existing directional action icon');
+check($xpath->query('//*[@id="hhf-epitesi-naplo"]')->length===1,'construction journal section retained');
+$harmat_home_family_units=harmat_home_family_units();
+$original_owned=include dirname($candidate).'/harmat-home-family/body.php';
+$rewritten=harmat_home_family_hero_actions($original_owned);
+check(is_string($rewritten) && $rewritten!==$original_owned,'exact owned source accepted');
+foreach(array(null,false,array(),123,'',str_replace('hhf-actions hhf-hero-actions','drift',$original_owned),
+    str_replace('data-i18n="chooseApartment"','data-i18n="drift"',$original_owned),
+    str_replace('data-i18n="readJournal"','data-i18n="drift"',$original_owned),$original_owned.$original_owned) as $broken) {
+    check(harmat_home_family_hero_actions($broken)===false,'missing duplicate or invalid hero fails closed to original document');
+}
+preg_match('~<a class="hhf-button hhf-button-white" href="#hhf-lakasok"><span[^>]*>[^<]*</span>~',$original_owned,$old_choose);
+preg_match('~<a class="hhf-hero-journal"[\s\S]*?</a>~',$original_owned,$old_journal);
+check(harmat_home_family_hero_actions($original_owned.$old_choose[0])===false,'duplicate selector fragment rejected');
+check(harmat_home_family_hero_actions($original_owned.$old_journal[0])===false,'duplicate journal fragment rejected');
 preg_match('~<style id="harmat-home-family-header-flow">[\\s\\S]*?</style>~',$output,$flow_match);
 $flow=$flow_match[0] ?? '';
 check($flow!=='' && substr_count($output,'<style id="harmat-home-family-header-flow">')===1,'one successful homepage presentation override');
@@ -83,4 +106,5 @@ reset_state();$state['hidden']=true;$hidden=harmat_home_family_units();check($hi
 foreach(array('reserved','sold') as $status){$state['unit_status']=$status;check(harmat_home_family_units()['A1-1-L6']['status']===$status,'live status '.$status);}
 reset_state();
 foreach(array(substr($input,0,-7),str_replace('id="h22-offer-form"','id="missing-form"',$input),str_replace('</body>','<form id="h22-offer-form"></form></body>',$input),str_replace('elementor-164','drift',$input),str_replace('<h1 ','<h2 ',$input)) as $broken){$unchanged=harmat_home_family_output($broken);check($unchanged===$broken,'malformed/drift native fail-open');check(strpos($unchanged,$flow)===false,'rejected transform never emits flow override');}
+if (in_array('--render',$argv,true)) {echo $output;exit;}
 echo json_encode(array('status'=>'PASS','checks'=>$checks,'scope'=>'SYNTHETIC_PURE_NO_NETWORK_NO_SUBMISSION'));

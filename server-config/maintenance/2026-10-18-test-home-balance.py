@@ -36,6 +36,13 @@ class BalanceTests(unittest.TestCase):
         self.stack = contextlib.ExitStack()
         self.addCleanup(self.stack.close)
         self.stack.enter_context(patch.object(socket.socket, 'connect', side_effect=AssertionError('NETWORK FORBIDDEN')))
+        base = subprocess.check_output(['git', 'show', B.BASE + ':wp-mu-plugins/' + B.U.D.MAIN], cwd=B.ROOT)
+        historical = B.patch(base)
+        controller = (B.ROOT / 'wp-mu-plugins' / B.U.D.MAIN).resolve()
+        real_read = Path.read_bytes
+        # Keep this updater's exact release fixture after later controller revisions.
+        self.stack.enter_context(patch.object(Path, 'read_bytes', autospec=True,
+            side_effect=lambda path: historical if path.resolve() == controller else real_read(path)))
         self.original, self.candidate, self.files, self.hashes, self.checker = B.local_release()
         self.assets = {U.D.DIR + '/' + name: (B.ROOT / 'wp-mu-plugins' / name).read_bytes().replace(b'\r\n', b'\n')
                        for name in self.files if name != U.D.MAIN}

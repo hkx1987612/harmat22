@@ -1,5 +1,9 @@
 # Homepage Header and Readability Repair - Released
 
+Historical v1.0.2 record. Later approved homepage balance and original hero
+actions supersede its current-controller hashes and recovery entry point.
+Use `2026-10-18-home-balance.md` for the latest v1.0.4 narrow recovery.
+
 ## Current v1.0.2
 
 - User confirms the header is too tall, then reports tiny/unbalanced homepage text. Sol implements guarded homepage-only CSS in the existing controller; no native markup, JS, form, apartment, media, vendor or manifest edits. Parent reviews and deploys after a fresh backup. Header76px/logo60px, vertical container padding removed without shrinking menu hit area; inherited heading padding reset, scoped labels/meta enlarged, section spacing tightened. All overrides have homepage ownership selectors and fixed responsive font sizes, no global typography changes.
