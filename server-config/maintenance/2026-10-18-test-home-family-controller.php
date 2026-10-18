@@ -50,6 +50,17 @@ check(harmat_home_family_context(),'normal context');
 check((bool)harmat_home_family_assets(),'real asset pins');
 $input=fixture();$output=harmat_home_family_output($input);
 check($output!==$input,'positive replacement');
+preg_match('~<style id="harmat-home-family-header-flow">[\\s\\S]*?</style>~',$output,$flow_match);
+$flow=$flow_match[0] ?? '';
+check($flow!=='' && substr_count($output,'<style id="harmat-home-family-header-flow">')===1,'one successful homepage presentation override');
+check(strpos($output,$flow)<strpos($output,'</head>'),'flow style inside successful head');
+check(strpos($flow,'body.home.page-id-164.opal-header-absolute #masthead,body.home.page-id-164.opal-header-absolute #masthead > div.site-header{position:relative!important;background:#fff}')!==false,'native header remains in normal flow');
+check(strpos($flow,'height:76px!important;min-height:0!important')!==false && strpos($flow,'padding-top:100px')===false,'compact native height without fixed root offset');
+check(strpos($flow,'.headerrow>.e-con-inner>.e-con{height:100%!important;min-height:0!important;padding-block:0!important;justify-content:center}')!==false,'native header child whitespace cleared');
+check(strpos($flow,'.elementor-widget-opal-site-logo img{width:60px!important;height:60px!important;object-fit:contain}')!==false,'contained logo stays inside compact header');
+check(strpos($flow,'body.home.page-id-164 #harmat-home-family h1,body.home.page-id-164 #harmat-home-family h2,body.home.page-id-164 #harmat-home-family h3{padding:0}')!==false,'owned heading theme padding reset');
+check(strpos($flow,'@media(max-width:620px)')!==false && strpos($flow,'@media(max-width:360px)')!==false,'owned compact mobile readability overrides');
+check(strpos($flow,'font-size:32px')!==false && strpos($flow,'font-size:22px')!==false,'fixed readable desktop and narrow screen sizes');
 check(substr_count($output,'id="harmat-home-family"')===1,'one root');
 check(substr_count($output,'<h1 ')===1,'one h1');
 foreach(array('header','footer','form') as $tag){preg_match('~<'.$tag.'\b[\s\S]*?</'.$tag.'>~',$input,$a);preg_match('~<'.$tag.'\b[\s\S]*?</'.$tag.'>~',$output,$b);check($a[0]===$b[0],'native '.$tag.' byte exact');}
@@ -61,5 +72,5 @@ foreach(array('id'=>1777,'front'=>false,'main'=>false,'status'=>'draft','slug'=>
 reset_state();$state['hidden']=true;$hidden=harmat_home_family_units();check($hidden['A1-1-L6']['price_huf']===null,'hidden price null');
 foreach(array('reserved','sold') as $status){$state['unit_status']=$status;check(harmat_home_family_units()['A1-1-L6']['status']===$status,'live status '.$status);}
 reset_state();
-foreach(array(substr($input,0,-7),str_replace('id="h22-offer-form"','id="missing-form"',$input),str_replace('</body>','<form id="h22-offer-form"></form></body>',$input),str_replace('elementor-164','drift',$input),str_replace('<h1 ','<h2 ',$input)) as $broken){check(harmat_home_family_output($broken)===$broken,'malformed/drift native fail-open');}
+foreach(array(substr($input,0,-7),str_replace('id="h22-offer-form"','id="missing-form"',$input),str_replace('</body>','<form id="h22-offer-form"></form></body>',$input),str_replace('elementor-164','drift',$input),str_replace('<h1 ','<h2 ',$input)) as $broken){$unchanged=harmat_home_family_output($broken);check($unchanged===$broken,'malformed/drift native fail-open');check(strpos($unchanged,$flow)===false,'rejected transform never emits flow override');}
 echo json_encode(array('status'=>'PASS','checks'=>$checks,'scope'=>'SYNTHETIC_PURE_NO_NETWORK_NO_SUBMISSION'));

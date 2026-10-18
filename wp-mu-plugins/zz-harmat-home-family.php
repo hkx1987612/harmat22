@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.0
+ * Version: 1.0.2
  */
 defined('ABSPATH') || exit;
 
@@ -132,7 +132,32 @@ function harmat_home_family_output($html) {
         $base=content_url('/mu-plugins/harmat-home-family/');
         $replacement=str_replace('__HHF_ASSET_BASE__',esc_url($base),$replacement);
         if (strpos($replacement,'__HHF_')!==false || strpos($replacement,'src="assets/')!==false) return $html;
-        $resources='';
+        $resources='<style id="harmat-home-family-header-flow">'
+            . 'body.home.page-id-164.opal-header-absolute #masthead,body.home.page-id-164.opal-header-absolute #masthead > div.site-header{position:relative!important;background:#fff}'
+            . 'body.home.page-id-164.opal-header-absolute #my-sticky-header,body.home.page-id-164.opal-header-absolute #my-sticky-header.elementor-sticky__spacer{height:76px!important;min-height:0!important}'
+            . 'body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow,body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner{height:76px!important;min-height:0!important;padding-block:0!important}'
+            . 'body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner{align-items:center}'
+            . 'body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.e-con{height:100%!important;min-height:0!important;padding-block:0!important;justify-content:center}'
+            . 'body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-icon{padding-block:0!important}'
+            . 'body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-opal-site-logo img{width:60px!important;height:60px!important;object-fit:contain}'
+            . 'body.home.page-id-164 #harmat-home-family h1,body.home.page-id-164 #harmat-home-family h2,body.home.page-id-164 #harmat-home-family h3{padding:0}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-eyebrow,body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dt,body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>span{font-size:14px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong,body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-date{font-size:32px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlight-grid .hhf-highlight-unit{font-size:20px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-word{font-size:28px;line-height:1.4;overflow-wrap:anywhere}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-highlight-date>span{font-size:16px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-top h3{font-size:21px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-floor,body.home.page-id-164 #harmat-home-family .hhf-price>span,body.home.page-id-164 #harmat-home-family .hhf-fine-print,body.home.page-id-164 #harmat-home-family .hhf-apartment-note,body.home.page-id-164 #harmat-home-family .hhf-journal-date,body.home.page-id-164 #harmat-home-family figcaption{font-size:14px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-status,body.home.page-id-164 #harmat-home-family .hhf-apartment-facts dt{font-size:13px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-facts dd{font-size:18px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-link,body.home.page-id-164 #harmat-home-family .hhf-text-link{font-size:15px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-section-heading,body.home.page-id-164 #harmat-home-family .hhf-everyday-heading{margin-bottom:24px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-journal-copy h2,body.home.page-id-164 #harmat-home-family .hhf-showroom-row h2,body.home.page-id-164 #harmat-home-family .hhf-chooser h2{margin-bottom:12px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-section{padding-block:64px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-panorama{padding-top:0}'
+            . '@media(max-width:620px){body.home.page-id-164 #harmat-home-family .hhf-section{padding-block:40px}body.home.page-id-164 #harmat-home-family .hhf-panorama{padding-top:0}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>strong,body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-date{font-size:30px}body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-word{font-size:24px}body.home.page-id-164 #harmat-home-family figcaption{font-size:13px}}'
+            . '@media(max-width:360px){body.home.page-id-164 #harmat-home-family .hhf-highlight-grid dd>.hhf-highlight-word{font-size:22px}}'
+            . '</style>';
         foreach (array('pannellum.css','home-family.css') as $name) {
             if (!isset($pins[$name])) return $html;
             $resources.='<link rel="stylesheet" href="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'">';

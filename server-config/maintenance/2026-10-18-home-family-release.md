@@ -120,6 +120,11 @@ offer+17 anti-spam validators PASS. No protected source/page/property/CRM drift.
 
 ## Recovery
 
+Superseded for the current controller by the approved v1.0.2 header/readability
+repair. Use `2026-10-18-home-header-flow.md` and its compact updater for the
+latest narrow verification/recovery; the commands below describe v1.0.0 only
+and intentionally reject the newer controller/bundle.
+
 After successful release, exact current-source ownership is required:
 
 ```powershell
