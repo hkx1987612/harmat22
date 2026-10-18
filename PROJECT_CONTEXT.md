@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Homepage Warm Preview - Pending Review
+
+- October18 user approves Sol-built OFFLINE homepage preview only, then review before publication; quote and appointment must remain untouched. Source in `server-config/previews/home-family/`, build/test helpers and record `server-config/maintenance/2026-10-18-home-family-preview.md`. Genuine media, early three floorplan cards/public facts, dated construction, family lifestyle, showroom/contact; local HU/Chinese, no forms/APIs/embedded selector/tracking.
+- Preview opened for user: `outputs/2026-10-18-home-family/harmat-home-family-preview-v1.html`, images/CSS/JS embedded and local sibling hero video.12 no-network DOM/source +10 packaging tests/JS syntax PASS;10 destination routes HTTP200. Production sources unchanged against2e3f738; no live/server/customer/mail writes. Browser file-URL observation denied; no workaround. Actual mobile/pixel/video-decoding checks and design approval PENDING, not deploy-ready. Live stable tag unchanged `stable-2026-10-18-property-disclaimer-current`.
+
 ## Property Disclaimer Migration - Current
 
 - October18 user assigns Sol ONLY the legacy property footer notice migration, backup/mobile/HU-Chinese checks without quote/appointment damage. RELEASED independent MU `zz-harmat-property-disclaimer.php` v1.0.0 plus ONE exact legacy invocation guard. Complete successful public property document is validated, unchanged HU notice inserted inside body immediately before colophon, legacy call retired only in the validated result. Missing module/drift/partial output preserves old fallback; no full legacy disable. Existing CSS and all language/native form/backend/data sources unchanged.
