@@ -1,5 +1,7 @@
 # Homepage Construction Policy and Loading Audit
 
+Follow-up: the user subsequently explicitly authorized the in-app browser and restored a full-width hero. Actual viewport checks and the separate v1.0.9 release are recorded in `2026-10-18-home-hero-fill.md`. The original audit below remains its historical read-only evidence; its pending browser gate is superseded by that follow-up.
+
 ## Scope and State
 
 - User confirms one latest construction compilation on the homepage, other clips in the construction journal; review mobile/loading without changing quotes or appointments.

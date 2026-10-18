@@ -148,14 +148,13 @@ test('scoped CSS resets legacy all-caps/padding and uses full-frame stable media
   dom.window.close();
 });
 
-test('homepage scoped comfort rules remove offset/cropping and split mobile copy band', () => {
+test('homepage hero fills width while construction retains comfortable click-only media', () => {
   assert.equal(controller.includes('.hhf-hero{margin-top:76px;scroll-margin-top:152px}'), false);
-  assert.match(controller, /\.hhf-hero\{display:grid;[^}]*max-width:1280px;margin:0 auto/);
-  assert.match(controller, /\.hhf-hero-poster\{[^}]*aspect-ratio:16\/9;object-fit:contain/);
-  assert.match(controller, /\.hhf-hero-video\{inset:0;[^}]*object-fit:contain/);
-  assert.match(controller, /@media\(max-width:767px\)\{body.home.page-id-164 #harmat-home-family \.hhf-hero\{background:#edf2ef/);
-  assert.match(controller, /\.hhf-hero-inner\{grid-area:2\/1/);
-  assert.match(controller, /\.hhf-hero::before\{display:none/);
+  assert.match(controller, /\.hhf-hero\{width:100%;max-width:none;margin:0;scroll-margin-top:76px/);
+  assert.equal(controller.includes('.hhf-hero-inner{grid-area:2/1'), false);
+  assert.equal(controller.includes('.hhf-hero::before{display:none'), false);
+  const pinnedCss = fs.readFileSync(path.join(ROOT, 'wp-mu-plugins/harmat-home-family/home-family.css'), 'utf8');
+  assert.match(pinnedCss, /\.hhf-hero-video\s*\{[^}]*object-fit:\s*cover/);
   assert.match(controller, /function_exists\('harmat_cu_home_teaser'\)/);
   assert.match(controller, /function_exists\('harmat_cu_resources'\)/);
   assert.equal(/update_post|wp_insert|wp_mail|register_rest_route|fetch\(/.test(moduleSource), false);
