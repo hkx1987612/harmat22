@@ -2,6 +2,12 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Payment Copy Audit - Read Only
+
+- Completed145/145 sitemap public pages(124properties),7first-party scripts,0fetchfailures;119properties share identical4214paymentcopy,5omit it. Public HTML/inline/scripts show no detected obsolete fixed payment deadline.124document links inventoried, only2floorplans+technicalPDF text sampled (image-only pages/not allOCR excluded).6parser tests pass; no live form end-to-end test claimed because no functional change/submission.
+- October18 user requests public-site payment consistency check, excluding quote/appointment changes. Shared property Elementor4214 block remains installment-only:10+15 is valid first25, then25/25/20/5;20% says apartment-completion notice rather than latest key-collection notice. It omits8%/4% alternatives and explicit installment-no-discount. Actual scrolled IAB A1-1-L2 HU/ZH confirms, HU restored. Financing page is generic, not a wrong-date finding. Assistant isolated18question routing:12payment variants correct,3tax variants intentionally separate,3promotion synonyms omit approved alternatives; no oldMarch/May installment date.
+- Live source hashing without WP/database boot confirms assistant LFff702f01/raw e520fd35, sales e2339891 and dictionary7651d634 match local. Protected sales generator/labels/private UI still use2027-06-01 for final50%, conflicting with latestJune30; found but NOT modified. No saved quote/contract/customer-record inspection or migration. Production stable tag unchanged. Scope/attachment limitations and safe public-copy-only follow-up: `server-config/maintenance/2026-10-18-payment-copy-audit.md`. This does not authorize quote edits or older deployment tasks.
+
 ## Assistant Payment And Presentation - Current
 
 - October18 latest user-approved payment policy is three choices: full apartment price by2026-12-31 ->8% discount;50% by2026-12-31 plus remaining50% by2027-06-30 ->4%; construction milestones25%(deposit/downpayment)+25%(topping-out)+25%(interior fitout)+20%(key-collection notice)+5%(handover), no discount/no fixed dates. This supersedes the earlier May31 installment date. Existing quotes, contracts, CRM/payment records and appointment logic are not changed.
