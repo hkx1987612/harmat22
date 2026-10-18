@@ -1,0 +1,165 @@
+<?php
+/**
+ * Plugin Name: Harmat Home Family
+ * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
+ * Version: 1.0.0
+ */
+defined('ABSPATH') || exit;
+
+function harmat_home_family_context() {
+    foreach (array('WP_CLI', 'DOING_CRON', 'DOING_AJAX', 'REST_REQUEST', 'XMLRPC_REQUEST') as $flag) {
+        if (defined($flag) && constant($flag)) return false;
+    }
+    if (!in_array($_SERVER['REQUEST_METHOD'] ?? '', array('GET', 'HEAD'), true)
+        || is_admin() || wp_doing_ajax() || wp_doing_cron() || is_feed() || is_preview()
+        || is_404() || is_search() || is_embed() || is_trackback() || !is_main_query()
+        || (function_exists('wp_is_json_request') && wp_is_json_request())
+        || isset($_GET['elementor-preview']) || !is_front_page() || !is_page(164)
+        || get_queried_object_id() !== 164 || (int)get_option('page_on_front') !== 164
+        || get_option('show_on_front') !== 'page' || get_page_template_slug(164) !== ''
+        || get_post_status(164) !== 'publish' || get_post_field('post_name',164,'raw') !== 'fooldal'
+        || get_post_field('post_password',164,'raw') !== '') return false;
+    $raw=get_post_field('post_content',164,'raw');
+    return is_string($raw) && strlen($raw)===42575
+        && hash('sha256',$raw)==='dabadc35c52bd029d1097178a52eebd08a5a5ccca1bb5a9d53c12797a473dedf'
+        && function_exists('harmat_sai_property_summary_data')
+        && function_exists('hm_migrated_property_floorplan_image_from_uploads');
+}
+
+function harmat_home_family_assets() {
+    $directory=__DIR__.'/harmat-home-family';
+    $manifest=$directory.'/manifest.json';
+    if (is_link($directory) || !is_file($manifest) || is_link($manifest)
+        || hash_file('sha256',$manifest)!=='21e6ebec9bf0bfcbc273c42b5dc33f07ce96547fa04ccdd0b53faf780d3587b3') return false;
+    $pins=json_decode(file_get_contents($manifest),true);
+    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'])) return false;
+    foreach ($pins as $name=>$hash) {
+        if (!is_string($name) || !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]*\z/D',$name)
+            || !is_string($hash) || !preg_match('/\A[a-f0-9]{64}\z/D',$hash)
+            || !is_file($directory.'/'.$name) || is_link($directory.'/'.$name)
+            || hash_file('sha256',$directory.'/'.$name)!==$hash) return false;
+    }
+    return $pins;
+}
+
+function harmat_home_family_units() {
+    $units=array();
+    foreach (array('A1-1-L6'=>4317,'A2-4-L5'=>5212,'A1-1-L5'=>4311) as $code=>$id) {
+        $post=get_post($id);
+        if (!$post || $post->post_type!=='property' || $post->post_status!=='publish' || $post->post_password!=='') return false;
+        $data=harmat_sai_property_summary_data($id);
+        if (!is_array($data) || ($data['title'] ?? '')!==$code
+            || !isset($data['rooms'],$data['sales_area'],$data['status'],$data['price'],$data['hide_price'])
+            || !is_numeric($data['rooms']) || $data['rooms']<=0
+            || !is_numeric($data['sales_area']) || !is_finite((float)$data['sales_area']) || $data['sales_area']<=0
+            || !in_array($data['status'],array('current','reserved','sold'),true)
+            || !is_bool($data['hide_price']) || !is_int($data['price'])) return false;
+        $url=get_permalink($id);
+        $floorplan=hm_migrated_property_floorplan_image_from_uploads($code,get_post_meta($id,'property_floorplan',true));
+        foreach (array($url,$floorplan) as $link) {
+            $parts=parse_url($link);
+            if (!is_array($parts) || ($parts['scheme'] ?? '')!=='https' || ($parts['host'] ?? '')!=='harmat22.hu'
+                || isset($parts['user']) || isset($parts['pass'])) return false;
+        }
+        $units[$code]=array('code'=>$code,'url'=>$url,'rooms'=>$data['rooms'],'sales_area'=>$data['sales_area'],
+            'status'=>$data['status'],'price_huf'=>!$data['hide_price'] && $data['price']>0 ? $data['price'] : null,
+            'floorplan_url'=>$floorplan);
+    }
+    return $units;
+}
+
+// DOM parsing validates ownership; never serialize the native document or form.
+function harmat_home_family_document($html) {
+    if (!class_exists('DOMDocument') || !preg_match('~\A\s*<!doctype html>~i',$html)
+        || !preg_match('~</html>\s*\z~i',$html)) return false;
+    $doc=new DOMDocument();
+    if (!$doc->loadHTML('<?xml encoding="UTF-8">'.$html,LIBXML_NONET|LIBXML_NOERROR|LIBXML_NOWARNING)) return false;
+    foreach (array('html','head','body','main','h1') as $tag) {
+        if ($doc->getElementsByTagName($tag)->length!==1) return false;
+    }
+    $ids=array();
+    $protected=array('main'=>'main','masthead'=>'header','colophon'=>'footer','h22-offer-modal'=>'div',
+        'h22-offer-form'=>'form','hm-cookie-settings-button'=>'button','harmat-internal-language'=>'div');
+    foreach ($doc->getElementsByTagName('*') as $node) {
+        $id=$node->getAttribute('id');
+        if ($id==='') continue;
+        if (isset($ids[$id]) && (isset($protected[$id]) || $id==='harmat-home-family')) return false;
+        $ids[$id]=$node;
+    }
+    foreach ($protected as $id=>$tag) {
+        if (!isset($ids[$id]) || $ids[$id]->tagName!==$tag) return false;
+        if ($id==='main') continue;
+        $body=false;
+        for ($node=$ids[$id]->parentNode;$node;$node=$node->parentNode) {
+            if ($node instanceof DOMElement && $node->tagName==='main') return false;
+            if ($node instanceof DOMElement && $node->tagName==='body') $body=true;
+        }
+        if (!$body) return false;
+    }
+    for ($node=$ids['h22-offer-form']->parentNode;$node && $node!==$ids['h22-offer-modal'];$node=$node->parentNode) {}
+    if (!$node) return false;
+    return array($doc,$ids);
+}
+
+function harmat_home_family_output($html) {
+    if (!is_string($html) || !harmat_home_family_context() || !($pins=harmat_home_family_assets())
+        || (http_response_code() && http_response_code()!==200) || strpos($html,'id="harmat-home-family"')!==false) return $html;
+    try {
+        $parsed=harmat_home_family_document($html);
+        if (!$parsed || substr_count($html,'</head>')!==1 || substr_count($html,'</main>')!==1
+            || substr_count($html,'<main id="main" class="site-main">')!==1) return $html;
+        $start=strpos($html,'<main id="main" class="site-main">');
+        $end=strpos($html,'</main>')+7;
+        $old=substr($html,$start,$end-$start);
+        foreach (array('elementor-164','harmat-native-home-video','harmat-home-featured-title') as $marker) {
+            if (strpos($old,$marker)===false) return $html;
+        }
+        $head=strpos($html,'</head>');
+        if ($head>=$start) return $html;
+        $seo='<h1 class="harmat-seo-h1">' . "\u{00da}j \u{00e9}p\u{00ed}t\u{00e9}s\u{0171} lak\u{00e1}sok Budapest X. ker\u{00fc}let\u{00e9}ben - Harmat Lak\u{00f3}park</h1>";
+        if (substr_count($html,$seo)!==1) return $html;
+        $seo_at=strpos($html,$seo);
+        if ($seo_at>=$start && $seo_at<$end) return $html;
+        foreach (array('masthead','colophon','h22-offer-modal','h22-offer-form','hm-cookie-settings-button','harmat-internal-language') as $id) {
+            if (preg_match_all('~<[^>]+\bid=["\x27]'.preg_quote($id,'~').'["\x27][^>]*>~i',$html,$m,PREG_OFFSET_CAPTURE)!==1) return $html;
+            if ($m[0][0][1]>=$start && $m[0][0][1]<$end) return $html;
+        }
+        $harmat_home_family_units=harmat_home_family_units();
+        if (!$harmat_home_family_units) return $html;
+        $replacement=include __DIR__.'/harmat-home-family/body.php';
+        if (!is_string($replacement) || substr_count($replacement,'id="harmat-home-family"')!==1
+            || preg_match('~<(?:form|input|textarea|header|footer|iframe|script|html|head|body)\b~i',$replacement)) return $html;
+        $base=content_url('/mu-plugins/harmat-home-family/');
+        $replacement=str_replace('__HHF_ASSET_BASE__',esc_url($base),$replacement);
+        if (strpos($replacement,'__HHF_')!==false || strpos($replacement,'src="assets/')!==false) return $html;
+        $resources='';
+        foreach (array('pannellum.css','home-family.css') as $name) {
+            if (!isset($pins[$name])) return $html;
+            $resources.='<link rel="stylesheet" href="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'">';
+        }
+        foreach (array('pannellum.js','home-family.js') as $name) {
+            if (!isset($pins[$name])) return $html;
+            $resources.='<script defer src="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'"></script>';
+        }
+        $changes=array(array($start,$end-$start,$replacement),array($head,0,$resources),
+            array($seo_at,strlen($seo),str_replace(array('<h1 ','</h1>'),array('<p ','</p>'),$seo)));
+        usort($changes,static function($a,$b){return $b[0]<=>$a[0];});
+        $result=$html;
+        foreach ($changes as $change) $result=substr_replace($result,$change[2],$change[0],$change[1]);
+        $verified=harmat_home_family_document($result);
+        return $verified && isset($verified[1]['harmat-home-family'])
+            && $verified[0]->getElementsByTagName('h1')->item(0)->getAttribute('id')==='hero-title' ? $result : $html;
+    } catch (Throwable $error) {
+        return $html;
+    }
+}
+
+function harmat_home_family_buffer() {
+    if (!harmat_home_family_context() || !harmat_home_family_assets() || headers_sent()) return;
+    $intact=true;
+    ob_start(static function($html,$phase) use (&$intact) {
+        if (!($phase & PHP_OUTPUT_HANDLER_FINAL) || ($phase & (PHP_OUTPUT_HANDLER_CLEAN|PHP_OUTPUT_HANDLER_FLUSH))) $intact=false;
+        return $intact ? harmat_home_family_output($html) : $html;
+    });
+}
+add_action('template_redirect','harmat_home_family_buffer',-4000);

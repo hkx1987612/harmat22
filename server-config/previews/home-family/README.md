@@ -2,6 +2,13 @@
 
 Status: OFFLINE DESIGN REVIEW ONLY, October 18, 2026. Not deployed.
 
+The offline artifact itself remains local. The user later explicitly authorized
+a separate native-shell production adaptation and live verification. That release
+is documented in `server-config/maintenance/2026-10-18-home-family-release.md`;
+its sources are `wp-mu-plugins/zz-harmat-home-family.php` and `harmat-home-family/`.
+The offline browser restriction was not bypassed. Historical pending checks below
+refer to the local artifact, not the separately verified production integration.
+
 User approved Sol implementation of a local preview, with publication only after
 review. Quote and appointment behavior must not change. Sol authored the three
 presentation files here; parent review added packaging and no-network tests.
@@ -108,13 +115,14 @@ asset URLs, defer panorama GPU initialization and retain manual video playback.
   attempted. Responsive CSS was reviewed, but NO real-browser mobile, pixel,
   screenshot, actual video decoding or device test is certified.
 
-User conditionally authorizes release after real mobile/3D checks and backup.
-Those checks remain pending; an opened local tab is not verification. Future
-integration needs a separate live backup,
+The original conditional local-preview release request was superseded by explicit
+direct production-integration authorization. An opened local tab is not evidence.
+Production integration used a separate live backup,
 scoped integration preserving native quote/appointment owners and live HU/Chinese
-controls, staged/formal PHP lint where applicable, cache handling, and real
-desktop/mobile/core-flow regression before publication. Existing stable live
-release/tag remains unchanged. No rollback is needed for this offline phase.
+controls, staged/formal PHP lint, cache handling, and real
+desktop/narrow-viewport/core-flow regression after scoped publication. Stable live
+release is recorded separately. No rollback is needed for this offline artifact.
 Production integration must also namespace preview styles, retain the native
 language/header/form owners, use live apartment data and never apply the offline
-CSP to the production document. No integration adapter has been released.
+CSP to the production document. The released adapter implements these boundaries;
+see the separate release record for actual evidence and fullscreen/device limits.

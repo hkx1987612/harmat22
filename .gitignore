@@ -23,6 +23,8 @@ video-upload-*/
 *.html
 *.json
 !wp-content/uploads/2026/03/Start/start_hitboxes.json
+!wp-mu-plugins/harmat-home-family/manifest.json
+!server-config/maintenance/2026-10-18-home-family-presentation-assets.json
 *-payload.txt
 *.log
 *.mbtree

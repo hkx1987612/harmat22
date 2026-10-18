@@ -167,3 +167,13 @@ and native-flow regression remain release gates. No SSH/server edit/backup,
 customer/CRM/mail write or release occurred. Stable live tag remains unchanged.
 Only owned sources/tests/accurate notes shared; no old ads/social/Messenger/
 security/automation/shutdown tasks resumed.
+
+## Later Explicit Production Authorization
+
+User supersedes the prior local-review gate and requests direct live release,
+then verification. The restricted local artifact was NOT browser-tested, hosted
+as an alternate route or deployed wholesale. A separate native-shell homepage
+adaptation was implemented and released with fresh backup and actual live Chrome
+QA. Current/historical release, owned rollback and precise limits are in
+`server-config/maintenance/2026-10-18-home-family-release.md`. This supersedes
+"no release" status for the project, not the local artifact's verification limits.
