@@ -7,7 +7,8 @@ import re
 
 ROOT=Path(__file__).resolve().parents[2]
 DIR=ROOT/'wp-mu-plugins/harmat-internal-language'
-PARTS=[DIR/'marketing.zh-Hans.json',DIR/'legal.zh-Hans.json',DIR/'property.zh-Hans.json',DIR/'dynamic.zh-Hans.json',ROOT/'server-config/previews/chinese-switch/zh-Hans.json']
+COVERAGE=DIR/'coverage-fixes.zh-Hans.json'
+PARTS=[DIR/'marketing.zh-Hans.json',DIR/'legal.zh-Hans.json',DIR/'property.zh-Hans.json',DIR/'dynamic.zh-Hans.json',ROOT/'server-config/previews/chinese-switch/zh-Hans.json',COVERAGE]
 
 def unique(pairs):
     result={}
@@ -26,6 +27,7 @@ def build():
             if re.match(r'^Az A[1-4]-(F|[1-4])-L[0-9]+ a Harmat Lakópark ',key):
                 raise ValueError('Live numeric paragraph must use current-data parser, not dictionary')
             if key in result and result[key]!=value:conflicts.append(key)
+            if part==COVERAGE and key in result:continue
             result[key]=value
     blob=(json.dumps(result,ensure_ascii=False,sort_keys=True,indent=2)+'\n').encode('utf-8')
     return blob,conflicts
