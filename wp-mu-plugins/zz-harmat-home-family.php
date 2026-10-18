@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.7
+ * Version: 1.0.8
  */
 defined('ABSPATH') || exit;
 
@@ -146,6 +146,7 @@ function harmat_home_family_output($html) {
         if (!$harmat_home_family_units) return $html;
         $replacement=include __DIR__.'/harmat-home-family/body.php';
         $replacement=harmat_home_family_hero_actions($replacement);
+        if (function_exists('harmat_cu_home_teaser')) $replacement=harmat_cu_home_teaser($replacement);
         if (!is_string($replacement) || substr_count($replacement,'id="harmat-home-family"')!==1
             || preg_match('~<(?:form|input|textarea|header|footer|iframe|script|html|head|body)\b~i',$replacement)) return $html;
         $base=content_url('/mu-plugins/harmat-home-family/');
@@ -218,8 +219,15 @@ function harmat_home_family_output($html) {
             . '@media(max-width:360px){body.home.page-id-164 #harmat-home-family .hhf-hero h1{font-size:30px}}'
             . '@media(max-width:767px){body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner{display:grid!important;grid-template-columns:minmax(133px,1fr) 36px minmax(100px,1fr);gap:4px;padding-inline:12px!important;width:100%!important;box-sizing:border-box;flex-wrap:nowrap}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.e-con{width:auto!important;min-width:0;padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.elementor-element-58842f8{align-items:flex-start}body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow>.e-con-inner>.elementor-element-fba2323{align-items:flex-end}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-opal-site-logo img{width:36px!important;height:36px!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc{display:block!important;width:100px!important;max-width:100%!important;min-width:0;gap:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc .elementor-button-wrapper{display:block!important;width:100%!important;max-width:100%!important;min-width:0;gap:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc a.elementor-button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:100%;min-height:40px;padding:8px 6px;font-size:12px;line-height:1.2;letter-spacing:0;text-transform:none!important;white-space:nowrap}body.home.page-id-164 #harmat-internal-language[data-hil-anchor=menu],body.home.page-id-164 #harmat-internal-language[data-hil-anchor=held],body.home.page-id-164 #harmat-internal-language[data-hil-anchor=fallback]{width:84px!important;max-width:84px!important}body.home.page-id-164 #harmat-internal-language[data-hil-anchor=fallback]{left:62px!important;right:auto!important;top:16px!important;bottom:auto!important}body.home.page-id-164 #harmat-internal-language>button[data-hil-language]{flex:1 1 0;width:auto;padding-inline:1px}body.home.page-id-164 #harmat-internal-language>button[data-hil-language=hu]{flex:1.3 1 0}}'
             . '@media(max-width:767px){body.home.page-id-164.opal-header-absolute #my-sticky-header .headerrow{padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-widget-icon{padding-inline:0!important}body.home.page-id-164.opal-header-absolute #my-sticky-header .elementor-element-56f08cc{padding-inline:0!important}body.home.page-id-164 #harmat-internal-language>button[data-hil-language=hu]{flex:1.4 1 0}}'
-            . '@media(min-width:1025px){body.home.page-id-164 #harmat-home-family .hhf-hero{margin-top:76px;scroll-margin-top:152px}}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero{display:grid;grid-template-columns:minmax(0,1fr);height:auto;min-height:0;width:100%;max-width:1280px;margin:0 auto;scroll-margin-top:76px}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero-poster{position:relative;inset:auto;grid-area:1/1;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;object-position:center}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero-video{inset:0;width:100%;height:100%;object-fit:contain;object-position:center}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-hero-inner{grid-area:1/1;height:auto;min-height:0;align-self:stretch}'
+            . '@media(max-width:767px){body.home.page-id-164 #harmat-home-family .hhf-hero{background:#edf2ef}body.home.page-id-164 #harmat-home-family .hhf-hero::before{display:none}body.home.page-id-164 #harmat-home-family .hhf-hero-video{bottom:auto;height:auto;aspect-ratio:16/9}body.home.page-id-164 #harmat-home-family .hhf-hero-inner{grid-area:2/1;width:100%;max-width:100%;padding:18px 20px 16px}body.home.page-id-164 #harmat-home-family .hhf-hero-copy{max-width:none;color:#244537}body.home.page-id-164 #harmat-home-family .hhf-hero h1{font-size:28px;color:#244537;text-shadow:none}body.home.page-id-164 #harmat-home-family .hhf-hero-actions{gap:10px;margin-top:12px}body.home.page-id-164 #harmat-home-family .hhf-hero-actions .hhf-button{font-size:15px;min-height:44px;padding:9px 12px;max-width:100%;white-space:normal}body.home.page-id-164 #harmat-home-family .hhf-hero-booking{background:transparent;border-color:#244537;color:#244537}body.home.page-id-164 #harmat-home-family .hhf-hero-bottom{position:static;margin-top:14px;gap:12px}body.home.page-id-164 #harmat-home-family .hhf-hero-bottom .hhf-media-label{background:transparent;color:#47574e;padding:0}body.home.page-id-164 #harmat-home-family .hhf-hero-bottom .hhf-icon-button{border-color:#244537;background:#244537;color:#fff}}'
             . '</style>';
+        if (strpos($replacement,'data-hcu-home="1"')!==false && function_exists('harmat_cu_resources')) {
+            $resources.=harmat_cu_resources();
+        }
         foreach (array('pannellum.css','home-family.css') as $name) {
             if (!isset($pins[$name])) return $html;
             $resources.='<link rel="stylesheet" href="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'">';
