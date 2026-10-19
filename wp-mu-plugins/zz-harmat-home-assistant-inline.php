@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Assistant Inline
  * Description: Removable homepage assistant entrance and desktop hero copy placement.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 defined('ABSPATH') || exit;
 
@@ -42,7 +42,7 @@ function harmat_home_assistant_inline_footer(): void {
 #harmat-home-family #hhf-lakasok #harmat-home-assistant-actions>.harmat-local-ai-launch[data-hap-ready="1"]{position:static!important;inset:auto!important;z-index:auto!important;transform:none!important;margin:0!important;width:auto!important;min-width:0!important;max-width:100%!important;min-height:48px;padding:10px 14px!important;font:600 14px/1.3 Arial,sans-serif;white-space:normal;overflow-wrap:anywhere}
 #harmat-home-family #hhf-lakasok #harmat-home-assistant-actions>.harmat-local-ai-launch[data-hap-ready="1"]>span{min-width:0}
 @media(max-width:767px){#harmat-home-family #hhf-lakasok .hhf-section-heading[data-hhai-ready="1"]{gap:12px}}
-@media(min-width:768px){#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-inner{width:100%;max-width:none;justify-content:center;padding:28px 48px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-bottom{left:48px;right:48px}}
+@media(min-width:768px){#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-inner{width:100%;max-width:none;justify-content:center;padding:28px 48px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-copy{position:relative;top:64px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-bottom{left:48px;right:48px}}
 @media(min-width:768px) and (max-width:1000px){#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-inner{padding:28px 24px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-bottom{left:24px;right:24px}}
 </style>
 <script id="harmat-home-assistant-inline-script">

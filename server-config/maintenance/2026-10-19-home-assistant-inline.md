@@ -1,5 +1,34 @@
 # Inline Homepage Assistant Entry
 
+## Follow-Up: Lower Hero Copy
+
+User says the centered title/action group is still too high. Current1.0.1 adds
+only desktop non-fullscreen `position:relative;top:64px` to the copy group, plus
+the version bump. Left margins, JS, assistant placement, mobile/fullscreen, media,
+loop/scroll playback, quotation and appointment remain unchanged. Exact predecessor
+is c43260f/SHA449ffd8868549b5eba50a15e84efa9883517b828e678b96b987ca9ebcc1a9f71;
+candidate SHA3bce85ddad7b4b59948293536b2fbd193bb21b820b6384c9bdbb937a529125bd.
+55 DOM,79 PHP and5 existing-source transport/recovery cases pass. Fresh private
+backup home-hero-lower-abbb92741ce241ed997b3f731993eda2, aggregate
+a4131534ac5c20801756e1830e571af292fae0620749325d2291cabd3b4458bd.
+RELEASED and independently VERIFIED. Both checks pass9routes,
+124 inventory, nativeform/SEO/protectedstate,35 offer+17 spam checks, staged79PHP
+and atomic/lint/cache flow. Actual visible IAB983px hero: copy center exactly64px
+below video center, left24px unchanged; copybottom468.265625 remains above hero
+bottom628.9375. Looptrue, assistantstatic. Actual390 mobile retainsstatic/topauto/
+flex-end and nooverflow; defaultviewport restored. Clean ignored proof:
+`outputs/2026-10-19-home-assistant-inline/hero-lowered.jpg`.
+No form/chat/lead/mail submission or changes to playback sources/data.
+
+Independent check (replace `--verify` with `--rollback` for exact source recovery):
+
+```powershell
+python server-config/maintenance/2026-10-19-update-home-hero-lower.py --verify /home/harmath2/codex-backups/home-hero-lower-abbb92741ce241ed997b3f731993eda2 --expect a4131534ac5c20801756e1830e571af292fae0620749325d2291cabd3b4458bd
+```
+
+Stable tag after sync: `stable-2026-10-19-home-hero-lower-current`.
+The following sections describe the retained1.0.0 baseline behavior.
+
 ## Scope
 
 User requests moving the intelligent-customer-service button off the screen

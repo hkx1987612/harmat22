@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const ROOT = path.resolve(__dirname, '../..');
 const { JSDOM } = require(path.join(ROOT, 'outputs/2026-10-17-chinese-switch/node_modules/jsdom'));
@@ -275,7 +276,12 @@ test('CSS rule allowlist isolates entry layout and desktop non-fullscreen hero p
           assert.match(media, /^\(min-width:768px\)/);
           const props = [...Array(rule.style.length)].map((_, i) => rule.style[i]);
           if (selector.endsWith('.hhf-hero-inner')) assert.ok(props.every(p => ['width', 'max-width', 'justify-content', 'padding'].includes(p)));
-          else { assert.ok(selector.endsWith('.hhf-hero-bottom')); assert.deepEqual(props, ['left', 'right']); }
+          else if (selector.endsWith('.hhf-hero-copy')) {
+            assert.equal(media, '(min-width:768px)');
+            assert.deepEqual(props, ['position', 'top']);
+            assert.equal(rule.style.getPropertyValue('position'), 'relative');
+            assert.equal(rule.style.getPropertyValue('top'), '64px');
+          } else { assert.ok(selector.endsWith('.hhf-hero-bottom')); assert.deepEqual(props, ['left', 'right']); }
         } else {
           entryRules++;
           assert.match(selector, /^#harmat-home-family #hhf-lakasok /);
@@ -286,7 +292,7 @@ test('CSS rule allowlist isolates entry layout and desktop non-fullscreen hero p
     }
   }
   inspect(dom.window.document.styleSheets[0].cssRules);
-  assert.equal(heroRules, 4); assert.equal(entryRules, 9);
+  assert.equal(heroRules, 5); assert.equal(entryRules, 9);
   assert.match(css, /min-width:768px\)\{#harmat-home-family \.hhf-hero:not\(:fullscreen\) \.hhf-hero-inner\{width:100%;max-width:none;justify-content:center;padding:28px 48px\}/);
   assert.match(css, /min-width:768px\) and \(max-width:1000px\)/);
   assert.match(css, /padding:28px 24px/);
@@ -302,11 +308,22 @@ test('entry CSS resets fixed positioning and home font/padding/minwidth while al
   assert.ok(!css.includes('display:none') && !css.includes('display:flex!important'));
 });
 
+test('1.0.1 source differs from pinned c43260f only by version and desktop copy offset', () => {
+  const old = execFileSync('git', ['show', 'c43260f:wp-mu-plugins/zz-harmat-home-assistant-inline.php'], { cwd: ROOT, encoding: 'utf8' });
+  assert.equal(crypto.createHash('sha256').update(old).digest('hex'), '449ffd8868549b5eba50a15e84efa9883517b828e678b96b987ca9ebcc1a9f71');
+  const boundary = 'padding:28px 48px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-bottom';
+  const insertion = 'padding:28px 48px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-copy{position:relative;top:64px}#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-bottom';
+  assert.equal(old.split(boundary).length, 2);
+  assert.equal(source.replaceAll('\r\n', '\n'), old.replace('Version: 1.0.0', 'Version: 1.0.1').replace(boundary, insertion));
+});
+
 test('source forbids new handlers, translations, chat writes, requests, observers and resource/video changes', () => {
   assert.ok(!/cloneNode|innerHTML|outerHTML|replaceChildren|textContent\s*=|\.click\(|dispatchEvent|MutationObserver|setTimeout|setInterval|fetch\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|Storage|localStorage|sessionStorage|\.value\s*=|\.src\s*=|\.play\(|\.pause\(/.test(script));
   assert.deepEqual([...script.matchAll(/addEventListener\(([^,]+)/g)].map(m => m[1]), ["'DOMContentLoaded'"]);
   assert.ok(!/\b(?:data-hap-suspended|data-harmat-language|data-harmat-ai-lang)\b/.test(script));
   assert.ok(!/<(?:form|input|textarea|select|video|iframe|link)\b|\bsrc=|@import|url\(/i.test(assets));
-  assert.ok(!/\.hhf-hero-(?:copy|actions|video|poster)\b|\bh1\b/.test(css), 'hero copy/typography/media untouched');
+  const copyRule = '#harmat-home-family .hhf-hero:not(:fullscreen) .hhf-hero-copy{position:relative;top:64px}';
+  assert.equal(css.split(copyRule).length, 2, 'exactly one allowed desktop copy offset');
+  assert.ok(!/\.hhf-hero-(?:copy|actions|video|poster)\b|\bh1\b/.test(css.replace(copyRule, '')), 'no other hero copy/typography/media changes');
   assert.match(source, /add_action\('wp_footer', 'harmat_home_assistant_inline_footer', 1200\)/);
 });
