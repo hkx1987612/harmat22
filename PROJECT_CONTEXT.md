@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Desktop Complete Video - Current
+
+- User confirms mobile fine, desktop only. Earlier1.0.10 top-position fix sacrificed bottom and is superseded. Home1.0.11 SHAe641ee934d125b07bfd05a9680ef438125bb00caf99f8c9257a99a58dabdc4a1 changes only final desktop768+ CSS/version: whole section remains below76px menu, natural16:9 bounded to viewport-minus108px, contain/center, side margins instead of intrinsic cropping. No mobile, pinned asset, media/playback, header, quote/appointment or payment-discussion change.
+- Fresh backup home-video-complete-ddee492b28644a92aeb6a3fad3fef3ea; release and separate verify9routes/124inventory/nativeform-SEO/protectedstate/35offer+17spam pass. Seven source/transport and76PHP cases pass. Actual1920x900 hero76..868,1280x720 hero76..688/complete1088x612 moving video;390 original cover58%center unchanged/no overflow. Desktop quote emptycontacts/requireduncheckedprivacy open-close without send. Full evidence/recovery in2026-10-19-home-video-complete.md; stabletagstable-2026-10-19-home-video-complete-current. Existing title/action overlays retained, no every-frame overlay or physicaldevice/Safari/CWV certification.
+
 ## October19 Public Copy And Desktop Video - Current
 
 - User withdraws published discount policy: terms/discounts are discussed personally with sales. Public module1.0.1 f3faec27172819a0db9704d50256c767c035d6a71f628cc59c71875a0429b2ad and assistant runtime0.4.4 LF38cba03f6fb668749efa255b489f0b893c5028f58c055fe8a67fc1bded63df83/rawc055ccced2d1e56e01c07b007842a2d7a9d04ffd881b7112e9d2fad15b222b1e RELEASED/independently VERIFIED. Exact mixedEOL preserved. No public8%/4% discount promises or installment-no-discount contrast; dates2026-12-31/2027-06-30 and milestones25/25/25/20/5 retained. Tax4% guidance and protected private salesJune1/quote/appointment/CRM sources and data untouched. Earlier discount policy below is historical, superseded for public wording.
