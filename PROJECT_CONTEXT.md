@@ -2,7 +2,12 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
-## Desktop Complete Video - Current
+## Full-Width Desktop And TV Video - Current
+
+- TV photo feedback supersedes the viewport-height cap below. RELEASED/independently VERIFIED home1.0.12 SHA b1aab40a51dab20d042a3a966e426fe6ff8cfe10bfe992e852acbd551da82d8b removes only desktop max-height cap/version: fullwidth natural16:9 below76px header, no intrinsic crop/bars; ordinary browser can require scrolling. New homepage-only removable fullscreen1.0.0 SHA38383bbaacb876e0b3de4b63d22fc23c6f29679784e3d4cf99e56d9ddd9d4580 hides owned copy/gradient/label in fullscreen, keeps original pause ownership, no media/playback attrs rewrite. Mobile/forms/appointment/payment/ads/pinned assets untouched.
+- Backup home-tv-video-985c04daa74749979c8ba7b857e08476; aggregate c23029ca4e01b71a30c6264cfd0e7f362b6e7fdfd9b4e6b83fb3631e14562a07.28JS/42scopePHP/76controller/6transport and server42scope/35offer+17spam,9routes/124inventory/nativeformSEO/protectedstate pass. Actual IAB fullscreens1280x720 then native1920x1080 with fullframe/moving video, pause/exit/manual-pause preservation/resume/focus pass; HU/ZH labels roundtrip.390 mobile unchanged/native emptyquote opens-closes withoutsend. Clean ignored video-fullscreen-final.jpg, forced-viewport earlier image NOT final proof. Chrome automated fullscreen rejected gracefully; physicalTV mouse confirmation pending, not a hardware/Safari/CWV/inbox certificate. Full evidence/recovery2026-10-19-home-tv-video.md; stabletagstable-2026-10-19-home-tv-video-current.
+
+## Desktop Complete Video - Historical
 
 - User confirms mobile fine, desktop only. Earlier1.0.10 top-position fix sacrificed bottom and is superseded. Home1.0.11 SHAe641ee934d125b07bfd05a9680ef438125bb00caf99f8c9257a99a58dabdc4a1 changes only final desktop768+ CSS/version: whole section remains below76px menu, natural16:9 bounded to viewport-minus108px, contain/center, side margins instead of intrinsic cropping. No mobile, pinned asset, media/playback, header, quote/appointment or payment-discussion change.
 - Fresh backup home-video-complete-ddee492b28644a92aeb6a3fad3fef3ea; release and separate verify9routes/124inventory/nativeform-SEO/protectedstate/35offer+17spam pass. Seven source/transport and76PHP cases pass. Actual1920x900 hero76..868,1280x720 hero76..688/complete1088x612 moving video;390 original cover58%center unchanged/no overflow. Desktop quote emptycontacts/requireduncheckedprivacy open-close without send. Full evidence/recovery in2026-10-19-home-video-complete.md; stabletagstable-2026-10-19-home-video-complete-current. Existing title/action overlays retained, no every-frame overlay or physicaldevice/Safari/CWV certification.
