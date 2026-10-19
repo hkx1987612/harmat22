@@ -64,7 +64,7 @@ $source = file_get_contents($module);
 load_code(substr($source, 5));
 check($state['hooks'] === array(array('elementor/widget/render_content', 'harmat_ppc_widget', 1000, 2),
     array('the_content', 'harmat_ppc_content', 1000), array('template_redirect', 'harmat_ppc_buffer', -4000)), 'two scoped filters and one outer final-document buffer registered');
-check(strpos($source, 'Version: 1.0.0') !== false, 'new module version 1.0.0');
+check(strpos($source, 'Version: 1.0.1') !== false, 'payment terms module version 1.0.1');
 check(harmat_ppc_scope(), 'canonical published passwordless property GET');
 $_SERVER['REQUEST_METHOD'] = 'HEAD'; check(harmat_ppc_scope(), 'HEAD allowed');
 foreach (array('POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', '') as $method) {
@@ -114,7 +114,9 @@ check($xpath->query('//form | //input | //select | //textarea | //button | //a |
 foreach (array('hu', 'zh') as $language) {
     $copy = array();
     foreach ($xpath->query('//*[@data-hppc-' . $language . ']') as $node) $copy[] = $node->getAttribute('data-hppc-' . $language);
-    check(strpos($copy[3], '8%') !== false && strpos($copy[6], '4%') !== false, $language . ' approved discounts');
+    check(!preg_match('~(?:8|4)%|Kedvezmény nélkül|无折扣~u', implode(' ', $copy)), $language . ' no public discount promises or contrast');
+    $personal = $language === 'hu' ? 'egyedileg egyeztessen az értékesítéssel' : '优惠请与销售面议';
+    foreach (array(3, 6, 9) as $i) check(strpos($copy[$i], $personal) !== false, $language . ' sales discussion in each plan');
     preg_match_all('~(\d+)%~', $copy[2], $full);
     check($full[1] === array(), $language . ' full-price condition is not a fabricated split');
     preg_match_all('~(\d+)%~', $copy[5], $halves);
@@ -125,7 +127,7 @@ foreach (array('hu', 'zh') as $language) {
 }
 foreach (array('2026. december 31-ig', '2027. június 30-ig', '2026年12月31日前', '2027年6月30日前',
     'foglaló és előleg összesen', '定金与预付款合计', 'kulcsátvételi értesítéskor', '收到领取钥匙通知时',
-    'Kedvezmény nélkül.', '无折扣', 'rögzített fizetési dátumok nélkül.', '不设固定付款日期') as $copy) {
+    'egyedileg egyeztessen az értékesítéssel.', '优惠请与销售面议', 'rögzített fizetési dátumok nélkül.', '不设固定付款日期') as $copy) {
     check(strpos($html, $copy) !== false, 'approved bilingual wording: ' . $copy);
 }
 check(!preg_match('~május|May|05[.-]31|5月31|nélkül。~u', $html), 'no superseded May31 or Chinese punctuation in HU');

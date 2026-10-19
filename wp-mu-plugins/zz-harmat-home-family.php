@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.9
+ * Version: 1.0.10
  */
 defined('ABSPATH') || exit;
 
@@ -222,6 +222,7 @@ function harmat_home_family_output($html) {
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero{width:100%;max-width:none;margin:0;scroll-margin-top:76px}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero-actions .hhf-button{min-width:0;max-width:100%;white-space:normal}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero-actions .hhf-button>span{min-width:0}'
+            . '@media(min-width:768px){body.home.page-id-164 #harmat-home-family .hhf-hero-poster,body.home.page-id-164 #harmat-home-family .hhf-hero-video{object-position:center top}}'
             . '</style>';
         if (strpos($replacement,'data-hcu-home="1"')!==false && function_exists('harmat_cu_resources')) {
             $resources.=harmat_cu_resources();

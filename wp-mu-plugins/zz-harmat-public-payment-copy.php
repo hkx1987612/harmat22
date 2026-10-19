@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Public Payment Copy
  * Description: Removable, frontend-only public payment wording; no sales data or form changes.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 defined('ABSPATH') || exit;
 
@@ -44,16 +44,16 @@ function harmat_ppc_html(): string {
     $plans = array(
         array('Teljes lakásvételár', '全额付款',
             'A lakás teljes vételárának kifizetése 2026. december 31-ig.', '于2026年12月31日前支付全部公寓房款。',
-            '8% kedvezmény a lakás vételárából.', '享公寓房价8%的折扣。'),
+            'A feltételekről és az esetleges kedvezményről egyedileg egyeztessen az értékesítéssel.', '具体条件及优惠请与销售面议。'),
         array('50% + 50%', '50% + 50%',
             'A lakás vételárának 50%-a 2026. december 31-ig, a fennmaradó 50% 2027. június 30-ig.',
             '于2026年12月31日前支付公寓房款的50%，剩余50%于2027年6月30日前支付。',
-            '4% kedvezmény a lakás vételárából.', '享公寓房价4%的折扣。'),
+            'A feltételekről és az esetleges kedvezményről egyedileg egyeztessen az értékesítéssel.', '具体条件及优惠请与销售面议。'),
         array('Építési mérföldkövek', '按施工节点付款',
             '25% foglaló és előleg összesen; 25% szerkezetkész állapot; 25% belsőépítészeti munkálatok; 20% a kulcsátvételi értesítéskor; 5% átadáskor.',
             '25%（定金与预付款合计）；25%主体结构封顶；25%室内装修施工；20%收到领取钥匙通知时；5%交房时。',
-            'Kedvezmény nélkül. A részletek az építési mérföldkövekhez kötöttek, rögzített fizetési dátumok nélkül.',
-            '无折扣。各期款项按施工节点支付，不设固定付款日期。'),
+            'A részletek az építési mérföldkövekhez kötöttek, rögzített fizetési dátumok nélkül. A feltételekről és az esetleges kedvezményről egyedileg egyeztessen az értékesítéssel.',
+            '各期款项按施工节点支付，不设固定付款日期。具体条件及优惠请与销售面议。'),
     );
     $html = '<section id="harmat-public-payment-copy" class="hppc-plans" data-harmat-public-payment-copy="1" data-language-protect="" lang="hu">'
         . harmat_ppc_text('h2', 'Fizetési ütemezés', '付款安排') . '<dl>';
