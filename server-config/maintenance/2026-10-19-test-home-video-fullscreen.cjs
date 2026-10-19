@@ -10,7 +10,7 @@ const { JSDOM } = require(path.join(ROOT, 'outputs/2026-10-17-chinese-switch/nod
 const PHP = process.env.HHF_PHP || (process.platform === 'win32' ? 'C:/tools/php-8.5.6/php.exe' : 'php');
 const controller = fs.readFileSync(path.join(ROOT, 'wp-mu-plugins/zz-harmat-home-family.php'), 'utf8');
 const body = fs.readFileSync(path.join(ROOT, 'wp-mu-plugins/harmat-home-family/body.php'), 'utf8').match(/<<<'HHF_MAIN_HTML'\r?\n([\s\S]*?)\r?\nHHF_MAIN_HTML/)[1];
-const originalJS = fs.readFileSync(path.join(ROOT, 'wp-mu-plugins/harmat-home-family/home-family.js'), 'utf8');
+const playbackJS = fs.readFileSync(path.join(ROOT, 'wp-mu-plugins/harmat-home-family/home-family-scroll-play.js'), 'utf8');
 const assets = execFileSync(PHP, [path.join(__dirname, '2026-10-19-test-home-video-fullscreen.php'), '--render'], { encoding: 'utf8' });
 const script = assets.match(/<script id="harmat-home-video-fullscreen-js">([\s\S]*?)<\/script>/)[1];
 const css = assets.match(/<style id="harmat-home-video-fullscreen-css">([\s\S]*?)<\/style>/)[1];
@@ -68,7 +68,7 @@ async function fixture(t, options = {}) {
     constructor(cb) { this.cb = cb; observers.push(this); }
     observe(target) { this.target = target; }
   };
-  if (options.native) w.eval(originalJS);
+  if (options.native) w.eval(playbackJS);
   else if (!options.pauseHidden) pause.hidden = false;
   const pauseHTML = pause.outerHTML;
   const videoHTML = video.outerHTML;
@@ -96,13 +96,23 @@ async function fixture(t, options = {}) {
   };
 }
 
-test('home change is exactly version plus desktop max-height; pinned asset manifest still matches', () => {
-  const old = execFileSync('git', ['show', 'a42ba47:wp-mu-plugins/zz-harmat-home-family.php'], { cwd: ROOT, encoding: 'utf8' });
-  assert.equal(controller.replaceAll('\r\n', '\n'), old.replace('Version: 1.0.11', 'Version: 1.0.12').replace('max-height:calc(100svh - 108px)', 'max-height:none'));
+test('current home preserves full-frame CSS and changes only manifest/runtime selection plus version', () => {
+  const old = execFileSync('git', ['show', '5813e37:wp-mu-plugins/zz-harmat-home-family.php'], { cwd: ROOT, encoding: 'utf8' });
   const crypto = require('node:crypto');
-  assert.equal(crypto.createHash('sha256').update(old).digest('hex'), 'e641ee934d125b07bfd05a9680ef438125bb00caf99f8c9257a99a58dabdc4a1');
+  assert.equal(crypto.createHash('sha256').update(old).digest('hex'), 'b1aab40a51dab20d042a3a966e426fe6ff8cfe10bfe992e852acbd551da82d8b');
   const dir = path.join(ROOT, 'wp-mu-plugins/harmat-home-family');
-  for (const [name, sha] of Object.entries(JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')))) {
+  const manifest = fs.readFileSync(path.join(dir, 'manifest-scroll-play.json'));
+  const manifestSha = crypto.createHash('sha256').update(manifest).digest('hex');
+  const expected = old.replace('Version: 1.0.12', 'Version: 1.0.13')
+    .replace("$directory.'/manifest.json'", "$directory.'/manifest-scroll-play.json'")
+    .replace('21e6ebec9bf0bfcbc273c42b5dc33f07ce96547fa04ccdd0b53faf780d3587b3', manifestSha)
+    .replace("$pins['home-family.js']))", "$pins['home-family.js'],$pins['home-family-scroll-play.js']))")
+    .replace("array('pannellum.js','home-family.js')", "array('pannellum.js','home-family-scroll-play.js')");
+  assert.equal(controller.replaceAll('\r\n', '\n'), expected);
+  const pins = JSON.parse(manifest);
+  assert.deepEqual(pins, { ...JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')),
+    'home-family-scroll-play.js': crypto.createHash('sha256').update(playbackJS).digest('hex') });
+  for (const [name, sha] of Object.entries(pins)) {
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(dir, name))).digest('hex'), sha, name);
   }
 });
@@ -309,7 +319,7 @@ for (const mode of ['duplicate-root', 'duplicate-video', 'missing-icon', 'missin
   assert.equal(f.hero.hasAttribute('data-hhvf-hero'), false);
 });
 
-test('pinned playback JS retains manual pause, offscreen policy and mute with addon present', async t => {
+test('current playback keeps playing offscreen and retains manual/background pause with addon present', async t => {
   const f = await fixture(t, { native: true });
   f.intersect(true);
   assert.equal(f.video.paused, false);
@@ -331,7 +341,7 @@ test('pinned playback JS retains manual pause, offscreen policy and mute with ad
   assert.equal(f.media.length, pausedCalls, 'fullscreen exit never resumes manually paused video');
   assert.equal(pausedCalls, calls + 2, 'only original pause button triggers play/pause');
   f.pause.querySelector('button').click(); assert.equal(f.video.paused, false);
-  f.intersect(false); assert.equal(f.video.paused, true);
+  f.intersect(false); assert.equal(f.video.paused, false, 'scrolling offscreen no longer pauses');
   f.intersect(true); assert.equal(f.video.paused, false);
   f.setHidden(true); assert.equal(f.video.paused, true);
 });
