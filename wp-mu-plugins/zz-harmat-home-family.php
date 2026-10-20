@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.18
+ * Version: 1.0.19
  */
 defined('ABSPATH') || exit;
 
@@ -28,11 +28,11 @@ function harmat_home_family_context() {
 
 function harmat_home_family_assets() {
     $directory=__DIR__.'/harmat-home-family';
-    $manifest=$directory.'/manifest-six-r2.json';
+    $manifest=$directory.'/manifest-loop.json';
     if (is_link($directory) || !is_file($manifest) || is_link($manifest)
-        || hash_file('sha256',$manifest)!=='b7ad673660278889725b832cf748656c5b4e59fc92220519e75117eb99f25280') return false;
+        || hash_file('sha256',$manifest)!=='0ea9f878ae7eacf6602af0ae0bda89e899ebea73ec6ca968c59d29fc07f5d998') return false;
     $pins=json_decode(file_get_contents($manifest),true);
-    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'],$pins['home-family-scroll-play.js'],$pins['body-six.php'],$pins['home-family-six.js'],$pins['home-family-six-r2.js'])) return false;
+    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'],$pins['home-family-scroll-play.js'],$pins['body-six.php'],$pins['home-family-six.js'],$pins['home-family-six-r2.js'],$pins['home-family-loop.js'])) return false;
     foreach ($pins as $name=>$hash) {
         if (!is_string($name) || !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]*\z/D',$name)
             || !is_string($hash) || !preg_match('/\A[a-f0-9]{64}\z/D',$hash)
@@ -245,7 +245,7 @@ function harmat_home_family_output($html) {
             if (!isset($pins[$name])) return $html;
             $resources.='<link rel="stylesheet" href="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'">';
         }
-        foreach (array('pannellum.js','home-family-six-r2.js') as $name) {
+        foreach (array('pannellum.js','home-family-loop.js') as $name) {
             if (!isset($pins[$name])) return $html;
             $resources.='<script defer src="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'"></script>';
         }

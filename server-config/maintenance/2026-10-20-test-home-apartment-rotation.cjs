@@ -7,7 +7,7 @@ const candidate=path.join(ROOT,'wp-mu-plugins/zz-harmat-home-apartment-rotation.
 const assets=execFileSync(PHP,[path.join(__dirname,'2026-10-20-test-home-apartment-rotation.php'),candidate,'--render'],{encoding:'utf8'});
 const script=assets.match(/<script id="harmat-home-rotation-script">([\s\S]*?)<\/script>/)[1];
 const home=execFileSync(PHP,[path.join(__dirname,'2026-10-18-test-home-family-controller.php'),path.join(ROOT,'wp-mu-plugins/zz-harmat-home-family.php'),'--render'],{encoding:'utf8'}).match(/<main[\s\S]*?<\/main>/)[0];
-const native=fs.readFileSync(path.join(ROOT,'wp-mu-plugins/harmat-home-family/home-family-six-r2.js'),'utf8');
+const native=fs.readFileSync(process.env.HHF_RUNTIME_FILE || path.join(ROOT,'wp-mu-plugins/harmat-home-family/home-family-six-r2.js'),'utf8');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 async function fixture(t,{mobile=false,reduced=false,mutate}={}){
  const dom=new JSDOM(`<html data-harmat-language="hu"><head></head><body><header>Native</header>${home}${assets}<button class="harmat-local-ai-launch" data-hap-suspended="0">Chat</button><section id="harmat-local-ai-panel"></section><form id="quote"><input value="unsent"><input type="checkbox" required></form><footer>Native</footer></body></html>`,{url:'https://harmat22.hu/',runScripts:'outside-only',pretendToBeVisual:true});
