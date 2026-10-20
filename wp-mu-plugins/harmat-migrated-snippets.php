@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Migrated Snippet Logic
  * Description: Version-controlled replacement for public cleanup, SEO, legal footer, and legacy text Code Snippets.
- * Version: 2026.07.31.2
+ * Version: 2026.10.20.2
  */
 
 defined('ABSPATH') || exit;
@@ -849,7 +849,7 @@ function hm_migrated_clean_footer_html() {
             'Lakáskereső' => home_url('/lakaskereso/'),
             'Virtuális lakásválasztó' => home_url('/virtualis-lakasvalaszto/'),
             'Első ütem' => home_url('/virtualis-lakasvalaszto-elso-utem/'),
-            'Összes alaprajz' => home_url('/lakaskereso/'),
+            'Építési napló' => home_url('/epitesi-naplo/'),
         ),
     );
 
@@ -863,17 +863,18 @@ function hm_migrated_clean_footer_html() {
         $html .= '</nav></section>';
     }
 
-    $html .= '<section><h2>Jogi / Kapcsolat</h2>';
-    $html .= '<p><strong>Harmat Lakópark címe</strong><br>1105 Budapest, Harmat utca 22.</p>';
-    $html .= '<p><strong>E-mail</strong><br><a href="mailto:ertekesites@harmat22.hu">ertekesites@harmat22.hu</a></p>';
+    $html .= '<section class="harmat-clean-footer-contact"><h2>Kapcsolat</h2>';
     $html .= '<p><strong>Telefon</strong><br><a href="tel:+36300733375">+36300733375</a></p>';
+    $html .= '<p><strong>E-mail</strong><br><a href="mailto:ertekesites@harmat22.hu">ertekesites@harmat22.hu</a></p>';
+    $html .= '<p><strong>Harmat Lakópark címe</strong><br>1105 Budapest, Harmat utca 22.</p>';
+    $html .= '</section></div>';
+    $html .= '<div class="harmat-clean-footer-bottom">';
     $html .= '<nav aria-label="Jogi dokumentumok">';
     foreach (hm_migrated_legal_links() as $label => $url) {
         $html .= '<a href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
     }
-    $html .= '</nav></section>';
-    $html .= '</div>';
-    $html .= '<div class="harmat-clean-footer-bottom">© Cooperation Power Kft. Minden jog fenntartva. Az árak, alapterületek, látványtervek és műszaki tartalmak tájékoztató jellegűek.</div>';
+    $html .= '</nav>';
+    $html .= '<p>© Cooperation Power Kft. Minden jog fenntartva. Az árak, alapterületek, látványtervek és műszaki tartalmak tájékoztató jellegűek.</p></div>';
     $html .= '</footer>';
 
     return $html;
@@ -1607,15 +1608,24 @@ add_action('wp_head', function () {
     if (hm_migrated_is_public_request()) {
         ?>
 <style id="harmat-migrated-public-layout-css">
-.harmat-clean-footer{background:#fff7e8;border-top:1px solid rgba(152,112,51,.22);font-family:Montserrat,Arial,sans-serif;color:#263135}
-.harmat-clean-footer-inner{max-width:1180px;margin:0 auto;padding:34px 24px 24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:34px}
-.harmat-clean-footer h2{margin:0 0 14px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
-.harmat-clean-footer nav{display:grid;gap:8px}
-.harmat-clean-footer a{color:#263135!important;text-decoration:none;font-size:14px;font-weight:700;line-height:1.45}
-.harmat-clean-footer a:hover{color:#987033!important}
-.harmat-clean-footer p{margin:0 0 12px;color:#4f575d;font-size:13px;line-height:1.65}
-.harmat-clean-footer strong{color:#987033;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.harmat-clean-footer-bottom{border-top:1px solid rgba(152,112,51,.16);padding:14px 24px 18px;text-align:center;color:#687078;font-size:12px;line-height:1.6}
+#colophon.harmat-clean-footer{background:#193e34;border-top:2px solid #c6a66a;font-family:Montserrat,Arial,sans-serif;color:#f4f7f5;letter-spacing:0}
+#colophon.harmat-clean-footer,#colophon.harmat-clean-footer *{box-sizing:border-box;letter-spacing:0}
+#colophon.harmat-clean-footer .harmat-clean-footer-inner{max-width:1180px;margin:0 auto;padding:32px 24px 24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
+#colophon.harmat-clean-footer section{min-width:0}
+#colophon.harmat-clean-footer h2{margin:0 0 12px;color:#c6a66a;font-size:12px;font-weight:700;line-height:1.5;letter-spacing:0;text-transform:uppercase}
+#colophon.harmat-clean-footer nav{display:grid;gap:7px;min-width:0}
+#colophon.harmat-clean-footer a{color:#f4f7f5!important;text-decoration:none;font-size:15px;font-weight:500;line-height:1.6;letter-spacing:0;overflow-wrap:anywhere}
+#colophon.harmat-clean-footer a:hover,#colophon.harmat-clean-footer a:focus-visible{color:#fff!important;text-decoration:underline;text-underline-offset:4px}
+#colophon.harmat-clean-footer a:focus-visible{outline:2px solid #f4f7f5;outline-offset:4px}
+#colophon.harmat-clean-footer p{margin:0 0 14px;color:#dbe5df;font-size:15px;line-height:1.6;overflow-wrap:anywhere}
+#colophon.harmat-clean-footer strong{color:#dbe5df;font-size:12px;font-weight:500;line-height:1.5;letter-spacing:0}
+#colophon.harmat-clean-footer .harmat-clean-footer-contact a{font-size:16px;font-weight:600}
+#colophon.harmat-clean-footer .harmat-clean-footer-contact p:last-child{margin-bottom:0}
+#colophon.harmat-clean-footer .harmat-clean-footer-bottom{max-width:1180px;margin:0 auto;border-top:1px solid rgba(244,247,245,.2);padding:18px 24px 76px;text-align:left}
+#colophon.harmat-clean-footer .harmat-clean-footer-bottom nav{display:flex;flex-wrap:wrap;gap:8px 24px;margin-bottom:12px}
+#colophon.harmat-clean-footer .harmat-clean-footer-bottom a{font-weight:400;max-width:100%}
+#colophon.harmat-clean-footer .harmat-clean-footer-bottom p{margin:0;font-size:12px;line-height:1.6}
+@media(max-width:620px){#colophon.harmat-clean-footer .harmat-clean-footer-inner{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 20px;padding:26px 16px 24px}#colophon.harmat-clean-footer .harmat-clean-footer-contact{grid-column:1 / -1}#colophon.harmat-clean-footer .harmat-clean-footer-bottom{padding:16px 16px 76px}#colophon.harmat-clean-footer .harmat-clean-footer-bottom nav{gap:8px 20px}}
 body:not(.elementor-editor-active) .harmat-ai-assistant,body:not(.elementor-editor-active) .harmat-ai-toggle{display:none!important}
 body:not(.elementor-editor-active) .harmat-local-ai-launch{right:18px!important;bottom:max(22px,env(safe-area-inset-bottom,0px) + 22px)!important;z-index:100080!important;box-sizing:border-box!important;isolation:isolate!important;transform:none!important}
 body:not(.elementor-editor-active) .harmat-local-ai-panel{right:18px!important;bottom:max(88px,env(safe-area-inset-bottom,0px) + 88px)!important;z-index:100081!important}
@@ -1704,8 +1714,8 @@ body.dialog-lightbox-body .scrollup,body.dialog-container .scrollup{display:none
 .harmat-info-note a,.harmat-build-log-list a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;margin-top:18px;padding:0 15px;border:1px solid #987033;background:#987033;color:#fff!important;font-size:12px;font-weight:900;text-transform:uppercase;text-decoration:none}
 .harmat-build-log-list{display:grid;gap:16px;margin-top:28px}
 .harmat-build-log-list time{display:block;margin-bottom:8px;color:#987033;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase}
-@media(max-width:900px){.harmat-home-opening-notice{margin:88px 18px 0}.harmat-clean-footer-inner,.harmat-home-partners-head,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-home-featured-grid,.harmat-home-partners-grid,.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
-@media(max-width:560px){body:not(.elementor-editor-active) .scrollup{display:none!important}body:not(.elementor-editor-active) .harmat-local-ai-launch{right:12px!important;bottom:max(14px,env(safe-area-inset-bottom,0px) + 14px)!important}body:not(.elementor-editor-active) .harmat-local-ai-panel{right:12px!important;bottom:max(72px,env(safe-area-inset-bottom,0px) + 72px)!important}.harmat-clean-footer-inner{grid-template-columns:1fr;padding:28px 18px}.harmat-home-opening-notice{margin:82px 14px 0;padding:12px 14px}.harmat-home-opening-notice div{align-items:flex-start;flex-direction:column;gap:4px;text-align:left}.harmat-home-featured,.harmat-home-partners{margin:28px auto 34px;padding:0 16px}.harmat-home-featured-head{display:block}.harmat-home-featured-head a{margin-top:14px;width:100%}.harmat-home-featured-grid,.harmat-home-partners-grid{grid-template-columns:1fr}.harmat-home-featured-card dl{grid-template-columns:1fr}.harmat-home-featured-card dl div{border-right:0}.harmat-home-featured-actions{grid-template-columns:1fr}.harmat-project-modern .entry-content,.harmat-info-page .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
+@media(max-width:900px){.harmat-home-opening-notice{margin:88px 18px 0}.harmat-home-partners-head,.harmat-project-hero,.harmat-project-copy,.harmat-project-note{grid-template-columns:1fr}.harmat-home-featured-grid,.harmat-home-partners-grid,.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.harmat-project-hero-image{min-height:280px}}
+@media(max-width:560px){body:not(.elementor-editor-active) .scrollup{display:none!important}body:not(.elementor-editor-active) .harmat-local-ai-launch{right:12px!important;bottom:max(14px,env(safe-area-inset-bottom,0px) + 14px)!important}body:not(.elementor-editor-active) .harmat-local-ai-panel{right:12px!important;bottom:max(72px,env(safe-area-inset-bottom,0px) + 72px)!important}.harmat-home-opening-notice{margin:82px 14px 0;padding:12px 14px}.harmat-home-opening-notice div{align-items:flex-start;flex-direction:column;gap:4px;text-align:left}.harmat-home-featured,.harmat-home-partners{margin:28px auto 34px;padding:0 16px}.harmat-home-featured-head{display:block}.harmat-home-featured-head a{margin-top:14px;width:100%}.harmat-home-featured-grid,.harmat-home-partners-grid{grid-template-columns:1fr}.harmat-home-featured-card dl{grid-template-columns:1fr}.harmat-home-featured-card dl div{border-right:0}.harmat-home-featured-actions{grid-template-columns:1fr}.harmat-project-modern .entry-content,.harmat-info-page .entry-content{padding:26px 18px 44px}.harmat-project-hero{padding-top:34px;gap:22px}.harmat-project-actions a{flex:1 1 100%}.harmat-project-stats,.harmat-project-gallery,.harmat-project-features,.harmat-info-grid{grid-template-columns:1fr}.harmat-project-stats strong{font-size:23px}.harmat-project-hero-image{min-height:210px}.harmat-project-hero-image figcaption{left:12px;bottom:12px}}
 </style>
         <?php
     }
