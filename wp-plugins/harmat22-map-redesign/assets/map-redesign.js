@@ -386,14 +386,19 @@
       return;
     }
 
-    var target = findTargetSection();
+    var neighborhood = document.querySelector("main .harmat-neighborhood-page");
+    var target = neighborhood || findTargetSection();
     if (!target) {
       return;
     }
 
     var replacement = document.createElement("div");
     replacement.innerHTML = markup();
-    target.replaceWith(replacement);
+    if (target === neighborhood) {
+      target.insertAdjacentElement("afterend", replacement);
+    } else {
+      target.replaceWith(replacement);
+    }
     initializeModule(replacement.querySelector(".harmat-interactive"));
   });
 })();

@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Neighborhood Details - Restored
+
+- October20 user reports missing facilities and approves minimal repair. Original detailed server content was not deleted: legacy map-redesign JS replaced the entire section in the browser. Plugin2.2.1 now preserves `main .harmat-neighborhood-page` and inserts the same 3D viewer after it; legacy/nonowned behavior unchanged. JS SHAa9d07a0f3c823d40fcd39b4ad0011ed74545f4c99ef28d3c8d534bcb039870f2, PHP rawfb3bdf09c766880a847c6bd55b150ff229c45374b16f9054aaac73bb18e61330 (canonicalLF034d27b59d7035e7d0c9e3e474474cd1675d70af82bc18ac7ac04143cf0458d2). Existing mixed PHP EOL retained.
+- Backupneighborhood-preserve-ec4cbc01bbf745e89ed00da9b6bbd615 aggregated465da5076dc1e5e7f662bd1f047fb273525b3f93165d2e41df90d96a25222dc RELEASED/separatelyVERIFIED_CURRENT_STATE:7routes/exactnativecontent/formSEO/protectedstate/35offer+17spam.26DOM/7transport local pass. Actual1280HUZH/390ZH/320HUZH six cards/nooverflow; viewer tabs/fullscreen1920x1080/keyboard render change;320emptyHUZH offer openscloses/originaldate/time/source/privacy/no submission. Initial503 prewrite refusal and corrected native-property-wrapper verifier failure/owned-source rollback documented, not hidden. No facility data/DB/quote/booking/homepage/ads changes. Distances not remeasured; old viewer-only copy/contrast debt retained. Recovery/evidence `server-config/maintenance/2026-10-20-neighborhood-preservation.md`.
+
 ## October20 Facebook Budget - Current
 
 - User explicitly halves only existing main-video housing daily budget; native Ads Manager published HUF10,714 -> HUF5,357/day once. Fresh independent Ad Center/detail confirms saved amount, reopened end date October26 unchanged. Recruitment remains HUF14,000 lifetime; Google/YouTube/website/quote/booking untouched. Historical HUF150,000 spending cap not edited/freshly reopened; do not treat daily-times14 summary as a new cumulative cap. Summary581linkclicks/zero initiatedmessageconversations is not proof of zero phone/email/site leads. Details `server-config/maintenance/2026-10-20-facebook-budget-reduction.md`; ignored screenshot shown to user. New Drive media publication requested separately, not yet published. User rejects compressed mobile rendition; retain current HD homepage video.

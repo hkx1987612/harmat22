@@ -1,6 +1,6 @@
 # Harmat22 Interactive Presentation Module
 
-Version 2.1 keeps the interactive Harmat22 project viewer and adds the latest live-site polish from 2026-05-12.
+Version 2.2.1 preserves the detailed neighborhood facilities section and places the interactive viewer below it. Legacy map-only replacement remains unchanged. The October20 maintenance record documents the exact private backup, source pins, tests and recovery command.
 
 ## What It Includes
 
