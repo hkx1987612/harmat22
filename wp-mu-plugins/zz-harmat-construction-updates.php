@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Construction Updates
  * Description: Removable, read-only construction registry shared by the journal and homepage.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 defined('ABSPATH') || exit;
 
@@ -31,6 +31,30 @@ function harmat_cu_registry(): array {
             'note' => array('hu' => 'A felvétel az akkori helyszíni állapotot mutatja, nem elkészült otthonokat.', 'zh' => '视频记录拍摄时的施工状态，并非已竣工住宅。'),
         );
     }
+    $records[] = array(
+        'id' => '2026-10-19', 'date' => '2026-10-19', 'uploaded' => '2026-10-20',
+        'status' => 'published', 'approved' => true,
+        'file' => '2026-10-19-compilation-hu-subtitled', 'duration' => 145.783333,
+        'title' => array('hu' => 'Építési napló – 2026. október 19.', 'zh' => '施工日志 · 2026年10月19日'),
+        'summary' => array(
+            'hu' => 'Október 19-i helyszíni körképek a vasbeton szerkezetekről, a födémek vasalásáról és zsaluzásáról. A napi A1–A4 fotók az egyes épületek munkáit mutatják be.',
+            'zh' => '10月19日现场视频记录钢筋混凝土结构、顶板钢筋和模板施工，并附当天A1–A4各楼栋的施工照片。'),
+        'note' => array(
+            'hu' => 'Valódi helyszíni videók és fotók, a felvétel napjának állapotával. Magyar felirat és szintetikus magyar narráció; az eredeti helyszíni hang nélkül.',
+            'zh' => '真实现场视频与照片，反映拍摄当日状态。配有匈牙利语字幕和合成旁白，已去除现场原声。'),
+    );
+    $records[] = array(
+        'id' => '2026-10-20', 'date' => '2026-10-20', 'uploaded' => '2026-10-20',
+        'status' => 'published', 'approved' => true,
+        'file' => '2026-10-20-compilation-hu-subtitled', 'duration' => 113.033333,
+        'title' => array('hu' => 'Építési napló – 2026. október 20.', 'zh' => '施工日志 · 2026年10月20日'),
+        'summary' => array(
+            'hu' => 'Október 20-i helyszíni videók és A1–A4 fotók: fal- és pillérvasalás, födémzsaluzás, födémvasalás és födémbetonozás a Harmat Lakóparkban.',
+            'zh' => '10月20日现场视频与A1–A4施工照片，展示墙柱钢筋、顶板模板、顶板钢筋以及顶板混凝土浇筑。'),
+        'note' => array(
+            'hu' => 'Valódi helyszíni videók és fotók, a felvétel napjának állapotával. Magyar felirat és szintetikus magyar narráció; az eredeti helyszíni hang nélkül.',
+            'zh' => '真实现场视频与照片，反映拍摄当日状态。配有匈牙利语字幕和合成旁白，已去除现场原声。'),
+    );
     return $records;
 }
 
