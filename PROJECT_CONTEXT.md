@@ -2,6 +2,12 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October20 Availability Incident - Current
+
+- User prioritizes outage/log diagnosis; style crawl stopped, unfinished local draft removed, no full-site style-completion claim. No production edits/rollback/restart/security changes or quote/appointment submissions this investigation. Earlier footer stable baseline retained.
+- Desktop and independent mobile-data failure; TCP connects but TLS/SSH banner time out. wePanel initially shell-only, later ordinary reload restores resource charts/log access. Actual public error log99warnings/zero fatals, last08:52:34UTC; account today's09:59Budapest two fatals are previously recorded private staging frozen-fixture refusal, not live requests. Real sales-plugin warning debt remains, not repaired. Charts do not prove host health; no provider-level logs yet.
+- At13:10Budapest isolated homepage/search/contact HEADs200 without code rollback/edit; favors transient hosting/service/network/filtering event, root cause unconfirmed and preceding GET crawl contribution/rate-trigger not excluded. One urgent authorized provider ticket successfully received, no displayed number; old portal list excludes newer tickets, do not duplicate. Raw logs/private receipt stay local, not Git. Full evidence/limitations in2026-10-20-availability-incident.md. No form delivery or full functional recovery certification.
+
 ## Footer Palette And Layout - Current
 
 - October20 user approves footer/color refinement after desktop/mobile preview and backup, explicitly preserving quotes/appointments. Screenshot clarification identifies pale-yellow footer, NOT a photograph replacement; photos/media unchanged. Sol bounded renderer/scopedCSS plusfixtures, parent public static previews/transport/actual QA. Current migrated owner2026.10.20.2 LF a74f6de8d93bc5f183cf7447be3100acbebacf19228cf2f5ea1de62d5d2b375f, production raw f28f8dfdf80ea2edea09a0f7d9ec4854f16305d9dd1033bc507a269882b51077, original mixed EOL/nonowned bytes retained. Inkgreen/softwhite/smallgold; desktop3 columns, <=620 two nav columns/contact fullspan; duplicate search link -> journal; four legal links separate bottom row; exact colophon opening/contacts/copyright retained. No new module/script/form/provider/data changes; language dictionary unchanged.
