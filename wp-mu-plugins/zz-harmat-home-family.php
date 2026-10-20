@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.16
+ * Version: 1.0.17
  */
 defined('ABSPATH') || exit;
 
@@ -230,6 +230,8 @@ function harmat_home_family_output($html) {
             . '@media(min-width:768px){body.home.page-id-164 #harmat-home-family .hhf-hero{height:auto;min-height:0;max-height:none;aspect-ratio:16/9;background:#111a15}body.home.page-id-164 #harmat-home-family .hhf-hero-poster,body.home.page-id-164 #harmat-home-family .hhf-hero-video{object-fit:contain;object-position:center}}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-toggle{margin-top:24px;max-width:100%;white-space:normal}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-apartment[hidden],body.home.page-id-164 #harmat-home-family .hhf-apartment-toggle[hidden]{display:none!important}'
+            . '@media(min-width:621px){body.home.page-id-164 #harmat-home-family .hhf-everyday-grid{grid-template-columns:repeat(2,minmax(0,1fr))}body.home.page-id-164 #harmat-home-family .hhf-everyday-story:nth-child(2){padding-top:0}}'
+            . '@supports(grid-template-rows:subgrid){@media(min-width:621px){body.home.page-id-164 #harmat-home-family .hhf-everyday-grid{row-gap:0}body.home.page-id-164 #harmat-home-family .hhf-everyday-story{display:grid;grid-template-rows:subgrid;grid-row:span 3;align-self:stretch;min-width:0}}}'
             . '</style>';
         if (strpos($replacement,'data-hcu-home="1"')!==false && function_exists('harmat_cu_resources')) {
             $resources.=harmat_cu_resources();
