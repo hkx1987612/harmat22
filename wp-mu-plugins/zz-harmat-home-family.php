@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.13
+ * Version: 1.0.15
  */
 defined('ABSPATH') || exit;
 
@@ -28,11 +28,11 @@ function harmat_home_family_context() {
 
 function harmat_home_family_assets() {
     $directory=__DIR__.'/harmat-home-family';
-    $manifest=$directory.'/manifest-scroll-play.json';
+    $manifest=$directory.'/manifest-six-r2.json';
     if (is_link($directory) || !is_file($manifest) || is_link($manifest)
-        || hash_file('sha256',$manifest)!=='4916615afd43d01394b22b362e5e4878f9eca02ee086791cbb0081b52bbf7b81') return false;
+        || hash_file('sha256',$manifest)!=='b7ad673660278889725b832cf748656c5b4e59fc92220519e75117eb99f25280') return false;
     $pins=json_decode(file_get_contents($manifest),true);
-    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'],$pins['home-family-scroll-play.js'])) return false;
+    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'],$pins['home-family-scroll-play.js'],$pins['body-six.php'],$pins['home-family-six.js'],$pins['home-family-six-r2.js'])) return false;
     foreach ($pins as $name=>$hash) {
         if (!is_string($name) || !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]*\z/D',$name)
             || !is_string($hash) || !preg_match('/\A[a-f0-9]{64}\z/D',$hash)
@@ -44,7 +44,7 @@ function harmat_home_family_assets() {
 
 function harmat_home_family_units() {
     $units=array();
-    foreach (array('A1-1-L6'=>4317,'A2-4-L5'=>5212,'A1-1-L5'=>4311) as $code=>$id) {
+    foreach (array('A1-1-L6'=>4317,'A2-4-L5'=>5212,'A1-1-L5'=>4311,'A3-F-L3'=>5302,'A4-F-L1'=>5460,'A3-2-L2'=>5318) as $code=>$id) {
         $post=get_post($id);
         if (!$post || $post->post_type!=='property' || $post->post_status!=='publish' || $post->post_password!=='') return false;
         $data=harmat_sai_property_summary_data($id);
@@ -144,7 +144,7 @@ function harmat_home_family_output($html) {
         }
         $harmat_home_family_units=harmat_home_family_units();
         if (!$harmat_home_family_units) return $html;
-        $replacement=include __DIR__.'/harmat-home-family/body.php';
+        $replacement=include __DIR__.'/harmat-home-family/body-six.php';
         $replacement=harmat_home_family_hero_actions($replacement);
         if (function_exists('harmat_cu_home_teaser')) $replacement=harmat_cu_home_teaser($replacement);
         if (!is_string($replacement) || substr_count($replacement,'id="harmat-home-family"')!==1
@@ -223,6 +223,8 @@ function harmat_home_family_output($html) {
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero-actions .hhf-button{min-width:0;max-width:100%;white-space:normal}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-hero-actions .hhf-button>span{min-width:0}'
             . '@media(min-width:768px){body.home.page-id-164 #harmat-home-family .hhf-hero{height:auto;min-height:0;max-height:none;aspect-ratio:16/9;background:#111a15}body.home.page-id-164 #harmat-home-family .hhf-hero-poster,body.home.page-id-164 #harmat-home-family .hhf-hero-video{object-fit:contain;object-position:center}}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment-toggle{margin-top:24px;max-width:100%;white-space:normal}'
+            . 'body.home.page-id-164 #harmat-home-family .hhf-apartment[hidden],body.home.page-id-164 #harmat-home-family .hhf-apartment-toggle[hidden]{display:none!important}'
             . '</style>';
         if (strpos($replacement,'data-hcu-home="1"')!==false && function_exists('harmat_cu_resources')) {
             $resources.=harmat_cu_resources();
@@ -231,7 +233,7 @@ function harmat_home_family_output($html) {
             if (!isset($pins[$name])) return $html;
             $resources.='<link rel="stylesheet" href="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'">';
         }
-        foreach (array('pannellum.js','home-family-scroll-play.js') as $name) {
+        foreach (array('pannellum.js','home-family-six-r2.js') as $name) {
             if (!isset($pins[$name])) return $html;
             $resources.='<script defer src="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'"></script>';
         }

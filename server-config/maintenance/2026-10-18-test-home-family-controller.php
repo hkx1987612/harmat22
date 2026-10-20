@@ -31,7 +31,7 @@ function get_post_status($id){global $state;return $state['status'];}
 function get_post_field($field,$id,$raw){global $state;return array('post_content'=>$state['raw'],'post_name'=>$state['slug'],'post_password'=>$state['password'])[$field];}
 function get_post($id){global $state;return (object)array('post_type'=>$state['unit_type'],'post_status'=>'publish','post_password'=>'');}
 function get_post_meta($id,$key,$single){return '';}
-function harmat_sai_property_summary_data($id){global $state;$codes=array(4317=>'A1-1-L6',5212=>'A2-4-L5',4311=>'A1-1-L5');return array('title'=>$codes[$id],'rooms'=>2,'sales_area'=>47.83,'price'=>62236650,'hide_price'=>$state['hidden'],'status'=>$state['unit_status']);}
+function harmat_sai_property_summary_data($id){global $state;$codes=array(4317=>'A1-1-L6',5212=>'A2-4-L5',4311=>'A1-1-L5',5302=>'A3-F-L3',5460=>'A4-F-L1',5318=>'A3-2-L2');return array('title'=>$codes[$id],'rooms'=>2,'sales_area'=>47.83,'price'=>62236650,'hide_price'=>$state['hidden'],'status'=>$state['unit_status']);}
 function get_permalink($id){$d=harmat_sai_property_summary_data($id);return 'https://harmat22.hu/property/'.strtolower($d['title']).'/';}
 function hm_migrated_property_floorplan_image_from_uploads($code,$pdf){return 'https://harmat22.hu/wp-content/uploads/2026/05/'.$code.'-cn-floorplan-display.jpg';}
 function content_url($path){return 'https://harmat22.hu/wp-content'.$path;}
