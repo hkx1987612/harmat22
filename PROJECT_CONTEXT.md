@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Homepage Contact Image - Current
+
+- User requests replacing homepage contact-area fence photo. Current controller1.0.16 SHAd73fccd048b51e83f1d4b1ce301635751c25bc1ef8bbe7d521f14818b75e3f02 adds only exact single-figure replacement/version; ten-pin assets/body-six/runtime/CSS/contacts/quote/appointment unchanged. Reuses inspected existing xgt_5.jpg courtyard/family rendering; existing HU/ZH panoramaGallery5/rendering keys replace old real-site caption accurately. Contact page original photo untouched.
+- Backuphome-contact-image-5b0030278bde4a1bb87833a5a50b828f aggregate65ada2e95b760388362c73a4338d06b8d5bcf533413416201311d06a99abe300 RELEASED and independently VERIFIED:76controller/35offer/17spam,8offline tests, exact-main figure-only/native formSEO/3routes/protectedstate pass. First preflight refused normalized-footer comparison BEFORElivewrite; exact raw mixedEOL reconstruction/pin fixed, no footer edits. Actual1280/390/320HUZH loaded/nooverflow, native mobile empty quote opens/closes requiredprivacyunchecked/fiveHUsources unchanged, no send. Defaultviewport/HU restored; ignored screenshots. Recovery/chaining in2026-10-20-home-contact-image.md; roll back this controller to1.0.15 before older frozen transports. Stabletagstable-2026-10-20-home-contact-image-current aftersync.
+
 ## October20 Availability Incident - Current
 
 - User prioritizes outage/log diagnosis; style crawl stopped, unfinished local draft removed, no full-site style-completion claim. No production edits/rollback/restart/security changes or quote/appointment submissions this investigation. Earlier footer stable baseline retained.

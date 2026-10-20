@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.15
+ * Version: 1.0.16
  */
 defined('ABSPATH') || exit;
 
@@ -145,6 +145,11 @@ function harmat_home_family_output($html) {
         $harmat_home_family_units=harmat_home_family_units();
         if (!$harmat_home_family_units) return $html;
         $replacement=include __DIR__.'/harmat-home-family/body-six.php';
+        $contact_image='<figure><img src="https://harmat22.hu/wp-content/mu-plugins/harmat-contact-family/project-location.jpg" width="1000" height="750" alt="A Harmat utca 22. környéke helyszíni felvételen" data-i18n-alt="locationAlt" loading="lazy" decoding="async"><figcaption data-i18n="locationCaption">Helyszíni felvétel · Harmat utca és környéke</figcaption></figure>';
+        if (!is_string($replacement) || substr_count($replacement,$contact_image)!==1) return $html;
+        $replacement=str_replace($contact_image,
+            '<figure><img src="https://harmat22.hu/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/xgt_5.jpg" width="3840" height="2160" alt="Kert és közösségi tér" data-i18n-alt="panoramaGallery5" loading="lazy" decoding="async"><figcaption data-i18n="rendering">Látványterv</figcaption></figure>',
+            $replacement);
         $replacement=harmat_home_family_hero_actions($replacement);
         if (function_exists('harmat_cu_home_teaser')) $replacement=harmat_cu_home_teaser($replacement);
         if (!is_string($replacement) || substr_count($replacement,'id="harmat-home-family"')!==1
