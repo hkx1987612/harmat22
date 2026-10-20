@@ -32,6 +32,8 @@ def validate_delta(old,new):
 def bundle():
     old=subprocess.check_output(['git','show','f86dd79:wp-mu-plugins/'+D.MAIN],cwd=ROOT)
     new=S.read_local(D.MAIN)
+    if sha(new)=='dafbf493b166909ded9f52dd01b7015f2edffaa6aa6aa6f9e8dd3fa3af21bb70':
+        new=subprocess.check_output(['git','show','d5975d8:wp-mu-plugins/'+D.MAIN],cwd=ROOT)
     validate_delta(old,new)
     manifest=S.read_local(D.ASSET+'/manifest-six-r2.json')
     require(sha(manifest)=='b7ad673660278889725b832cf748656c5b4e59fc92220519e75117eb99f25280','Retained manifest changed')

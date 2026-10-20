@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Lifestyle Alignment And Roof Garden - Current
+
+- User approves equal lifestyle images; then requests replacing homepage model photo with roof garden. Separate backups/releases. Current home1.0.18 SHAdafbf493b166909ded9f52dd01b7015f2edffaa6aa6aa6f9e8dd3fa3af21bb70 retains1.0.17 equal >=621px columns/zerooffset/progressive sharedrows (mobile unchanged), plus exact model-figure swap to inspected officialgallery Harmat22_latvany-8-harmat-1280.webp1280x720/271163bytes. Existing HU/ZH rendering key, original selector destination/frame/lazyloading retained; no pinnedassets/scripts/contentdata/form/business edits.
+- Alignmentbackuphome-everyday-align-c31c94cdb59541a9b8f8fea11453bec3 aggregatedab9c05e2c4d85f539aefa104ae1123f1ae7a9a2758b61463e9106d90cb9f8ef RELEASED/independentlyVERIFIED mainexact/CSSonly. Roofbackuphome-roof-garden-b6eda971e30544bf8a67168c1bc860ac aggregate04b81d2c71085dbbdafb5b245e349dad7e2d54beafa94e9fb723685357e65e84 RELEASED/independentlyVERIFIED figureonly/nativeformSEO/7routes/protectedstate/76controller+35offer+17spam. Local7alignment/6roof/8contact tests. Actual1280HUZH images568.5x379 identicaltops/title/body;768wrappedtitles aligned;390/320originalstack loaded/nooverflow, roof390ZH335x223.33.320empty quote openscloses/dateOct23/time12-15/originalsources/privacyunchecked, no send. Temporarygallerytabsclosed; only actually measured viewport claims. HU/defaultviewport restored, ignored screenshots. Exact chain recovery2026-10-20-home-everyday-and-roof-garden.md; stabletagstable-2026-10-20-home-roof-garden-current aftersync. Contact image below retained; older currentcontroller versions superseded.
+
 ## Homepage Contact Image - Current
 
 - User requests replacing homepage contact-area fence photo. Current controller1.0.16 SHAd73fccd048b51e83f1d4b1ce301635751c25bc1ef8bbe7d521f14818b75e3f02 adds only exact single-figure replacement/version; ten-pin assets/body-six/runtime/CSS/contacts/quote/appointment unchanged. Reuses inspected existing xgt_5.jpg courtyard/family rendering; existing HU/ZH panoramaGallery5/rendering keys replace old real-site caption accurately. Contact page original photo untouched.

@@ -22,6 +22,9 @@ NEW_SHA = 'd73fccd048b51e83f1d4b1ce301635751c25bc1ef8bbe7d521f14818b75e3f02'
 OLD_FIGURE = '<figure><img src="https://harmat22.hu/wp-content/mu-plugins/harmat-contact-family/project-location.jpg" width="1000" height="750" alt="A Harmat utca 22. környéke helyszíni felvételen" data-i18n-alt="locationAlt" loading="lazy" decoding="async"><figcaption data-i18n="locationCaption">Helyszíni felvétel · Harmat utca és környéke</figcaption></figure>'
 NEW_FIGURE = '<figure><img src="https://harmat22.hu/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/xgt_5.jpg" width="3840" height="2160" alt="Kert és közösségi tér" data-i18n-alt="panoramaGallery5" loading="lazy" decoding="async"><figcaption data-i18n="rendering">Látványterv</figcaption></figure>'
 IMAGE_URL = 'https://harmat22.hu/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/xgt_5.jpg'
+IMAGE_MIME = 'image/jpeg'
+IMAGE_BYTES = 1041262
+IMAGE_SHA = '1079bc7f5ab4995a2fc1e5307a84a4ca19d3fa82d75c0b20cf28d323ecf3cf99'
 BLOCK = ("        $contact_image='"+OLD_FIGURE+"';\n"
          '        if (!is_string($replacement) || substr_count($replacement,$contact_image)!==1) return $html;\n'
          '        $replacement=str_replace($contact_image,\n'
@@ -39,6 +42,9 @@ def validate_delta(old, new):
 def bundle():
     old = subprocess.check_output(['git', 'show', '3796857:wp-mu-plugins/'+D.MAIN], cwd=ROOT)
     new = S.read_local(D.MAIN)
+    if sha(new) in ('65f29b83d86f96ac4a121049a90c7c67ffdeca07bb05d0dcac6542aebfc98651',
+                    'dafbf493b166909ded9f52dd01b7015f2edffaa6aa6aa6f9e8dd3fa3af21bb70'):
+        new = subprocess.check_output(['git','show','f86dd79:wp-mu-plugins/'+D.MAIN],cwd=ROOT)
     validate_delta(old, new)
     manifest = S.read_local(D.ASSET+'/manifest-six-r2.json')
     require(sha(manifest) == 'b7ad673660278889725b832cf748656c5b4e59fc92220519e75117eb99f25280', 'Original pins required')
@@ -99,8 +105,8 @@ def operate(parts, backup=None, reverse=False):
             baseline,mime = Q.get(D.URL)
             require('text/html' in mime and main_html(baseline.decode()).count(OLD_FIGURE) == 1, 'Baseline unavailable/drift')
             image,kind = Q.get(IMAGE_URL)
-            require(kind.startswith('image/jpeg') and len(image) == 1041262
-                    and sha(image) == '1079bc7f5ab4995a2fc1e5307a84a4ca19d3fa82d75c0b20cf28d323ecf3cf99',
+            require(kind.startswith(IMAGE_MIME) and len(image) == IMAGE_BYTES
+                    and sha(image) == IMAGE_SHA,
                     'Selected existing image differs from inspected image')
             r.mkdir(backup); r.mkdir(backup+'/'+D.ASSET)
             for name,blob in protected.items():

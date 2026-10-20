@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.17
+ * Version: 1.0.18
  */
 defined('ABSPATH') || exit;
 
@@ -149,6 +149,11 @@ function harmat_home_family_output($html) {
         if (!is_string($replacement) || substr_count($replacement,$contact_image)!==1) return $html;
         $replacement=str_replace($contact_image,
             '<figure><img src="https://harmat22.hu/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/xgt_5.jpg" width="3840" height="2160" alt="Kert és közösségi tér" data-i18n-alt="panoramaGallery5" loading="lazy" decoding="async"><figcaption data-i18n="rendering">Látványterv</figcaption></figure>',
+            $replacement);
+        $model_image='<figure><img src="https://harmat22.hu/wp-content/mu-plugins/harmat-contact-family/showroom-model.jpg" width="1000" height="750" alt="A Harmat Lakópark épületmakettje a bemutatóteremben" data-i18n-alt="modelAlt" loading="lazy" decoding="async"><figcaption data-i18n="modelCaption">Helyszíni felvétel · a lakópark makettje a bemutatóteremben</figcaption></figure>';
+        if (substr_count($replacement,$model_image)!==1) return $html;
+        $replacement=str_replace($model_image,
+            '<figure><img src="https://harmat22.hu/wp-content/uploads/2026/02/Harmat22_latvany-8-harmat-1280.webp" width="1280" height="720" alt="A Harmat Lakópark tervezett tetőkertje" data-i18n-alt="rendering" loading="lazy" decoding="async"><figcaption data-i18n="rendering">Látványterv</figcaption></figure>',
             $replacement);
         $replacement=harmat_home_family_hero_actions($replacement);
         if (function_exists('harmat_cu_home_teaser')) $replacement=harmat_cu_home_teaser($replacement);
