@@ -7,6 +7,7 @@ import re
 import shlex
 import stat
 import subprocess
+import time
 import urllib.request
 import uuid
 
@@ -35,11 +36,31 @@ DATES=('2026-10-19','2026-10-20')
 NAMES=tuple(d+'-compilation-hu-subtitled'+suffix for d in DATES for suffix in ('.mp4','.jpg'))
 TEST='2026-10-20-test-daily-construction.php'
 HELPERS=(TEST,'2026-10-18-test-construction-updates.php',D.TEST,D.CHECKER)
+MAP_PINS={
+    'assets/map-redesign.js':'a9d07a0f3c823d40fcd39b4ad0011ed74545f4c99ef28d3c8d534bcb039870f2',
+    'harmat22-map-redesign.php':'fb3bdf09c766880a847c6bd55b150ff229c45374b16f9054aaac73bb18e61330',
+}
 
 
 def file_hash(path):
     import hashlib
     with path.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
+
+
+def local_media(name,item,directory=LOCAL):
+    require(name in NAMES,'Only reviewed public media filenames allowed')
+    path=directory/name
+    require(path.is_file() and not path.is_symlink() and path.resolve().parent==directory.resolve(),'Unsafe local media')
+    require(set(item)=={'sha256','bytes'} and isinstance(item['sha256'],str)
+            and re.fullmatch('[a-f0-9]{64}',item['sha256'])
+            and type(item['bytes']) is int and 0<item['bytes']<=512*1024*1024,'Bounded reviewed HD media required')
+    require(path.stat().st_size==item['bytes'] and file_hash(path)==item['sha256'],'Final local media drift')
+
+
+def page(route):
+    time.sleep(1.5)
+    print('BOUNDED_PAGE_CHECK '+route,flush=True)
+    return Q.get('https://harmat22.hu'+route)
 
 
 def bundle():
@@ -60,20 +81,20 @@ def bundle():
     require(qa.get('status')=='PASS_FINAL_LOCAL_TECHNICAL_QA_NOT_PUBLISHED','Final media QA required')
     media={name:qa['files'][name] for name in NAMES}
     for name,item in media.items():
-        path=LOCAL/name
-        require(path.is_file() and not path.is_symlink() and path.resolve().parent==LOCAL.resolve(),'Unsafe local media')
-        require(set(item)=={'sha256','bytes'} and re.fullmatch('[a-f0-9]{64}',item['sha256'])
-                and type(item['bytes']) is int and 0<item['bytes']<=512*1024*1024,'Bounded reviewed HD media required')
-        require(path.stat().st_size==item['bytes'] and file_hash(path)==item['sha256'],'Final local media drift')
+        local_media(name,item)
     pins={'old':OLD,'new':NEW,'protected':{n:sha(b) for n,b in protected.items()},
           'helpers':{n:sha(b) for n,b in helpers.items()},'media':media,'qa':sha((LOCAL/'qa.json').read_bytes()),
-          'snapshot_policy':L.P.CACHE_PREDICATE}
+          'snapshot_policy':L.P.CACHE_PREDICATE,'retained_neighborhood_sources':MAP_PINS}
     return old,new,protected,helpers,media,sha(Q.P.encoded(pins))
 
 
 def state(r,protected):
     value=L.P.state(r,protected)
     value['sources'].pop(TARGET,None)
+    base=H.LIVE+'/wp-content/plugins/harmat22-map-redesign'
+    r.directory(base);r.directory(base+'/assets')
+    value['retained_neighborhood_sources']={name:sha(r.read(base+'/'+name)) for name in MAP_PINS}
+    require(value['retained_neighborhood_sources']==MAP_PINS,'Retained neighborhood repair changed')
     return value
 
 
@@ -105,6 +126,7 @@ def upload(r,name,entry):
 
 def remove_media(r,media):
     for name,item in media.items():
+        require(name in NAMES,'Never remove nonallowlisted media')
         path=MEDIA+'/'+name
         if not D.absent(r,path):media_check(r,path,item);r.sftp.remove(path)
 
@@ -116,7 +138,7 @@ def main_html(text):
 def proof(baselines,active,media):
     result={}
     for route,baseline in baselines.items():
-        body,mime=Q.get('https://harmat22.hu'+route)
+        body,mime=page(route)
         require('text/html' in mime,'Page unavailable')
         text=body.decode('utf-8');old=baseline.decode('utf-8')
         current_page,previous=D.Page(text),D.Page(old)
@@ -143,16 +165,18 @@ def proof(baselines,active,media):
         result[route]={'native_form_unchanged':True,'owned_delta_only':True,'canonical_unchanged':True}
     for route in ('/lakaskereso/','/property/a1-f-l1/','/elerhetosegeink/',
                   '/virtualis-lakasvalaszto/','/virtualis-lakasvalaszto-elso-utem/','/virtualis-lakasvalaszto-a1-epulet/'):
-        data,mime=Q.get('https://harmat22.hu'+route)
+        data,mime=page(route)
         require('text/html' in mime and not re.search(rb'Fatal error|Parse error|critical error',data,re.I),'Health route failed')
     if active:
         for name,item in media.items():
             with urllib.request.urlopen(urllib.request.Request(URL+name,method='HEAD'),timeout=30) as response:
-                require(response.status==200 and int(response.headers['Content-Length'])==item['bytes'],'Media HEAD failed')
+                require(response.status==200 and response.geturl()==URL+name
+                        and int(response.headers['Content-Length'])==item['bytes'],'Media HEAD failed')
                 require(('video/mp4' if name.endswith('.mp4') else 'image/jpeg') in response.headers.get('Content-Type',''),'Media MIME failed')
             if name.endswith('.mp4'):
                 with urllib.request.urlopen(urllib.request.Request(URL+name,headers={'Range':'bytes=0-0'}),timeout=30) as response:
-                    require(response.status==206 and response.headers.get('Content-Range')=='bytes 0-0/'+str(item['bytes'])
+                    require(response.status==206 and response.geturl()==URL+name
+                            and response.headers.get('Content-Range')=='bytes 0-0/'+str(item['bytes'])
                             and len(response.read(2))==1,'Bounded byte-range failed')
     result['health_routes']=8;result['submission']=False
     return result
@@ -172,7 +196,7 @@ def operate(parts,backup=None,reverse=False):
         if fresh:
             meta=Q.metadata(r,TARGET,old)
             require(all(D.absent(r,MEDIA+'/'+n) for n in NAMES),'Existing daily media retained; inspect duplicates')
-            baselines={route:Q.get('https://harmat22.hu'+route)[0] for route in ('/','/epitesi-naplo/')}
+            baselines={route:page(route)[0] for route in ('/','/epitesi-naplo/')}
             r.mkdir(backup);r.mkdir(backup+'/'+D.ASSET)
             r.write_new(backup+'/original-module.php',old);r.write_new(backup+'/candidate-module.php',new)
             r.lint(backup+'/original-module.php');r.lint(backup+'/candidate-module.php')

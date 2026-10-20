@@ -1,6 +1,11 @@
 # October19 And October20 New Construction Media
 
-## Current Status: Final Local Editions, Not Published
+## Current Status: Published On All Three Destinations
+
+- Follow-up: user explicitly accepted the current-batch company YouTube upload Terms/community guidelines. Both daily editions are now publicly published to company YouTube and Facebook and added to the website journal/latest homepage teaser, with independent website release verification and native public playback checks. The preparation checkpoints below are historical, NOT an upload queue. Do not repeat their pending steps or reupload either file.
+- Exact public URLs, backup, final aggregate, verification limits and recovery are in `2026-10-20-daily-construction-publication.md`. New final transport aggregate is `6b843670476a1336806af4c0b82eb74869a72910e9be8a1660f48dfe7672f11d`, replacing the earlier offline draft aggregate. Production registry is now1.0.1; the original looping hero and native quote/appointment remain unchanged.
+
+## Final Local Edition Checkpoint (Historical)
 
 - Follow-up user selects the same prior free Imre Hungarian narration/captions for website/YouTube, silent captioned Facebook editions, and confirms Google verification complete. Correct company Studio is now accessible. This supersedes the earlier pending-voice and personal-channel-only checkpoint below.
 - `2026-10-20-build-daily-construction.py` rendered final editions DIRECTLY from original HEVC clips/photos, not a second encode of the earlier silent masters. Full original video intervals plus four8-second uncropped/padded photos per day;1920x1080 H264/60fps/CRF16. Original lower-fps material repeats frames, not native60fps/lossless. Piper pinned model/config/card reused offline,17 individually timed sentences aligned to burned ASS/SRT;9caption cues October19/8October20. Original site audio excluded, no music or paid service.
