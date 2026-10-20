@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## Hero Assistant Entrance - Current
+
+- October20 user approves moving the SAME native assistant button below the two hero chooser links. Existing inline owner1.0.2 SHA12f6ea88ed68b548aae279496b57402ed5d96c123788d9f1b176e346edd701ca; hero-only static/light icon+text/16pxgap/44pxhit, no duplicate/label/chat service/input/history/form/media edits. Desktop copy64px/leftmargins, home1.0.18/pins/footer retained; all-apartments link stays in original heading. Native HAP suspension intact.
+- Backuphome-hero-assistant-563f5510955549b68f99f47aeef1e201 aggregate6fa806458eacd1d9648c9e7c2358ed48524742fb26d2954088dec70832fd6503 RELEASED/independentlyVERIFIED7routes/mainbyteexact/nativeformSEO/protectedstate/35offer+17spam; local44DOM/79PHP/6transport pass. Actual1280HU static114x44 atx48/16pxbelowactions,390ZH/320HU nooverflow, nativechatopenscloses/focusreturns/emptyinput285pxmobilepanel.320ZHquoteemptycontacts/requireduncheckedprivacy/original5sourcevalues openscloses/suspendslauncher withoutsend. Ignored screenshots outputs/2026-10-20-hero-assistant. Recovery2026-10-20-home-hero-assistant.md. No physicaldevice/maildelivery claim. Latest user also requests six-card automatic rotation with manual arrows; this is separate work, not yet released.
+
 ## Lifestyle Alignment And Roof Garden - Current
 
 - User approves equal lifestyle images; then requests replacing homepage model photo with roof garden. Separate backups/releases. Current home1.0.18 SHAdafbf493b166909ded9f52dd01b7015f2edffaa6aa6aa6f9e8dd3fa3af21bb70 retains1.0.17 equal >=621px columns/zerooffset/progressive sharedrows (mobile unchanged), plus exact model-figure swap to inspected officialgallery Harmat22_latvany-8-harmat-1280.webp1280x720/271163bytes. Existing HU/ZH rendering key, original selector destination/frame/lazyloading retained; no pinnedassets/scripts/contentdata/form/business edits.
