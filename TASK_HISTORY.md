@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-21 - Read-Only ChatGPT Discovery And Image Audit
+
+- User requests accurate search visibility/image use and correction plan; website/quote/appointment/ads notedited.18directthrottledGETs/boundedbrowser/searchsampling, no login/CRM/formsubmission/cachepurge. Robotsallow/indexfollow/labelUA200, actualsearchreadablehome; no realOpenAIIP/log/index proof. SearchtoolA4failure whilebrowser/direct200 noted, not fabricatedblockrootcause. Correct current398/124/2028Q2 retained.
+- AboutoldOG2018interior vsnewhero;gallery5legacyunknown-provenanceinteriors/26entries/genericalt/smallOG/partialtopnoticeocclusion; specificpropertyOGgenericroom vsactualfloorplan/newApartment.image. Existingpublicpark/rendering/date disclaimers partlycorrect, not allphotosjudgedwrong. FreshA4sales57.05vs60.10/A3-F-L343.74vs47.39, A1FL1alreadycorrect; unitpricedisplay/oldWebPagepricewording/stalesitemapdates; garden-giftliteral needsconfirmation. Readlocaloldformula/SEOowners only. Actualgallery2018image/propertyOGroom/samplepropertysummary screenshotsignored, twoowntabsclosed. Scheme: userconfirmedmediaregister andrepresentativeheadmetadata first, area/promo separate, realupdateindexsignal later; no deletingoriginalimages, no DB restoration. Full2026-10-21-chatgpt-discovery-content-audit.md. Historical145-page/124audit notrerun; stableproduction18d62cc unchanged, docs-only sync.
+
 ## 2026-10-20 - Publish October19/20 Construction Compilations
 
 - Current-batch YouTube Terms confirmed; each narrated/captioned file uploaded/published once on company @Harmat-22. Public19 Fcfs8qS3IbI /20 rcm_FcStEbQ, native copyright checks clear, actual1080p60/1920x1080 playback, Hungarian SRT plus burned subtitles, existing construction playlist, AI voice disclosed, no remix. Facebook silent captioned versions public19 reel1435738061840483 /20 reel1109391925416570, actual playback and public Page/date confirmed; boost/story/remix off, no paid action. Public links and exact final-file pins in dedicated record. No private-person branding.
