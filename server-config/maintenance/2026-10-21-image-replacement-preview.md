@@ -1,5 +1,9 @@
 # Image Replacement Comparison V1 - Local Review Only
 
+## Superseding User Decision
+
+The user subsequently cancelled all website image replacement and clarified that the task is paid ChatGPT advertising only. This preview is historical, NOT a deployment queue. No mapping here may be deployed based on later ad-creative approval. Production images, quote/appointment/PDF and apartment data remain unchanged. The separate local ad draft is documented in `2026-10-21-chatgpt-ad-draft/README.md`.
+
 ## Scope
 
 - User requests a before/after image comparison using previously approved project material, clear rendering/site-photo labels, then backup/deploy only AFTER approval. No production implementation or authorization to change quote/appointment data is inferred.
