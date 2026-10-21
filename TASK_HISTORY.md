@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-21 - Local Before/After Image Preview V1
+
+- Userrequestsprojectconfirmedmedia/effect-vs-real-labelledcomparison, confirmthenbackupdeploy; explains salesareamissingbalcony. Recorded explanation, not coefficient/area/quotechangeauthorization. Built6comparisoncases +3realphoto-captionexamples, HU/ZH; oldgroupclearly1of5representative/allnames/unknownorigin, nofilesdeleted. Existinglocalapprovedprojectassets copiedbyteexact;8boundedpublicimageGETs foroldcomparison/threeexactfloorplans, nocrop/redraw/PDFchange. Allpreviewmedia ignored; source-only manifest/builder/tests/notes synced.
+-13offlinechecks+JSsyntaxpass, actual1280desktop/390and320mobilelayout/all15mainimages/contain/nooverflow,390A4dialog374x593fits/full765x1009, A3enlarge902x460 exactfile, openclose/focus. Initialresizecaptureartifact excluded; viewportrestored. Localonlypreviewhttp://127.0.0.1:8789/ andignoredHTML/screenshots; hiddenloopbackserverPID22156, no hostingupload/productionedits/cachepurge/CRM/data/submission/ads/backup/deploy. Waitinguserapprovalbeforelivebackup/candidate, productionstable18d62cc retained. Detailed2026-10-21-image-replacement-preview.md. Do not inferphysicalphone/licensing/automaticallimagesconfirmed.
+
 ## 2026-10-21 - Read-Only ChatGPT Discovery And Image Audit
 
 - User requests accurate search visibility/image use and correction plan; website/quote/appointment/ads notedited.18directthrottledGETs/boundedbrowser/searchsampling, no login/CRM/formsubmission/cachepurge. Robotsallow/indexfollow/labelUA200, actualsearchreadablehome; no realOpenAIIP/log/index proof. SearchtoolA4failure whilebrowser/direct200 noted, not fabricatedblockrootcause. Correct current398/124/2028Q2 retained.

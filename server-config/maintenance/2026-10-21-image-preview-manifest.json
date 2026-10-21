@@ -1,0 +1,42 @@
+{
+  "version": "preview-v1",
+  "status": "LOCAL_REVIEW_ONLY_NOT_APPROVED_FOR_DEPLOYMENT",
+  "area_scope": "User confirms sales area includes balcony. No area edits; no coefficient inferred.",
+  "cases": [
+    {
+      "id": "about", "title": "关于我们 · 搜索与分享封面", "page": "/magunkrol/",
+      "before": {"url": "https://harmat22.hu/wp-content/uploads/2018/12/eladolakas_3d6.jpg", "file": "before-about.jpg", "type": "旧室内图 · 项目归属待核实", "note": "当前 OG 与 WebPage 图片仍使用这张旧室内图，与页面庭院首图不一致。"},
+      "after": {"local": "wp-mu-plugins/harmat-about-family/harmat-courtyard.jpg", "url": "https://harmat22.hu/wp-content/mu-plugins/harmat-about-family/harmat-courtyard.jpg", "file": "project-courtyard.jpg", "type": "项目效果图", "hu": "Harmat Lakópark – tervezett belső udvar. Látványterv, nem a megvalósult állapot fényképe.", "zh": "Harmat Lakópark 规划庭院效果图，并非建成实景。", "alt_hu": "A Harmat Lakópark tervezett belső udvara és lakóépületei.", "note": "使用已批准并已在关于页展示的项目庭院图，同步搜索及分享入口。"}
+    },
+    {
+      "id": "a1", "title": "A1-F-L1 · 户型搜索与分享封面", "page": "/property/a1-f-l1/",
+      "before": {"url": "https://harmat22.hu/wp-content/uploads/2026/01/微信图片_20251112131011_117_192.jpg", "file": "before-generic-room.jpg", "type": "通用室内示意 · 非专属户型图", "note": "该通用客餐厅图还被其他房号使用，不应代替本套户型图。"},
+      "after": {"url": "https://harmat22.hu/wp-content/uploads/2026/05/A1-F-L1-cn-floorplan-display.jpg", "file": "a1-f-l1-floorplan.jpg", "type": "对应房号户型图", "hu": "A1-F-L1 – a honlapon jelenleg közzétett alaprajz. Nem helyszíni fénykép.", "zh": "A1-F-L1 官网当前公开户型图，并非实景照片。", "alt_hu": "A Harmat Lakópark A1-F-L1 lakásának alaprajza.", "note": "沿用官网现有对应房号的户型图，不改图纸内容、朝向、面积或技术 PDF。"}
+    },
+    {
+      "id": "a4", "title": "A4-F-L1 · 户型搜索与分享封面", "page": "/property/a4-f-l1/",
+      "before": {"url": "https://harmat22.hu/wp-content/uploads/2026/01/微信图片_20251112131011_117_192.jpg", "file": "before-generic-room.jpg", "type": "通用室内示意 · 与 A1 共用", "note": "当前分享封面与 A1-F-L1 共用同一张室内图，无法区分房号。"},
+      "after": {"url": "https://harmat22.hu/wp-content/uploads/2026/05/A4-F-L1-cn-floorplan-display.jpg", "file": "a4-f-l1-floorplan.jpg", "type": "对应房号户型图", "hu": "A4-F-L1 – a honlapon jelenleg közzétett alaprajz. Nem helyszíni fénykép.", "zh": "A4-F-L1 官网当前公开户型图，并非实景照片。", "alt_hu": "A Harmat Lakópark A4-F-L1 lakásának alaprajza.", "note": "使用现有 A4-F-L1 图纸。保留白边和完整标注，预览不重绘或裁剪。"}
+    },
+    {
+      "id": "a3", "title": "A3-F-L3 · 户型搜索与分享封面", "page": "/property/a3-f-l3/",
+      "before": {"url": "https://harmat22.hu/wp-content/uploads/2026/02/Harmat22_latvany-14.jpg", "file": "before-a3.jpg", "type": "项目通用效果图", "note": "当前图片表达项目氛围，不能明确对应 A3-F-L3 的具体布局。"},
+      "after": {"url": "https://harmat22.hu/wp-content/uploads/2026/05/A3-F-L3-cn-floorplan-display.jpg", "file": "a3-f-l3-floorplan.jpg", "type": "对应房号户型图", "hu": "A3-F-L3 – a honlapon jelenleg közzétett alaprajz. Nem helyszíni fénykép.", "zh": "A3-F-L3 官网当前公开户型图，并非实景照片。", "alt_hu": "A Harmat Lakópark A3-F-L3 lakásának alaprajza.", "note": "将图文关联到同一房号；室内面积与含阳台的销售面积不在本轮修改。"}
+    },
+    {
+      "id": "interior", "title": "图库 · 未核实旧室内素材", "page": "/galeria/",
+      "before": {"url": "https://harmat22.hu/wp-content/uploads/2018/12/eladolakas_3d10.jpg", "file": "before-interior.jpg", "type": "旧室内素材 · 代表图 1 / 5", "note": "建议暂停展示 eladolakas_3d10、3d8、3d6、3d2、3d1；归属未核实，不能仅凭路径认定是假图。原文件不删除。"},
+      "after": {"local": "wp-mu-plugins/harmat-about-family/harmat-living-room.jpg", "url": "https://harmat22.hu/wp-content/mu-plugins/harmat-about-family/harmat-living-room.jpg", "file": "project-living-room.jpg", "type": "已采用的项目室内效果图", "hu": "Harmat Lakópark – illusztratív lakásbelső. A berendezés nem átadási műszaki tartalom; a kép nem egy konkrét lakás fényképe.", "zh": "Harmat Lakópark 室内设计效果示意。家具布置不代表交付标准，也不代表某一套公寓的实景。", "alt_hu": "A Harmat Lakópark illusztratív nappali-látványterve teraszkapcsolattal.", "note": "保留当前已在官网采用的室内方案；先去重，再补清晰图注，不用同一张图机械替换五次。"}
+    },
+    {
+      "id": "gallery", "title": "图库 · 总览分享封面", "page": "/galeria/",
+      "before": {"url": "https://harmat22.hu/wp-content/uploads/2026/02/Harmat22_latvany-19-300x200.jpg", "file": "before-gallery-cover.jpg", "type": "现有分享图 · 300 × 200", "note": "现有缩略图不适合作为清晰的项目总览分享封面。"},
+      "after": {"local": "wp-mu-plugins/harmat-project-family/project-aerial.jpg", "url": "https://harmat22.hu/wp-content/mu-plugins/harmat-project-family/project-aerial.jpg", "file": "project-aerial.jpg", "type": "项目总览效果图", "hu": "Harmat Lakópark – a tervezett lakópark madártávlati látványterve. Nem légifotó az elkészült épületekről.", "zh": "Harmat Lakópark 规划项目鸟瞰效果图，并非已建成小区的航拍实景。", "alt_hu": "A Harmat Lakópark tervezett épületei és zöld udvarai madártávlati látványterven.", "note": "使用已批准的项目页总览原图，不把低清缩略图直接放大。"}
+    }
+  ],
+  "references": [
+    {"id": "construction", "title": "施工现场", "local": "outputs/2026-10-20-site-media/final-v1/2026-10-20-compilation-hu-subtitled.jpg", "file": "construction-2026-10-20.jpg", "type": "施工实景 · 2026-10-20", "hu": "Helyszíni felvétel – 2026. október 20. A felvétel az akkori építési állapotot mutatja.", "zh": "2026年10月20日现场记录，反映拍摄当日施工状态，不是竣工实景。", "url": "https://harmat22.hu/wp-content/uploads/2026/10/construction-updates/2026-10-20-compilation-hu-subtitled.jpg"},
+    {"id": "showroom", "title": "销售展厅", "local": "wp-mu-plugins/harmat-contact-family/showroom-lounge.jpg", "file": "showroom-lounge.jpg", "type": "展厅实景 · 非交付样板房", "hu": "Helyszíni felvétel – a Harmat Lakópark értékesítési irodája. Nem lakásbelső vagy átadási minta.", "zh": "Harmat Lakópark 销售展厅实景，不是公寓内部或交付样板。", "url": "https://harmat22.hu/wp-content/mu-plugins/harmat-contact-family/showroom-lounge.jpg"},
+    {"id": "park", "title": "周边公共公园", "local": "outputs/2026-10-18-home-family/assets/park.jpg", "file": "nearby-public-park.jpg", "type": "周边实景 · 公共配套", "hu": "Helyszíni felvétel – közeli nyilvános park. Nem a lakópark belső kertje; a felvétel dátuma külön ellenőrzendő.", "zh": "附近公共公园实景，不是小区内部花园。拍摄日期另行核对，不标为最新，也不据此宣称公司投资翻修。", "url": ""}
+  ]
+}

@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October21 Image Replacement Preview - Awaiting Approval
+
+- User approves LOCAL before/after preview using existing confirmed project assets, effect/site categories clear, backup/liveonlyafterconfirmation; quote/booking untouched. Clarifies sales-area discrepancy is missing balcony inclusion. Do not infer balconycoefficient or change any area/price/quote/appointment data. Sixcomparisoncases aboutcover/threefloorplans/interiorgroup/gallerycover +threeexistingrealphoto examples. Old5interiors represented1/5/listed asunknown, no fake/ownership claim or deletion. Proposed HU/ZH renderings/non-delivery-room/site-date/showroom/publicpark labels; original floorplans retained uncropped/unmodified.
+- Local preview outputs/2026-10-21-image-preview/v1/index.html and http://127.0.0.1:8789/; no forms/tracking/backend, localassets/CSP/noindex. Builder/manifest/13offline tests and JSsyntax pass; actual1280/390/320 loaded15mainimages/nooverflow;390A4 enlargedoriginalfits/close; A3 exactfile/caption. Viewportreset; ignored desktop/mobile screenshots. ServerloopbackhiddenPID22156 thissession, no publichostingupload. V1notapproved/released, productionstable18d62cc unchanged. Details2026-10-21-image-replacement-preview.md. Next awaitselectedimages/captions approval BEFORE freshprivatebackup/stageddeployment; no area or originalPDF change inferred.
+
 ## October21 ChatGPT And Image Audit - Plan Only
 
 - User requests read-only crawl/content/image consistency audit and correction plan, no quote/appointment changes.18 throttled publicGETs (11HTML+robots/index/publicfeed,2UA-label probes,2childXML), bounded browser/search-tool sampling; no livewrite/cachepurge/login/customer/submission/ads changes. Robots publicallowall/indexfollow/UA-label200 and actual search-readable homepage; not proof of real OpenAIIP access/logs/indexing or guaranteed recommendation. Search tool cannot fetch A4 detail, although directGET/browser200; source unknown, no security weakening proposed.
