@@ -1,4 +1,5 @@
 """Build an isolated, public-content-only homepage copy review. No live writes."""
+import argparse
 from copy import deepcopy
 from hashlib import sha256
 from html import escape
@@ -7,7 +8,7 @@ from pathlib import Path
 import re
 import shutil
 
-from lxml import html
+from lxml import etree, html
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
@@ -45,6 +46,45 @@ COPY = {
     'panoramaLocationTitle': ('A Harmat utca környéke', 'Harmat utca 周边'),
     'panoramaLocationCopy': ('A környék részletes bemutatója a Környékünk oldalon található.', '周边配套的详细介绍可在“周边环境”页查看。'),
 }
+
+PARK = {
+    'source': 'https://commons.wikimedia.org/wiki/File:%C3%93hegy_park_k%C3%B6zponti_r%C3%A9sze.jpg',
+    'image': 'https://upload.wikimedia.org/wikipedia/commons/5/5a/%C3%93hegy_park_k%C3%B6zponti_r%C3%A9sze.jpg',
+    'author': 'Czimmy',
+    'license': 'https://creativecommons.org/licenses/by-sa/3.0/',
+    'date': '2016-04-06',
+    'width': 3104,
+    'height': 1746,
+    'sha256': '849e9d4f33b58b3c60a8fdaa14ed06cd64e2fead982daff5b1c0eb6dcc0296f6',
+    'local': 'assets/ohegy-park-central-2016-original.jpg',
+    'alt': ('Az Óhegy park központi részének széles látképe, 2016. április 6.', 'Óhegy 公园中央区域宽景实拍，2016年4月6日'),
+    'caption': ('Óhegy park · archív fotó, 2016.04.06. · közpark, nem a lakópark belső kertje', 'Óhegy 公园 · 历史实拍，2016年4月6日 · 周边公共公园，非小区内部花园'),
+}
+
+
+def replace_park(candidate):
+    source = OUT.parent / 'source-images/ohegy-park-central-2016-original.jpg'
+    if not source.is_file() or digest(source) != PARK['sha256']:
+        raise ValueError('Ohegy original image missing or changed')
+    row = cls(candidate, 'hhf-park-row')[0]
+    row.set('id', 'hhf-ohegy-preview')
+    image = row.xpath('.//img')[0]
+    image.set('src', PARK['image'])
+    image.set('width', str(PARK['width']))
+    image.set('height', str(PARK['height']))
+    image.set('alt', PARK['alt'][0])
+    image.set('data-preview-ohegy', '')
+    caption = row.xpath('.//figcaption')[0]
+    caption.text = PARK['caption'][0]
+    credit = html.Element('span', {'class': 'preview-photo-credit'})
+    author = etree.SubElement(credit, 'a', href=PARK['source'])
+    author.text = 'Czimmy / Wikimedia Commons'
+    author.tail = ' · '
+    license_link = etree.SubElement(credit, 'a', href=PARK['license'])
+    license_link.text = 'CC BY-SA 3.0'
+    credit.tail = None
+    row.xpath('.//figure')[0].append(credit)
+    shutil.copyfile(source, OUT / PARK['local'])
 
 
 def digest(path):
@@ -118,7 +158,7 @@ def clean(main):
         raise ValueError('Non-public or executable content in snapshot')
 
 
-def build():
+def build(ohegy=False):
     (OUT / 'assets').mkdir(parents=True, exist_ok=True)
     snapshot = json.loads((OUT / 'public-snapshot.json').read_text(encoding='utf-8'))
     baseline = html.fromstring(snapshot['main'])
@@ -138,6 +178,12 @@ def build():
     cls(candidate, 'hhf-showroom-copy')[0].append(about_link)
     team.getparent().remove(team)
     mapping, proof = assets()
+    copy_values = dict(COPY)
+    if ohegy:
+        replace_park(candidate)
+        mapping[PARK['image']] = PARK['local']
+        proof.append({'url': PARK['image'], 'local': PARK['local'], 'sha256': PARK['sha256'], 'bytes': (OUT / PARK['local']).stat().st_size})
+        copy_values.update({'parkAlt': PARK['alt'], 'parkCaption': PARK['caption']})
     media = {
         'https://harmat22.hu/wp-content/uploads/harmat-video/harmat-home-1080p-v2.mp4': 'media/hero.mp4',
         'https://harmat22.hu/wp-content/plugins/harmat22-map-redesign/assets/harmat-3d/swsp_xmsp.mp4': 'media/panorama.mp4',
@@ -159,7 +205,7 @@ def build():
                 element.set('rel', 'noopener noreferrer')
         runtime = (REPO / 'wp-mu-plugins/harmat-home-family/home-family-loop.js').read_text(encoding='utf-8')
         if name == 'after':
-            for key, (_, zh) in COPY.items():
+            for key, (_, zh) in copy_values.items():
                 pattern = re.compile(r'^(\s*' + re.escape(key) + r': )[^\n]+$', re.M)
                 runtime, count = pattern.subn(lambda match: match[1] + json.dumps(zh, ensure_ascii=False) + ',', runtime, count=1)
                 if count != 1:
@@ -167,7 +213,7 @@ def build():
         (OUT / f'runtime-{name}.js').write_text(runtime, encoding='utf-8')
         main_html = html.tostring(main, encoding='unicode')
         (OUT / f'{name}-main.html').write_text(main_html, encoding='utf-8')
-        (OUT / ('index.html' if name == 'after' else 'before.html')).write_text(shell(main_html, name), encoding='utf-8')
+        (OUT / ('index.html' if name == 'after' else 'before.html')).write_text(shell(main_html, name, ohegy and name == 'after'), encoding='utf-8')
     styles = '\n'.join(item['text'] for item in snapshot['styles'])
     (OUT / 'live-styles.css').write_text(styles, encoding='utf-8')
     shutil.copyfile(REPO / 'wp-mu-plugins/harmat-home-family/home-family.css', OUT / 'home-family.css')
@@ -182,14 +228,18 @@ def build():
             end = text.index('\n', start)
             text = text[:start] + "          if(url !== 'media/construction.mp4')return;" + text[end:]
             (OUT / 'construction.js').write_text(text, encoding='utf-8')
-    (OUT / 'proof.json').write_text(json.dumps({'captured': snapshot['captured'], 'images': proof, 'changes': changes}, ensure_ascii=False, indent=2), encoding='utf-8')
+    (OUT / 'proof.json').write_text(json.dumps({'captured': snapshot['captured'], 'images': proof, 'changes': changes, 'park_replacement': PARK if ohegy else None}, ensure_ascii=False, indent=2), encoding='utf-8')
     rows = ''.join('<tr><td>' + escape(c['key']) + '</td><td>' + escape(c['before']) + '</td><td>' + escape(c['after']) + '</td><td>' + escape(c['zh']) + '</td></tr>' for c in changes)
     (OUT / 'changes.html').write_text('<!doctype html><html lang="zh-Hans"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>文案对照</title><link rel="stylesheet" href="preview.css"><body class="review-document"><h1>首页文案对照</h1><p>只做本地预览，未上线。图片、视频、房源数据、报价及预约不改；独立团队文字区合并至展示中心。</p><p><a href="index.html">返回新版预览</a></p><div class="comparison-scroll"><table><thead><tr><th>位置</th><th>原匈牙利语</th><th>新版匈牙利语</th><th>对应中文</th></tr></thead><tbody>' + rows + '</tbody></table></div></body></html>', encoding='utf-8')
-    print(f'Built {OUT}: {len(changes)} bilingual copy edits; {len(proof)} unchanged image resources; no production files edited.')
+    if ohegy:
+        review = OUT / 'changes.html'
+        text = review.read_text(encoding='utf-8').replace('图片、视频、房源数据、报价及预约不改', '仅将公园区图片换成注明年份和来源的 Óhegy 实拍，其他图片、视频、房源数据、报价及预约不改')
+        review.write_text(text, encoding='utf-8')
+    print(f'Built {OUT}: {len(changes)} bilingual copy edits; Ohegy image={ohegy}; no production files edited.')
 
 
-def shell(main, version):
-    return '''<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+def shell(main, version, ohegy=False):
+    page = '''<!doctype html><html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; media-src 'self' blob:; connect-src 'self'; form-action 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'">
 <title>Harmat Lakópark · 首页文案离线预览</title><link rel="stylesheet" href="assets/pannellum.css"><link rel="stylesheet" href="home-family.css"><link rel="stylesheet" href="live-styles.css"><link rel="stylesheet" href="preview.css">
 <script src="assets/pannellum.js" defer></script><script src="assets/lucide.min.js" defer></script><script src="runtime-''' + version + '''.js" defer></script><script src="fullscreen.js" defer></script><script src="construction.js" defer></script><script src="preview.js" defer></script></head>
@@ -197,7 +247,12 @@ def shell(main, version):
 <header class="preview-header"><div class="preview-header-inner"><details class="preview-menu"><summary title="菜单" aria-label="菜单"><i data-lucide="menu" aria-hidden="true"></i></summary><nav aria-label="预览导航"><a href="#hhf-lakasok" data-review-hu="Lakások" data-review-zh="房源">Lakások</a><a href="#hhf-epitesi-naplo" data-review-hu="Építési napló" data-review-zh="施工日志">Építési napló</a><a href="#hhf-mindennapok" data-review-hu="Otthon és környéke" data-review-zh="家与周边">Otthon és környéke</a><a href="#hhf-panorama" data-review-hu="360° panoráma" data-review-zh="360°全景">360° panoráma</a><a href="#hhf-kapcsolat" data-review-hu="Kapcsolat" data-review-zh="联系我们">Kapcsolat</a></nav></details>
 <div class="preview-language" role="group" aria-label="语言"><button type="button" data-language="hu" aria-pressed="true">Magyar</button><button type="button" data-language="zh" aria-pressed="false">中文</button></div><a class="preview-brand" href="#hhf-kezdolap"><img src="assets/harmat-logo.png" alt="Harmat Lakópark" width="60" height="60"></a><a class="preview-contact" href="https://harmat22.hu/elerhetosegeink/" target="_blank" rel="noopener noreferrer" data-review-hu="Kapcsolat / időpont" data-review-zh="联系 / 预约">Kapcsolat / időpont</a></div></header>
 <main>''' + main + '''</main><footer class="review-note"><p>本地文案预览：导航为预览用外壳，不替换正式菜单或页脚。六套房源为公开数据快照，预览不连接实时轮换、客服、报价或预约后台；联系与详情链接仍指向官网。所有图片和视频沿用原素材，未压缩或重绘。</p><a href="changes.html">查看全部文案对照</a></footer></body></html>'''
+    if ohegy:
+        page = page.replace('所有图片和视频沿用原素材，未压缩或重绘。', '仅公园区换成注明来源及年份的 Óhegy 历史实拍，原图未修改；其他图片和视频不变。')
+    return page
 
 
 if __name__ == '__main__':
-    build()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ohegy-park', action='store_true')
+    build(ohegy=parser.parse_args().ohegy_park)

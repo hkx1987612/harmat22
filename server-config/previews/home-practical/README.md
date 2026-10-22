@@ -3,13 +3,42 @@
 October 22, 2026. LOCAL PREVIEW ONLY. User confirmation is required before any
 production implementation. This is not a replacement image plan or an ad campaign.
 
+## Ohegy Photo Follow-up
+
+User subsequently explicitly requests one Ohegy park image sourced for this LOCAL
+preview. This supersedes image preservation only for the park-row figure. All
+other photographs, card data, main copy, videos, styles outside that figure and
+quote/booking workflows remain unchanged. No production edit or deployment.
+
+Current review rebuild uses `python server-config/previews/home-practical/build.py
+--ohegy-park` (one command on one line). Without the flag, the builder retains the
+historical copy-only original-park mode.14 invariant tests pass in Ohegy mode.
+
+Selected original: [Ohegy park central area](https://commons.wikimedia.org/wiki/File:%C3%93hegy_park_k%C3%B6zponti_r%C3%A9sze.jpg),
+Czimmy, April6,2016; CC BY-SA3.0 with linked author/source and license displayed.
+3104x1746 /3367982bytes, SHA256
+`849e9d4f33b58b3c60a8fdaa14ed06cd64e2fead982daff5b1c0eb6dcc0296f6`;
+source SHA1 independently matches Commons metadata. Download remains ignored at
+`outputs/2026-10-22-home-practical/source-images/`. Original bytes retained, no
+crop/AI editing/resampling. Figure-only contain/native-aspect override prevents
+existing tablet4:3 cropping. HU/ZH alt/caption explicitly mark2016 archival photo
+of a public park, not the completed development's garden. This is a ground-level
+wide view of the central park, NOT an aerial whole-park/360 panorama or a claim of
+current2026 appearance. Original comparison page still retains old park picture.
+
+Actual1280desktop/390/320 mobile: loaded3104x1746, contain/full16:9 frame, no
+horizontal overflow or overlapping figure/text, HU/ZH credit/caption switch and
+console clean at tested state. Local server restartedPID31344 on127.0.0.1:8793.
+Direct review anchor `/#hhf-ohegy-preview`. Source files/tests/notes only in Git;
+photo and browser screenshot remain local. No back-end or customer submissions.
+
 ## Proposed Changes
 
 - Replace 26 HU/ZH copy entries: descriptive section titles, shorter introductions,
   concrete room/grounds/neighborhood/showroom/contact descriptions.
 - Consolidate the standalone text-only team band into the existing showroom row,
   retaining the original about-page link. All image-bearing sections stay.
-- Retain warmth through the existing imagery, typography and restrained palette;
+- Retain warmth through existing imagery (except approved Ohegy follow-up above), typography and restrained palette;
   no generated photos, new palette, financial incentives or sales claims.
 - Public facts (including area, price, dates, contacts), six floorplans, current
   October20 construction record, original media/captions and action destinations

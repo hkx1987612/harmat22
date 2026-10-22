@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 from lxml import html
-from build import COPY, OUT, cls, digest
+from build import COPY, OUT, PARK, cls, digest
 
 
 class PreviewTests(unittest.TestCase):
@@ -15,9 +15,16 @@ class PreviewTests(unittest.TestCase):
         cls_.page = html.parse(str(OUT / 'index.html'))
         cls_.proof = json.loads((OUT / 'proof.json').read_text(encoding='utf-8'))
 
-    def test_all_images_unchanged_in_order(self):
+    def test_all_other_images_unchanged_in_order(self):
         fields = ('src', 'data-original-src', 'width', 'height', 'alt', 'loading')
-        self.assertEqual([[e.get(k) for k in fields] for e in self.before.xpath('.//img')], [[e.get(k) for k in fields] for e in self.after.xpath('.//img')])
+        before = self.before.xpath('.//img')
+        after = self.after.xpath('.//img')
+        self.assertEqual(len(before), len(after))
+        for original, current in zip(before, after):
+            if self.proof.get('park_replacement') and original.get('data-i18n-alt') == 'parkAlt':
+                self.assertEqual(current.get('data-original-src'), PARK['image'])
+                continue
+            self.assertEqual([original.get(k) for k in fields], [current.get(k) for k in fields])
 
     def test_original_bytes(self):
         for image in self.proof['images']:
@@ -39,7 +46,8 @@ class PreviewTests(unittest.TestCase):
         self.assertEqual(self.before.get_element_by_id('hhf-panorama-viewer').attrib, self.after.get_element_by_id('hhf-panorama-viewer').attrib)
 
     def test_actions_and_contacts_preserved(self):
-        self.assertEqual(sorted(self.before.xpath('.//a/@href')), sorted(self.after.xpath('.//a/@href')))
+        after_links = self.after.xpath('.//a[not(ancestor::*[@class="preview-photo-credit"])]/@href')
+        self.assertEqual(sorted(self.before.xpath('.//a/@href')), sorted(after_links))
         self.assertIn('mailto:ertekesites@harmat22.hu', self.after.xpath('.//a/@href'))
         self.assertIn('tel:+36300733375', self.after.xpath('.//a/@href'))
 
@@ -72,6 +80,27 @@ class PreviewTests(unittest.TestCase):
     def test_no_replacement_characters(self):
         for name in ('index.html', 'runtime-after.js', 'changes.html'):
             self.assertNotIn('\ufffd', (OUT / name).read_text(encoding='utf-8'))
+
+    def test_park_attribution_and_date(self):
+        if not self.proof.get('park_replacement'):
+            self.skipTest('Original image mode')
+        figure = cls(self.after, 'hhf-park-row')[0].xpath('.//figure')[0]
+        self.assertIn('2016.04.06.', figure.text_content())
+        self.assertIn(PARK['source'], figure.xpath('.//a/@href'))
+        self.assertIn(PARK['license'], figure.xpath('.//a/@href'))
+        runtime = (OUT / 'runtime-after.js').read_text(encoding='utf-8')
+        self.assertIn(PARK['caption'][1], runtime)
+        self.assertIn(PARK['alt'][1], runtime)
+
+    def test_park_is_full_original_not_generated(self):
+        if not self.proof.get('park_replacement'):
+            self.skipTest('Original image mode')
+        from PIL import Image
+        image = self.after.xpath('.//img[@data-preview-ohegy]')
+        self.assertEqual(len(image), 1)
+        with Image.open(OUT / image[0].get('src')) as original:
+            self.assertEqual(original.size, (3104, 1746))
+        self.assertEqual(digest(OUT / image[0].get('src')), PARK['sha256'])
 
 
 if __name__ == '__main__':
