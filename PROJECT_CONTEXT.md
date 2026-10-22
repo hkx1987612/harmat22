@@ -2,7 +2,13 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
-## October22 Homepage Copy Review - Local Only
+## October23 Homepage Practical Copy - Released
+
+- User approves reviewed homepage/2024park photo, backup then deployment, desktop/mobile QA, conditional shutdown afterward. Home controller1.0.20 SHAb116dc413a0aea1c367c955b98669987368ee05b0c74b46cf2199bb013ba86df selects body-practical.php/home-family-practical.js/manifest-practical.json.26HUZH copy edits and originalaboutlink/teamtext consolidation; only parkphoto replaced, other images/nativeheader/footer/forms/SEO/livecards/journal/media/workflows retained. Original4096x3072/8154459byte2024-11-09CC0 photo full4:3/contain/lazy/datecredit;8MB weak-network risk remains, not a compression claim.
+- Backuphome-practical-49db8ca8b2ad41f69e92a2a5a1ac9fea aggregate609d64168975bbec403e0e08cba6cbf8b021ed1312d84b31dc8a1279208ee185 RELEASED and independent strictVERIFIED,7routes/nativeformSEO/headerfooter/mainexact/protectedstate/35offer17spam/no dispatchmail. First genericbinaryPHP-lint attempt safely rolledback beforecontrolleractivation; corrected exactnewstatic transport tested.16offline/76controller/13retainedloop pass.
+- Actual1280HUZH/390/320 nooverflow, parkoriginalloaded/fullframe/datelabel; mobile6cardexpand/manual/auto2->3->4 stable593.83pxcards/3662.97pxgrid. Hero1920x1080ready4/playingloop84.24->6.66s withoutreload; scroll/languagecontinue.320HUZHnativeempty281x550quote/booking/dateMinOct23/originaltime/source/privacy openscloses,390contactappointment likewise/no send.320nonblankpanorama/project/gallery/rotation;390A1selectorimage/detailhealthy, consolecleanatcheckedstates. HU/defaultviewport restored. No physicaldevice/weaknetwork/CWV/mailcertification. Exactsource-onlyrecovery/pins in2026-10-23-home-practical-release.md; rawphoto/privatebackups/screenshotsignored. Sync sources before user-authorized nonforced60s shutdown.
+
+## October22 Homepage Copy Review - Historical Local Preview
 
 - Newest park choice supersedes2016 below: user says old photo is dated; selected verified Commons Random photos1989/CC0 daylight Ohegy park+Kobanya landmark,2024-11-09,4096x3072/8154459bytes. Original SHA256fc603a46552558b2acfdae68ab3bad57d569e7d19d11bb02b86afbc727c9c266/SHA1dae4ba94bd72bf418cc0f1252ded0fca0028f484 matches metadata.3 recent licensed candidates inspected,2025 visitor images lack reuse proof and are not used. `--ohegy-park` now selects2024, labelledactualdate/publicpark, not2026/current/aerial/360. Figure-only4:3/contain reserves lazy-load space; other images/copy/workflows/live unchanged.14localtests and actual1280/390/320 loaded/fullframe/HUZH/nooverflow/consoleclean checks pass; defaultviewport restored, screenshotignored. ServerrestartedPID25924. Original8MB stays local, future production needs separate responsive-performance handling after approval.
 

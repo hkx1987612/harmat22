@@ -2,7 +2,12 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
-## 2026-10-22 - Homepage Practical Copy Preview (Not Deployed)
+## 2026-10-23 - Approved Homepage Practical Release
+
+- Published reviewed26HUZHcopychanges/teamtextconsolidation and ONE2024-11-09OhegyCC0originalphoto; no otherimages/quotePDF/booking/businessdata/adchanges. Controller1.0.20/newimmutablebody/runtime/manifest; retains originalbehavior/otherpins. Backuphome-practical-49db8ca8b2ad41f69e92a2a5a1ac9fea aggregate609d64168975bbec403e0e08cba6cbf8b021ed1312d84b31dc8a1279208ee185 RELEASED/independentstrictVERIFIED7routes/exactnativeformSEO/headerfooter/dynamicmain/protectedstate/35offer17spam. Initialbinary-lint helperfailure safelyrolledback beforeactivation, exactstaticadapterfixed/tested; no silentfaileddeploymentclaim.
+-16offline/76controller/13loop pass; actual1280HUZH/390/320 parkfullframe/datecredit/nooverflow,6cardexpand/manual/auto2->3->4 stable,1920x1080hero84.24->6.66loop/scrollcontinues.320emptyHUZH281x550nativequoteappointment/originaldate/time/source/privacy and390contactentry openclose/no send;3203Dnonblank/tabs/rotation,390A1image/detailhealthy. Consolecleancheckedstates; defaultviewport/HU restored.8MBoriginallazyphoto retains weaknetworkcost; no physicaldevice/FPS/CWV/inbox claim. Recovery/limitations2026-10-23-home-practical-release.md. Userconditionalshutdown only after source/notes sync and successfulchecks; no forcedunsavedappclosing.
+
+## 2026-10-22 - Homepage Practical Copy Preview (Historical, Deployed October23)
 
 - User finds2016 picture too old. Latest local choice now2024-11-09 Commons Ohegy park6 (Random photos1989,CC0),4096x3072; verifiedoriginalSHA1/EXIF/date/license, visually compared3 open2024images, daylightlandmark selected. Figure/date/credit/source/native4:3 update only; no other preview content/production/customerdata/workflow edits.14invariants pass; localserverPID25924. Old2016 file retained only as historical cache. Still not current2026/aerial/360 claim; raw8MB not a production optimization decision.
 
