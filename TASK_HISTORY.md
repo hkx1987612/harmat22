@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-22 - Homepage Practical Copy Preview (Not Deployed)
+
+- User approves offline-only homepage copy/hierarchy refinement while retaining images, warmth and quote/booking behavior. Created local before/after preview with26 HU/ZH copy edits and team-text consolidation into showroom. No production or business-data edits, no form submission, no image replacements and no ad/account actions.
+- Source/tests/readme: `server-config/previews/home-practical/`. Artifact: `outputs/2026-10-22-home-practical/v1/`; URL `http://127.0.0.1:8793/` with exact local original media aliases.12 offline tests plus JSsyntax/local HTTP range/isolation checks pass. Actual1280desktop/390/320 HU/ZH responsive checks, six-card expansion, hero loop/time advance and nonblank3D/project/gallery tabs. Review shell/static public card snapshot/customer service disconnected; not a full live-workflow test. No live backup required/performed; production18d62cc untouched. Wait for user review before backup/deployment.
+
 ## 2026-10-21 - Local ChatGPT Ad Creative Review V1
 
 - User cancels website image replacement, wants only ChatGPT ads, approves7days/HUF38,500 totalplanningtarget and later companyaccountterms; not publication. Platform409createdbutaccesspending, existingcompanyaccount requiresadminpermission. Userauthorizedsupportemailsent/verified, lastmailbox/UIchecknoreply/access. No duplicateaccount/payment/newpermission/campaignactivation. Correspondence/privateIDs not committed.

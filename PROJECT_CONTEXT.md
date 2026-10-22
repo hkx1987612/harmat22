@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October22 Homepage Copy Review - Local Only
+
+- User requests a less generic, more practical/warm homepage preview. No image replacement, quote/PDF/booking/data changes; final confirmation required before live implementation. Preview source `server-config/previews/home-practical/`, ignored artifact `outputs/2026-10-22-home-practical/v1/`, loopback `http://127.0.0.1:8793/` (local serverPID14396). Includes before/after and HU/ZH copy comparison.26 copy entries updated; standalone text-only team band consolidated into showroom with original about link. Image-bearing sections, six featured card facts, journal, media/captions/contact/action URLs retained.
+- Original image/video files reused locally without compression/generation.12 offline invariants pass; actual1280/390/320 HU/ZH layout/nooverflow, three-to-six-card mobile expansion, hero time advancement/loop and nonblank320Pannellum project/gallery tabs checked. No forms, chats, backend or live inventory connection in preview. Six cards deliberately static public snapshot; review header/footer are labelled shell, not production replacement. No live backup/deploy/customer submission or native quote/appointment certification this task. Production18d62cc unchanged; eventual deployment needs fresh backup and native protected-workflow checks. Screenshots/raw public snapshot/media stay ignored. No account/ad work this turn.
+
 ## October21 ChatGPT Ad Creative - Awaiting Review, Not Published
 
 - User wants PAID ChatGPT advertising, not website image replacement or an SEO correction deployment. Explicit website-image replacement cancellation supersedes the historical preview below. Preserve all production images, quote/booking/PDF/data/other ad budgets.7days/ONE totalmedia capHUF38,500 approved as a planning target; native preview and final budget still require confirmation BEFORE publication. Start/end unset; no renewal or unapproved taxes/fees.
