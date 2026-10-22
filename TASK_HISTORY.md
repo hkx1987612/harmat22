@@ -4,6 +4,8 @@ This file summarizes completed work, fixed issues, and known open items. It is n
 
 ## 2026-10-22 - Homepage Practical Copy Preview (Not Deployed)
 
+- User finds2016 picture too old. Latest local choice now2024-11-09 Commons Ohegy park6 (Random photos1989,CC0),4096x3072; verifiedoriginalSHA1/EXIF/date/license, visually compared3 open2024images, daylightlandmark selected. Figure/date/credit/source/native4:3 update only; no other preview content/production/customerdata/workflow edits.14invariants pass; localserverPID25924. Old2016 file retained only as historical cache. Still not current2026/aerial/360 claim; raw8MB not a production optimization decision.
+
 - Ohegy follow-up: user requests finding a high-res real park view and adding to LOCAL preview only. Chose Commons Czimmy central-park wide photograph3104x1746,2016-04-06, CC BY-SA3.0. Original source/metadata/hash/visual verified, no transform; HU/ZH historical/publicpark caption and linked author/license. One figure-only image/alt/caption/aspect update under explicit `--ohegy-park` mode; original comparison retained, other page data/media/workflows unchanged.14offline tests and actual1280/390/320 loaded/contain/nooverflow/multilingual-caption/credit checks pass. No live upload, production backup/deploy or form submission. Local review8793/#hhf-ohegy-preview, serverPID31344, screenshot ignored. Source/reference details in preview README.
 
 - User approves offline-only homepage copy/hierarchy refinement while retaining images, warmth and quote/booking behavior. Created local before/after preview with26 HU/ZH copy edits and team-text consolidation into showroom. No production or business-data edits, no form submission, no image replacements and no ad/account actions.

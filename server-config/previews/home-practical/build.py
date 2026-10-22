@@ -48,22 +48,23 @@ COPY = {
 }
 
 PARK = {
-    'source': 'https://commons.wikimedia.org/wiki/File:%C3%93hegy_park_k%C3%B6zponti_r%C3%A9sze.jpg',
-    'image': 'https://upload.wikimedia.org/wikipedia/commons/5/5a/%C3%93hegy_park_k%C3%B6zponti_r%C3%A9sze.jpg',
-    'author': 'Czimmy',
-    'license': 'https://creativecommons.org/licenses/by-sa/3.0/',
-    'date': '2016-04-06',
-    'width': 3104,
-    'height': 1746,
-    'sha256': '849e9d4f33b58b3c60a8fdaa14ed06cd64e2fead982daff5b1c0eb6dcc0296f6',
-    'local': 'assets/ohegy-park-central-2016-original.jpg',
-    'alt': ('Az Óhegy park központi részének széles látképe, 2016. április 6.', 'Óhegy 公园中央区域宽景实拍，2016年4月6日'),
-    'caption': ('Óhegy park · archív fotó, 2016.04.06. · közpark, nem a lakópark belső kertje', 'Óhegy 公园 · 历史实拍，2016年4月6日 · 周边公共公园，非小区内部花园'),
+    'source': 'https://commons.wikimedia.org/wiki/File:Budapest,_K%C5%91b%C3%A1nya,_%C3%93hegy_park,_6.jpg',
+    'image': 'https://upload.wikimedia.org/wikipedia/commons/1/18/Budapest%2C_K%C5%91b%C3%A1nya%2C_%C3%93hegy_park%2C_6.jpg',
+    'author': 'Random photos 1989',
+    'license': 'https://creativecommons.org/publicdomain/zero/1.0/',
+    'license_name': 'CC0 1.0',
+    'date': '2024-11-09',
+    'width': 4096,
+    'height': 3072,
+    'sha256': 'fc603a46552558b2acfdae68ab3bad57d569e7d19d11bb02b86afbc727c9c266',
+    'local': 'assets/ohegy-park-2024-11-09-original.jpg',
+    'alt': ('Óhegy park a Kőbánya felirattal, 2024. november 9.', 'Óhegy 公园与 Kőbánya 地标，2024年11月9日实拍'),
+    'caption': ('Óhegy park · fotó: 2024.11.09. · közpark, nem a lakópark belső kertje', 'Óhegy 公园 · 实拍于2024年11月9日 · 周边公共公园，非小区内部花园'),
 }
 
 
 def replace_park(candidate):
-    source = OUT.parent / 'source-images/ohegy-park-central-2016-original.jpg'
+    source = OUT.parent / 'source-images' / Path(PARK['local']).name
     if not source.is_file() or digest(source) != PARK['sha256']:
         raise ValueError('Ohegy original image missing or changed')
     row = cls(candidate, 'hhf-park-row')[0]
@@ -78,10 +79,10 @@ def replace_park(candidate):
     caption.text = PARK['caption'][0]
     credit = html.Element('span', {'class': 'preview-photo-credit'})
     author = etree.SubElement(credit, 'a', href=PARK['source'])
-    author.text = 'Czimmy / Wikimedia Commons'
+    author.text = PARK['author'] + ' / Wikimedia Commons'
     author.tail = ' · '
     license_link = etree.SubElement(credit, 'a', href=PARK['license'])
-    license_link.text = 'CC BY-SA 3.0'
+    license_link.text = PARK['license_name']
     credit.tail = None
     row.xpath('.//figure')[0].append(credit)
     shutil.copyfile(source, OUT / PARK['local'])
@@ -248,7 +249,7 @@ def shell(main, version, ohegy=False):
 <div class="preview-language" role="group" aria-label="语言"><button type="button" data-language="hu" aria-pressed="true">Magyar</button><button type="button" data-language="zh" aria-pressed="false">中文</button></div><a class="preview-brand" href="#hhf-kezdolap"><img src="assets/harmat-logo.png" alt="Harmat Lakópark" width="60" height="60"></a><a class="preview-contact" href="https://harmat22.hu/elerhetosegeink/" target="_blank" rel="noopener noreferrer" data-review-hu="Kapcsolat / időpont" data-review-zh="联系 / 预约">Kapcsolat / időpont</a></div></header>
 <main>''' + main + '''</main><footer class="review-note"><p>本地文案预览：导航为预览用外壳，不替换正式菜单或页脚。六套房源为公开数据快照，预览不连接实时轮换、客服、报价或预约后台；联系与详情链接仍指向官网。所有图片和视频沿用原素材，未压缩或重绘。</p><a href="changes.html">查看全部文案对照</a></footer></body></html>'''
     if ohegy:
-        page = page.replace('所有图片和视频沿用原素材，未压缩或重绘。', '仅公园区换成注明来源及年份的 Óhegy 历史实拍，原图未修改；其他图片和视频不变。')
+        page = page.replace('所有图片和视频沿用原素材，未压缩或重绘。', '仅公园区换成注明来源及日期的 Óhegy 实拍，原图未修改；其他图片和视频不变。')
     return page
 
 

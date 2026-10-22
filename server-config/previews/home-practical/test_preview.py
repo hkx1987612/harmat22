@@ -85,7 +85,7 @@ class PreviewTests(unittest.TestCase):
         if not self.proof.get('park_replacement'):
             self.skipTest('Original image mode')
         figure = cls(self.after, 'hhf-park-row')[0].xpath('.//figure')[0]
-        self.assertIn('2016.04.06.', figure.text_content())
+        self.assertIn(PARK['date'].replace('-', '.'), figure.text_content())
         self.assertIn(PARK['source'], figure.xpath('.//a/@href'))
         self.assertIn(PARK['license'], figure.xpath('.//a/@href'))
         runtime = (OUT / 'runtime-after.js').read_text(encoding='utf-8')
@@ -99,7 +99,7 @@ class PreviewTests(unittest.TestCase):
         image = self.after.xpath('.//img[@data-preview-ohegy]')
         self.assertEqual(len(image), 1)
         with Image.open(OUT / image[0].get('src')) as original:
-            self.assertEqual(original.size, (3104, 1746))
+            self.assertEqual(original.size, (PARK['width'], PARK['height']))
         self.assertEqual(digest(OUT / image[0].get('src')), PARK['sha256'])
 
 

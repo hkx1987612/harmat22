@@ -14,21 +14,33 @@ Current review rebuild uses `python server-config/previews/home-practical/build.
 --ohegy-park` (one command on one line). Without the flag, the builder retains the
 historical copy-only original-park mode.14 invariant tests pass in Ohegy mode.
 
-Selected original: [Ohegy park central area](https://commons.wikimedia.org/wiki/File:%C3%93hegy_park_k%C3%B6zponti_r%C3%A9sze.jpg),
-Czimmy, April6,2016; CC BY-SA3.0 with linked author/source and license displayed.
-3104x1746 /3367982bytes, SHA256
-`849e9d4f33b58b3c60a8fdaa14ed06cd64e2fead982daff5b1c0eb6dcc0296f6`;
-source SHA1 independently matches Commons metadata. Download remains ignored at
-`outputs/2026-10-22-home-practical/source-images/`. Original bytes retained, no
-crop/AI editing/resampling. Figure-only contain/native-aspect override prevents
-existing tablet4:3 cropping. HU/ZH alt/caption explicitly mark2016 archival photo
-of a public park, not the completed development's garden. This is a ground-level
-wide view of the central park, NOT an aerial whole-park/360 panorama or a claim of
-current2026 appearance. Original comparison page still retains old park picture.
+Current original (user found the previous2016 photo too old):
+[Ohegy park with Kobanya landmark](https://commons.wikimedia.org/wiki/File:Budapest,_K%C5%91b%C3%A1nya,_%C3%93hegy_park,_6.jpg),
+Random photos1989, November9,2024; CC0 1.0, linked author/source and dedication.
+4096x3072 /8154459bytes, SHA256
+`fc603a46552558b2acfdae68ab3bad57d569e7d19d11bb02b86afbc727c9c266`;
+SHA1 `dae4ba94bd72bf418cc0f1252ded0fca0028f484` independently matches Commons
+metadata. Three dated2024 open-license candidates visually inspected, daylight
+landmark view selected over dark sunset and colored-light views.2025 visitor
+photos found but no verified reuse permission; not copied into preview.
 
-Actual1280desktop/390/320 mobile: loaded3104x1746, contain/full16:9 frame, no
-horizontal overflow or overlapping figure/text, HU/ZH credit/caption switch and
-console clean at tested state. Local server restartedPID31344 on127.0.0.1:8793.
+Downloads remain ignored at `outputs/2026-10-22-home-practical/source-images/`.
+Original bytes retained, no crop/AI editing/resampling. Figure-only4:3/contain
+matches this original and reserves space before lazy loading. HU/ZH alt/caption
+explicitly mark2024-11-09 and public park, not the development's garden. This is
+NOT an aerial whole-park/360 panorama or a claim of current2026 appearance. Old
+2016 source file stays local as historical evidence, not selected. Original
+comparison page still retains original site's pet-park picture.
+
+Actual desktop/mobile picture, date, source and unchanged workflow checks are
+repeated for this replacement:1280x800 image425.97x319.47,390x844 image335x251.25,
+320x740 HU/ZH captions/nooverflow, original4096x3072/contain and browser console
+clean.14 offline invariants pass. Screenshots `proof/ohegy-2024-desktop.jpg` and
+`proof/ohegy-2024-mobile.jpg` remain ignored. Default viewport restored and review
+tab retained. Local server restarted
+PID25924 on127.0.0.1:8793. Original8.15MB is for review; any later authorized
+production release needs its own responsive image/performance plan, not a silent
+8MB homepage upload or unapproved compression.
 Direct review anchor `/#hhf-ohegy-preview`. Source files/tests/notes only in Git;
 photo and browser screenshot remain local. No back-end or customer submissions.
 

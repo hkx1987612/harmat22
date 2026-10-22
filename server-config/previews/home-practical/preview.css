@@ -18,7 +18,7 @@ body { margin: 0; color: #244537; background: #f7f8f7; font-family: Arial, Helve
 .review-note { margin: 0; padding: 24px max(24px, calc((100% - 1144px)/2)); background: #edf2ee; color: #506358; font-size: 13px; line-height: 1.8; }
 #harmat-home-family .hhf-showroom-copy > a + a { margin-left: 24px; }
 #harmat-home-family .harmat-local-ai-launch:disabled { opacity: 1; cursor: help; }
-#harmat-home-family img[data-preview-ohegy] { aspect-ratio: 3104 / 1746 !important; height: auto !important; object-fit: contain !important; }
+#harmat-home-family img[data-preview-ohegy] { aspect-ratio: 4 / 3 !important; height: auto !important; object-fit: contain !important; }
 #harmat-home-family .preview-photo-credit { display: block; margin-top: 6px; font-size: 11px; line-height: 1.6; color: #68726c; overflow-wrap: anywhere; }
 #harmat-home-family .preview-photo-credit a { text-underline-offset: 3px; }
 #harmat-home-family .hhf-hero-copy .harmat-local-ai-launch { display: inline-flex; gap: 8px; align-items: center; color: #fff; background: transparent; border: 0; font-size: 14px; padding: 0; min-height: 44px; margin-top: 16px; }
