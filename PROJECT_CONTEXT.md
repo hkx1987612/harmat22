@@ -2,7 +2,12 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
-## October23 Homepage Practical Copy - Released
+## October23 Showroom Exterior Follow-Up - Current
+
+- User deletes visible parkdate/note/Commonscredit, then supplies exact showroomexterior withHARMATsign. Currenthome1.0.21 SHA4189d36865d0c4bd54f8dcf414e1cae2e04ae6a68df1205b6917c67a964ab4e2 selectsbody-showroom.php/home-family-showroom.js/manifest-showroom.json. Onlytwofigureschange: parkimage/alt/publicparkcopy retained, captioncreditmarkupremoved; showroomoriginal1706x1280/237920bytes SHAac4ad2578c1b44af479f5a0bcf9c07bb49e6f5a0245e24a65fc9a0b8e60eb1dc byteexact/fullratio/contain/lazy, genericrealcaptionretained/Chinesealtcorrected. Otherimages/quotePDF/booking/data/ads/controlflow unchanged. No newshutdown scheduled duringfollow-up.
+- Backuphome-showroom-97365490e4b6467c8ec0ccf1c784ccb0 aggregate66d3c9c964a5790261118ea5288e0f0aa2b332a2fb78ed5e3d8ace33f8aaa830 RELEASED/independentstrictVERIFIED7routes/exacttwofiguremain/nativeformSEO/headerfooter/protectedstate/35offer17spam.10offline/76controller/JSsyntaxpass. ActualCSS1280HUZHloadedfullsign/nooverflow/parknotecount0 and validdesktopcroppedfullpagescreenshot;390x843/320x567 loadedimage/ratio/nooverflow/emptyHUZHquoteopenclose/originaldate/source/privacy/no submission. Chrome80%zoom/captureblanktilingtimeouts mean mobilevisualscreenshotnotcertified; screenshot errors not siteedits. Thirdpartyextensionandopaqueconsoleerrors observed, no cleanconsoleclaim. Defaultviewport/HUrestored. Recovery/pins/limits2026-10-23-home-showroom.md. Originalmedia/privatebackups/proofignored.
+
+## October23 Homepage Practical Copy - Released (Follow-Up Above)
 
 - User approves reviewed homepage/2024park photo, backup then deployment, desktop/mobile QA, conditional shutdown afterward. Home controller1.0.20 SHAb116dc413a0aea1c367c955b98669987368ee05b0c74b46cf2199bb013ba86df selects body-practical.php/home-family-practical.js/manifest-practical.json.26HUZH copy edits and originalaboutlink/teamtext consolidation; only parkphoto replaced, other images/nativeheader/footer/forms/SEO/livecards/journal/media/workflows retained. Original4096x3072/8154459byte2024-11-09CC0 photo full4:3/contain/lazy/datecredit;8MB weak-network risk remains, not a compression claim.
 - Backuphome-practical-49db8ca8b2ad41f69e92a2a5a1ac9fea aggregate609d64168975bbec403e0e08cba6cbf8b021ed1312d84b31dc8a1279208ee185 RELEASED and independent strictVERIFIED,7routes/nativeformSEO/headerfooter/mainexact/protectedstate/35offer17spam/no dispatchmail. First genericbinaryPHP-lint attempt safely rolledback beforecontrolleractivation; corrected exactnewstatic transport tested.16offline/76controller/13retainedloop pass.

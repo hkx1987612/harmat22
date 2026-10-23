@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-23 - Park Note Removal And Signed Showroom Exterior
+
+- Userrequestsparkcaption/creditdeleteandshowroomexteriorwithsign, thenuploadsexactphoto. Publishedtwofigure-onlybody/newimmutablealt-dictionaryruntime/manifest/controller1.0.21; byteexact1706x1280/237920bytephoto fullratio/contain, parkimage/altretained/visiblecaptioncreditremoved. Otherimagery/businessworkflowsunchanged. Backuphome-showroom-97365490e4b6467c8ec0ccf1c784ccb0 aggregate66d3c9c964a5790261118ea5288e0f0aa2b332a2fb78ed5e3d8ace33f8aaa830 RELEASED/strictindependentVERIFIED7routes/nativeformSEO/headerfooter/exactmain/protectedstate/35offer17spam.10delta/76controllerchecks/JSsyntaxpass.
+- Actual1280HUZHfullsign/loadedoriginal/parknotecount0/nooverflow,390/320geometry/loadedphoto/contain/nooverflow;320emptyHUZHquote/bookingopenscloses/contactsblank/privacynotchecked/originalsource/date/no send. Hero ready4playinglooptrue. Chrome80%zoom screenshotblank/tiled/offset/timeouts rejected; validfullpage-croppeddesktopproofsaved, mobilescreenshotvisualverificationlimited. Consolehasextension/opaquepageerrors, notcleanconsoleclaim. HU/defaultviewportrestored; no newshutdownduringfollow-up. Source-onlyrecovery andlimits2026-10-23-home-showroom.md; no rawmedia/privatebackups/proofsGit.
+
 ## 2026-10-23 - Approved Homepage Practical Release
 
 - Published reviewed26HUZHcopychanges/teamtextconsolidation and ONE2024-11-09OhegyCC0originalphoto; no otherimages/quotePDF/booking/businessdata/adchanges. Controller1.0.20/newimmutablebody/runtime/manifest; retains originalbehavior/otherpins. Backuphome-practical-49db8ca8b2ad41f69e92a2a5a1ac9fea aggregate609d64168975bbec403e0e08cba6cbf8b021ed1312d84b31dc8a1279208ee185 RELEASED/independentstrictVERIFIED7routes/exactnativeformSEO/headerfooter/dynamicmain/protectedstate/35offer17spam. Initialbinary-lint helperfailure safelyrolledback beforeactivation, exactstaticadapterfixed/tested; no silentfaileddeploymentclaim.

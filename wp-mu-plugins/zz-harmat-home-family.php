@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Home Family
  * Description: Reversible homepage presentation; native sales shell remains owned by existing modules.
- * Version: 1.0.20
+ * Version: 1.0.21
  */
 defined('ABSPATH') || exit;
 
@@ -28,11 +28,11 @@ function harmat_home_family_context() {
 
 function harmat_home_family_assets() {
     $directory=__DIR__.'/harmat-home-family';
-    $manifest=$directory.'/manifest-practical.json';
+    $manifest=$directory.'/manifest-showroom.json';
     if (is_link($directory) || !is_file($manifest) || is_link($manifest)
-        || hash_file('sha256',$manifest)!=='42a73d9100bb7422a1e85a94e079741a436466aa76ae14b6d935f10d962822b4') return false;
+        || hash_file('sha256',$manifest)!=='e39412a22fb38aaa3af61bf07606b8ee0285a2156a48ab7a185f2599bea086ff') return false;
     $pins=json_decode(file_get_contents($manifest),true);
-    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'],$pins['home-family-scroll-play.js'],$pins['body-six.php'],$pins['home-family-six.js'],$pins['home-family-six-r2.js'],$pins['home-family-loop.js'],$pins['body-practical.php'],$pins['home-family-practical.js'],$pins['ohegy-park-2024-original.jpg'])) return false;
+    if (!is_array($pins) || !isset($pins['body.php'],$pins['home-family.css'],$pins['home-family.js'],$pins['home-family-scroll-play.js'],$pins['body-six.php'],$pins['home-family-six.js'],$pins['home-family-six-r2.js'],$pins['home-family-loop.js'],$pins['body-practical.php'],$pins['home-family-practical.js'],$pins['ohegy-park-2024-original.jpg'],$pins['body-showroom.php'],$pins['home-family-showroom.js'],$pins['showroom-exterior-harmat.jpg'])) return false;
     foreach ($pins as $name=>$hash) {
         if (!is_string($name) || !preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._-]*\z/D',$name)
             || !is_string($hash) || !preg_match('/\A[a-f0-9]{64}\z/D',$hash)
@@ -144,7 +144,7 @@ function harmat_home_family_output($html) {
         }
         $harmat_home_family_units=harmat_home_family_units();
         if (!$harmat_home_family_units) return $html;
-        $replacement=include __DIR__.'/harmat-home-family/body-practical.php';
+        $replacement=include __DIR__.'/harmat-home-family/body-showroom.php';
         $contact_image='<figure><img src="https://harmat22.hu/wp-content/mu-plugins/harmat-contact-family/project-location.jpg" width="1000" height="750" alt="A Harmat utca 22. környéke helyszíni felvételen" data-i18n-alt="locationAlt" loading="lazy" decoding="async"><figcaption data-i18n="locationCaption">Helyszíni felvétel · Harmat utca és környéke</figcaption></figure>';
         if (!is_string($replacement) || substr_count($replacement,$contact_image)!==1) return $html;
         $replacement=str_replace($contact_image,
@@ -238,6 +238,7 @@ function harmat_home_family_output($html) {
             . '@media(min-width:621px){body.home.page-id-164 #harmat-home-family .hhf-everyday-grid{grid-template-columns:repeat(2,minmax(0,1fr))}body.home.page-id-164 #harmat-home-family .hhf-everyday-story:nth-child(2){padding-top:0}}'
             . '@supports(grid-template-rows:subgrid){@media(min-width:621px){body.home.page-id-164 #harmat-home-family .hhf-everyday-grid{row-gap:0}body.home.page-id-164 #harmat-home-family .hhf-everyday-story{display:grid;grid-template-rows:subgrid;grid-row:span 3;align-self:stretch;min-width:0}}}'
             . 'body.home.page-id-164 #harmat-home-family .hhf-showroom-copy>a+a{margin-left:24px}body.home.page-id-164 #harmat-home-family img[data-hhf-ohegy]{aspect-ratio:4/3!important;height:auto!important;object-fit:contain!important}body.home.page-id-164 #harmat-home-family .hhf-photo-credit{display:block;margin-top:6px;font-size:11px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}@media(max-width:767px){body.home.page-id-164 #harmat-home-family .hhf-showroom-copy>a+a{margin-left:0;display:flex;width:fit-content}}'
+            . 'body.home.page-id-164 #harmat-home-family img[data-hhf-showroom-exterior]{aspect-ratio:1706/1280!important;height:auto!important;object-fit:contain!important}'
             . '</style>';
         if (strpos($replacement,'data-hcu-home="1"')!==false && function_exists('harmat_cu_resources')) {
             $resources.=harmat_cu_resources();
@@ -246,7 +247,7 @@ function harmat_home_family_output($html) {
             if (!isset($pins[$name])) return $html;
             $resources.='<link rel="stylesheet" href="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'">';
         }
-        foreach (array('pannellum.js','home-family-practical.js') as $name) {
+        foreach (array('pannellum.js','home-family-showroom.js') as $name) {
             if (!isset($pins[$name])) return $html;
             $resources.='<script defer src="'.esc_url($base.$name.'?ver='.substr($pins[$name],0,16)).'"></script>';
         }
