@@ -70,6 +70,32 @@ recovering those pinned assets from the private release backups on another PC.
   errors to a proven source. No failure of checked site interactions observed.
   Browser default viewport and HU restored. No extension/security settings changed.
 
+## Read-Only Mobile Screenshot Follow-Up
+
+- User reports manually selecting100% Chrome zoom. The connected page still
+  reports DPR0.8; this alone is not a verified Chrome menu zoom reading. Do not
+  claim that100% was confirmed or that automation successfully restored80%.
+- After refreshing the user's existing homepage tab, normal viewport captures
+  remained white, but full-page Chrome captures succeeded. Saved original JPEGs
+  and unaltered rectangular crops under ignored
+  `outputs/2026-10-23-home-showroom/proof-mobile-100/` (folder name denotes the
+  intended test, not certified browser zoom). No reconstruction or image edits.
+- Visually inspected390x843 HU and320x567 ZH rendered-page crops. Both show the
+  complete showroom exterior, all HARMAT lettering and logo, with uncropped
+  image edges, native proportions, caption below and separate copy below that.
+  Original1706x1280 loaded; measured350x262.60 and287.99x216.07, contain,
+  no horizontal page overflow. Three sampled sign points hit the image itself.
+  This completes scoped responsive photo screenshot QA, not physical-phone QA.
+- Existing fixed cookie/settings and browser-extension controls appear in the
+  full-page captures; these were not removed or restyled. Do not claim every
+  captured page region is overlay-free or that console errors were resolved.
+- At320 ZH opened/closed the native empty quote/appointment dialog; within
+  viewport, original date minimumOct23 and five source values retained,
+  contacts/date blank and privacy unchecked. No fill, submission, mail or
+  business/source/deployment changes. Restored HU and default viewport; modal
+  aria-hidden=true. Requested manual80% menu restoration because browser zoom
+  could not be reliably controlled/read through the available interface.
+
 ## Exact Recovery
 
 ```powershell

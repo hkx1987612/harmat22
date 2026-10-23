@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-23 - Read-Only Showroom Mobile Screenshot QA
+
+- Full-page Chrome capture succeeds after ordinary viewport screenshots remain white. Actual390HU/320ZH rendered-page crops inspected: complete exterior/HARMAT sign/logo, native ratio, caption/copy separated, no horizontal overflow. Scoped photo/layout visual QA completed; not physical-phone testing. Existing cookie/extension overlays not changed, no clean-console claim.
+-320ZH native empty quote/booking opens/closes, original date/source/privacy/blank fields retained, no customer data entered/sent or live source/deployment changes. HU/defaultviewport restored. User reports100%, but tool does not verify menu zoom; requested manual80% restoration rather than claiming successful automated adjustment. Ignored proof-mobile-100 folder name is intended test only. Maintenance note updated; original release/pins/backups unchanged.
+
 ## 2026-10-23 - Park Note Removal And Signed Showroom Exterior
 
 - Userrequestsparkcaption/creditdeleteandshowroomexteriorwithsign, thenuploadsexactphoto. Publishedtwofigure-onlybody/newimmutablealt-dictionaryruntime/manifest/controller1.0.21; byteexact1706x1280/237920bytephoto fullratio/contain, parkimage/altretained/visiblecaptioncreditremoved. Otherimagery/businessworkflowsunchanged. Backuphome-showroom-97365490e4b6467c8ec0ccf1c784ccb0 aggregate66d3c9c964a5790261118ea5288e0f0aa2b332a2fb78ed5e3d8ace33f8aaa830 RELEASED/strictindependentVERIFIED7routes/nativeformSEO/headerfooter/exactmain/protectedstate/35offer17spam.10delta/76controllerchecks/JSsyntaxpass.
