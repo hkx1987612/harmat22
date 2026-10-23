@@ -2,6 +2,12 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-23 - Company Internal Maintenance Legal Copy
+
+- Approved factual correction in privacy and impressum only: replace external example with Cooperation Power Kft. internal authorized maintenance staff/task-limited data. Hosting confirmed correct/retained; other legal copy, global date, cookies, photos, quote/PDF/booking/data unchanged. Two HU rows/four exact new Chinese strings; fixed-path combined dictionary pin with language1.1.1, no runtime/bootstrap/security-guard change.
+- Backup internal-maintenance-fixed-path-6e82725cf12744589ae1c782f32e7a87 aggregatef30eaa7b4f9f845c0ed3c1ec0986b79bf607ca58a7489bc70e2a50aaa2e7892f RELEASED and separately VERIFIED9routes/nativeformSEO/legalmain/protectedstate/35offer17spam,10offline tests. Actual1280ZH/320ZH copy/language/no document overflow, mobile table scroll unchanged; no fill/send. Screenshot timeout/tiling rejected; not full visual/physical/inbox/compliance certification. HU/default viewport restored.
+- Initial immutable renamed dictionary incompatible with original bootstrap allowlist caused temporary Chinese unavailability, despite static checks. Actual browser detected it; source-only recovery verified before fixed-path release. Recovery metadata list/tuple guard failure stopped before rename, corrected and successful; no DB restoration. Full explanation/pins/recovery2026-10-23-internal-maintenance.md. No new shutdown or other service/permission changes.
+
 ## 2026-10-23 - Read-Only Showroom Mobile Screenshot QA
 
 - Full-page Chrome capture succeeds after ordinary viewport screenshots remain white. Actual390HU/320ZH rendered-page crops inspected: complete exterior/HARMAT sign/logo, native ratio, caption/copy separated, no horizontal overflow. Scoped photo/layout visual QA completed; not physical-phone testing. Existing cookie/extension overlays not changed, no clean-console claim.

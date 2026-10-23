@@ -230,7 +230,7 @@ function hm_legal_privacy_20260514() {
         <thead><tr><th>Kategória / szolgáltató</th><th>Szerep</th><th>Tipikus adat</th></tr></thead>
         <tbody>
             <tr><td>Tárhely.Eu Szolgáltató Kft. / tarhely.com szerverkörnyezet</td><td>A weboldal, adatbázis, fájlok és technikai naplók tárhelyszolgáltatása</td><td>Technikai naplók, űrlapadatok, weboldaladatok</td></tr>
-            <tr><td>Weboldal-fejlesztő és karbantartó, például Szabados Attila EV. / 21stcenturywebsites.hu</td><td>Hibajavítás, biztonsági és működési támogatás</td><td>Csak a feladat elvégzéséhez szükséges adatok</td></tr>
+            <tr><td>A Cooperation Power Kft. belső, feljogosított munkatársai</td><td>Weboldal-karbantartás, hibajavítás, biztonsági és működési támogatás</td><td>Csak a karbantartási feladat elvégzéséhez szükséges adatok</td></tr>
             <tr><td>SMTP2GO és a weboldal levelezési rendszere</td><td>Értesítések, visszaigazolások és ügyfélkommunikáció továbbítása</td><td>Név, e-mail cím, üzenettartalom, kézbesítési állapot</td></tr>
             <tr><td>Értékesítési, CRM, ügyfél-, ügynöki és ügyvédi portálok</td><td>Érdeklődések, foglalások, szerződés-előkészítés és jogosultságkezelt dokumentumkezelés</td><td>Kapcsolattartási adatok, lakásazonosító, ügyállapot, szerződés-előkészítési adatok</td></tr>
             <tr><td>Jogi, számviteli és pénzügyi tanácsadók</td><td>Szerződés-előkészítés, jogi kötelezettségek és igénykezelés</td><td>Csak az adott ügy kezeléséhez szükséges adatok</td></tr>
@@ -356,7 +356,7 @@ function hm_legal_impressum_20260514() {
         <tbody>
             <tr><th>Tárhelyszolgáltató</th><td>Tárhely.Eu Szolgáltató Kft. / tarhely.com szerverkörnyezet - weboldal, adatbázis, fájlok és technikai naplók tárhelyszolgáltatása.</td></tr>
             <tr><th>E-mail kézbesítés</th><td>SMTP2GO és a weboldal levelezési rendszere - űrlapértesítések, visszaigazolások és ügyfélkommunikáció továbbítása.</td></tr>
-            <tr><th>Weboldal-karbantartás</th><td>Weboldal-fejlesztő és karbantartó szolgáltató, például Szabados Attila EV. / 21stcenturywebsites.hu - hibajavítás, biztonsági és működési támogatás.</td></tr>
+            <tr><th>Weboldal-karbantartás</th><td>A weboldal karbantartását a Cooperation Power Kft. belső, feljogosított munkatársai végzik; a kapcsolódó adatokhoz csak a karbantartási feladat elvégzéséhez szükséges mértékben férhetnek hozzá.</td></tr>
             <tr><th>Biztonság / CDN / gyorsítótár</th><td>WordPress biztonsági, gyorsítótár-, optimalizálási és esetleges CDN-szolgáltatások - a weboldal védelme, teljesítménye, naplózása és rendelkezésre állása érdekében.</td></tr>
         </tbody>
     </table>
