@@ -2,6 +2,11 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October26 Homepage Showroom Image Report - Unresolved, Read-Only
+
+- User confirms reported broken image is HOMEPAGE showroom exterior. Server/public original SHAac4ad2578c1b44af479f5a0bcf9c07bb49e6f5a0245e24a65fc9a0b8e60eb1dc/237920bytes/1706x1280, HTTP200JPEG, exact emitted URL intact. Fresh IAB1280 and390HUZH scrolling loads original/full sign with actual screenshots/no mobile overflow. Offscreen lazy complete=false before scroll is normal, not reproduced error. No image replacement/live edits/cache purge/security/form/customer changes; repo baseline61c45a3/no deployment, HU/default viewport restored.
+- Read-only aggregate log audit: HTTP archive throughOct26 00:06, HTTPS only throughOct5, neither contains target static image requests. No evidence from current nginx static logs, so cannot exclude intermittent errors or claim a fix. Need failing-session screenshot/device/hard-refresh result. Helper/limits2026-10-26-showroom-image-check.md; ignored proofs/aggregate only, no raw logs/PII/Git media. User's planned sharper-photo replacement is still not supplied/authorized anew.
+
 ## October23 Internal Maintenance Party - Current
 
 - User confirms company internal maintenance and correct existing hosting. Privacy/impressum external maintainer example replaced with Cooperation Power Kft. internal authorized staff/task-limited access in exactly two rows, HU/ZH. Hosting/mail/contact/global notice date/cookie token/all other legal copy retained; no full compliance audit claim. Original photo stays pending user's sharper replacement tomorrow.

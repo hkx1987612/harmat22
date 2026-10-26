@@ -2,6 +2,11 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-26 - Read-Only Homepage Showroom Failure Investigation
+
+- Homepage target confirmed; file/server/public SHA and200JPEG match original, exact page URL retained. Fresh1280desktop and390HUZH native scroll load1706x1280/full sign; actual screenshots saved ignored, no mobile overflow. Failure NOT reproduced, no root-cause/fix claim; no live edit/cache purge/form submit/security change. HU/default viewport restored.
+- Added bounded read-only audit helper: only aggregate date/status/coverage, no raw logs/PII output. Current available HTTP log endsOct26 00:06; HTTPS endsOct5; neither records target image, so cannot exclude current nginx static delivery issues. Need user's failing-session screenshot/device/hard-refresh result. Details2026-10-26-showroom-image-check.md; photo and quotation/appointment code remain untouched.
+
 ## 2026-10-23 - Company Internal Maintenance Legal Copy
 
 - Approved factual correction in privacy and impressum only: replace external example with Cooperation Power Kft. internal authorized maintenance staff/task-limited data. Hosting confirmed correct/retained; other legal copy, global date, cookies, photos, quote/PDF/booking/data unchanged. Two HU rows/four exact new Chinese strings; fixed-path combined dictionary pin with language1.1.1, no runtime/bootstrap/security-guard change.
