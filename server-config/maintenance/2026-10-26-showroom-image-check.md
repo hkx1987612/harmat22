@@ -48,8 +48,24 @@ counts, plus image integrity proof; aggregate output stays ignored.
 
 ## Next Evidence
 
-Need the user's actual broken-image screenshot/session context (desktop/mobile,
-browser and whether hard refresh changes it). Do not claim a root cause or fix,
+User now confirms DESKTOP homepage; do not keep asking which page/device.
+Additional desktop follow-up: ordinary HEAD200/237920bytes, ETag
+`"6adb1cf1-3a160"`, conditional GET with this If-None-Match and homepage Referer
+returns304. Cache-Control remains max-age31536000. This is expected cache
+revalidation, not proof the user's local cached response is correct. Public
+desktop scroll test loads1706x1280; display:block/visibility:visible/opacity1/
+filter:none, no showroom-filtered warning/error observed. Native lazy loading
+defers an offscreen image; no failed load was reproduced. Performance timing is
+not exposed in the available read-only DOM scope, so no request-duration claim.
+
+Connected Chrome inventory currently contains no homepage tab, and its two
+visible windows have unrelated titles. They were not opened/changed. Requested
+the actual still-broken desktop page be opened/connected without refreshing or
+clearing cache first, to preserve failure evidence. Fresh IAB success cannot
+substitute for inspecting that failing session.
+
+Need the user's actual broken-image screenshot or connected failing browser
+session. Do not claim a root cause or fix,
 blindly disable lazy loading, replace the photo, change delivery/security rules,
 or add unbounded retries without evidence. A user hard refresh is a diagnostic,
 not a proven fix. Quote/PDF/appointment code must stay untouched.

@@ -4,6 +4,8 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## October26 Homepage Showroom Image Report - Unresolved, Read-Only
 
+- Follow-up user explicitly confirms DESKTOP homepage. HTTP cache check: HEAD200, If-None-Match GET304 with same ETag6adb1cf1-3a160/yearcache, expected behavior; no proof user's cached bytes healthy. Public desktop scroll loads1706x1280/visible/displayblock/opacity1/filternone/no showroom-filtered console errors. Connected Chrome has no homepage tab, so requested actual still-failing page opened/connected without refresh/cache clear; do not repeat page/device questions or claim root cause/fix. No live changes. Details appended to existing audit note.
+
 - User confirms reported broken image is HOMEPAGE showroom exterior. Server/public original SHAac4ad2578c1b44af479f5a0bcf9c07bb49e6f5a0245e24a65fc9a0b8e60eb1dc/237920bytes/1706x1280, HTTP200JPEG, exact emitted URL intact. Fresh IAB1280 and390HUZH scrolling loads original/full sign with actual screenshots/no mobile overflow. Offscreen lazy complete=false before scroll is normal, not reproduced error. No image replacement/live edits/cache purge/security/form/customer changes; repo baseline61c45a3/no deployment, HU/default viewport restored.
 - Read-only aggregate log audit: HTTP archive throughOct26 00:06, HTTPS only throughOct5, neither contains target static image requests. No evidence from current nginx static logs, so cannot exclude intermittent errors or claim a fix. Need failing-session screenshot/device/hard-refresh result. Helper/limits2026-10-26-showroom-image-check.md; ignored proofs/aggregate only, no raw logs/PII/Git media. User's planned sharper-photo replacement is still not supplied/authorized anew.
 
