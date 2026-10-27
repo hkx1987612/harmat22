@@ -1,5 +1,10 @@
 # Neighborhood Practical Review
 
+Historical local review. The user subsequently approved publication; the guarded
+October27 production release, final pins and recovery are documented in
+`server-config/maintenance/2026-10-27-neighborhood-practical.md`. The preview shell
+was not deployed; native production menu/footer/forms were retained.
+
 Local-only response to the October27 request to remove the page's AI/template
 feel. No deployment or edits to the live site's source, quote/PDF, bookings,
 business records, analytics, ads, security or cache settings.

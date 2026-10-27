@@ -2,7 +2,26 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
-## 2026-10-27 - Neighborhood Practical Offline Preview
+## 2026-10-27 - Approved Neighborhood Practical Release
+
+- New page3959-only scoped/hash-pinned MU presentation, existing native shell,
+  language, form/SEO and old-source fallback retained.17 original public POIs and
+  approximate distances not remeasured; original park/planning media unchanged.
+  No quote/PDF/booking/business/ads/security changes or customer submission.
+- Backup neighborhood-practical-201ec751693e423799d9bb2eb01cd397, aggregate
+ 6572d03f1d7f1a4c2595c8ac2ed031e34825cf7691e668432910bd65952f70b1;
+  RELEASED/separate VERIFIED ten routes/native form/SEO/shell/other mains/protected
+  state/35offer17spam,278 local assertions/JS syntax. Actual1280/390/320 HUZH,
+  filter/search/menu/gallery/nonblank-changing3D/controls; pixel deltas37.38/49.19.
+ 320ZH native empty appointment panel281x722 within viewport, no fill/send.
+- Private incomplete-routing header mismatch blocked first preflight. Initial
+  native padding/title visual mismatch source-only rolled back then corrected.
+  Final raw source/pins/recovery/limits in2026-10-27-neighborhood-practical.md.
+  Mobile fullscreen screenshot emulation artifact rejected, valid inline proof;
+  not physical-device/FPS/full-video/CWV certification.8MB photo/native fixed
+  controls retained. HU/default viewport restored; showroom report still separate.
+
+## 2026-10-27 - Neighborhood Practical Offline Preview (Historical)
 
 - Reworked local review around original2024 park real photo, searchable17-place
   directory/five categories/maps and optional original3D/gallery/videos. HU/ZH.

@@ -2,7 +2,34 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
-## October27 Neighborhood Redesign - Local Preview Only
+## October27 Neighborhood Practical - Released
+
+- User approved publication. Added `zz-harmat-neighborhood-practical.php` and
+  scoped/hash-pinned `harmat-neighborhood-practical/` presentation only on3959
+  public GET/HEAD, exact raw5041byte page guard. Old source plugins/content remain
+  fallback; no DB, quote/PDF/booking/business/ads/security changes or submissions.
+  Native menu/footer/language/form/SEO retained.17 original names/distances remain,
+  distances NOT remeasured; original2024 park and planning media reused byte-exact.
+- Backup neighborhood-practical-201ec751693e423799d9bb2eb01cd397; aggregate
+ 6572d03f1d7f1a4c2595c8ac2ed031e34825cf7691e668432910bd65952f70b1.
+  Controller1eabc05348ac3866ad5018b23c2c42cfb4679da7689e171cb943be928d9e77ec.
+  Private full native preflight PASS, RELEASED and separate VERIFIED ten routes,
+  exact form/SEO/native shell and other-page main, protected state unchanged,
+ 35offer17spam pure checks;278 offline assertions/JS syntax pass.
+- Actual1280/390/320 nooverflow/HUZH/search/category/native menu, cubemap drag/
+  zoom/reset/rotation/fullscreen state/gallery checked. Desktop/mobile inline
+  screenshot deltas37.38/49.19; mobile fullscreen capture rejected for emulation
+  artifact, not a physical-device claim.320ZH native appointment opens/closes,
+ 281x722 panel inside320x740, original blank fields/date/source/privacy, no send.
+  HU/default viewport restored. Original8MB park/network cost and native fixed
+  controls retained. No full-video/FPS/CWV/mail certification.
+- Initial incomplete private routing header mismatch stopped before activation;
+  an initial visual padding/title mismatch was source-only rolled back before
+  corrected final release. Recovery/pins/limits in
+  `server-config/maintenance/2026-10-27-neighborhood-practical.md`.
+  Prior homepage showroom loading report remains unrelated/unresolved.
+
+## October27 Neighborhood Redesign - Historical Local Preview
 
 - User requests less AI/template-like neighborhood page. New preview source:
   `server-config/previews/neighborhood-practical/`; local review8795, ignored

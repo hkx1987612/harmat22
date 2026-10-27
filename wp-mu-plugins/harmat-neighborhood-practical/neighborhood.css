@@ -1,0 +1,277 @@
+#harmat-neighborhood-practical .pnlm-container{margin: 0; padding: 0; overflow: hidden; position: relative; cursor: default; width: 100%; height: 100%; font-family: Helvetica,"Nimbus Sans L","Liberation Sans",Arial,sans-serif; background: #f4f4f4 url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2267%22%20height%3D%22100%22%20viewBox%3D%220%200%2067%20100%22%3E%0A%3Cpath%20stroke%3D%22%23ccc%22%20fill%3D%22none%22%20d%3D%22M33.5%2C50%2C0%2C63%2C33.5%2C75%2C67%2C63%2C33.5%2C50m-33.5-50%2C67%2C25m-0.5%2C0%2C0%2C75m-66.5-75%2C67-25m-33.5%2C75%2C0%2C25m0-100%2C0%2C50%22%2F%3E%0A%3C%2Fsvg%3E%0A') repeat; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -o-user-select: none; -ms-user-select: none; user-select: none; outline: 0; line-height: 1.4; contain: content;}
+#harmat-neighborhood-practical .pnlm-container *{box-sizing: content-box;}
+#harmat-neighborhood-practical .pnlm-ui{position: absolute; width: 100%; height: 100%; z-index: 1;}
+#harmat-neighborhood-practical .pnlm-grab{cursor: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20height%3D%2226%22%20width%3D%2226%22%3E%0A%3Cpath%20stroke%3D%22%23000%22%20stroke-width%3D%221px%22%20fill%3D%22%23fff%22%20d%3D%22m15.3%2020.5s6.38-6.73%204.64-8.24-3.47%201.01-3.47%201.01%203.61-5.72%201.41-6.49c-2.2-0.769-3.33%204.36-3.33%204.36s0.873-5.76-1.06-5.76-1.58%205.39-1.58%205.39-0.574-4.59-2.18-4.12c-1.61%200.468-0.572%205.51-0.572%205.51s-1.58-4.89-2.93-3.79c-1.35%201.11%200.258%205.25%200.572%206.62%200.836%202.43%202.03%202.94%202.17%205.55%22%2F%3E%0A%3C%2Fsvg%3E%0A') 12 8,default;}
+#harmat-neighborhood-practical .pnlm-grabbing{cursor: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20height%3D%2226%22%20width%3D%2226%22%3E%0A%3Cpath%20stroke%3D%22%23000%22%20stroke-width%3D%221px%22%20fill%3D%22%23fff%22%20d%3D%22m15.3%2020.5s5.07-5.29%203.77-6.74c-1.31-1.45-2.53%200.14-2.53%200.14s2.74-3.29%200.535-4.06c-2.2-0.769-2.52%201.3-2.52%201.3s0.81-2.13-1.12-2.13-1.52%201.77-1.52%201.77-0.261-1.59-1.87-1.12c-1.61%200.468-0.874%202.17-0.874%202.17s-0.651-1.55-2-0.445c-1.35%201.11-0.68%202.25-0.365%203.62%200.836%202.43%202.03%202.94%202.17%205.55%22%2F%3E%0A%3C%2Fsvg%3E%0A') 12 8,default;}
+#harmat-neighborhood-practical .pnlm-sprite{background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2226%22%20height%3D%22208%22%3E%0A%3Ccircle%20fill-opacity%3D%22.78%22%20cy%3D%22117%22%20cx%3D%2213%22%20r%3D%2211%22%20fill%3D%22%23fff%22%2F%3E%0A%3Ccircle%20fill-opacity%3D%22.78%22%20cy%3D%22143%22%20cx%3D%2213%22%20r%3D%2211%22%20fill%3D%22%23fff%22%2F%3E%0A%3Ccircle%20cy%3D%22169%22%20cx%3D%2213%22%20r%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%2F%3E%0A%3Ccircle%20cy%3D%22195%22%20cx%3D%2213%22%20r%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%2F%3E%0A%3Ccircle%20cx%3D%2213%22%20cy%3D%22195%22%20r%3D%222.5%22%2F%3E%0A%3Cpath%20d%3D%22m5%2083v6h2v-4h4v-2zm10%200v2h4v4h2v-6zm-5%205v6h6v-6zm-5%205v6h6v-2h-4v-4zm14%200v4h-4v2h6v-6z%22%2F%3E%0A%3Cpath%20d%3D%22m13%20110a7%207%200%200%200%20-7%207%207%207%200%200%200%207%207%207%207%200%200%200%207%20-7%207%207%200%200%200%20-7%20-7zm-1%203h2v2h-2zm0%203h2v5h-2z%22%2F%3E%0A%3Cpath%20d%3D%22m5%2057v6h2v-4h4v-2zm10%200v2h4v4h2v-6zm-10%2010v6h6v-2h-4v-4zm14%200v4h-4v2h6v-6z%22%2F%3E%0A%3Cpath%20d%3D%22m17%2038v2h-8v-2z%22%2F%3E%0A%3Cpath%20d%3D%22m12%209v3h-3v2h3v3h2v-3h3v-2h-3v-3z%22%2F%3E%0A%3Cpath%20d%3D%22m13%20136-6.125%206.125h4.375v7.875h3.5v-7.875h4.375z%22%2F%3E%0A%3Cpath%20d%3D%22m10.428%20173.33v-5.77l5-2.89v5.77zm1-1.73%203-1.73-3.001-1.74z%22%2F%3E%0A%3C%2Fsvg%3E%0A');}
+#harmat-neighborhood-practical .pnlm-container:-moz-full-screen{height: 100% !important; width: 100% !important; position: static !important;}
+#harmat-neighborhood-practical .pnlm-container:-webkit-full-screen{height: 100% !important; width: 100% !important; position: static !important;}
+#harmat-neighborhood-practical .pnlm-container:-ms-fullscreen{height: 100% !important; width: 100% !important; position: static !important;}
+#harmat-neighborhood-practical .pnlm-container:fullscreen{height: 100% !important; width: 100% !important; position: static !important;}
+#harmat-neighborhood-practical .pnlm-render-container{cursor: inherit; position: absolute; height: 100%; width: 100%;}
+#harmat-neighborhood-practical .pnlm-controls{margin-top: 4px; background-color: #fff; border: 1px solid #999; border-color: rgba(0,0,0,0.4); border-radius: 3px; cursor: pointer; z-index: 2; -webkit-transform: translateZ(9999px); transform: translateZ(9999px);}
+#harmat-neighborhood-practical .pnlm-control:hover{background-color: #f8f8f8;}
+#harmat-neighborhood-practical .pnlm-controls-container{position: absolute; top: 0; left: 4px; z-index: 1;}
+#harmat-neighborhood-practical .pnlm-zoom-controls{width: 26px; height: 52px;}
+#harmat-neighborhood-practical .pnlm-zoom-in{width: 100%; height: 50%; position: absolute; top: 0; border-radius: 3px 3px 0 0;}
+#harmat-neighborhood-practical .pnlm-zoom-out{width: 100%; height: 50%; position: absolute; bottom: 0; background-position: 0 -26px; border-top: 1px solid #ddd; border-top-color: rgba(0,0,0,0.10); border-radius: 0 0 3px 3px;}
+#harmat-neighborhood-practical .pnlm-fullscreen-toggle-button,#harmat-neighborhood-practical .pnlm-orientation-button,#harmat-neighborhood-practical .pnlm-hot-spot-debug-indicator{width: 26px; height: 26px;}
+#harmat-neighborhood-practical .pnlm-hot-spot-debug-indicator{position: absolute; top: 50%; left: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; background-color: rgba(255,255,255,0.5); border-radius: 13px; display: none;}
+#harmat-neighborhood-practical .pnlm-orientation-button-inactive{background-position: 0 -156px;}
+#harmat-neighborhood-practical .pnlm-orientation-button-active{background-position: 0 -182px;}
+#harmat-neighborhood-practical .pnlm-fullscreen-toggle-button-inactive{background-position: 0 -52px;}
+#harmat-neighborhood-practical .pnlm-fullscreen-toggle-button-active{background-position: 0 -78px;}
+#harmat-neighborhood-practical .pnlm-panorama-info{position: absolute; bottom: 4px; background-color: rgba(0,0,0,0.7); border-radius: 0 3px 3px 0; padding-right: 10px; color: #fff; text-align: left; display: none; z-index: 2; -webkit-transform: translateZ(9999px); transform: translateZ(9999px);}
+#harmat-neighborhood-practical .pnlm-title-box{position: relative; font-size: 20px; display: table; padding-left: 5px; margin-bottom: 3px;}
+#harmat-neighborhood-practical .pnlm-author-box{position: relative; font-size: 12px; display: table; padding-left: 5px;}
+#harmat-neighborhood-practical .pnlm-load-box{position: absolute; top: 50%; left: 50%; width: 200px; height: 150px; margin: -75px 0 0 -100px; background-color: rgba(0,0,0,0.7); border-radius: 3px; text-align: center; font-size: 20px; display: none; color: #fff;}
+#harmat-neighborhood-practical .pnlm-load-box p{margin: 20px 0;}
+#harmat-neighborhood-practical .pnlm-lbox{position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; display: none;}
+#harmat-neighborhood-practical .pnlm-loading{animation-duration: 1.5s; -webkit-animation-duration: 1.5s; animation-name: hn-pnlm-mv; -webkit-animation-name: hn-pnlm-mv; animation-iteration-count: infinite; -webkit-animation-iteration-count: infinite; animation-timing-function: linear; -webkit-animation-timing-function: linear; height: 10px; width: 10px; background-color: #fff; position: relative;}
+@keyframes hn-pnlm-mv { 
+  from {left: 0; top: 0;} 
+  25% {left: 10px; top: 0;} 
+  50% {left: 10px; top: 10px;} 
+  75% {left: 0; top: 10px;} 
+  to {left: 0; top: 0;} 
+}
+@-webkit-keyframes hn-pnlm-mv { 
+  from {left: 0; top: 0;} 
+  25% {left: 10px; top: 0;} 
+  50% {left: 10px; top: 10px;} 
+  75% {left: 0; top: 10px;} 
+  to {left: 0; top: 0;} 
+}
+#harmat-neighborhood-practical .pnlm-load-button{position: absolute; top: 50%; left: 50%; width: 200px; height: 100px; margin: -50px 0 0 -100px; background-color: rgba(0,0,0,.7); border-radius: 3px; text-align: center; font-size: 20px; display: table; color: #fff; cursor: pointer;}
+#harmat-neighborhood-practical .pnlm-load-button:hover{background-color: rgba(0,0,0,.8);}
+#harmat-neighborhood-practical .pnlm-load-button p{display: table-cell; vertical-align: middle;}
+#harmat-neighborhood-practical .pnlm-info-box{font-size: 15px; position: absolute; top: 50%; left: 50%; width: 200px; height: 150px; margin: -75px 0 0 -100px; background-color: #000; border-radius: 3px; display: table; text-align: center; color: #fff; table-layout: fixed;}
+#harmat-neighborhood-practical .pnlm-info-box a,#harmat-neighborhood-practical .pnlm-author-box a{color: #fff; word-wrap: break-word; overflow-wrap: break-word;}
+#harmat-neighborhood-practical .pnlm-info-box p{display: table-cell; vertical-align: middle; padding: 0 5px 0 5px;}
+#harmat-neighborhood-practical .pnlm-error-msg{display: none;}
+#harmat-neighborhood-practical .pnlm-about-msg{font-size: 11px; line-height: 11px; color: #fff; padding: 5px 8px 5px 8px; background: rgba(0,0,0,0.7); border-radius: 3px; position: absolute; top: 50px; left: 50px; display: none; opacity: 0; -moz-transition: opacity .3s ease-in-out; -webkit-transition: opacity .3s ease-in-out; -o-transition: opacity .3s ease-in-out; -ms-transition: opacity .3s ease-in-out; transition: opacity .3s ease-in-out; z-index: 1;}
+#harmat-neighborhood-practical .pnlm-about-msg a:link,#harmat-neighborhood-practical .pnlm-about-msg a:visited{color: #fff;}
+#harmat-neighborhood-practical .pnlm-about-msg a:hover,#harmat-neighborhood-practical .pnlm-about-msg a:active{color: #eee;}
+#harmat-neighborhood-practical .pnlm-hotspot-base{position: absolute; visibility: hidden; cursor: default; vertical-align: middle; top: 0; z-index: 1;}
+#harmat-neighborhood-practical .pnlm-hotspot{height: 26px; width: 26px; border-radius: 13px;}
+#harmat-neighborhood-practical .pnlm-hotspot:hover{background-color: rgba(255,255,255,0.2);}
+#harmat-neighborhood-practical .pnlm-hotspot.pnlm-info{background-position: 0 -104px;}
+#harmat-neighborhood-practical .pnlm-hotspot.pnlm-scene{background-position: 0 -130px;}
+#harmat-neighborhood-practical div.pnlm-tooltip span{visibility: hidden; position: absolute; border-radius: 3px; background-color: rgba(0,0,0,0.7); color: #fff; text-align: center; max-width: 200px; padding: 5px 10px; margin-left: -220px; cursor: default;}
+#harmat-neighborhood-practical div.pnlm-tooltip:hover span{visibility: visible;}
+#harmat-neighborhood-practical div.pnlm-tooltip:hover span:after{content: ''; position: absolute; width: 0; height: 0; border-width: 10px; border-style: solid; border-color: rgba(0,0,0,0.7) transparent transparent transparent; bottom: -20px; left: -10px; margin: 0 50%;}
+#harmat-neighborhood-practical .pnlm-compass{position: absolute; width: 50px; height: 50px; right: 4px; bottom: 4px; border-radius: 25px; background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20height%3D%2250%22%20width%3D%2250%22%3E%0A%3Cpath%20d%3D%22m24.5078%206-3.2578%2018h7.5l-3.25781-18h-0.984376zm-3.2578%2020%203.2578%2018h0.9844l3.2578-18h-7.5zm1.19531%200.9941h5.10938l-2.5547%2014.1075-2.5547-14.1075z%22%2F%3E%0A%3C%2Fsvg%3E%0A'); cursor: default; display: none;}
+#harmat-neighborhood-practical .pnlm-world{position: absolute; left: 50%; top: 50%;}
+#harmat-neighborhood-practical .pnlm-face{position: absolute; -webkit-transform-origin: 0 0; transform-origin: 0 0;}
+#harmat-neighborhood-practical .pnlm-dragfix,#harmat-neighborhood-practical .pnlm-preview-img{position: absolute; height: 100%; width: 100%;}
+#harmat-neighborhood-practical .pnlm-preview-img{background-size: cover; background-position: center;}
+#harmat-neighborhood-practical .pnlm-lbar{width: 150px; margin: 0 auto; border: #fff 1px solid; height: 6px;}
+#harmat-neighborhood-practical .pnlm-lbar-fill{background: #fff; height: 100%; width: 0;}
+#harmat-neighborhood-practical .pnlm-lmsg{font-size: 12px;}
+#harmat-neighborhood-practical .pnlm-fade-img{position: absolute; top: 0; left: 0;}
+#harmat-neighborhood-practical .pnlm-pointer{cursor: pointer;}
+#harmat-neighborhood-practical *{box-sizing: border-box; letter-spacing: 0;}
+#harmat-neighborhood-practical{margin: 0; background: #fafbf9; color: #203b36; font: 16px/1.65 Arial,"Microsoft YaHei",sans-serif;}
+#harmat-neighborhood-practical button,#harmat-neighborhood-practical input,#harmat-neighborhood-practical select{font: inherit;}
+#harmat-neighborhood-practical button,#harmat-neighborhood-practical a{-webkit-tap-highlight-color: transparent;}
+#harmat-neighborhood-practical button{cursor: pointer;}
+#harmat-neighborhood-practical a{color: inherit; text-decoration: none;}
+#harmat-neighborhood-practical a:hover{text-decoration: underline; text-underline-offset: 5px;}
+#harmat-neighborhood-practical button:focus-visible,#harmat-neighborhood-practical a:focus-visible,#harmat-neighborhood-practical input:focus-visible,#harmat-neighborhood-practical select:focus-visible,#harmat-neighborhood-practical summary:focus-visible{outline: 3px solid #a77c3b; outline-offset: 4px;}
+#harmat-neighborhood-practical h1,#harmat-neighborhood-practical h2,#harmat-neighborhood-practical h3,#harmat-neighborhood-practical p,#harmat-neighborhood-practical figure{margin: 0;}
+#harmat-neighborhood-practical h1,#harmat-neighborhood-practical h2,#harmat-neighborhood-practical .details-title{font-family: Georgia,"Noto Serif CJK SC",serif; font-weight: 500; line-height: 1.2;}
+#harmat-neighborhood-practical h1{font-size: 46px;}
+#harmat-neighborhood-practical h2,#harmat-neighborhood-practical .details-title{font-size: 32px;}
+#harmat-neighborhood-practical h3{font-size: 19px;}
+#harmat-neighborhood-practical .content-width{width: min(1160px,calc(100% - 64px)); margin-inline: auto;}
+#harmat-neighborhood-practical [hidden]{display: none !important;}
+#harmat-neighborhood-practical .icon-button{width: 42px; height: 42px; flex: 0 0 42px; padding: 10px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #bacbc2; border-radius: 3px; background: #fff; color: #274b40;}
+#harmat-neighborhood-practical .icon-button svg{width: 20px; height: 20px;}
+#harmat-neighborhood-practical .park-hero{position: relative; height: 500px; isolation: isolate; overflow: hidden; background: #c0d5df;}
+#harmat-neighborhood-practical .hero-photo{width: 100%; height: 100%; object-fit: cover; object-position: center 62%; display: block;}
+#harmat-neighborhood-practical .hero-copy{position: absolute; top: 29px; left: 24px; right: 24px; text-align: center; color: #193d38; text-shadow: 0 1px 9px #ffffff55;}
+#harmat-neighborhood-practical .hero-copy p{font-size: 13px; font-weight: 600; margin-bottom: 12px;}
+#harmat-neighborhood-practical .hero-copy #hn-page-title{max-width: 900px; margin: auto;}
+#harmat-neighborhood-practical .photo-label{position: absolute; right: 32px; bottom: 17px; padding: 4px 9px; background: #ffffffed; font-size: 11px; color: #26473e;}
+#harmat-neighborhood-practical .section-nav{display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid #d3ddd7; min-height: 78px; font-size: 13px; font-weight: 600;}
+#harmat-neighborhood-practical .section-nav a{display: flex; align-items: center; gap: 10px; min-height: 44px;}
+#harmat-neighborhood-practical .section-nav svg{width: 18px; height: 18px; flex-shrink: 0;}
+#harmat-neighborhood-practical .directory{padding-block: 65px 80px;}
+#harmat-neighborhood-practical .section-heading{display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: end; margin-bottom: 36px;}
+#harmat-neighborhood-practical .eyebrow{display: block; font-size: 12px; font-weight: 500; margin-bottom: 12px; color: #62766c;}
+#harmat-neighborhood-practical .distance-note{max-width: 460px; color: #64746d; font-size: 12px; line-height: 1.75;}
+#harmat-neighborhood-practical .directory-layout{display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 55px;}
+#harmat-neighborhood-practical .filters{position: sticky; top: 102px; align-self: start;}
+#harmat-neighborhood-practical .search-box{display: flex; align-items: center; gap: 9px; background: white; border: 1px solid #bccac1; border-radius: 3px; padding: 0 12px; min-height: 46px;}
+#harmat-neighborhood-practical .search-box svg{width: 18px; height: 18px; flex: 0 0 18px;}
+#harmat-neighborhood-practical .search-box input{min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: #203b36; padding: 11px 0; font-size: 14px;}
+#harmat-neighborhood-practical .category-buttons{margin-top: 21px; display: grid; gap: 3px;}
+#harmat-neighborhood-practical .category-button{display: flex; align-items: center; gap: 10px; border: 0; border-left: 2px solid transparent; background: transparent; padding: 11px 10px; text-align: left; font-size: 14px; line-height: 1.45; color: #4c6358; min-height: 46px;}
+#harmat-neighborhood-practical .category-button svg{width: 18px; height: 18px; flex: 0 0 18px;}
+#harmat-neighborhood-practical .category-button[aria-pressed=true]{border-color: #2c5a4b; background: #e9eee9; color: #1d4537; font-weight: 600;}
+#harmat-neighborhood-practical .category-count{margin-left: auto; font-size: 12px; color: #6f7d75;}
+#harmat-neighborhood-practical .mobile-category{display: none;}
+#harmat-neighborhood-practical .results-head{display: flex; justify-content: space-between; gap: 16px; min-height: 38px; border-bottom: 1px solid #b9c9bf; font-size: 12px; color: #6d7d73;}
+#harmat-neighborhood-practical .column-label{font-size: 11px;}
+#harmat-neighborhood-practical .place-group{padding-top: 24px;}
+#harmat-neighborhood-practical .place-group h3{margin-bottom: 12px; color: #405e50; font-weight: 600; font-size: 14px;}
+#harmat-neighborhood-practical .place-row{display: grid; grid-template-columns: minmax(0,1fr) 86px 40px; gap: 16px; align-items: center; min-height: 88px; padding: 15px 0; border-bottom: 1px solid #dce3dd;}
+#harmat-neighborhood-practical .place-name{font-size: 16px; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere;}
+#harmat-neighborhood-practical .place-description{font-size: 12px; color: #748177; margin-top: 5px; line-height: 1.45;}
+#harmat-neighborhood-practical .place-distance{text-align: right; color: #3d5749; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums;}
+#harmat-neighborhood-practical .map-link{width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #56705e; border: 1px solid #ced8d0; border-radius: 3px; background: white;}
+#harmat-neighborhood-practical .map-link:hover{background: #edf2ed;}
+#harmat-neighborhood-practical .map-link svg{width: 18px; height: 18px;}
+#harmat-neighborhood-practical #hn-empty-state{text-align: center; padding: 70px 12px; color: #687a6b;}
+#harmat-neighborhood-practical #hn-empty-state>svg{width: 28px; height: 28px; margin-bottom: 12px;}
+#harmat-neighborhood-practical #hn-empty-state button{background: transparent; border: 0; border-bottom: 1px solid #41634e; color: #2b543e; margin-top: 20px; padding: 4px;}
+#harmat-neighborhood-practical .project-view{border-top: 1px solid #d0dcd4; border-bottom: 1px solid #d0dcd4; background: #edf1ed;}
+#harmat-neighborhood-practical .project-view summary{list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 30px; cursor: pointer; padding-block: 32px;}
+#harmat-neighborhood-practical .project-view summary::-webkit-details-marker{display: none;}
+#harmat-neighborhood-practical .project-view .eyebrow{margin-bottom: 6px;}
+#harmat-neighborhood-practical .details-title{display: block; font-size: 27px;}
+#harmat-neighborhood-practical .expand-icon{display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px; border: 1px solid #b4c5b9;}
+#harmat-neighborhood-practical .expand-icon svg{width: 20px; height: 20px; transition: transform .15s;}
+#harmat-neighborhood-practical .project-view[open] .expand-icon svg{transform: rotate(45deg);}
+#harmat-neighborhood-practical .viewer-content{padding-bottom: 30px;}
+#harmat-neighborhood-practical .viewer-tabs{display: flex; gap: 26px; align-items: center; border-bottom: 1px solid #c6d4ca; margin-bottom: 18px;}
+#harmat-neighborhood-practical .viewer-tabs button{border: 0; border-bottom: 2px solid transparent; min-height: 48px; padding: 0 0 10px; background: transparent; color: #5a7160; display: flex; gap: 8px; align-items: center; font-size: 14px;}
+#harmat-neighborhood-practical .viewer-tabs button[aria-selected=true]{border-bottom-color: #2b523e; color: #193d2a; font-weight: 600;}
+#harmat-neighborhood-practical .viewer-tabs svg{width: 18px; height: 18px;}
+#harmat-neighborhood-practical .scene-shell{height: 500px; position: relative; overflow: hidden; background: #d2ddd2;}
+#harmat-neighborhood-practical .scene-shell:fullscreen{height: 100vh; width: 100vw;}
+#harmat-neighborhood-practical .scene-shell>img,#harmat-neighborhood-practical #hn-panorama{position: absolute; inset: 0; width: 100%; height: 100%;}
+#harmat-neighborhood-practical .scene-shell>img{object-fit: cover;}
+#harmat-neighborhood-practical #hn-panorama{z-index: 1;}
+#harmat-neighborhood-practical .scene-tools{position: absolute; z-index: 5; bottom: 15px; left: 16px; display: flex; gap: 6px;}
+#harmat-neighborhood-practical .scene-tools .icon-button{background: #fffffff2; border-color: #cbd6cf;}
+#harmat-neighborhood-practical .scene-tools .icon-button[aria-pressed=true]{background: #244b35; color: white;}
+#harmat-neighborhood-practical .scene-label{position: absolute; bottom: 18px; right: 16px; z-index: 5; padding: 4px 9px; background: #ffffffed; color: #34553e; font-size: 11px;}
+#harmat-neighborhood-practical .viewer-status:empty{display: none;}
+#harmat-neighborhood-practical .viewer-status{font-size: 13px; margin-top: 12px;}
+#harmat-neighborhood-practical .render-note{margin-top: 12px; font-size: 11px; color: #667d6b;}
+#harmat-neighborhood-practical .gallery{display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px;}
+#harmat-neighborhood-practical .gallery button{padding: 0; border: 0; background: transparent; text-align: left;}
+#harmat-neighborhood-practical .gallery img{display: block; width: 100%; aspect-ratio: 16/10; object-fit: cover;}
+#harmat-neighborhood-practical .gallery span{display: block; font-size: 12px; padding-top: 7px; color: #596e5f;}
+#harmat-neighborhood-practical .videos{display: grid; grid-template-columns: 1fr 1fr; gap: 22px;}
+#harmat-neighborhood-practical .videos video{width: 100%; display: block; aspect-ratio: 16/9; background: #15291e; object-fit: contain;}
+#harmat-neighborhood-practical .videos figcaption{font-size: 12px; margin-top: 7px; color: #546c5a;}
+#harmat-neighborhood-practical .visit-band{background: #f4f5f2;}
+#harmat-neighborhood-practical .visit-inner{padding-block: 54px; display: flex; justify-content: space-between; align-items: center; gap: 36px;}
+#harmat-neighborhood-practical .visit-inner h2{font-size: 29px; margin-bottom: 18px;}
+#harmat-neighborhood-practical .visit-inner .eyebrow{margin-bottom: 10px;}
+#harmat-neighborhood-practical .visit-inner>div>a{display: inline-block; font-size: 14px; margin-right: 25px; overflow-wrap: anywhere;}
+#harmat-neighborhood-practical .primary-link{display: inline-flex; align-items: center; justify-content: center; gap: 24px; min-height: 48px; padding: 12px 24px; background: #294f3a; color: white; border-radius: 3px; font-size: 14px; flex-shrink: 0;}
+#harmat-neighborhood-practical .primary-link svg{width: 18px; height: 18px;}
+#harmat-neighborhood-practical dialog{border: 0; border-radius: 4px; padding: 58px 16px 12px; width: min(1050px,calc(100% - 28px)); max-height: 94dvh; background: #f7f9f5; color: #274a35;}
+#harmat-neighborhood-practical dialog::backdrop{background: #122019cc;}
+#harmat-neighborhood-practical #hn-close-lightbox{position: absolute; right: 12px; top: 10px;}
+#harmat-neighborhood-practical #hn-lightbox-image{display: block; width: 100%; height: min(65dvh,650px); object-fit: contain;}
+#harmat-neighborhood-practical .lightbox-bottom{display: flex; align-items: center; justify-content: space-between; gap: 15px; padding-top: 12px;}
+#harmat-neighborhood-practical .lightbox-bottom span{font-size: 13px; text-align: center;}
+@media (min-width:1600px){
+#harmat-neighborhood-practical .park-hero{height: 580px;}
+#harmat-neighborhood-practical .hero-copy{top: 36px;}
+}
+@media (max-width:1000px){
+#harmat-neighborhood-practical .directory-layout{grid-template-columns: 210px minmax(0,1fr); gap: 32px;}
+#harmat-neighborhood-practical .section-heading{gap: 40px;}
+#harmat-neighborhood-practical h1{font-size: 40px;}
+#harmat-neighborhood-practical .park-hero{height: 460px;}
+#harmat-neighborhood-practical .section-nav{gap: 16px;}
+#harmat-neighborhood-practical .section-nav a{font-size: 12px;}
+#harmat-neighborhood-practical .hero-copy #hn-page-title{max-width: 750px;}
+}
+@media (max-width:700px){
+#harmat-neighborhood-practical .content-width{width: calc(100% - 36px);}
+#harmat-neighborhood-practical .park-hero{height: 380px;}
+#harmat-neighborhood-practical .hero-photo{object-position: 53% 66%;}
+#harmat-neighborhood-practical .hero-copy{top: 27px; left: 18px; right: 18px;}
+#harmat-neighborhood-practical .hero-copy p{font-size: 11px; margin-bottom: 10px;}
+#harmat-neighborhood-practical .hero-copy #hn-page-title{font-size: 32px; max-width: 340px; line-height: 1.18;}
+#harmat-neighborhood-practical .photo-label{right: 16px; bottom: 12px; font-size: 10px;}
+#harmat-neighborhood-practical .section-nav{min-height: 73px; gap: 12px; flex-wrap: wrap; justify-content: flex-start; padding-block: 10px;}
+#harmat-neighborhood-practical .section-nav a{gap: 6px; min-height: 32px; font-size: 11px;}
+#harmat-neighborhood-practical .section-nav svg{width: 16px; height: 16px;}
+#harmat-neighborhood-practical .section-nav a:last-child{margin-left: auto;}
+#harmat-neighborhood-practical .directory{padding-block: 38px 48px;}
+#harmat-neighborhood-practical .section-heading{display: block; margin-bottom: 24px;}
+#harmat-neighborhood-practical .section-heading h2{font-size: 27px;}
+#harmat-neighborhood-practical .distance-note{font-size: 11px; margin-top: 15px; line-height: 1.7;}
+#harmat-neighborhood-practical .directory-layout{display: block;}
+#harmat-neighborhood-practical .filters{position: static;}
+#harmat-neighborhood-practical .category-buttons{display: none;}
+#harmat-neighborhood-practical .mobile-category{display: flex; align-items: center; gap: 15px; font-size: 12px; margin-top: 12px;}
+#harmat-neighborhood-practical .mobile-category select{min-width: 0; flex: 1; max-width: 100%; border: 1px solid #bccac1; border-radius: 3px; min-height: 44px; color: #254c36; background: white; padding: 8px 10px; font-size: 14px;}
+#harmat-neighborhood-practical .results{margin-top: 25px;}
+#harmat-neighborhood-practical .results-head{font-size: 11px; min-height: 34px; align-items: start;}
+#harmat-neighborhood-practical .column-label{font-size: 10px;}
+#harmat-neighborhood-practical .place-group{padding-top: 22px;}
+#harmat-neighborhood-practical .place-group h3{font-size: 13px; margin-bottom: 6px;}
+#harmat-neighborhood-practical .place-row{grid-template-columns: minmax(0,1fr) 70px 34px; gap: 9px; min-height: 84px; padding-block: 14px;}
+#harmat-neighborhood-practical .place-name{font-size: 14px; line-height: 1.5;}
+#harmat-neighborhood-practical .place-description{font-size: 11px;}
+#harmat-neighborhood-practical .place-distance{font-size: 12px;}
+#harmat-neighborhood-practical .map-link{width: 34px; height: 38px;}
+#harmat-neighborhood-practical .map-link svg{width: 16px;}
+#harmat-neighborhood-practical .project-view summary{padding-block: 25px; gap: 18px;}
+#harmat-neighborhood-practical .details-title{font-size: 24px;}
+#harmat-neighborhood-practical .project-view .eyebrow{font-size: 11px;}
+#harmat-neighborhood-practical .expand-icon{width: 36px; height: 36px; flex-basis: 36px;}
+#harmat-neighborhood-practical .viewer-tabs{gap: 17px;}
+#harmat-neighborhood-practical .viewer-tabs button{font-size: 12px; gap: 6px;}
+#harmat-neighborhood-practical .viewer-tabs svg{width: 16px; height: 16px;}
+#harmat-neighborhood-practical .scene-shell{height: 350px;}
+#harmat-neighborhood-practical .scene-tools{left: 9px; bottom: 10px; gap: 4px;}
+#harmat-neighborhood-practical .scene-tools .icon-button{width: 38px; height: 40px; flex-basis: 38px; padding: 8px;}
+#harmat-neighborhood-practical .scene-label{right: 9px; bottom: 58px; font-size: 10px;}
+#harmat-neighborhood-practical .gallery{grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 12px;}
+#harmat-neighborhood-practical .videos{grid-template-columns: 1fr; gap: 22px;}
+#harmat-neighborhood-practical .render-note{font-size: 10px;}
+#harmat-neighborhood-practical .visit-inner{display: block; padding-block: 36px;}
+#harmat-neighborhood-practical .visit-inner h2{font-size: 26px;}
+#harmat-neighborhood-practical .visit-inner>div>a{display: block; margin: 9px 0; font-size: 14px;}
+#harmat-neighborhood-practical .primary-link{margin-top: 22px;}
+#harmat-neighborhood-practical #hn-lightbox-image{height: 61dvh;}
+#harmat-neighborhood-practical .eyebrow{margin-bottom: 9px;}
+}
+@media (max-width:350px){
+#harmat-neighborhood-practical .hero-copy #hn-page-title{font-size: 29px; max-width: 285px;}
+#harmat-neighborhood-practical .hero-copy p{font-size: 10px;}
+#harmat-neighborhood-practical .section-nav{column-gap: 15px;}
+#harmat-neighborhood-practical .section-nav a:last-child{margin-left: 0;}
+#harmat-neighborhood-practical .place-row{grid-template-columns: minmax(0,1fr) 62px 32px; gap: 7px;}
+#harmat-neighborhood-practical .map-link{width: 32px;}
+#harmat-neighborhood-practical .place-distance{font-size: 11px;}
+#harmat-neighborhood-practical .details-title{font-size: 21px;}
+#harmat-neighborhood-practical .viewer-tabs{gap: 13px;}
+#harmat-neighborhood-practical .viewer-tabs button{font-size: 11px;}
+#harmat-neighborhood-practical .scene-tools .icon-button{width: 35px; flex-basis: 35px;}
+#harmat-neighborhood-practical .visit-inner h2{font-size: 24px;}
+}
+@media (prefers-reduced-motion:reduce){
+#harmat-neighborhood-practical *{transition: none !important;}
+}
+#harmat-neighborhood-practical .place-name{margin: 0;}
+#harmat-neighborhood-practical :lang(zh-Hans) .hero-copy #hn-page-title{word-break: keep-all;}
+@media (min-width:701px){
+#harmat-neighborhood-practical .hero-photo{object-position: center 34%;}
+}
+#harmat-neighborhood-practical{display:block;min-width:0;font:16px/1.65 Arial,"Microsoft YaHei",sans-serif;color:#203b36;background:#fafbf9;letter-spacing:0}
+#harmat-neighborhood-practical h1,#harmat-neighborhood-practical h2,#harmat-neighborhood-practical h3,#harmat-neighborhood-practical h4,#harmat-neighborhood-practical p,#harmat-neighborhood-practical figure{padding:0;letter-spacing:0}
+#harmat-neighborhood-practical h1,#harmat-neighborhood-practical h2{font-weight:500;text-transform:none}
+#harmat-neighborhood-practical .hero-copy #hn-page-title{font-size:46px!important;line-height:1.2}
+@media(max-width:1000px){#harmat-neighborhood-practical .hero-copy #hn-page-title{font-size:40px!important}}
+@media(max-width:700px){#harmat-neighborhood-practical .hero-copy #hn-page-title{font-size:32px!important}}
+@media(max-width:350px){#harmat-neighborhood-practical .hero-copy #hn-page-title{font-size:29px!important}}
+#harmat-neighborhood-practical button{letter-spacing:0;text-transform:none;box-shadow:none;background-image:none}
+#harmat-neighborhood-practical #hn-place-search{box-shadow:none;height:auto;margin:0;border-radius:0;line-height:1.65}
+#harmat-neighborhood-practical a{box-shadow:none} #harmat-neighborhood-practical img{border-radius:0}
+body.page-id-3959 #masthead,body.page-id-3959 #masthead>div.site-header{position:relative!important;background:#fff}
+body.page-id-3959 #content,body.page-id-3959 .site-content{background:#fafbf9;padding:0!important}
+body.page-id-3959 #main .entry-content{margin:0!important}
+body.page-id-3959 #content .wrap,body.page-id-3959 #primary,body.page-id-3959 #main{width:100%!important;max-width:100%!important;min-width:0;padding:0!important;margin:0!important}
+body.page-id-3959 #page-title-bar{display:none}
+#harmat-neighborhood-practical #hn-project-view{scroll-margin-top:90px} #harmat-neighborhood-practical #hn-places{scroll-margin-top:90px}
+#harmat-neighborhood-practical [hidden]{display:none!important}
