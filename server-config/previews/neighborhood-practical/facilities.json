@@ -1,0 +1,208 @@
+{
+  "source": "https://harmat22.hu/harmat-lakopark-kornyeke/",
+  "captured": "2026-10-27",
+  "categories": [
+    {
+      "id": "parks",
+      "hu": "Park és szabadidő",
+      "zh": "公园与休闲",
+      "icon": "trees"
+    },
+    {
+      "id": "education",
+      "hu": "Oktatás",
+      "zh": "教育",
+      "icon": "graduation-cap"
+    },
+    {
+      "id": "shopping",
+      "hu": "Bevásárlás",
+      "zh": "购物",
+      "icon": "shopping-bag"
+    },
+    {
+      "id": "transport",
+      "hu": "Közlekedés",
+      "zh": "交通",
+      "icon": "tram-front"
+    },
+    {
+      "id": "services",
+      "hu": "Egészség és ügyintézés",
+      "zh": "医疗与日常服务",
+      "icon": "building-2"
+    }
+  ],
+  "places": [
+    {
+      "id": "1",
+      "category": "parks",
+      "distance": "kb. 200 m",
+      "name": "Közeli kutyafuttató",
+      "sourceNote": "mindennapi kutyasétához és kisállattal élőknek",
+      "zh": "附近遛狗区",
+      "descriptionHu": "Kutyafuttató",
+      "descriptionZh": "遛狗活动场地"
+    },
+    {
+      "id": "2",
+      "category": "parks",
+      "distance": "kb. 600 m",
+      "name": "Óhegy park",
+      "sourceNote": "séta, játszótér, zöld kikapcsolódás",
+      "zh": "Óhegy 公园",
+      "descriptionHu": "Közpark",
+      "descriptionZh": "公共公园"
+    },
+    {
+      "id": "3",
+      "category": "parks",
+      "distance": "kb. 700 m",
+      "name": "Csősztorony és Óhegy környéke",
+      "sourceNote": "helyi karakter és parkos városrész",
+      "zh": "Csősztorony 与 Óhegy 周边",
+      "descriptionHu": "Helyi látnivaló",
+      "descriptionZh": "本地地标"
+    },
+    {
+      "id": "4",
+      "category": "parks",
+      "distance": "kb. 2 km",
+      "name": "Újhegy és Sportliget iránya",
+      "sourceNote": "sport, szabadidő, nagyobb zöldfelületek",
+      "zh": "Újhegy 与 Sportliget 方向",
+      "descriptionHu": "Sport és szabadidő",
+      "descriptionZh": "运动与休闲"
+    },
+    {
+      "id": "5",
+      "category": "education",
+      "distance": "kb. 700 m",
+      "name": "Kőbányai Szent László Gimnázium",
+      "sourceNote": "középiskolai elérhetőség",
+      "zh": "Kőbányai Szent László 中学",
+      "descriptionHu": "Gimnázium",
+      "descriptionZh": "中等教育"
+    },
+    {
+      "id": "6",
+      "category": "education",
+      "distance": "kb. 1,2 km",
+      "name": "Kőbányai Harmat Általános Iskola",
+      "sourceNote": "általános iskola a kerületben",
+      "zh": "Kőbányai Harmat 小学",
+      "descriptionHu": "Általános iskola",
+      "descriptionZh": "基础教育"
+    },
+    {
+      "id": "7",
+      "category": "education",
+      "distance": "kb. 4,0 km",
+      "name": "Semmelweis Egyetem Nagyvárad tér",
+      "sourceNote": "felsőoktatási kampusz iránya",
+      "zh": "Semmelweis 大学 Nagyvárad tér 校区",
+      "descriptionHu": "Egyetemi helyszín",
+      "descriptionZh": "大学校区"
+    },
+    {
+      "id": "8",
+      "category": "education",
+      "distance": "kb. 4,2 km",
+      "name": "NKE Ludovika Campus",
+      "sourceNote": "felsőoktatási és városi kapcsolat",
+      "zh": "NKE Ludovika 校区",
+      "descriptionHu": "Egyetemi campus",
+      "descriptionZh": "大学校园"
+    },
+    {
+      "id": "9",
+      "category": "shopping",
+      "distance": "kb. 1,9 km",
+      "name": "ÁRKÁD Budapest",
+      "sourceNote": "nagy bevásárlóközpont",
+      "zh": "ÁRKÁD Budapest",
+      "descriptionHu": "Bevásárlóközpont",
+      "descriptionZh": "购物中心"
+    },
+    {
+      "id": "10",
+      "category": "shopping",
+      "distance": "kb. 2,1 km",
+      "name": "Sugár Üzletközpont",
+      "sourceNote": "mindennapi üzletek és szolgáltatások",
+      "zh": "Sugár 购物中心",
+      "descriptionHu": "Üzletek és szolgáltatások",
+      "descriptionZh": "商店与服务"
+    },
+    {
+      "id": "11",
+      "category": "shopping",
+      "distance": "kb. 2,6 km",
+      "name": "KÖKI Terminál",
+      "sourceNote": "bevásárlás és közlekedési kapcsolat",
+      "zh": "KÖKI Terminál",
+      "descriptionHu": "Bevásárlóközpont",
+      "descriptionZh": "购物中心"
+    },
+    {
+      "id": "12",
+      "category": "transport",
+      "distance": "kb. 1,2 km",
+      "name": "Kőbánya alsó vasútállomás",
+      "sourceNote": "helyi vasúti és villamos kapcsolat",
+      "zh": "Kőbánya alsó 火车站",
+      "descriptionHu": "Vasút és helyi kapcsolatok",
+      "descriptionZh": "铁路与本地交通"
+    },
+    {
+      "id": "13",
+      "category": "transport",
+      "distance": "kb. 2,0 km",
+      "name": "Örs vezér tere",
+      "sourceNote": "metró, HÉV, villamos, busz",
+      "zh": "Örs vezér tere",
+      "descriptionHu": "Metró, HÉV, villamos, busz",
+      "descriptionZh": "地铁、HÉV、轻轨及公交"
+    },
+    {
+      "id": "14",
+      "category": "transport",
+      "distance": "kb. 2,5 km",
+      "name": "Kőbánya-Kispest",
+      "sourceNote": "M3 metró, vasút, nagy csomópont",
+      "zh": "Kőbánya-Kispest",
+      "descriptionHu": "M3 metró és vasút",
+      "descriptionZh": "M3地铁与铁路"
+    },
+    {
+      "id": "15",
+      "category": "services",
+      "distance": "kb. 800 m",
+      "name": "Szent László tér / kerületi központ",
+      "sourceNote": "Kőbányai Polgármesteri Hivatal környéke",
+      "zh": "Szent László tér／区中心",
+      "descriptionHu": "Kerületi ügyintézés",
+      "descriptionZh": "区级公共服务"
+    },
+    {
+      "id": "16",
+      "category": "services",
+      "distance": "kb. 1,7 km",
+      "name": "Bajcsy-Zsilinszky Kórház",
+      "sourceNote": "kórház és rendelőintézet",
+      "zh": "Bajcsy-Zsilinszky 医院",
+      "descriptionHu": "Kórház és rendelőintézet",
+      "descriptionZh": "医院与门诊"
+    },
+    {
+      "id": "17",
+      "category": "services",
+      "distance": "közelben",
+      "name": "gyógyszertárak, rendelők, posta",
+      "sourceNote": "mindennapi szolgáltatások több irányban",
+      "zh": "周边药房、诊所与邮局",
+      "descriptionHu": "Mindennapi szolgáltatások",
+      "descriptionZh": "日常服务"
+    }
+  ]
+}

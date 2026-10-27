@@ -2,6 +2,27 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October27 Neighborhood Redesign - Local Preview Only
+
+- User requests less AI/template-like neighborhood page. New preview source:
+  `server-config/previews/neighborhood-practical/`; local review8795, ignored
+  artifact `outputs/2026-10-27-neighborhood-practical/v1/`. No deployment,
+  production source/database/cache/form/quote/PDF/booking/ads changes.
+- Real approved2024 park original reused byte-exact; practical five-category,
+  searchable17-place directory retains source names/distances. Removed duplicate
+  marketing/meta-copy, fake circle map and unverified commute-minute cards.
+  Existing distances are legacy approximate straight-line values, not remeasured.
+- Optional existing Pannellum cubemap/gallery/two videos, HU/ZH and contact links.
+  Preview header/footer are isolated review shell, not native production forms.
+  Eleven tests/JS syntax and actual1280/390/320 layout/filter/language/menu/gallery,
+  nonblank changing3D drag/zoom/rotation/fullscreen checks pass; no console error
+  at checked state. Not physical-device/video-FPS/live-workflow certification.
+- Wait for user approval before fresh backup/release gates. Preserve17 POIs and
+  October20 preservation fix; do not deploy preview shell or replace shared
+  performance plugin wholesale. Original8MB photo cold-load cost remains.
+- Separate October26 showroom loading report below remains unresolved and was
+  not changed or claimed fixed in this redesign task.
+
 ## October26 Homepage Showroom Image Report - Unresolved, Read-Only
 
 - Follow-up user explicitly confirms DESKTOP homepage. HTTP cache check: HEAD200, If-None-Match GET304 with same ETag6adb1cf1-3a160/yearcache, expected behavior; no proof user's cached bytes healthy. Public desktop scroll loads1706x1280/visible/displayblock/opacity1/filternone/no showroom-filtered console errors. Connected Chrome has no homepage tab, so requested actual still-failing page opened/connected without refresh/cache clear; do not repeat page/device questions or claim root cause/fix. No live changes. Details appended to existing audit note.

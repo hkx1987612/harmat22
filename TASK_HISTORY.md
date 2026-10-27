@@ -2,6 +2,22 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-27 - Neighborhood Practical Offline Preview
+
+- Reworked local review around original2024 park real photo, searchable17-place
+  directory/five categories/maps and optional original3D/gallery/videos. HU/ZH.
+  Removed internal marketing commentary/repeated cards/fake map/time promises;
+  retained all original public names and approximate distances, not remeasured.
+- Preview source/build/tests/readme under `server-config/previews/neighborhood-practical/`;
+  loopback8795. No production sources, quote/PDF/booking/customer/ads/security or
+  cache changes; no live backup/deploy/customer submission. Await user review.
+- Eleven tests/JS syntax pass; actual1280/390/320 no-overflow/HUZH/menu/category/
+  search/reset/gallery-focus checks; nonblank changing desktop/mobile cubemap,
+  drag/zoom/reset/rotation/fullscreen. Screenshot pixel deltas22.32/47.30.
+  No final console errors; not physical-device/FPS/full-video/live-form QA.
+  Original8MB park bytes unchanged; outputs/screenshots/public snapshot ignored.
+  Prior desktop-showroom intermittent failure remains separate and unresolved.
+
 ## 2026-10-26 - Read-Only Homepage Showroom Failure Investigation
 
 - Homepage target confirmed; file/server/public SHA and200JPEG match original, exact page URL retained. Fresh1280desktop and390HUZH native scroll load1706x1280/full sign; actual screenshots saved ignored, no mobile overflow. Failure NOT reproduced, no root-cause/fix claim; no live edit/cache purge/form submit/security change. HU/default viewport restored.
