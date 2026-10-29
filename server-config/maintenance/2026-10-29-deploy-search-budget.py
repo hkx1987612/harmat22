@@ -170,12 +170,12 @@ def operate(backup, deploy=False, rollback=False):
         if deploy:
             require(before==saved['before'],'Protected state changed since backup; stop, do not restore data')
             # The smart matcher supports old markup too; activate it before the new controls.
-            for key in ('smart','search'):
+            for key in sorted(PATHS, key=lambda key: key == 'search'):
                 old,candidate=blobs[key];target=PATHS[key][1]
                 changed.append(key); Q.replace(r,target,old,candidate,tuple(saved['meta'][key]))
             purge(r)
         elif rollback:
-            for key in ('search','smart'):
+            for key in reversed(sorted(PATHS, key=lambda key: key == 'search')):
                 old,candidate=blobs[key];target=PATHS[key][1]
                 Q.replace(r,target,candidate,old,tuple(saved['meta'][key]))
             purge(r)

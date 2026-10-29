@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.2.5
+ * Version: 1.2.6
  */
 
 if (!defined('ABSPATH')) {
@@ -37,12 +37,12 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.5');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.6');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
     if (harmat_lakas_redesign_is_page()) {
-        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.5', true);
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.6', true);
         wp_enqueue_script('harmat-lakas-redesign');
         wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
     }
@@ -58,11 +58,12 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v15';
+    return 'harmat_lakas_redesign_markup_v16';
 }
 
 function harmat_lakas_redesign_clear_cache() {
     delete_transient(harmat_lakas_redesign_cache_key());
+    delete_transient('harmat_lakas_redesign_markup_v15');
     delete_transient('harmat_lakas_redesign_markup_v14');
     delete_transient('harmat_lakas_redesign_markup_v13');
     delete_transient('harmat_lakas_redesign_markup_v12');
@@ -471,7 +472,7 @@ function harmat_lakas_redesign_render() {
             </fieldset>
         </div>
 
-        <div class="hm-lakas-resultbar">
+        <div class="hm-lakas-resultbar" hidden aria-hidden="true">
             <strong data-count><?php echo esc_html(count($items)); ?></strong>
             <span>találat</span>
         </div>
@@ -583,6 +584,7 @@ function harmat_lakas_redesign_css() {
     body.harmat-lakas-redesign-page .hm-lakas-budget-error{grid-column:1/-1;color:#a02d29;font-size:13px;line-height:1.5}
     body.harmat-lakas-redesign-page .hm-lakas-budget-error[hidden]{display:none}
     .hm-lakas-resultbar{display:flex;align-items:center;gap:8px;margin:0 0 20px;color:#687078;font-size:14px}
+    body.harmat-lakas-redesign-page .hm-lakas-resultbar[hidden]{display:none}
     .hm-lakas-resultbar strong{min-width:44px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#a8762d;color:#fff}
     .hm-lakas-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
     .hm-lakas-card{border:1px solid rgba(168,118,45,.18);background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 18px 42px rgba(31,35,37,.08)}

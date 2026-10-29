@@ -2,6 +2,24 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October30 Search Result Count Hidden - Current
+
+- User removes prominent count badge/result label. Search1.2.6/cachev16 adds
+  hidden/aria-hidden plus one scoped display-none rule; internal count retained
+  for filters. Cards/budgets/status defaults/load-more/data/quote/PDF/booking and
+  shared smart-search/translation sources unchanged.
+- Backup search-count-hidden-b07612d3f5e241c2afed770a22e18256; raw search SHA
+ d069717cbbcec7ba6020958d22ef63da2c3538f63f69f7e881f53c959a184c2c.
+  RELEASED/separateVERIFIED8routes/nativeformSEO/shell/othermains/124facts/
+  protectedstate/35offer17spam.53DOM/5transport/realtranslator8switch tests pass.
+- Actual1280/320CSS HUZH/nooverflow/count row height0;50-80M/current47matches
+  exact. Native blank quote/appointment date/time/privacy openclose/no send.
+  User's current91/blank budgets/Chinese and normal viewport restored;80%zoom
+  unchanged. Screenshot ignored; no physicaldevice/mail/CWV certificate.
+- Source-only recovery2026-10-30-hide-search-count.md. User requests one-off
+  normal shutdown after successful regression/source sync; never force unsaved
+  apps or replay that shutdown approval in later turns/automations.
+
 ## October30 Apartment Total Budget Filter - Released
 
 - User approves total-price range and removal of the search hero journal link

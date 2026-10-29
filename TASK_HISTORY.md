@@ -2,6 +2,22 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-30 - Hide Search Result-Count Reminder
+
+- Search1.2.6/cachev16 only hides count badge/label, retains internal counter and
+  existing filters/cards/load-more. No quote/PDF/appointment/data/media edits.
+  One-file exact-delta deployment, fresh backupsearch-count-hidden-b07612d3f5e
+ 241c2afed770a22e18256; rawSHA d069717cbbcec7ba6020958d22ef63da2c3538f63f69
+ f7e881f53c959a184c2c. RELEASED/separateVERIFIED8routes/nativeformSEO/shell/
+  othermains/124facts/protectedstate/35offer17spam;53DOM/5transport/8switch pass.
+- Actual1280desktop/320CSSmobile HUZH/count displaynone/height0/nooverflow;
+  current47 matches at50-80M exact. Native empty quote/appointment original
+  date/time/privacy openclose, no submission. Restore user's current91/blank
+  budget/Chinese and defaultviewport;80%zoom untouched, ignoredJPGproof.
+- User additionally requests normal shutdown only after successful regression
+  and source sync. Non-forced one-off handoff only; do not replay old shutdown
+  consent. Recovery and limits2026-10-30-hide-search-count.md. No ads/automation.
+
 ## 2026-10-30 - Search Total Budget And Top Journal Link
 
 - Released search1.2.5/cachev15 optional total-price min/max in millionsHUF and

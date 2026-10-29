@@ -10,7 +10,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 let checks = 0;
 function equal(a, b) { assert.deepEqual(a, b); checks++; }
 (async () => {
-    const dom = new JSDOM('<!doctype html><html><body>' + data.html + '</body></html>', { runScripts: 'outside-only', url: 'https://harmat22.hu/lakaskereso/?rooms=1' });
+    const dom = new JSDOM('<!doctype html><html><head><style>'+data.css+'</style></head><body class="harmat-lakas-redesign-page">' + data.html + '</body></html>', { runScripts: 'outside-only', url: 'https://harmat22.hu/lakaskereso/?rooms=1' });
     const w = dom.window, d = w.document;
     w.eval(data.js);
     for (const markup of [data.patch, data.comfort]) {
@@ -24,6 +24,9 @@ function equal(a, b) { assert.deepEqual(a, b); checks++; }
     const set = async (n, v) => { field(n).value = v; field(n).dispatchEvent(new w.Event('input', { bubbles: true })); await sleep(450); equal(+d.querySelector('[data-count]').textContent, visible().length); };
     const reset = async () => { d.querySelector('[data-reset]').click(); await sleep(450); };
     equal(d.querySelector('.hm-lakas-construction-link'), null);
+    equal(d.querySelector('.hm-lakas-resultbar').hidden, true);
+    equal(d.querySelector('.hm-lakas-resultbar').getAttribute('aria-hidden'), 'true');
+    equal(w.getComputedStyle(d.querySelector('.hm-lakas-resultbar')).display, 'none');
     equal(visible(), ['a1-1-l1', 'a1-1-l3', 'a1-1-l5', 'a1-1-l7']);
     await reset(); equal(visible().length, 7);
     await set('budgetMax', '50'); equal(visible(), ['a1-1-l1', 'a1-1-l2']);
