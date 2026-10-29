@@ -2,6 +2,31 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-10-30 - Search Total Budget And Top Journal Link
+
+- Released search1.2.5/cachev15 optional total-price min/max in millionsHUF and
+  removed only hero journal link. Read existing public price attributes, never
+  infer hidden prices; preserve124cardfacts/defaultALL/otherfilters/media/quote/
+  PDF/appointment/businessdata. Existing smart-search second pass respects bounds.
+- Final backup search-budget-2f667cfb3fc04e8b8a0d200d7068d245, rawsearch3851e819
+ 50e45d2b291989768bb2dd4b189200f085d0cac8c35285fa9c4a920b and guardfac8193d
+ 57daa110b089c531c50f851af99eed71b95582a5adf83a28279150f4. RELEASED plus
+  independentVERIFIED8routes/nativeformSEO/shell/othermain/124facts/protectedstate,
+ 35offer17spam no-dispatch pure checks.50DOM/5transport/real8switch regression pass.
+- Actual1280desktop/320/390CSSmobile HUZH, budget50-80M60 exactmatches,60-70M20,
+  A1two-room13/sort/loadmore/reset124/nooverflow.320ZH native A1-L6 quote/booking
+  opens277x722 within320x740; blank contacts/dateMinOct30/native3time5sources/
+  requireduncheckedprivacy, closes/no send. Existing80%zoom unchanged; capture
+  scale/viewport explicitly compensated. FinalignoredJPGs, no physicaldevice/mail
+  or CWV claim. HU/defaultviewport restoration before handoff.
+- Initial preflight optimized-vs-raw HTML comparison corrected semantically;
+  staging JSONlist/tuple mismatch stopped before rename. First release source-
+  rolled-back after actualZH revealed new observer echo. Final language-state
+  equality guard and true shared-runtime integration test fix it without editing
+  sharedtranslator. Old backup form check crossed midnight: only native dateMin
+  Oct29->30 differs, independent hashes confirm both originals restored then.
+  Details/recovery2026-10-29-search-budget.md. No ad/account/automation/shutdown.
+
 ## 2026-10-27 - Approved Neighborhood Practical Release
 
 - New page3959-only scoped/hash-pinned MU presentation, existing native shell,

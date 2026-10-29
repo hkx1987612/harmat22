@@ -2,6 +2,30 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## October30 Apartment Total Budget Filter - Released
+
+- User approves total-price range and removal of the search hero journal link
+  only. Search1.2.5/cachev15 adds optional minimum/maximum in millionsHUF, public
+  inclusive prices, HU/ZH labels and reversed-bound warning. Existing sqm/status
+  filters/defaultALL,124cards, prices, images, quote/PDF/booking/data unchanged.
+  Legacy smart-search function alone also respects the same bounds.
+- Current backup search-budget-2f667cfb3fc04e8b8a0d200d7068d245; raw searchSHA
+ 3851e81950e45d2b291989768bb2dd4b189200f085d0cac8c35285fa9c4a920b,
+  guardSHAfac8193d57daa110b089c531c50f851af99eed71b95582a5adf83a28279150f4.
+  RELEASED/separateVERIFIED8routes/nativeformSEO/shell/othermains/124publicfacts/
+  protectedstate/35offer17spam,50DOM+5transport+realtranslation8switchtests pass.
+- Actual1280/320/390CSS HUZH/nooverflow,50-80M60matches/60-70M20/reset124/
+  intersections/sort/more pass.320ZH exactA1-1-L6 native blank-contact quote and
+  appointment dialog277x722within320x740, original date/time/source/privacy,
+  openclose/no send. Existing80%zoom retained/viewport compensated, not a physical
+  phone, fullCWV or inbox-delivery certificate. Proofs/backupJSON ignored.
+- Initial staging list/tuple mismatch stopped before rename. Withdrawn first
+  release exposed translation observer feedback in new labels; both ownedfiles
+  source-restored before fix, noDBrestore. Native date min rolloverOct29->30 was
+  the only old-baseline rollback-form difference. Final local budget-language
+  guard updates only on real language changes; sharedtranslator untouched.
+  Recovery/limits:2026-10-29-search-budget.md. No ads/automation/shutdown work.
+
 ## October27 Neighborhood Practical - Released
 
 - User approved publication. Added `zz-harmat-neighborhood-practical.php` and

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Lakáskereső Redesign
  * Description: Clean standalone apartment search page for /lakaskereso/ using Harmat Sales Manager data.
- * Version: 1.2.4
+ * Version: 1.2.5
  */
 
 if (!defined('ABSPATH')) {
@@ -37,12 +37,12 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.4');
+    wp_register_style('harmat-lakas-redesign', false, array(), '1.2.5');
     wp_enqueue_style('harmat-lakas-redesign');
     wp_add_inline_style('harmat-lakas-redesign', harmat_lakas_redesign_css());
 
     if (harmat_lakas_redesign_is_page()) {
-        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.4', true);
+        wp_register_script('harmat-lakas-redesign', false, array(), '1.2.5', true);
         wp_enqueue_script('harmat-lakas-redesign');
         wp_add_inline_script('harmat-lakas-redesign', harmat_lakas_redesign_js());
     }
@@ -58,11 +58,12 @@ add_action('wp_footer', function () {
 
 
 function harmat_lakas_redesign_cache_key() {
-    return 'harmat_lakas_redesign_markup_v14';
+    return 'harmat_lakas_redesign_markup_v15';
 }
 
 function harmat_lakas_redesign_clear_cache() {
     delete_transient(harmat_lakas_redesign_cache_key());
+    delete_transient('harmat_lakas_redesign_markup_v14');
     delete_transient('harmat_lakas_redesign_markup_v13');
     delete_transient('harmat_lakas_redesign_markup_v12');
     delete_transient('harmat_lakas_redesign_markup_v11');
@@ -401,18 +402,6 @@ function harmat_lakas_redesign_render() {
         <div class="hm-lakas-hero">
             <p>Harmat Lakópark</p>
             <h1>Lakáskereső</h1>
-            <a class="hm-lakas-construction-link" href="<?php echo esc_url(home_url('/epitesi-naplo/')); ?>">
-                <svg class="hm-lakas-construction-mark" viewBox="0 0 52 52" width="52" height="52" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 40h40" fill="none" stroke="#a8762d" stroke-width="1.5"/>
-                    <path d="M10 38V14l14-6 14 6v24" fill="#fffaf1" stroke="#253137" stroke-width="1.5" stroke-linejoin="round"/>
-                    <path d="M15 19h6v6h-6zm13 0h6v6h-6zM15 29h6v6h-6z" fill="#d7e5df" stroke="#34766e" stroke-width="1.2"/>
-                    <path d="M25 38v-9h8v9" fill="#e8d2a9" stroke="#a8762d" stroke-width="1.2"/>
-                    <path d="M30 35c0-5 3.6-8.5 8-8.5s8 3.5 8 8.5" fill="#d8a74f" stroke="#80561b" stroke-width="1.4"/>
-                    <path d="M38 27v6m-10 2h20" fill="none" stroke="#80561b" stroke-width="1.4" stroke-linecap="round"/>
-                    <path d="M31 39h14" fill="none" stroke="#253137" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <span class="hm-lakas-construction-label">Építési napló</span>
-            </a>
         </div>
 
         <div class="hm-lakas-toolbar" data-hm-filter data-sqm-active="0">
@@ -474,6 +463,12 @@ function harmat_lakas_redesign_render() {
                 </div>
             </div>
             <button type="button" class="hm-lakas-reset" data-reset>Alaphelyzet</button>
+            <fieldset class="hm-lakas-budget" data-language-protect>
+                <legend data-budget-copy="title">Teljes vételár (millió Ft)</legend>
+                <label><span data-budget-copy="min">Minimum</span><input type="number" min="0" step="any" inputmode="decimal" data-filter="budgetMin" aria-label="Minimum vételár, millió forint"></label>
+                <label><span data-budget-copy="max">Maximum</span><input type="number" min="0" step="any" inputmode="decimal" data-filter="budgetMax" aria-label="Maximum vételár, millió forint"></label>
+                <span class="hm-lakas-budget-error" data-budget-copy="error" data-budget-error role="status" hidden>Az alsó határ nem lehet nagyobb a felsőnél.</span>
+            </fieldset>
         </div>
 
         <div class="hm-lakas-resultbar">
@@ -554,11 +549,6 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 32px;align-items:center;margin-bottom:22px;padding:24px 30px;border:1px solid rgba(168,118,45,.2);background:linear-gradient(135deg,#fffaf1,#f6ead8)}
     .hm-lakas-hero p{grid-column:1;grid-row:1;margin:0;color:#a8762d;font-size:12px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
     .hm-lakas-hero h1{grid-column:1;grid-row:2;margin:0;padding:0!important;color:#253137;font-family:"Marcellus SC",Georgia,serif;font-size:50px;font-weight:400;line-height:.98;letter-spacing:.04em;text-transform:uppercase}
-    .hm-lakas-construction-link{grid-column:2;grid-row:1/3;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;color:#80561b;font-size:12px;font-weight:900;text-decoration:none;text-transform:uppercase;white-space:nowrap}
-    .hm-lakas-construction-mark{display:block;flex:none;width:52px;height:52px}
-    .hm-lakas-construction-label{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 20px;border:1px solid #a8762d;background:#fff}
-    .hm-lakas-construction-link:hover .hm-lakas-construction-label{background:#a8762d;color:#fff}
-    .hm-lakas-construction-link:focus-visible{outline:3px solid #253137;outline-offset:3px}
     .hm-lakas-toolbar{display:grid;grid-template-columns:minmax(180px,1.05fr) repeat(3,minmax(108px,.68fr)) minmax(168px,.9fr) minmax(360px,2fr) auto;gap:14px;align-items:end;margin-bottom:18px;padding:22px;border:1px solid rgba(168,118,45,.2);background:#fffdf8}
     .hm-lakas-tabs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
     .hm-lakas-tabs button,.hm-lakas-reset{min-height:38px;padding:0 18px;border:1px solid rgba(168,118,45,.34);background:#fff;color:#8c621f;font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
@@ -586,6 +576,12 @@ function harmat_lakas_redesign_css() {
     .hm-lakas-range-slider input[type=range]::-webkit-slider-thumb{width:18px;height:18px;margin-top:-7px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer;pointer-events:auto;-webkit-appearance:none;appearance:none}
     .hm-lakas-range-slider input[type=range]::-moz-range-thumb{width:18px;height:18px;border:3px solid #fff;border-radius:999px;background:#a8762d;box-shadow:0 4px 12px rgba(37,49,55,.24);cursor:pointer;pointer-events:auto}
     .hm-lakas-reset{height:46px;background:#4f4c49;color:#d5aa6f;border-color:#4f4c49}
+    body.harmat-lakas-redesign-page .hm-lakas-budget{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,220px));gap:12px;margin:0;padding:12px 0 0;border:0;border-top:1px solid #d7dfda;min-width:0;letter-spacing:0}
+    body.harmat-lakas-redesign-page .hm-lakas-budget legend{float:left;grid-column:1/-1;width:100%;margin:0 0 10px;padding:0;color:#253137;font-size:13px;font-weight:700;line-height:1.5;letter-spacing:0}
+    body.harmat-lakas-redesign-page .hm-lakas-budget label{min-width:0;letter-spacing:0}
+    body.harmat-lakas-redesign-page .hm-lakas-budget input{min-width:0;font-size:16px}
+    body.harmat-lakas-redesign-page .hm-lakas-budget-error{grid-column:1/-1;color:#a02d29;font-size:13px;line-height:1.5}
+    body.harmat-lakas-redesign-page .hm-lakas-budget-error[hidden]{display:none}
     .hm-lakas-resultbar{display:flex;align-items:center;gap:8px;margin:0 0 20px;color:#687078;font-size:14px}
     .hm-lakas-resultbar strong{min-width:44px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:#a8762d;color:#fff}
     .hm-lakas-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
@@ -765,7 +761,24 @@ function harmat_lakas_redesign_js() {
       var empty=page.querySelector("[data-empty]");
       var grid=page.querySelector(".hm-lakas-grid");
       cards.forEach(function(card,index){card.dataset.originalOrder=String(index);});
-      var state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sqmActive:false,sort:""};
+      var state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sqmActive:false,sort:"",budgetMin:"",budgetMax:""};
+      var budgetLanguage=null;
+      var budgetCopy={hu:{title:"Teljes vételár (millió Ft)",min:"Minimum",max:"Maximum",error:"Az alsó határ nem lehet nagyobb a felsőnél.",minLabel:"Minimum vételár, millió forint",maxLabel:"Maximum vételár, millió forint"},zh:{title:"\u623f\u5c4b\u603b\u4ef7\uff08\u767e\u4e07\u798f\u6797\uff09",min:"\u6700\u4f4e\u603b\u4ef7",max:"\u6700\u9ad8\u603b\u4ef7",error:"\u6700\u4f4e\u603b\u4ef7\u4e0d\u80fd\u9ad8\u4e8e\u6700\u9ad8\u603b\u4ef7\u3002",minLabel:"\u6700\u4f4e\u603b\u4ef7\uff0c\u5355\u4f4d\u767e\u4e07\u798f\u6797",maxLabel:"\u6700\u9ad8\u603b\u4ef7\uff0c\u5355\u4f4d\u767e\u4e07\u798f\u6797"}};
+      function syncBudgetLanguage(){
+        var next=document.documentElement.getAttribute("data-harmat-language")==="zh-Hans"?"zh":"hu";
+        if(next===budgetLanguage) return;
+        budgetLanguage=next;
+        var copy=budgetCopy[next];
+        page.querySelectorAll("[data-budget-copy]").forEach(function(node){node.textContent=copy[node.dataset.budgetCopy];});
+        filters.querySelector("[data-filter=budgetMin]").setAttribute("aria-label",copy.minLabel);
+        filters.querySelector("[data-filter=budgetMax]").setAttribute("aria-label",copy.maxLabel);
+      }
+      syncBudgetLanguage();
+      new MutationObserver(syncBudgetLanguage).observe(document.documentElement,{attributes:true,attributeFilter:["data-harmat-language"]});
+      function budgetValue(value){
+        var number=Number(value);
+        return value!==""&&Number.isFinite(number)&&number>=0?Math.round(number*1000000):null;
+      }
       function numberValue(value){
         return parseInt(String(value||"").replace(/[^0-9]/g,""),10)||0;
       }
@@ -874,6 +887,9 @@ function harmat_lakas_redesign_js() {
         var visible=0;
         var minSqm=numberValue(state.sqmMin);
         var maxSqm=numberValue(state.sqmMax);
+        var minBudget=budgetValue(state.budgetMin);
+        var maxBudget=budgetValue(state.budgetMax);
+        filters.querySelector("[data-budget-error]").hidden=!(minBudget!==null&&maxBudget!==null&&minBudget>maxBudget);
         cards.forEach(function(card){
           var sqm=cardSqm(card);
           var priceOk=true;
@@ -885,7 +901,8 @@ function harmat_lakas_redesign_js() {
             (!state.building||card.dataset.building===state.building)&&
             (!state.floor||card.dataset.floor===state.floor)&&
             (!state.rooms||card.dataset.rooms===state.rooms)&&
-            priceOk;
+            priceOk&&((minBudget===null&&maxBudget===null)||(isTotalPriceKnown(card)&&
+              (minBudget===null||cardPrice(card)>=minBudget)&&(maxBudget===null||cardPrice(card)<=maxBudget)));
           card.classList.toggle("is-hidden",!ok);
           if(ok) visible++;
         });
@@ -898,7 +915,7 @@ function harmat_lakas_redesign_js() {
         var status=e.target.closest("[data-status]");
         if(status){state.status=status.dataset.status||"all";apply();return;}
         if(e.target.closest("[data-reset]")){
-          state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sqmActive:false,sort:""};
+          state={status:"all",query:"",building:"",floor:"",rooms:"",sqmMin:"",sqmMax:"",sqmActive:false,sort:"",budgetMin:"",budgetMax:""};
           filters.querySelectorAll("[data-filter]").forEach(function(field){
             if(field.type==="range") return;
             field.value="";

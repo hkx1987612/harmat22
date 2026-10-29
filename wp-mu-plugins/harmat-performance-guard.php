@@ -6197,6 +6197,11 @@ function harmat_perf_lakaskereso_search_patch() {
     var maxSqm = numberValue(selectedValue(toolbar, "sqmMax"));
     var sqmActive = toolbar.dataset.sqmActive === "1";
     var sort = selectedValue(toolbar, "sort");
+    function budgetBound(name) {
+      var value = selectedValue(toolbar, name), number = Number(value);
+      return value !== "" && Number.isFinite(number) && number >= 0 ? Math.round(number * 1000000) : null;
+    }
+    var minBudget = budgetBound("budgetMin"), maxBudget = budgetBound("budgetMax");
     var activeStatus = toolbar.querySelector("button.is-active[data-status]");
     var status = activeStatus ? activeStatus.getAttribute("data-status") : "all";
     var visibleCount = 0;
@@ -6213,7 +6218,9 @@ function harmat_perf_lakaskereso_search_patch() {
         (!floor || card.dataset.floor === floor) &&
         (!rooms || card.dataset.rooms === rooms) &&
         queryMatches(card, query) &&
-        priceOk;
+        priceOk && ((minBudget === null && maxBudget === null) ||
+          (isTotalPriceKnown(card) && (minBudget === null || cardPrice(card) >= minBudget) &&
+            (maxBudget === null || cardPrice(card) <= maxBudget)));
 
       card.classList.remove("is-hidden");
       card.classList.toggle("hm-smart-hidden", !visible);
