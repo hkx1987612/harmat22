@@ -1,0 +1,25 @@
+<?php
+namespace HarmatConstructionFixture;
+if (PHP_SAPI !== 'cli') exit(1);
+$bootstrap = file_get_contents(__DIR__ . '/2026-10-18-test-construction-updates.php');
+$marker = '$registry = harmat_cu_registry();';
+if (substr_count($bootstrap, $marker) !== 1) throw new \RuntimeException('Fixture boundary drift');
+eval(substr($bootstrap, 5, strpos($bootstrap, $marker) - 5));
+$registry = harmat_cu_registry();
+$ready = static function ($file) { return true; };
+$records = harmat_cu_records($registry, '2026-11-03', $ready);
+check(count($records) === 8, 'eight valid records');
+check(array_column(array_slice($records, 0, 2), 'id') === array('2026-10-30', '2026-10-20'), 'site video first');
+check(count(harmat_cu_records($registry, '2026-11-02', $ready)) === 7, 'no pre-publication entries');
+$markup = harmat_cu_journal_markup($records);
+check(substr_count($markup, 'data-hcu-player data-hcu-video=') === 8, 'eight click-only players');
+check($records[0]['file'] === '2026-10-30-harmat-site' && $records[0]['journal_only'] === true, 'only site footage added');
+check(!preg_match('~<(?:video|source|iframe)\b~i', $markup), 'no eager video');
+$graph = harmat_cu_schema(array());
+check($graph[0]['duration'] === 'PT47.6S', 'media duration');
+check($graph[0]['uploadDate'] === '2026-11-03' && $graph[0]['dateCreated'] === '2026-10-30', 'capture and publish dates distinct');
+check(harmat_cu_schema($graph) === $graph, 'schema idempotent');
+$harmat_home_family_units = array();
+$body = include dirname($candidate) . '/harmat-home-family/body.php';
+check(is_string($body) && strpos(harmat_cu_home_teaser($body), '#construction-2026-10-20') !== false, 'homepage keeps October 20');
+echo json_encode(array('status' => 'PASS', 'checks' => $checks)) . PHP_EOL;

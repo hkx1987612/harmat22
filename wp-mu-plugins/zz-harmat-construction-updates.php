@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Construction Updates
  * Description: Removable, read-only construction registry shared by the journal and homepage.
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 defined('ABSPATH') || exit;
 
@@ -54,6 +54,14 @@ function harmat_cu_registry(): array {
         'note' => array(
             'hu' => 'Valódi helyszíni videók és fotók, a felvétel napjának állapotával. Magyar felirat és szintetikus magyar narráció; az eredeti helyszíni hang nélkül.',
             'zh' => '真实现场视频与照片，反映拍摄当日状态。配有匈牙利语字幕和合成旁白，已去除现场原声。'),
+    );
+    $records[] = array(
+        'id' => '2026-10-30', 'date' => '2026-10-30', 'uploaded' => '2026-11-03',
+        'status' => 'published', 'approved' => true, 'journal_only' => true,
+        'file' => '2026-10-30-harmat-site', 'duration' => 47.6,
+        'title' => array('hu' => 'Helyszíni felvétel – 2026. október 30.', 'zh' => '施工现场实拍 · 2026年10月30日'),
+        'summary' => array('hu' => 'Október 30-i körkép a Harmat Lakópark építkezéséről.', 'zh' => '雨露花园10月30日施工现场全景。'),
+        'note' => array('hu' => 'A videó a felvétel napján látható állapotot mutatja, hang nélkül.', 'zh' => '视频记录拍摄当天的施工状态，已去除原声。'),
     );
     return $records;
 }
@@ -162,7 +170,11 @@ function harmat_cu_journal_markup(array $records): string {
 
 // Only replace the exact manifest-pinned old journal fragment, never native form HTML.
 function harmat_cu_home_teaser($html) {
-    if (!is_string($html) || !($records = harmat_cu_records()) || strpos($html, 'data-hcu-home') !== false) return $html;
+    if (!is_string($html) || strpos($html, 'data-hcu-home') !== false) return $html;
+    $records = harmat_cu_records(array_values(array_filter(harmat_cu_registry(), static function ($record) {
+        return empty($record['journal_only']);
+    })));
+    if (!$records) return $html;
     $pattern = '~    <section class="hhf-section hhf-journal"[^>]*>[\s\S]*?    </section>~';
     if (preg_match_all($pattern, $html, $matches, PREG_OFFSET_CAPTURE) !== 1) return $html;
     $old = $matches[0][0][0];
