@@ -121,6 +121,23 @@ final class Harmat_Local_Assistant {
         $lang = $requested_lang ?: $this->detect_language($message);
         $this->track_event('assistant_question', array('lang' => $lang, 'message_len' => strlen($message)));
         $result = $this->answer_message($message, $lang, $request->get_param('selection'));
+        if (($result['event'] ?? '') === 'unknown_question' && function_exists('harmat_openai_ticket')) {
+            $consent = $request->get_param('openai_consent');
+            if (is_string($consent) && $consent !== '') {
+                $topic = harmat_openai_topic($message, $lang, $consent);
+                $faq = array('transport' => 'transport_answer', 'education' => 'education_answer',
+                    'technical' => 'technical_document_summary_answer', 'location' => 'sales_office_visit_answer',
+                    'contact' => 'contact_answer', 'construction' => 'opening_construction_answer');
+                if (is_string($topic) && isset($faq[$topic])) {
+                    $method = $faq[$topic];
+                    $result['answer'] = $this->$method($lang);
+                    $result['event'] = '';
+                    $result['intent'] = $topic;
+                }
+            } elseif ($ticket = harmat_openai_ticket($message, $lang)) {
+                $result['openai_ticket'] = $ticket;
+            }
+        }
         return rest_ensure_response($result);
     }
 
@@ -852,15 +869,39 @@ final class Harmat_Local_Assistant {
             launch.setAttribute('aria-expanded', 'false');
           }
 
-          async function ask(text) {
+          function offerOpenAI(text, ticket, lang) {
+            var notice = document.createElement('div');
+            notice.className = 'harmat-local-ai-msg bot';
+            var copy = document.createElement('p');
+            copy.textContent = lang === 'zh'
+              ? '可将这一条问题发送给 OpenAI 判断类别，不发送聊天历史。OpenAI 可能按其政策保留安全日志。请勿提交姓名、联系方式或其他个人资料。也可继续联系销售。'
+              : 'Ezt az egy kérdést elküldheti az OpenAI-nak témabesorolásra, az előzmények nélkül. Az OpenAI a tájékoztatója szerint biztonsági naplókat tarthat meg. Ne adjon meg nevet, elérhetőséget vagy más személyes adatot. Az értékesítést közvetlenül is keresheti.';
+            var details = document.createElement('a');
+            details.href = 'https://developers.openai.com/api/docs/guides/your-data';
+            details.target = '_blank'; details.rel = 'noopener noreferrer';
+            details.textContent = lang === 'zh' ? 'OpenAI 数据处理说明' : 'OpenAI adatkezelési információk';
+            var send = document.createElement('button');
+            send.type = 'button'; send.className = 'harmat-local-ai-send';
+            send.textContent = lang === 'zh' ? '同意发送这一条问题' : 'Hozzájárulok e kérdés elküldéséhez';
+            send.addEventListener('click', function () {
+              if (asking) return;
+              notice.remove();
+              ask(text, ticket, lang);
+            });
+            notice.append(copy, details, document.createElement('br'), send);
+            body.appendChild(notice);
+            window.setTimeout(function () { body.scrollTop = body.scrollHeight; }, 0);
+          }
+
+          async function ask(text, consent, consentLang) {
             if (!refreshElements() || asking) return;
             asking = true;
-            var requestLang = currentLang;
+            var requestLang = consentLang || currentLang;
             var controller = new AbortController();
             var timeout = window.setTimeout(function () { controller.abort(); }, 15000);
             var waiting = {hu:'Válasz készül...', zh:'正在查询房源...', en:'Checking apartments...'};
             var failed = {hu:'Most nem sikerült válaszolni. Kérjük, próbálja újra, vagy keresse értékesítőnket: +36300733375.', zh:'暂时无法回答，请重试或联系销售：+36300733375。', en:'Unable to respond right now. Please retry or contact sales: +36300733375.'};
-            addMessage('user', text);
+            if (!consent) addMessage('user', text);
             var pending = document.createElement('div');
             pending.className = 'harmat-local-ai-msg bot';
             pending.textContent = waiting[requestLang];
@@ -874,15 +915,16 @@ final class Harmat_Local_Assistant {
                 },
                 credentials: 'same-origin',
                 signal: controller.signal,
-                body: JSON.stringify({ message: text, lang: requestLang, selection: selectionContext })
+                body: JSON.stringify({ message: text, lang: requestLang, selection: consent ? {} : selectionContext, openai_consent: consent || undefined })
               });
               var data = await response.json();
               if (!response.ok || !data.ok) throw new Error('Assistant unavailable');
-              selectionContext = data.selection || {};
+              if (!consent) selectionContext = data.selection || {};
               pending.remove();
               if (data.event) trackEvent(data.event, {intent: data.intent || ''});
               addMessage('bot', data.answer || failed[requestLang], data.cards || [], data.handoff || null, data.actions || []);
               setSuggestions(data.suggestions || []);
+              if (!consent && data.openai_ticket) offerOpenAI(text, data.openai_ticket, requestLang);
             } catch (err) {
               pending.remove();
               addMessage('bot', failed[requestLang]);

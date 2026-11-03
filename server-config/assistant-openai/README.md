@@ -1,0 +1,20 @@
+# Website Assistant OpenAI Pilot
+
+The routing library builds a Responses API request and validates its topic result. It does not register an endpoint, change the website widget, or read any customer data. Run `php server-config/assistant-openai/test-faq-router.php` for the fixture checks. The separate CLI test runners only transmit fixed synthetic questions and do not install or persist the API key.
+
+November 3: the supplied company test key successfully called `gpt-5.4-mini` from both the workstation and the WordPress host. Each run passed six Chinese and six Hungarian cases, including price, offer and appointment exclusion.
+
+The approved HU/ZH pilot is now live. Its only call site is the existing `/ask` callback after `unknown_question`. Consent is bound to the question and language, expires after five minutes, and is single use. A private, locked Budapest-day counter reserves a slot before any API attempt and fails closed at 30. No lead, previous messages, inventory payload, or tools are sent. The local FAQ methods still write the displayed answer; original quote, appointment, and handoff methods are unchanged. The notice asks visitors not to include personal data and discloses OpenAI's possible safety-log retention; the eligibility filter blocks common contact patterns, not every possible identifier.
+
+Private backup: `/home/harmath2/codex-backups/openai-faq-release-e02f8f1ea1564ac0878da0415026a603`. `original.php` is the prior assistant and `candidate-visible-consent.php` is the final deployed assistant (raw SHA256 `abcd38b0dbdecec96a8c72085614f48dae744dce2b2664c6fcd50fc0860c2e02`). `pilot-module.php` is the deployed MU source. The key is outside the public root, separate from source backups, in a 0600 file in a 0700 directory. To disable the pilot, remove the private key from that runtime path; the next request falls back to the original assistant. For source recovery verify the live source matches the exact backed-up candidate, atomically restore only the original assistant and remove only the matching MU module, then purge cache. Do not restore business data or reset quota on redeploy.
+
+Checks: local consent, quota/replay, 18 router, 39 assistant and 70 payment assertions; private real WordPress HTTP calls in HU/ZH and simulated timeout; four public routes and native offer/anti-spam checks; actual browser consent and local FAQ answers in both languages, original quote and appointment flows without submissions. No real visitor conversations used for training or testing. An unauthenticated scripted REST probe received 403; the actual browser flow verified normal behavior without bypassing that restriction.
+
+Use the current WordPress `/ask` path and public apartment provider as the authority. Initial pilot: classify only locally unresolved, non-sensitive FAQ questions and choose one allowlisted local answer. Keep existing deterministic prices, availability, offers, appointments, handoff, forms and event behavior. Never display model-generated prose, prices or URLs in this pilot.
+
+Before expanding the pilot:
+
+1. Test the actual WordPress PHP transport in a private context. Check topic accuracy and latency against the existing local assistant; include English before expanding beyond the Chinese/Hungarian pilot. Keep the model configurable and confirm its account access and pricing.
+2. Configure the key on the server, never in browser code, Git or chat. Verify privacy disclosures, retention settings and what customer text may be transmitted before enabling real traffic. `store: false` is not a zero-data-retention guarantee. Do not send leads, contact details, CRM data or conversation history.
+3. Add server-side spending/request limits, short timeouts and a disabled-by-default rollout flag. Fall back to the existing answer or human contact on failures or unmatched topics. Keep model output restricted to a topic label, with no tools or write permissions.
+4. Validate the native offer/appointment and live public inventory behavior without writing test customer records. Activate only after the isolated live API test and agreed usage limits.
