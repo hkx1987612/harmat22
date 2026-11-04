@@ -21,10 +21,13 @@ function crm_review_render($instance, $method) {
     try { (new ReflectionMethod($instance, $method))->invoke($instance); return ob_get_contents(); }
     finally { ob_end_clean(); }
 }
-function crm_review_forms($html) {
+function crm_review_forms($html, $post_only = false) {
     $doc = new DOMDocument(); @$doc->loadHTML('<?xml encoding="UTF-8">' . $html);
     $forms = array();
-    foreach ($doc->getElementsByTagName('form') as $form) { $forms[] = $doc->saveHTML($form); }
+    foreach ($doc->getElementsByTagName('form') as $form) {
+        if (!$post_only || strtolower($form->getAttribute('method')) === 'post') { $forms[] = $doc->saveHTML($form); }
+    }
+    if ($post_only) { sort($forms); }
     if (!$forms) { throw new RuntimeException('Native forms missing'); }
     return $forms;
 }
@@ -39,6 +42,24 @@ try {
             $b = crm_review_forms(crm_review_render($new, $method));
             if ($a !== $b) { throw new RuntimeException('Native form contract changed: ' . $view); }
             $results[] = array('lang' => $lang, 'view' => $view, 'forms' => count($a), 'unchanged' => true);
+        }
+        if (method_exists($new, 'sort_sales_deals_for_display')) {
+            $_GET['view'] = 'deals';
+            $a = crm_review_forms(crm_review_render($old, 'render_sales_portal_deals'), true);
+            $b = crm_review_forms(crm_review_render($new, 'render_sales_portal_deals'), true);
+            if ($a !== $b) { throw new RuntimeException('Native deal POST forms changed'); }
+            $results[] = array('lang' => $lang, 'view' => 'deals', 'post_forms' => count($a), 'unchanged' => true);
+            $dates = array(current_time('Y-m-d'), date('Y-m-d', strtotime('-1 day', current_time('timestamp'))));
+            $actual = (new ReflectionMethod($new, 'sales_walkin_counts_by_date'))->invoke($new, $dates);
+            $expected = array_fill_keys($dates, 0);
+            $leads = (new ReflectionMethod($old, 'get_leads'))->invoke($old);
+            foreach ($leads as $lead) {
+                $source = (new ReflectionMethod($old, 'lead_source_type'))->invoke($old, $lead);
+                $day = substr((string) ($lead['created_at'] ?? ''), 0, 10);
+                if ($source === 'walkin' && isset($expected[$day])) { $expected[$day]++; }
+            }
+            if ($actual !== $expected) { throw new RuntimeException('Native daily walk-in aggregation mismatch'); }
+            $results[] = array('lang' => $lang, 'walkin_dates_checked' => count($dates), 'aggregation_matches' => true);
         }
         $dashboard = crm_review_render($new, 'render_sales_portal_dashboard');
         $traffic = crm_review_render($new, 'render_sales_portal_traffic');

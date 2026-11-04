@@ -35,7 +35,16 @@ $new = methods_from_source(file_get_contents($root . '/' . $relative));
 $allowed = array('render_sales_portal', 'render_sales_portal_nav', 'sales_portal_allowed_views',
     'render_sales_traffic_strip', 'render_sales_traffic_summary', 'render_sales_portal_dashboard',
     'render_sales_portal_traffic', 'render_sales_portal_inquiry_summary_row',
-    'render_sales_portal_clients', 'sales_portal_css', 'sales_portal_chrome_css');
+    'render_sales_portal_clients', 'sales_portal_css', 'sales_portal_chrome_css', 'sales_portal_warm_css');
+if ($base === 'fec1e2a') {
+    $allowed = array('render_sales_portal', 'sales_portal_warm_css', 'render_sales_traffic_seven_day_table', 'render_sales_traffic_strip', 'render_sales_traffic_summary',
+        'sales_walkin_counts_by_date', 'render_sales_portal_deals', 'sort_sales_deals_for_display',
+        'render_sales_deal_filters', 'sales_deal_filters_from_request', 'sales_deal_filter_query_args');
+} else {
+    $allowed = array_merge($allowed, array('render_sales_traffic_seven_day_table', 'sales_walkin_counts_by_date',
+        'render_sales_portal_deals', 'sort_sales_deals_for_display', 'render_sales_deal_filters',
+        'sales_deal_filters_from_request', 'sales_deal_filter_query_args'));
+}
 $changed = array(); $unchanged = 0;
 foreach (array_unique(array_merge(array_keys($old), array_keys($new))) as $name) {
     if (isset($old[$name], $new[$name]) && $old[$name] === $new[$name]) { $unchanged++; continue; }

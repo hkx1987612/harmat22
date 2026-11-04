@@ -4,6 +4,18 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## November04 CRM Desktop Simplification - Current
 
+- Follow-up CRM1.6.122: warm-gray/sage private portal, larger consistent fonts,
+  daily website/walk-in/total columns, recent-update-first sales-deal display.
+  Legacy follow-up priority remains selectable; no records hidden or rewritten.
+  Total = website + own/walk-in registrations, excluding broker inquiries;
+  walk-ins use original creation date, never later updates or deal copies.
+- Fresh full79-table backup and source-only release verified.142 isolated UI
+  checks,478 unchanged methods, native195 client/321 inquiry/237 deal POST forms
+  identical per language;8 public form/SEO contracts and protected data unchanged.
+- Final warm desktop previews checked at1280/1440. Browser connection then
+  timed out; final narrow-screen screenshot/live visual follow-up and temporary
+  viewport-reset confirmation remain unavailable. Do not claim those passed.
+  Details: maintenance/2026-11-04-crm-warm-followup.md.
 - User prioritizes desktop, fewer distractions and data backup before changes.
 - CRM1.6.121: five primary sales navigation entries, daily visitor table plus
   recent permission-filtered inquiries, direct traffic view, collapsed new-client

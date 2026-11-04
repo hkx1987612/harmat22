@@ -6,6 +6,7 @@ from urllib.parse import urlsplit, parse_qs, urlencode
 from lxml import html
 
 ROOT = Path(__file__).resolve().parents[2] / 'outputs/2026-11-04-crm-review'
+WARM = Path(__file__).resolve().parent / 'previews/2026-11-04-crm-warm.css'
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -14,10 +15,13 @@ class Handler(BaseHTTPRequestHandler):
         role = query.get('demo_role', ['manager'])[0]
         lang = query.get('sales_lang', ['zh'])[0]
         view = query.get('view', ['dashboard'])[0]
-        if role not in ('manager', 'staff') or lang not in ('zh', 'hu') or view not in ('dashboard', 'traffic', 'inquiries', 'clients'):
+        theme = query.get('theme', ['current'])[0]
+        if role not in ('manager', 'staff') or lang not in ('zh', 'hu') or view not in ('dashboard', 'traffic', 'inquiries', 'clients', 'deals', 'properties') or theme not in ('current', 'warm'):
             self.send_error(404, 'This offline preview only includes reviewed views.')
             return
         path = ROOT / f'{role}-{lang}-{view}.html'
+        if view == 'deals' and query.get('deal_order') == ['followup']:
+            path = ROOT / f'{role}-{lang}-deals-followup.html'
         if not path.is_file():
             self.send_error(404)
             return
@@ -28,13 +32,18 @@ class Handler(BaseHTTPRequestHandler):
                 args = {k: v[-1] for k, v in parse_qs(url.query).items()}
                 args.setdefault('sales_lang', lang)
                 args['demo_role'] = role
+                args['theme'] = theme
                 anchor.set('href', '/?' + urlencode(args) + ('#' + url.fragment if url.fragment else ''))
         for form in doc.xpath('//form'):
             form.set('onsubmit', 'return false')
         for style in doc.xpath('//style'):
             style.text = (style.text or '').replace('@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;600;700;800;900&display=swap");', '')
+        if theme == 'warm' and not any('--crm-bg:' in (s.text or '') for s in doc.xpath('//style')):
+            style = html.Element('style', id='crm-warm-preview-only')
+            style.text = WARM.read_text(encoding='utf-8')
+            doc.find('head').append(style)
         notice = html.Element('aside', style='padding:8px 16px;background:#e5eeea;color:#264b3d;font:13px Arial')
-        notice.text = 'OFFLINE DEMO | Synthetic records only | No production connection'
+        notice.text = '离线预览 | 示例数据 | 未上线' if lang == 'zh' else 'Előnézet | Mintaadatok | Nem éles'
         doc.find('body').insert(0, notice)
         body = html.tostring(doc, encoding='utf-8', method='html')
         self.send_response(200)

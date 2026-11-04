@@ -2,6 +2,30 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-04 - CRM Warm Theme, Inquiry Totals And Recent Deals
+
+- User authorized direct warm-theme replacement after the first release, then
+  requested own/walk-in inquiries plus total and reported stale deal display.
+- CRM1.6.122 released: warm-gray/sage surfaces and consistent typography; desktop
+  filter controls have a readable minimum width. Private sales portal only.
+- Daily table adds walk-in registrations and total = website + walk-in, excluding
+  broker inquiries. Original creation date, not update date or deal copies;
+  manager boundary retained. Top metric explicitly says website inquiries.
+- Root cause: legacy sort put oldest overdue deals first. Default now recent
+  update descending, with creation-date/ID fallback and a selectable legacy
+  follow-up order. No record deletion, hiding, stage change or timestamp rewrite.
+- Fresh full79-table backup verified outside web root; source preflight and
+  atomic one-file release pass.142 UI checks,478 unchanged methods,26 appointment,
+ 727 antispam and4 transport cases.195 client/321 inquiry/237 deal POST forms per
+  language byte-identical in native read-only checks; two walk-in dates match.
+- DEPLOYED_VERIFIED:8 public form/SEO contracts and protected records/sources
+  unchanged. No quote/PDF/booking/customer submissions. Source-only rollback.
+- Warm1280/1440 desktop previews inspected. Final browser connection failed,
+  so narrow-screen capture and live visual follow-up are not certified; temporary
+  viewport reset could not be confirmed. Earlier release checks are historical.
+- Recovery, hashes and precise limitations:2026-11-04-crm-warm-followup.md.
+  Customer data/screenshots/backups remain in ignored/private storage only.
+
 ## 2026-11-04 - CRM Backup, Review And Desktop Simplification
 
 - User requests fewer unnecessary modules, daily visitor data instead of stale

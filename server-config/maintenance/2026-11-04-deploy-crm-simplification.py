@@ -80,7 +80,10 @@ def native(r, folder):
 def preflight():
     for filename in ('2026-11-04-test-crm-source-scope.php', '2026-11-04-test-crm-simplification.php',
                      '2026-10-14-test-appointment-integrity.php', '2026-10-15-test-offer-antispam.php'):
-        subprocess.run(['php.cmd', str(HERE / filename)], check=True, cwd=ROOT)
+        command = ['php.cmd', str(HERE / filename)]
+        if filename == '2026-11-04-test-crm-source-scope.php':
+            command.append(BASE)
+        subprocess.run(command, check=True, cwd=ROOT)
     backup = json.loads((OUT / 'backup.json').read_text())
     require(backup['status'] == 'BACKUP_VERIFIED' and backup['transactional_snapshot'], 'Full data backup required')
     r = H.Remote(); locked = False
