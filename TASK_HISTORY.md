@@ -2,6 +2,29 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-04 - Desktop Width, Readability And Live Reconciliation
+
+- User requested larger text and natural full-width desktop layout after the
+  inquiry table screenshot revealed a fixed-width table with unused right space.
+- Fresh79-table backup verified. CRM1.6.123 expands inquiry/read-view layouts;
+ 1.6.124 also fixes client table width and assignment-button wrapping.
+  Body15px, secondary13px, proportional inquiry columns and horizontal search.
+- Only `sales_portal_warm_css` changed;488 other methods identical to1.6.122.
+ 148 isolated checks,26 appointment cases,727 antispam checks and4 transport
+  cases pass. Native POST-form parity passes in both languages.
+- Both atomic releases verified eight public form/SEO contracts and unchanged
+  protected data/sources. An intermediate stale candidate was rejected before
+  any write and replaced with a fresh preflight. No database restores/submissions.
+- Original inquiry rows, client registration dates and seven-day totals agree.
+  Recent-update order is correct. Recent inquiries are not yet converted into
+  deals; no automatic conversions or timestamp changes were performed.
+- Chinese/Hungarian1440 desktop previews,1280 internal scroll and390px overflow
+  checks passed. Saved authenticated desktop screenshots inspected, final DOM
+  checks confirm full-width inquiry/client tables, fonts and retained rows.
+- Temporary viewport reset succeeded. Final duplicate screenshot/cleanup calls
+  were rejected; no further UI retries. Exact audit and private evidence remain
+  in ignored outputs; maintenance/2026-11-04-crm-desktop-readable.md records recovery.
+
 ## 2026-11-04 - CRM Warm Theme, Inquiry Totals And Recent Deals
 
 - User authorized direct warm-theme replacement after the first release, then

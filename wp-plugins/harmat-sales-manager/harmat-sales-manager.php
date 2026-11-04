@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.123
+ * Version: 1.6.124
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.123';
+    const VERSION = '1.6.124';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -18137,7 +18137,12 @@ body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-traffic-strip small
   body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-table td:nth-child(7) :is(button,input[type=submit],.button) {width:80px!important;min-width:80px!important;height:36px!important;border-radius:5px!important;font-size:13px!important;font-weight:600!important;line-height:1.3!important;box-shadow:none!important}
   body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-table .harmat-sales-actions {width:100%!important;max-width:none!important;gap:8px!important}
   body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-table .harmat-sales-actions :is(a,button) {min-height:34px!important;border-radius:5px!important;font-size:13px!important;font-weight:600!important;line-height:1.4!important;box-shadow:none!important}
-  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table td {font-size:15px;line-height:1.5}
+  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table {width:100%!important;max-width:none!important}
+  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table td {font-size:15px!important;line-height:1.5!important}
+  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table td strong {font-size:15px!important;line-height:1.5!important;font-weight:600}
+  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table td small {font-size:13px!important;line-height:1.5!important}
+  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table .harmat-sales-inline-form {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+  body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-table .harmat-sales-inline-form button {min-width:76px;white-space:nowrap;font-size:14px;border-radius:5px;box-shadow:none}
   body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-deal-focus-main small {font-size:14px;line-height:1.5}
 }
 @media(max-width:1180px) {

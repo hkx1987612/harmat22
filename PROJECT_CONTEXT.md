@@ -4,6 +4,20 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## November04 CRM Desktop Simplification - Current
 
+- CRM1.6.124: read-view desktop shells use available width; inquiry/client tables
+  fill their wrappers, body15px/secondary13px, softer rows and larger controls.
+  Inquiry search controls align horizontally. Only private warm-theme CSS changed;
+  quote/PDF/appointment logic and forms remain untouched.148 UI checks pass,
+ 488 other methods unchanged; fresh backup and two guarded source releases verified.
+- Live read-only reconciliation across inquiries, client registration dates and
+  seven-day dashboard totals passed. Recent-update order and legacy order tested;
+  old-looking deals also reflect recent inquiries not yet converted to deals.
+  No automatic conversions, deletions or timestamp rewrites.
+- Desktop Chinese/Hungarian previews and saved live screenshots inspected;
+  narrower tables retain internal scrolling.390px has no page-wide overflow.
+  Viewport reset confirmed. Final duplicate capture/cleanup was rejected after
+  the completed live audit; do not claim those final cleanup calls succeeded.
+  Details: maintenance/2026-11-04-crm-desktop-readable.md.
 - Follow-up CRM1.6.122: warm-gray/sage private portal, larger consistent fonts,
   daily website/walk-in/total columns, recent-update-first sales-deal display.
   Legacy follow-up priority remains selectable; no records hidden or rewritten.
@@ -12,10 +26,9 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Fresh full79-table backup and source-only release verified.142 isolated UI
   checks,478 unchanged methods, native195 client/321 inquiry/237 deal POST forms
   identical per language;8 public form/SEO contracts and protected data unchanged.
-- Final warm desktop previews checked at1280/1440. Browser connection then
-  timed out; final narrow-screen screenshot/live visual follow-up and temporary
-  viewport-reset confirmation remain unavailable. Do not claim those passed.
-  Details: maintenance/2026-11-04-crm-warm-followup.md.
+- Earlier1.6.122 browser follow-up was interrupted; the new read-only checks
+  above supersede that limitation. Historical details remain in
+  maintenance/2026-11-04-crm-warm-followup.md.
 - User prioritizes desktop, fewer distractions and data backup before changes.
 - CRM1.6.121: five primary sales navigation entries, daily visitor table plus
   recent permission-filtered inquiries, direct traffic view, collapsed new-client

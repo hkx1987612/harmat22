@@ -227,6 +227,8 @@ check(strpos($desktop_css, 'td:nth-child(n) {font-size:15px!important') !== fals
 preg_match_all('/nth-child\([1-9]\) \{width:(\d+)%!important\}/', $desktop_css, $column_widths);
 check(count($column_widths[1]) === 9 && array_sum($column_widths[1]) === 100, 'all nine inquiry columns share full width');
 check(strpos($desktop_css, '.harmat-sales-portal-shell:has(') !== false, 'wide shell restricted to read views, not quote or appointment editors');
+check(strpos($desktop_css, '.harmat-sales-client-table {width:100%!important') !== false, 'client table also fills the desktop wrapper');
+check(strpos($desktop_css, '.harmat-sales-client-table td {font-size:15px!important') !== false, 'client font overrides legacy important rule');
 $options['harmat_broker_leads_v1'] = array(301 => array('id' => 301, 'client_name' => 'DEMO EDIT',
     'assigned_sales_id' => 11, 'created_at' => '2026-11-04 10:00:00'));
 foreach (array('manager', 'staff') as $mode) {

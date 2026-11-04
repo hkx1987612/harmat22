@@ -40,7 +40,7 @@ if ($base === 'fec1e2a') {
     $allowed = array('render_sales_portal', 'sales_portal_warm_css', 'render_sales_traffic_seven_day_table', 'render_sales_traffic_strip', 'render_sales_traffic_summary',
         'sales_walkin_counts_by_date', 'render_sales_portal_deals', 'sort_sales_deals_for_display',
         'render_sales_deal_filters', 'sales_deal_filters_from_request', 'sales_deal_filter_query_args');
-} elseif ($base === '1efa6ff') {
+} elseif (in_array($base, array('1efa6ff', '9de98b2'), true)) {
     $allowed = array('sales_portal_warm_css');
 } else {
     $allowed = array_merge($allowed, array('render_sales_traffic_seven_day_table', 'sales_walkin_counts_by_date',

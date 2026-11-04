@@ -7,7 +7,7 @@ HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('crm_readable_transport', HERE / '2026-11-04-deploy-crm-simplification.py')
 M = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(M)
-M.BASE = '1efa6ff'
+M.BASE = '9de98b2'
 M.PATHS = {'crm': M.PATHS['crm']}
 M.PREFIX = M.H.BACKUPS + '/crm-desktop-readable-'
 M.LOCK = M.H.BACKUPS + '/.crm-desktop-readable.lock'
