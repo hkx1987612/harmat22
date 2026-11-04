@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Harmat CRM Bandwidth Widget
- * Description: Shows current-month hosting traffic beside visitor metrics in the private sales CRM.
- * Version: 1.1.0
+ * Description: Manager-only hosting traffic detail in the private CRM traffic overview.
+ * Version: 1.1.1
  */
 
 if (!defined('ABSPATH')) {
@@ -180,15 +180,18 @@ function harmat_crm_bw_widget_markup(string $lang, bool $compact = false): strin
 
 function harmat_crm_bw_filter_sales_html(string $html): string
 {
-    if ($html === '' || strpos($html, 'harmat-sales-portal-body') === false) {
+    $slot = '<div id="harmat-sales-technical-summary"></div>';
+    if ($html === '' || strpos($html, 'harmat-sales-portal-body') === false
+        || strpos($html, $slot) === false || !current_user_can('harmat_manage_sales')) {
         return $html;
     }
 
     $lang = strpos($html, 'data-sales-lang="hu"') !== false ? 'hu' : 'zh';
     $style = <<<'CSS'
 <style id="harmat-crm-bandwidth-style">
-.harmat-sales-traffic-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
-.harmat-sales-traffic-strip{grid-template-columns:repeat(5,minmax(0,1fr)) auto}
+.harmat-crm-technical-details{margin:18px 0}
+.harmat-crm-technical-details>summary{padding:12px 0;cursor:pointer;font-weight:700}
+.harmat-crm-technical-details>article{max-width:440px;padding:16px;border:1px solid #ead8b8;border-radius:8px;background:#fff}
 .harmat-crm-bandwidth-card{position:relative;overflow:hidden}
 .harmat-crm-bandwidth-card em{display:block;margin-top:7px;color:#687178;font-size:11px;font-style:normal;font-weight:800;line-height:1.4}
 .harmat-crm-bandwidth-card .harmat-crm-bandwidth-source.is-delayed{color:#a65313}
@@ -200,25 +203,13 @@ function harmat_crm_bw_filter_sales_html(string $html): string
 .harmat-crm-bandwidth-danger .harmat-crm-bandwidth-progress i{background:#c9362b}
 .harmat-sales-traffic-strip .harmat-crm-bandwidth-danger{border-color:#efb6b1;background:#fff4f3}
 .harmat-sales-traffic-strip .harmat-crm-bandwidth-danger strong{color:#b42318}
-@media(max-width:1000px){
-  .harmat-sales-traffic-grid,.harmat-sales-traffic-strip{grid-template-columns:1fr}
-}
 </style>
 CSS;
 
     $html = str_replace('</head>', $style . '</head>', $html);
-    $html = preg_replace(
-        '~(<div class="harmat-sales-traffic-grid">)~',
-        '$1' . harmat_crm_bw_widget_markup($lang),
-        $html,
-        1
-    );
-    $html = preg_replace(
-        '~(<section class="harmat-sales-traffic-strip">)~',
-        '$1' . harmat_crm_bw_widget_markup($lang, true),
-        $html,
-        1
-    );
+    $title = $lang === 'hu' ? 'Tárhely adatforgalma' : '服务器带宽';
+    $html = str_replace($slot, '<details class="harmat-crm-technical-details"><summary>'
+        . esc_html($title) . '</summary>' . harmat_crm_bw_widget_markup($lang) . '</details>', $html);
 
     return $html;
 }

@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.120
+ * Version: 1.6.121
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.120';
+    const VERSION = '1.6.121';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -7751,25 +7751,26 @@ final class Harmat_Sales_Manager {
         ob_start();
         nocache_headers();
         echo '<!doctype html><html lang="' . esc_attr($this->portal_html_lang($lang)) . '"><head><meta charset="' . esc_attr(get_bloginfo('charset')) . '"><meta name="viewport" content="width=device-width, initial-scale=1">';
-        echo '<meta name="robots" content="noindex,nofollow"><title>' . esc_html($shell_text['title']) . '</title><style>' . $this->sales_portal_css() . '</style></head>';
+        echo '<meta name="robots" content="noindex,nofollow"><title>' . esc_html($shell_text['title']) . '</title><style>' . $this->sales_portal_css() . $this->sales_portal_chrome_css() . '</style></head>';
         echo '<body class="harmat-sales-portal-body" lang="' . esc_attr($this->portal_html_lang($lang)) . '" data-sales-lang="' . esc_attr($lang) . '">';
         echo '<main class="harmat-sales-portal-shell">';
         echo '<header class="harmat-sales-portal-hero">';
-        echo '<div><p class="harmat-sales-eyebrow">Harmat Lakópark</p><h1>' . esc_html($shell_text['h1']) . '</h1><p>' . esc_html($this->is_sales_staff_user() ? $shell_text['hero_staff'] : $shell_text['hero_manager']) . '</p></div>';
+        echo '<div><p class="harmat-sales-eyebrow">Harmat Lakópark</p><h1>' . esc_html($lang === 'hu' ? 'Értékesítés' : '销售管理') . '</h1></div>';
         echo '<div class="harmat-sales-user">' . $this->sales_portal_language_switch($lang) . '<b class="harmat-sales-role-badge">' . esc_html($this->is_sales_staff_user() ? $shell_text['role_staff'] : $shell_text['role_manager']) . '</b><span>' . esc_html($user->display_name ?: $user->user_login) . '</span><a href="' . esc_url(wp_logout_url($this->portal_url_with_lang('sales', $lang))) . '">' . esc_html($shell_text['logout']) . '</a></div>';
         echo '</header>';
         $this->render_sales_portal_nav($view, $shell_text);
-        if ($view !== 'dashboard') {
+        if ($view === 'dashboard') {
             $this->render_sales_traffic_strip($this->is_sales_manager_user());
         }
-        $this->render_sales_staff_scope_notice($shell_text);
 
         if ($notice) {
             echo '<div class="harmat-sales-notice harmat-sales-notice-' . esc_attr($notice_type) . '">' . esc_html($notice) . '</div>';
         }
         $this->render_sales_portal_account_notices();
 
-        if ($view === 'tasks') {
+        if ($view === 'traffic') {
+            $this->render_sales_portal_traffic();
+        } elseif ($view === 'tasks') {
             $this->render_sales_portal_tasks();
         } elseif ($view === 'inquiries') {
             $this->render_sales_portal_inquiries();
@@ -7809,12 +7810,13 @@ final class Harmat_Sales_Manager {
         $text = $text ?: $this->sales_shell_text($this->active_sales_language());
         if ($this->is_sales_staff_user()) {
             $items = $text['nav_staff'];
-            $primary_views = array('dashboard', 'tasks', 'inquiries', 'deals', 'clients', 'properties');
+            $primary_views = array('dashboard', 'inquiries', 'deals', 'clients', 'properties');
         } else {
             $items = $text['nav_manager'];
-            $primary_views = array('dashboard', 'tasks', 'inquiries', 'deals', 'clients', 'properties', 'payments');
+            $primary_views = array('dashboard', 'inquiries', 'deals', 'clients', 'properties');
         }
 
+        $items['traffic'] = $this->active_sales_language() === 'hu' ? 'Weboldal látogatottsága' : '访问概览';
         $allowed_views = $this->sales_portal_allowed_views();
         $items = array_intersect_key($items, array_flip($allowed_views));
         $primary_items = array_intersect_key($items, array_flip($primary_views));
@@ -7827,15 +7829,15 @@ final class Harmat_Sales_Manager {
             echo '<a class="' . ($active === $view ? 'is-active' : '') . '" href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
         }
         if ($more_items) {
-            echo '<details class="harmat-sales-nav-more"' . ($more_active ? ' open' : '') . '><summary class="' . ($more_active ? 'is-active' : '') . '">' . esc_html($text['more']) . '</summary><div>';
+            echo '<details class="harmat-sales-nav-more"><summary class="' . ($more_active ? 'is-active' : '') . '">' . esc_html($text['more']) . '</summary><div>';
             foreach ($more_items as $view => $label) {
                 $url = $view === 'dashboard' ? home_url('/sales/') : $this->sales_portal_url(array('view' => $view));
                 echo '<a class="' . ($active === $view ? 'is-active' : '') . '" href="' . esc_url($url) . '">' . esc_html($label) . '</a>';
             }
+            if ($this->is_sales_manager_user()) {
+                echo '<a href="' . esc_url(home_url('/sales-admin/')) . '" target="_blank" rel="noopener">' . esc_html($text['admin']) . '</a>';
+            }
             echo '</div></details>';
-        }
-        if ($this->is_sales_manager_user()) {
-            echo '<a href="' . esc_url(home_url('/sales-admin/')) . '" target="_blank" rel="noopener">' . esc_html($text['admin']) . '</a>';
         }
         echo '</nav>';
     }
@@ -7855,10 +7857,10 @@ final class Harmat_Sales_Manager {
 
     private function sales_portal_allowed_views() {
         if ($this->is_sales_manager_user()) {
-            return array('dashboard', 'tasks', 'inquiries', 'activity', 'deals', 'commissions', 'payments', 'customers', 'clients', 'brokers', 'properties', 'trash', 'legal', 'links');
+            return array('dashboard', 'traffic', 'tasks', 'inquiries', 'activity', 'deals', 'commissions', 'payments', 'customers', 'clients', 'brokers', 'properties', 'trash', 'legal', 'links');
         }
 
-        return array('dashboard', 'tasks', 'inquiries', 'deals', 'clients', 'customers', 'properties', 'trash');
+        return array('dashboard', 'traffic', 'tasks', 'inquiries', 'deals', 'clients', 'customers', 'properties', 'trash');
     }
 
     private function render_sales_portal_account_notices() {
@@ -7978,7 +7980,7 @@ final class Harmat_Sales_Manager {
         echo '<span><small>今日浏览</small><strong>' . esc_html((string) $stats['today_pageviews']) . '</strong></span>';
         echo '<span><small>近7天浏览</small><strong>' . esc_html((string) $stats['seven_day_pageviews']) . '</strong></span>';
         echo '<span><small>今日询价</small><strong>' . esc_html($today_inquiries === null ? '-' : (string) $today_inquiries) . '</strong></span>';
-        echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'dashboard'))) . '">查看访问概览</a>';
+        echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'traffic'))) . '">查看访问概览</a>';
         echo '</section>';
     }
 
@@ -7986,7 +7988,7 @@ final class Harmat_Sales_Manager {
         $stats = $this->sales_visit_dashboard_stats();
         $today_inquiries = $can_manage ? $this->count_offer_inquiries_on_date(current_time('Y-m-d')) : null;
 
-        echo '<section class="harmat-sales-panel harmat-sales-traffic-panel">';
+        echo '<section id="sales-traffic-overview" class="harmat-sales-panel harmat-sales-traffic-panel">';
         echo '<div class="harmat-sales-panel-head"><div><h2>网站访问概览</h2><p>从同意统计 cookie 的公开页面访问中记录，数据从上线后开始累计。</p></div><a href="' . esc_url(home_url('/')) . '" target="_blank" rel="noopener">打开网站</a></div>';
         echo '<div class="harmat-sales-traffic-grid">';
         echo '<article><small>今日访客</small><strong>' . esc_html((string) $stats['today_visitors']) . '</strong><span>匿名去重</span></article>';
@@ -8544,214 +8546,48 @@ final class Harmat_Sales_Manager {
     }
 
     private function render_sales_portal_dashboard() {
-        $dashboard_text = $this->sales_dashboard_text();
-        $task_text = $this->sales_task_text();
-        $client_text = $this->sales_clients_page_text($this->active_sales_language());
-        $properties = $this->get_properties();
-        $leads = $this->visible_leads($this->get_leads());
-        $sales_users = $this->get_sales_users();
-        $deals = $this->visible_deals($this->get_deals());
-        $tasks = $this->sales_tasks();
-        $can_manage = $this->is_sales_manager_user();
-        $property_counts = array('current' => 0, 'reserved' => 0, 'sold' => 0);
-        foreach ($properties as $property) {
-            $property_counts[$this->sales_status($property->ID)]++;
-        }
+        $lang = $this->active_sales_language();
+        $hu = $lang === 'hu';
+        $fallback = $this->sales_dashboard_text()['fallback'];
+        $inquiry_text = $this->sales_inquiries_page_text($lang);
+        $rows = array_slice($this->sales_inquiry_summary_rows('', '', $lang), 0, 5);
+        $stats = $this->sales_visit_dashboard_stats();
 
-        $task_counts = $this->task_bucket_counts($tasks);
-        $workbench_stats = $this->sales_workbench_stats($tasks);
-        $today_appointments = 0;
-        $unassigned_inquiries = 0;
-        $overdue_payments = 0;
-        foreach ($tasks as $task) {
-            $task_type = (string) ($task['type'] ?? '');
-            $task_title = (string) ($task['title'] ?? '');
-            if (($task['urgency_key'] ?? '') === 'today' && ($task_type === $task_text['type_viewing'] || $task_title === $task_text['tomorrow_viewing'])) {
-                $today_appointments++;
-            }
-        }
-        $today_inquiries = 0;
-        $assigned_without_deal = 0;
-        foreach ($workbench_stats as $stat) {
-            if (($stat['key'] ?? '') === 'today_inquiries') {
-                $today_inquiries = (int) ($stat['value'] ?? 0);
-            } elseif (($stat['key'] ?? '') === 'unassigned_inquiries') {
-                $unassigned_inquiries = (int) ($stat['value'] ?? 0);
-            } elseif (($stat['key'] ?? '') === 'assigned_without_deal') {
-                $assigned_without_deal = (int) ($stat['value'] ?? 0);
-            } elseif (($stat['key'] ?? '') === 'overdue_payments') {
-                $overdue_payments = (int) ($stat['value'] ?? 0);
-            }
-        }
-        if ($can_manage) {
-            $action_title = '主管今日重点';
-            $action_intro = '只显示最容易影响成交的事项：未分配询价、逾期跟进、今日看房和付款提醒。';
-            $action_cards = array(
-                array('label' => '未分配询价', 'value' => $unassigned_inquiries, 'hint' => '尽快分配给销售', 'url' => $this->sales_portal_url(array('view' => 'inquiries')), 'tone' => 'lead'),
-                array('label' => '逾期跟进', 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => '优先补跟，避免客户流失', 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue')), 'tone' => 'danger'),
-                array('label' => '今日看房', 'value' => $today_appointments, 'hint' => '确认时间、钥匙和资料', 'url' => $this->sales_portal_url(array('view' => 'tasks')), 'tone' => 'visit'),
-                array('label' => '付款提醒', 'value' => $overdue_payments, 'hint' => '逾期或未完成付款', 'url' => $this->sales_portal_url(array('view' => 'payments')), 'tone' => 'danger'),
-            );
-        } else {
-            $action_title = '我的今日工作';
-            $action_intro = '只显示当前账号需要处理的事项：今日待办、逾期跟进、今日看房和新询价。';
-            $action_cards = array(
-                array('label' => '今日待办', 'value' => (int) ($task_counts['today'] ?? 0), 'hint' => '今天需要处理的跟进', 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'today')), 'tone' => 'today'),
-                array('label' => '逾期跟进', 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => '优先补跟，避免客户流失', 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue')), 'tone' => 'danger'),
-                array('label' => '今日看房', 'value' => $today_appointments, 'hint' => '确认时间、钥匙和资料', 'url' => $this->sales_portal_url(array('view' => 'tasks')), 'tone' => 'visit'),
-                array('label' => '新询价', 'value' => $today_inquiries, 'hint' => '尽快联系或建立跟单', 'url' => $this->sales_portal_url(array('view' => 'inquiries')), 'tone' => 'lead'),
-            );
-        }
-
-        $dashboard_lang = method_exists($this, 'active_sales_language') ? $this->active_sales_language() : ($this->current_portal_language('sales') === 'hu' ? 'hu' : 'zh');
-        // harmat-dashboard-hu-action-copy-fix
-        if ($dashboard_lang === 'hu') {
-            if ($can_manage) {
-                $action_title = json_decode('"Vezet\u0151i napi f\u00f3kusz"');
-                $action_intro = json_decode('"Csak a legfontosabb kock\u00e1zati pontok: kiosztatlan \u00e9rdekl\u0151d\u00e9sek, lej\u00e1rt k\u00f6vet\u00e9sek, mai megtekint\u00e9sek \u00e9s fizet\u00e9si eml\u00e9keztet\u0151k."');
-                $action_cards = array(
-                    array('label' => json_decode('"Kiosztatlan \u00e9rdekl\u0151d\u00e9sek"'), 'value' => $unassigned_inquiries, 'hint' => json_decode('"Gyors kioszt\u00e1s \u00e9rt\u00e9kes\u00edt\u0151nek"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries')), 'tone' => 'lead'),
-                    array('label' => json_decode('"Lej\u00e1rt k\u00f6vet\u00e9sek"'), 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => json_decode('"Els\u0151k\u00e9nt ezeket \u00e9rdemes p\u00f3tolni"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue')), 'tone' => 'danger'),
-                    array('label' => json_decode('"Mai megtekint\u00e9sek"'), 'value' => $today_appointments, 'hint' => json_decode('"Id\u0151pont, kulcs \u00e9s dokumentum ellen\u0151rz\u00e9se"'), 'url' => $this->sales_portal_url(array('view' => 'tasks')), 'tone' => 'visit'),
-                    array('label' => json_decode('"Fizet\u00e9si eml\u00e9keztet\u0151"'), 'value' => $overdue_payments, 'hint' => json_decode('"Lej\u00e1rt vagy hi\u00e1nyz\u00f3 befizet\u00e9s"'), 'url' => $this->sales_portal_url(array('view' => 'payments')), 'tone' => 'danger'),
-                );
-            } else {
-                $action_title = json_decode('"Napi munkafeladatok"');
-                $action_intro = json_decode('"A saj\u00e1t \u00fcgyf\u00e9lk\u00f6vet\u00e9sek, mai id\u0151pontok \u00e9s \u00faj \u00e9rdekl\u0151d\u00e9sek r\u00f6vid \u00e1ttekint\u00e9se."');
-                $action_cards = array(
-                    array('label' => json_decode('"Mai teend\u0151k"'), 'value' => (int) ($task_counts['today'] ?? 0), 'hint' => json_decode('"Ma kezelend\u0151 k\u00f6vet\u00e9sek"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'today')), 'tone' => 'today'),
-                    array('label' => json_decode('"Lej\u00e1rt k\u00f6vet\u00e9sek"'), 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => json_decode('"Els\u0151k\u00e9nt ezeket \u00e9rdemes p\u00f3tolni"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue')), 'tone' => 'danger'),
-                    array('label' => json_decode('"Mai megtekint\u00e9sek"'), 'value' => $today_appointments, 'hint' => json_decode('"Id\u0151pont \u00e9s dokumentum ellen\u0151rz\u00e9se"'), 'url' => $this->sales_portal_url(array('view' => 'tasks')), 'tone' => 'visit'),
-                    array('label' => json_decode('"\u00daj \u00e9rdekl\u0151d\u00e9sek"'), 'value' => $today_inquiries, 'hint' => json_decode('"Gyors kapcsolatfelv\u00e9tel"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries')), 'tone' => 'lead'),
-                );
-            }
-        }
-
-        // Dashboard appointment board and payment reminder widgets are hidden from overview.
-
-        if ($dashboard_lang === 'hu') {
-            $linkage_cards = $can_manage ? array(
-                array('step' => '01', 'label' => json_decode('"Kiosztatlan \u00e9rdekl\u0151d\u00e9sek"'), 'value' => $unassigned_inquiries, 'hint' => json_decode('"Felel\u0151st kell kiosztani"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries'))),
-                array('step' => '02', 'label' => json_decode('"Kiosztva, \u00fcgy n\u00e9lk\u00fcl"'), 'value' => $assigned_without_deal, 'hint' => json_decode('"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcggy\u00e9 alak\u00edt\u00e1s"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries'))),
-                array('step' => '03', 'label' => json_decode('"Lej\u00e1rt k\u00f6vet\u00e9sek"'), 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => json_decode('"K\u00f6vet\u00e9si rekordok p\u00f3tl\u00e1sa els\u0151k\u00e9nt"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue'))),
-                array('step' => '04', 'label' => json_decode('"Fizet\u00e9si eml\u00e9keztet\u0151"'), 'value' => $overdue_payments, 'hint' => json_decode('"Befizet\u00e9sek \u00e9s r\u00e9szletek ellen\u0151rz\u00e9se"'), 'url' => $this->sales_portal_url(array('view' => 'payments'))),
-            ) : array(
-                array('step' => '01', 'label' => json_decode('"Mai teend\u0151k"'), 'value' => (int) ($task_counts['today'] ?? 0), 'hint' => json_decode('"Mai \u00fcgyfelek kezel\u00e9se"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'today'))),
-                array('step' => '02', 'label' => json_decode('"Lej\u00e1rt k\u00f6vet\u00e9sek"'), 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => json_decode('"K\u00f6vet\u00e9si rekordok p\u00f3tl\u00e1sa els\u0151k\u00e9nt"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue'))),
-                array('step' => '03', 'label' => json_decode('"\u00daj \u00e9rdekl\u0151d\u00e9sek"'), 'value' => $today_inquiries, 'hint' => json_decode('"Gyors kapcsolatfelv\u00e9tel vagy \u00fcgy l\u00e9trehoz\u00e1sa"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries'))),
-                array('step' => '04', 'label' => json_decode('"Saj\u00e1t \u00fcgyek"'), 'value' => count($deals), 'hint' => json_decode('"\u00dcgyf\u00e9lk\u00f6vet\u00e9s megnyit\u00e1sa"'), 'url' => $this->sales_portal_url(array('view' => 'deals'))),
-            );
-        } else {
-            $linkage_cards = $can_manage ? array(
-                array('step' => '01', 'label' => json_decode('"\u672a\u6307\u6d3e\u8be2\u4ef7"'), 'value' => $unassigned_inquiries, 'hint' => json_decode('"\u5148\u5206\u914d\u8d1f\u8d23\u4eba"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries'))),
-                array('step' => '02', 'label' => json_decode('"\u5df2\u6307\u6d3e\u672a\u8ddf\u5355"'), 'value' => $assigned_without_deal, 'hint' => json_decode('"\u8f6c\u6210\u9500\u552e\u8ddf\u5355"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries'))),
-                array('step' => '03', 'label' => json_decode('"\u903e\u671f\u8ddf\u8fdb"'), 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => json_decode('"\u4f18\u5148\u8865\u8ddf\u8fdb\u8bb0\u5f55"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue'))),
-                array('step' => '04', 'label' => json_decode('"\u4ed8\u6b3e\u63d0\u9192"'), 'value' => $overdue_payments, 'hint' => json_decode('"\u6838\u5bf9\u5230\u8d26\u548c\u5206\u671f"'), 'url' => $this->sales_portal_url(array('view' => 'payments'))),
-            ) : array(
-                array('step' => '01', 'label' => json_decode('"\u4eca\u65e5\u5f85\u529e"'), 'value' => (int) ($task_counts['today'] ?? 0), 'hint' => json_decode('"\u5904\u7406\u4eca\u5929\u5ba2\u6237\u4e8b\u9879"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'today'))),
-                array('step' => '02', 'label' => json_decode('"\u903e\u671f\u8ddf\u8fdb"'), 'value' => (int) ($task_counts['overdue'] ?? 0), 'hint' => json_decode('"\u4f18\u5148\u8865\u8ddf\u8fdb\u8bb0\u5f55"'), 'url' => $this->sales_portal_url(array('view' => 'tasks', 'task_status' => 'overdue'))),
-                array('step' => '03', 'label' => json_decode('"\u65b0\u8be2\u4ef7"'), 'value' => $today_inquiries, 'hint' => json_decode('"\u5feb\u901f\u8054\u7cfb\u5ba2\u6237"'), 'url' => $this->sales_portal_url(array('view' => 'inquiries'))),
-                array('step' => '04', 'label' => json_decode('"\u6211\u7684\u8ddf\u5355"'), 'value' => count($deals), 'hint' => json_decode('"\u6253\u5f00\u5ba2\u6237\u8ddf\u8fdb"'), 'url' => $this->sales_portal_url(array('view' => 'deals'))),
-            );
-        }
-        $fold_open_label = $dashboard_lang === 'hu' ? json_decode('"Megnyitva"') : json_decode('"\u5df2\u5c55\u5f00"');
-        $linkage_title = $dashboard_lang === 'hu' ? json_decode('"Adatkapcsolat: \u00c9rdekl\u0151d\u00e9sek -> \u00dcgy -> Fizet\u00e9s"') : json_decode('"\u6570\u636e\u8054\u52a8\uff1a\u8be2\u4ef7 -> \u8ddf\u5355 -> \u4ed8\u6b3e"');
-        echo '<details class="harmat-sales-dashboard-fold harmat-sales-linkage-fold"><summary><span>' . esc_html($linkage_title) . '</span><b>' . esc_html($fold_open_label) . '</b></summary>';
-        echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact harmat-sales-workbench-kpis harmat-sales-linkage-kpis">';
-        foreach ($linkage_cards as $card) {
-            echo '<article><small>' . esc_html($card['step'] . ' - ' . $card['label']) . '</small><strong><a href="' . esc_url($card['url']) . '">' . esc_html((string) $card['value']) . '</a></strong><span>' . esc_html($card['hint']) . '</span></article>';
-        }
+        echo '<section class="harmat-sales-overview-lists">';
+        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><h2>' . esc_html($hu ? 'Napi látogatottság' : '每日访问') . '</h2><a href="' . esc_url($this->sales_portal_url(array('view' => 'traffic'))) . '">' . esc_html($hu ? 'Részletek' : '访问详情') . '</a></div>';
+        echo '<p>' . esc_html($hu ? 'Csak a statisztikai sütikhez hozzájáruló látogatások; nem a teljes webhelyforgalom.' : '仅统计同意统计 Cookie 的访问，不代表全站总流量。') . '</p>';
+        $this->render_sales_traffic_seven_day_table(array_reverse($stats['daily']), $this->is_sales_manager_user());
         echo '</section>';
-        $this->render_sales_funnel_panel($deals, $leads);
-        echo '</details>';
+        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><h2>' . esc_html($hu ? 'Legújabb érdeklődések' : '最近询价') . '</h2><a href="' . esc_url($this->sales_portal_url(array('view' => 'inquiries'))) . '">' . esc_html($hu ? 'Összes érdeklődés' : '全部询价') . '</a></div>';
+        if (!$rows) {
+            echo '<div class="harmat-sales-empty">' . esc_html($hu ? 'Nincs megjeleníthető érdeklődés.' : '暂无可查看的询价。') . '</div>';
+        } else {
+            echo '<div class="harmat-sales-dashboard-list">';
+            foreach ($rows as $row) {
+                $url = $this->sales_portal_url(array('view' => 'inquiries')) . '#inquiry-' . $row['kind'] . '-' . (int) $row['id'];
+                $contact = trim(($row['phone'] ?: '-') . ' · ' . ($row['email'] ?: '-'), ' ·');
+                echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($url) . '"><header><strong>' . esc_html($row['client'] ?: $fallback['unnamed']) . '</strong><span>' . esc_html($row['date']) . '</span></header><p>' . esc_html($row['property'] ?: $inquiry_text['row']['no_property']) . '</p><small>' . esc_html($contact) . '</small></a>';
+            }
+            echo '</div>';
+        }
+        echo '</section></section>';
+    }
 
-        $more_metrics_title = $dashboard_lang === 'hu' ? json_decode('"R\u00e9szletes mutat\u00f3k"') : json_decode('"\u66f4\u591a\u8be6\u7ec6\u6307\u6807"');
-        $report_title = $dashboard_lang === 'hu' ? json_decode('"Riportelemz\u00e9s"') : json_decode('"\u62a5\u8868\u5206\u6790"');
-        echo '<details class="harmat-sales-dashboard-fold"><summary><span>' . esc_html($report_title) . '</span><b>' . esc_html($fold_open_label) . '</b></summary>';
+    private function render_sales_portal_traffic() {
+        $can_manage = $this->is_sales_manager_user();
+        $this->render_sales_traffic_summary($can_manage);
+        if (!$can_manage) {
+            return;
+        }
+
+        $hu = $this->active_sales_language() === 'hu';
+        echo '<details class="harmat-sales-report-details"><summary>' . esc_html($hu ? 'Értékesítési riportok' : '销售报表') . '</summary>';
+        $deals = $this->visible_deals($this->get_deals());
+        $leads = $this->visible_leads($this->get_leads());
         $this->render_sales_conversion_metrics($deals, $leads);
         $this->render_sales_performance_dashboard($deals, $leads);
-        $this->render_sales_traffic_summary($can_manage);
         echo '</details>';
-
-        $overview_panel_texts = json_decode('{"zh":{"tasks_title":"\u9700\u8981\u5904\u7406\u7684\u4e8b\u9879","tasks_intro":"\u6700\u8fd1\u548c\u5df2\u7ecf\u903e\u671f\u7684\u9500\u552e\u4efb\u52a1\u3002","view_all":"\u67e5\u770b\u5168\u90e8","tasks_empty":"\u6682\u65e0\u9700\u8981\u5904\u7406\u7684\u4e8b\u9879\u3002","inquiries_title":"\u6700\u65b0\u8be2\u4ef7","inquiries_intro":"\u4ece\u516c\u5f00\u8868\u5355\u8fdb\u5165\u7684\u65b0\u5ba2\u6237\u3002","inquiries_empty":"\u6682\u65e0\u65b0\u7f51\u7ad9\u8be2\u4ef7\u3002","scope_title":"\u6211\u7684\u9500\u552e\u8303\u56f4","scope_intro":"\u53ea\u663e\u793a\u5f53\u524d\u8d26\u53f7\u81ea\u5df1\u7684\u5ba2\u6237\u3001\u8ddf\u8fdb\u548c\u5df2\u5206\u914d\u8be2\u4ef7\u3002","scope_link":"\u65b0\u589e\u8ddf\u5355","more_title":"\u66f4\u591a\u5ba2\u6237\u548c\u8ddf\u5355\u5217\u8868","more_open":"\u5c55\u5f00","deals_title":"\u9500\u552e\u8ddf\u5355","deals_intro":"\u8ddf\u8fdb\u9636\u6bb5\u3001\u91d1\u989d\u548c\u4e0b\u4e00\u6b65\u52a8\u4f5c\u3002","deals_empty":"\u6682\u65e0\u9500\u552e\u8ddf\u5355\u3002","clients_title":"\u5ba2\u6237\u4fdd\u62a4","clients_intro":"\u6700\u65b0\u767b\u8bb0\u5ba2\u6237\u548c\u4fdd\u62a4\u671f\u3002","clients_empty":"\u6682\u65e0\u5ba2\u6237\u8ddf\u8fdb\u8bb0\u5f55\u3002"},"hu":{"tasks_title":"Kezelend\u0151 feladatok","tasks_intro":"A legk\u00f6zelebbi \u00e9s lej\u00e1rt \u00e9rt\u00e9kes\u00edt\u00e9si feladatok.","view_all":"\u00d6sszes megtekint\u00e9se","tasks_empty":"Nincs kezelend\u0151 feladat.","inquiries_title":"Leg\u00fajabb \u00e9rdekl\u0151d\u00e9sek","inquiries_intro":"Nyilv\u00e1nos \u0171rlapr\u00f3l \u00e9rkezett \u00faj \u00fcgyfelek.","inquiries_empty":"Nincs \u00faj weboldali \u00e9rdekl\u0151d\u00e9s.","scope_title":"Saj\u00e1t \u00e9rt\u00e9kes\u00edt\u00e9si k\u00f6r","scope_intro":"Csak a saj\u00e1t \u00fcgyfelek, k\u00f6vet\u00e9sek \u00e9s kiosztott \u00e9rdekl\u0151d\u00e9sek jelennek meg.","scope_link":"\u00daj \u00fcgy r\u00f6gz\u00edt\u00e9se","more_title":"Tov\u00e1bbi \u00fcgyfelek \u00e9s \u00fcgyek","more_open":"Megnyit\u00e1s","deals_title":"\u00c9rt\u00e9kes\u00edt\u00e9si \u00fcgyek","deals_intro":"F\u00e1zis, \u00f6sszeg \u00e9s k\u00f6vetkez\u0151 l\u00e9p\u00e9s.","deals_empty":"M\u00e9g nincs \u00e9rt\u00e9kes\u00edt\u00e9si \u00fcgy.","clients_title":"\u00dcgyf\u00e9lv\u00e9delem","clients_intro":"Leg\u00fajabb r\u00f6gz\u00edtett \u00fcgyfelek \u00e9s v\u00e9delmi id\u0151szak.","clients_empty":"M\u00e9g nincs \u00fcgyf\u00e9lk\u00f6vet\u00e9si rekord."}}', true);
-        $overview_panel_text = $overview_panel_texts[$dashboard_lang] ?? $overview_panel_texts['zh'];
-
-        echo '<section class="harmat-sales-split">';
-        echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($overview_panel_text['tasks_title']) . '</h2><p>' . esc_html($overview_panel_text['tasks_intro']) . '</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'tasks'))) . '">' . esc_html($overview_panel_text['view_all']) . '</a></div>';
-        if (!$tasks) {
-            echo '<div class="harmat-sales-empty">' . esc_html($overview_panel_text['tasks_empty']) . '</div>';
-        } else {
-            echo '<div class="harmat-sales-dashboard-list">';
-            foreach (array_slice($tasks, 0, 5) as $task) {
-                $task_context = trim(($task['client'] ?: $task_text['no_client']) . ' · ' . ($task['property'] ?: $task_text['no_property']), ' ·');
-                echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($task['url']) . '"><header><strong>' . esc_html($task['title']) . '</strong><span class="harmat-sales-pill harmat-sales-task-' . esc_attr($task['urgency_key']) . '">' . esc_html($task['urgency']) . '</span></header><p>' . esc_html($task_context) . '</p><small>' . esc_html($task['date']) . ' · ' . esc_html($task['type']) . '</small></a>';
-            }
-            echo '</div>';
-        }
-        echo '</div>';
-
-        if ($can_manage) {
-            echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($overview_panel_text['inquiries_title']) . '</h2><p>' . esc_html($overview_panel_text['inquiries_intro']) . '</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'inquiries'))) . '">' . esc_html($overview_panel_text['view_all']) . '</a></div>';
-            $inquiries = $this->get_offer_inquiry_posts(5);
-            if (!$inquiries) {
-                echo '<div class="harmat-sales-empty">' . esc_html($overview_panel_text['inquiries_empty']) . '</div>';
-            } else {
-                echo '<div class="harmat-sales-dashboard-list">';
-                foreach ($inquiries as $inquiry) {
-                    $data = $this->offer_inquiry_data($inquiry->ID);
-                    $contact = trim(($data['phone'] ?: '-') . ' · ' . ($data['email'] ?: '-'), ' ·');
-                    echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($this->sales_portal_url(array('view' => 'inquiries'))) . '"><header><strong>' . esc_html($data['name'] ?: $dashboard_text['fallback']['unnamed']) . '</strong><span>' . esc_html(get_the_date('Y-m-d H:i', $inquiry->ID)) . '</span></header><p>' . esc_html($data['apartment'] ?: $dashboard_text['fallback']['unassigned']) . '</p><small>' . esc_html($contact) . '</small></a>';
-                }
-                echo '</div>';
-            }
-        } else {
-            echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($overview_panel_text['scope_title']) . '</h2><p>' . esc_html($overview_panel_text['scope_intro']) . '</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'deals'))) . '">' . esc_html($overview_panel_text['scope_link']) . '</a></div>';
-            $scope_cards = $dashboard_lang === 'hu'
-                ? json_decode('[["Potenci\\u00e1lis \\u00fcgyfelek","Saj\\u00e1t kezel\\u00e9s"],["Saj\\u00e1t \\u00fcgyek","Vezet\\u0151i j\\u00f3v\\u00e1hagy\\u00e1sig"],["Lez\\u00e1rt \\u00fcgyfelek","Ut\\u00f3k\\u00f6vet\\u00e9s"],["\\u00c1r / fizet\\u00e9s / szerz\\u0151d\\u00e9s","Csak olvas\\u00e1s vagy vezet\\u0151 kezeli"]]', true)
-                : json_decode('[["\\u6f5c\\u5728\\u5ba2\\u6237","\\u81ea\\u5df1\\u7ef4\\u62a4"],["\\u6211\\u7684\\u8ddf\\u5355","\\u4e3b\\u7ba1\\u786e\\u8ba4\\u524d"],["\\u6210\\u4ea4\\u5ba2\\u6237","\\u552e\\u540e\\u7ef4\\u62a4"],["\\u4ef7\\u683c / \\u4ed8\\u6b3e / \\u5408\\u540c","\\u53ea\\u8bfb\\u6216\\u4e3b\\u7ba1\\u5904\\u7406"]]', true);
-            echo '<div class="harmat-sales-rule-list">';
-            foreach ($scope_cards as $scope_card) {
-                echo '<span><strong>' . esc_html($scope_card[0]) . '</strong><b>' . esc_html($scope_card[1]) . '</b></span>';
-            }
-            echo '</div>';
-        }
-        echo '</div></section>';
-
-        echo '<details class="harmat-sales-dashboard-fold"><summary><span>' . esc_html($overview_panel_text['more_title']) . '</span><b>' . esc_html($overview_panel_text['more_open']) . '</b></summary>';
-        echo '<section class="harmat-sales-split">';
-        echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($overview_panel_text['deals_title']) . '</h2><p>' . esc_html($overview_panel_text['deals_intro']) . '</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'deals'))) . '">' . esc_html($overview_panel_text['view_all']) . '</a></div>';
-        if (!$deals) {
-            echo '<div class="harmat-sales-empty">' . esc_html($overview_panel_text['deals_empty']) . '</div>';
-        } else {
-            echo '<div class="harmat-sales-dashboard-list">';
-            foreach (array_slice(array_values($deals), 0, 5) as $deal) {
-                $stage_options = $this->deal_stage_options($dashboard_lang);
-                $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
-                $deal_url = $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) ($deal['id'] ?? 0)));
-                $deal_property = $deal['property_id'] ? $this->sales_display_value(get_the_title((int) $deal['property_id']), $dashboard_lang) : $dashboard_text['fallback']['unassigned'];
-                $deal_next = !empty($deal['next_step']) ? $this->sales_deal_next_step_label($deal['next_step'], $dashboard_lang) : $this->format_followup_datetime($deal['next_followup'] ?? '');
-                echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($deal_url) . '"><header><strong>' . esc_html($deal['client_name'] ?: $dashboard_text['fallback']['unnamed']) . '</strong><span class="harmat-sales-pill harmat-sales-deal-' . esc_attr($stage) . '">' . esc_html($stage_options[$stage]) . '</span></header><p>' . esc_html($deal_property) . '</p><small>' . esc_html($deal_next ?: $dashboard_text['fallback']['not_set']) . '</small></a>';
-            }
-            echo '</div>';
-        }
-        echo '</div>';
-
-        echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($overview_panel_text['clients_title']) . '</h2><p>' . esc_html($overview_panel_text['clients_intro']) . '</p></div><a href="' . esc_url($this->sales_portal_url(array('view' => 'clients'))) . '">' . esc_html($overview_panel_text['view_all']) . '</a></div>';
-        if (!$leads) {
-            echo '<div class="harmat-sales-empty">' . esc_html($overview_panel_text['clients_empty']) . '</div>';
-        } else {
-            echo '<div class="harmat-sales-dashboard-list">';
-            foreach (array_slice($leads, 0, 5) as $lead) {
-                $status_options = $this->lead_status_options($dashboard_lang);
-                $status = isset($status_options[$lead['status']]) ? $lead['status'] : 'new';
-                $days_left = $this->lead_protection_days_left($lead);
-                $lead_url = $this->sales_portal_url(array('view' => 'clients', 'edit_lead' => (int) ($lead['id'] ?? 0)));
-                $lead_property = $lead['property_id'] ? $this->sales_display_value(get_the_title((int) $lead['property_id']), $dashboard_lang) : $dashboard_text['fallback']['unassigned'];
-                echo '<a class="harmat-sales-dashboard-item" href="' . esc_url($lead_url) . '"><header><strong>' . esc_html($lead['client_name'] ?: $dashboard_text['fallback']['unnamed']) . '</strong><span class="harmat-sales-pill">' . esc_html($status_options[$status]) . '</span></header><p>' . esc_html($lead_property) . '</p><small>' . esc_html($days_left > 0 ? $client_text['row'][1] . $days_left . $client_text['row'][2] : $client_text['row'][3]) . '</small></a>';
-            }
-            echo '</div>';
-        }
-        echo '</section></section></details>';
+        echo '<div id="harmat-sales-technical-summary"></div>';
     }
 
     private function sales_inquiries_page_text($lang = null) {
@@ -8957,7 +8793,7 @@ final class Harmat_Sales_Manager {
             $assignment_label = $row_text['assigned_prefix'] . $this->assigned_sales_label($assigned_sales_id);
         }
 
-        echo '<tr>';
+        echo '<tr id="inquiry-' . esc_attr($kind) . '-' . $id . '">';
         echo '<td><span class="harmat-sales-pill harmat-sales-source-' . esc_attr($source) . '">' . esc_html($row['source_label'] ?? '-') . '</span><small>' . esc_html(($kind === 'website' ? $row_text['website_form'] : $row_text['client_file']) . $id) . '</small>';
         if ($source === 'broker' && !empty($row['broker_label'])) {
             echo '<small>' . esc_html($row_text['broker_prefix'] . $row['broker_label']) . '</small>';
@@ -11849,6 +11685,7 @@ final class Harmat_Sales_Manager {
         echo '<article><small>' . esc_html($text['kpis'][4]) . '</small><strong>' . (int) $status_counts['closed'] . '</strong></article>';
         echo '</section>';
 
+        echo '<details class="harmat-sales-client-editor"' . ($form['id'] || isset($_GET['lead_error']) ? ' open' : '') . '><summary>' . esc_html($form['id'] ? $text['form'][0] : $text['form'][1]) . '</summary>';
         echo '<section class="harmat-sales-split harmat-sales-client-workspace"><div class="harmat-sales-panel">';
         echo '<div class="harmat-sales-panel-head"><div><h2>' . esc_html($form['id'] ? $text['form'][0] : $text['form'][1]) . '</h2><p>' . esc_html($text['form'][2]) . '</p></div></div>';
         echo '<form method="post" class="harmat-sales-form" data-harmat-property-warning-form>';
@@ -11894,6 +11731,7 @@ final class Harmat_Sales_Manager {
         echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['rules'][0]) . '</h2><p>' . esc_html($text['rules'][1]) . '</p></div></div>';
         echo '<div class="harmat-sales-rule-list"><span><strong>' . esc_html($text['rules'][2]) . '</strong><b>' . esc_html((string) self::LEAD_PROTECTION_DAYS . ' ' . $text['rules'][3]) . '</b></span><span><strong>' . esc_html($text['rules'][4]) . '</strong><b>' . esc_html($text['rules'][5]) . '</b></span><span><strong>' . esc_html($text['rules'][6]) . '</strong><b>' . esc_html($text['rules'][7]) . '</b></span><span><strong>' . esc_html($text['rules'][8]) . '</strong><b>' . esc_html($can_manage ? $text['rules'][9] : $text['rules'][10]) . '</b></span></div></div></section>';
 
+        echo '</details>';
         echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['list'][0]) . '</h2><p>' . esc_html($text['list'][1]) . '</p></div></div>';
         if (!$leads) { echo '<div class="harmat-sales-empty">' . esc_html($text['list'][2]) . '</div></section>'; return; }
         echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-client-table"><thead><tr>';
@@ -18126,9 +17964,71 @@ final class Harmat_Sales_Manager {
 JS;
     }
 
+    private function sales_portal_chrome_css() {
+        return '
+        body.harmat-sales-portal-body{background:#f4f6f6;font-family:Arial,"Microsoft YaHei",sans-serif;font-size:14px}
+        .harmat-sales-portal-shell{padding-top:18px}
+        .harmat-sales-portal-hero{padding:14px 20px;border-radius:8px;background:#fff;border-color:#dbe2e1;box-shadow:none}
+        .harmat-sales-portal-hero h1{font:700 24px/1.3 Arial,"Microsoft YaHei",sans-serif}
+        .harmat-sales-portal-hero .harmat-sales-eyebrow{margin:0 0 4px;color:#42685d;letter-spacing:0;font-size:12px}
+        .harmat-sales-user{flex-wrap:wrap;border:0;border-radius:0;padding:0;gap:12px}
+        .harmat-sales-nav{gap:8px;border-radius:8px;border-color:#dbe2e1;box-shadow:none}
+        .harmat-sales-panel{border-radius:8px;border-color:#dbe2e1;box-shadow:none}
+        .harmat-sales-panel h2{font:700 20px/1.35 Arial,"Microsoft YaHei",sans-serif;letter-spacing:0}
+        .harmat-sales-panel-head p{font-size:14px;line-height:1.6}
+        .harmat-sales-kpis article{border-radius:8px;border-color:#dbe2e1;box-shadow:none;background:#fff}
+        .harmat-sales-kpis small{font-size:13px;color:#4f655e;letter-spacing:0}
+        .harmat-sales-nav>a,.harmat-sales-nav-more>summary{min-height:40px;padding:10px 16px;border-radius:6px;font-size:14px;letter-spacing:0}
+        .harmat-sales-nav>a.is-active,.harmat-sales-nav-more>summary.is-active{background:#285a4b;color:#fff;border-color:#285a4b}
+        .harmat-sales-nav-more>div{z-index:20;max-height:65vh;overflow:auto}
+        .harmat-sales-client-editor{margin:0 0 18px}
+        .harmat-sales-client-editor>summary{width:fit-content;padding:10px 16px;background:#fff;border:1px solid #cad6d2;border-radius:6px;font-size:14px;font-weight:700;color:#285a4b;cursor:pointer}
+        .harmat-sales-client-editor[open]>summary{margin-bottom:12px}
+        .harmat-sales-overview-lists>.harmat-sales-panel,.harmat-sales-traffic-panel{border-color:#dbe2e1;border-radius:8px;box-shadow:none;background:#fff;padding:20px}
+        .harmat-sales-overview-lists h2,.harmat-sales-traffic-panel h2{font:700 20px/1.35 Arial,"Microsoft YaHei",sans-serif;letter-spacing:0}
+        .harmat-sales-overview-lists p,.harmat-sales-traffic-panel p{font-size:14px;line-height:1.6}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item{background:#fff;border:0;border-bottom:1px solid #e0e6e4;border-radius:0;box-shadow:none;padding:12px 0}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item:last-child{border-bottom:0}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item:hover{transform:none;background:#f4f8f6}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item strong{font-size:15px}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item small{font-size:13px}
+        .harmat-sales-overview-lists a,.harmat-sales-traffic-panel a{color:#285a4b}
+        .harmat-sales-traffic-strip{border-color:#dbe2e1;border-radius:8px;box-shadow:none}
+        .harmat-sales-traffic-strip span{border:0;background:#f3f6f5;border-radius:4px}
+        .harmat-sales-traffic-strip small{color:#4f655e;letter-spacing:0;font-size:13px}
+        .harmat-sales-traffic-strip a{background:#285a4b;border-radius:6px;font-size:14px}
+        .harmat-sales-traffic-day-table th{font-size:13px;letter-spacing:0;background:#edf2f0;color:#42685d}
+        .harmat-sales-traffic-day-table td{border-color:#e0e6e4;font-size:14px}
+        .harmat-sales-traffic-day-table td small{font-size:12px}
+        .harmat-sales-traffic-day-table{border-radius:6px;border-color:#dbe2e1}
+        @media(max-width:800px){
+          .harmat-sales-overview-lists{grid-template-columns:1fr}
+          .harmat-sales-portal-hero{align-items:flex-start;padding:14px;gap:12px}
+          .harmat-sales-overview-lists>.harmat-sales-panel{padding:14px}
+          .harmat-sales-traffic-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+          .harmat-sales-traffic-strip a{grid-column:1/-1}
+          .harmat-sales-traffic-strip span{padding:8px;flex-wrap:wrap}
+          .harmat-sales-nav{position:relative}
+          .harmat-sales-nav-more{position:static}
+          .harmat-sales-nav-more>div{width:auto;max-width:none;left:8px;right:8px;top:calc(100% + 4px)}
+        }';
+    }
+
     private function sales_portal_css() {
         return '
         @import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;600;700;800;900&display=swap");
+        .harmat-sales-overview-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+        .harmat-sales-overview-lists>.harmat-sales-panel{min-width:0;margin:0}
+        .harmat-sales-overview-lists .harmat-sales-panel-head{flex-wrap:wrap}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item{overflow-wrap:anywhere}
+        .harmat-sales-overview-lists .harmat-sales-dashboard-item header{flex-wrap:wrap}
+        .harmat-sales-overview-lists .harmat-sales-traffic-days{padding:0;border:0;background:transparent}
+        .harmat-sales-overview-lists .harmat-sales-traffic-day-table table{min-width:0}
+        .harmat-sales-overview-lists .harmat-sales-traffic-day-table td,.harmat-sales-overview-lists .harmat-sales-traffic-day-table th{padding:10px 8px}
+        .harmat-sales-report-details{margin:18px 0}
+        .harmat-sales-report-details>summary{padding:12px 0;cursor:pointer;font-weight:700}
+        .harmat-sales-inquiry-table tr:target{outline:2px solid #386b59;outline-offset:-2px;background:#edf6f1}
+        @media(max-width:800px){.harmat-sales-overview-lists{grid-template-columns:1fr}}
         *{box-sizing:border-box}body.harmat-sales-portal-body{margin:0;background:#fbf4e7;color:#253137;font-family:Montserrat,Arial,"Microsoft YaHei",sans-serif}
         .harmat-sales-portal-shell{width:min(1500px,calc(100% - 32px));margin:0 auto;padding:28px 0 44px}
         .harmat-sales-portal-hero{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:14px;padding:26px 30px;border:1px solid #ead8b8;border-radius:22px;background:linear-gradient(135deg,#fffaf1,#fff);box-shadow:0 18px 45px rgba(70,54,28,.08)}

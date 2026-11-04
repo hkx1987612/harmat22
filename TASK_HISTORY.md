@@ -2,6 +2,31 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-04 - CRM Backup, Review And Desktop Simplification
+
+- User requests fewer unnecessary modules, daily visitor data instead of stale
+  overdue tasks, single-click visitor overview, desktop priority and backup first.
+- Full79-table InnoDB snapshot and CRM/private-material archive retained outside
+  web root; modes/checksums/schema-count/archive checks pass. No restore drill.
+- CRM1.6.121 and bandwidth1.1.1 deployed after private native preflight. Five core
+  nav items, direct traffic page, daily table/latest inquiries, client form folded
+  unless editing/error, compact consistent typography and narrow More-menu fix.
+- Kept task/payment/commission/legal/audit/trash/account functionality under More;
+  no business data deletion, public quote/PDF/appointment changes or reminder edits.
+-475 methods identical;94 synthetic UI checks,26 appointment cases,727 antispam
+  checks,4 mocked release/recovery scenarios. Native comparison retains195 client
+  and321 inquiry forms per language. Read-only transaction, no customer submission.
+- First staging attempt refused list-vs-tuple metadata mismatch before live
+  rename. Fixed transport input type without loosening protections. Final release
+  validates8 public native-form/SEO contracts and protected options/posts/postmeta/
+  unrelated source hashes. Source-only recovery, never database rollback.
+- Actual browser validates direct traffic, latest daily data, collapsed client
+  editor, original fields and HU/ZH switching. Desktop1440/1280 and narrow390/320
+  synthetic previews inspected. Live screenshot timed out; proof image is marked
+  synthetic. Default viewport/Chinese restored; original user tab untouched.
+- Detailed review, limits, exact live pins and rollback locations recorded in
+  server-config/maintenance/2026-11-04-crm-review.md. Outputs/raw data ignored.
+
 ## 2026-10-30 - Hide Search Result-Count Reminder
 
 - Search1.2.6/cachev16 only hides count badge/label, retains internal counter and

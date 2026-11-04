@@ -2,6 +2,25 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November04 CRM Desktop Simplification - Current
+
+- User prioritizes desktop, fewer distractions and data backup before changes.
+- CRM1.6.121: five primary sales navigation entries, daily visitor table plus
+  recent permission-filtered inquiries, direct traffic view, collapsed new-client
+  form with editing/error auto-open. Consistent Chinese/Hungarian chrome.
+- Old tasks and low-frequency modules remain in More; no records deleted and no
+  task reminders disabled. Bandwidth1.1.1 is manager-only optional technical detail.
+- Full79-table transactional backup plus private source/material archive verified
+  outside the web root. No restore drill. Raw backup/customer data stay private.
+- Release verified eight public form/SEO contracts and unchanged protected data
+  and unrelated sources.475 core methods byte-identical,94 UI checks,26 appointment
+  cases,727 antispam checks,4 offline release scenarios. Native forms identical.
+- Desktop/narrow previews and live authenticated link/form/language checks pass;
+  live screenshot capture unavailable, final screenshot uses synthetic fixtures.
+- Next work: client lookup/filtering and terminology, then task-rule review;
+  concurrency/auth/provisioning findings require a separate safety-tested batch.
+  Details and source-only recovery: maintenance/2026-11-04-crm-review.md.
+
 ## October30 Search Result Count Hidden - Current
 
 - User removes prominent count badge/result label. Search1.2.6/cachev16 adds
