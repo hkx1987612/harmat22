@@ -127,7 +127,7 @@ final class Harmat_Local_Assistant {
                 $topic = harmat_openai_topic($message, $lang, $consent);
                 $faq = array('transport' => 'transport_answer', 'education' => 'education_answer',
                     'technical' => 'technical_document_summary_answer', 'location' => 'sales_office_visit_answer',
-                    'contact' => 'contact_answer', 'construction' => 'opening_construction_answer');
+                    'contact' => 'contact_answer', 'construction' => 'construction_progress_answer');
                 if (is_string($topic) && isset($faq[$topic])) {
                     $method = $faq[$topic];
                     $result['answer'] = $this->$method($lang);
@@ -1136,6 +1136,11 @@ final class Harmat_Local_Assistant {
             );
         }
 
+        $context_faq = $this->context_faq_answer($normalized, $lang, $intent, $filters);
+        if ($context_faq !== null) {
+            return $this->response($context_faq, array(), $lang);
+        }
+
         if ($this->is_sales_office_request($normalized)) {
             return $this->response(
                 $this->sales_office_visit_answer($lang),
@@ -1392,6 +1397,51 @@ final class Harmat_Local_Assistant {
 
     private function is_transport_question($text) {
         return $this->has_any($text, array('kozlekedes', 'busz', 'autobusz', 'jarat', 'megallo', 'bkk', 'budapestgo', 'transport', 'bus', 'public transport', 'bus route', 'bus stop', '交通', '公交', '公交车', '巴士', '线路', '几路', '车站'));
+    }
+
+    private function context_faq_answer($text, $lang, $intent, $filters) {
+        $named_park = $this->has_any($text, array('ohegy park', 'ohegy 公园'));
+        $park_distinction = $named_park && $this->has_any($text, array('自己的花园', '小区内部', 'sajat kert', 'belso udvar'));
+        if (!in_array($lang, array('hu', 'zh'), true)
+            || in_array($intent, array('availability', 'floorplan', 'payment', 'loan', 'subsidy', 'discount', 'legal', 'handover'), true)
+            || array_filter(array_intersect_key($filters, array_flip(array('rooms', 'budget', 'area', 'area_min', 'area_max', 'building', 'floor', 'terrace', 'cheap'))))
+            || $this->is_available_list_request($text)
+            || preg_match('/\b(?:ar|ara|arak|arat|vetelar|mennyibe|huf|ft)\b|多少钱|价格|价钱|金额|总价|单价|预算/u', $text)
+            || $this->has_any($text, array('bemutatoiroda', 'ertekesitesi iroda', '销售办公室', '售楼处', '销售中心', '推荐房源', 'lakasokat ajanl', 'lakast keres'))
+            || ((!empty($filters['garden']) || !empty($filters['ground_floor'])) && !$park_distinction)
+            || $this->is_payment_schedule_question($text) || $this->is_tax_vat_question($text)) return null;
+
+        if ($this->has_any($text, array('施工进度', '施工进展', '施工现在进展', '工程进展', '工程进度', '工地视频', '施工日志',
+                'hol tart az epitkezes', 'hol tart most az epitkezes', 'epitkezes allasa', 'epitesi naplo', 'friss helyszini video', 'epitesi video'))) {
+            return $this->construction_progress_answer($lang);
+        }
+        if ($this->has_any($text, array('医院', '药店', '药房', '诊所', '医疗', 'korhaz', 'gyogyszertar', 'patika', 'rendelo'))) {
+            return $this->by_lang($lang,
+                'A környékoldal szerint a Bajcsy-Zsilinszky Kórház és rendelőintézet kb. 1,7 km-re van légvonalban. A környéken gyógyszertárak és rendelők is vannak; indulás előtt ellenőrizze a címet és a nyitvatartást.',
+                '官网周边页列出的 Bajcsy-Zsilinszky 医院及门诊，直线距离约 1.7 公里。周边也有药房和诊所，出发前请确认地址和开放时间。', '');
+        }
+        if ($this->has_any($text, array('地铁站', '地铁', '火车站', '铁路站', 'metro', 'vasutallomas', 'vasutmegallo'))) {
+            return $this->by_lang($lang,
+                'A környékoldalon szereplő közlekedési pontok: Kőbánya alsó vasútállomás (kb. 1,2 km), Örs vezér tere (metró, HÉV, villamos és busz, kb. 2 km) és Kőbánya-Kispest (M3 és vasút, kb. 2,5 km). Ezek légvonalbeli távolságok; az útvonalat és a menetrendet a BudapestGO-ban ellenőrizze.',
+                '官网列出三个交通点：Kőbánya alsó 火车站约 1.2 公里，Örs vezér tere（地铁、郊铁、电车、公交）约 2 公里，Kőbánya-Kispest（M3 地铁和火车）约 2.5 公里。以上是直线距离，实际路线和班次请查 BudapestGO。', '');
+        }
+        if ($this->has_any($text, array('商场', '买东西', '购物', 'bevasarol', 'bevasarl'))) {
+            return $this->by_lang($lang,
+                'A környékoldal három bevásárlóközpontot emel ki: ÁRKÁD Budapest (kb. 1,9 km), Sugár Üzletközpont (kb. 2,1 km) és KÖKI Terminál (kb. 2,6 km). A távolságok légvonalban értendők, az útvonal ettől eltérhet.',
+                '官网周边页列有 ÁRKÁD Budapest（约 1.9 公里）、Sugár 商场（约 2.1 公里）和 KÖKI Terminál（约 2.6 公里）。这些是直线距离，实际出行路线可能更长。', '');
+        }
+        if ($named_park || $this->has_any($text, array('散步的公园', '附近有公园', 'hol lehet setalni', 'setalni a kozelben'))) {
+            return $this->by_lang($lang,
+                'Az Óhegy park közpark, nem a lakópark saját kertje. A környékoldal szerint kb. 600 m-re van légvonalban. A lakópark tervezett belső zöld udvara ettől különálló.',
+                'Óhegy park 是附近的公共公园，不是小区内部花园。按官网周边页，直线距离约 600 米。项目规划的内部绿化庭院与它是两处不同的空间。', '');
+        }
+        if ($this->has_any($text, array('不开车', '没有车怎么出门', 'auto nelkul', 'kocsi nelkul'))) {
+            return $this->transport_answer($lang);
+        }
+        if ($this->has_any($text, array('技术说明', '项目技术资料'))) {
+            return $this->technical_document_summary_answer($lang);
+        }
+        return null;
     }
 
     private function is_education_question($text) {
@@ -1659,7 +1709,9 @@ final class Harmat_Local_Assistant {
         $hu = $this->u('A Harmat Lak\u00f3park m\u0171szaki tartalm\u00e1nak f\u0151 pontjai: 1105 Budapest, Harmat utca 22.; tervezett energetikai besorol\u00e1s: A; korszer\u0171 VRF leveg\u0151-v\u00edz h\u0151szivatty\u00fas f\u0171t\u00e9s-h\u0171t\u00e9s; a nappalikban, h\u00e1l\u00f3szob\u00e1kban \u00e9s \u00e9tkez\u0151kben mennyezeti fel\u00fcletf\u0171t\u00e9s-fel\u00fcleth\u0171t\u00e9s; a f\u00fcrd\u0151kben, k\u00f6zleked\u0151kben \u00e9s konyh\u00e1kban padl\u00f3f\u0171t\u00e9s; a lak\u00e1sokba nincs g\u00e1z bevezetve; h\u00e1romr\u00e9teg\u0171 h\u0151szigetel\u0151 \u00fcvegez\u00e9s\u0171 Rehau SYNEGO 80 ny\u00edl\u00e1sz\u00e1r\u00f3k; DELTA SPECIAL70 biztons\u00e1gi bej\u00e1rati ajt\u00f3; lak\u00f3szob\u00e1kban lamin\u00e1lt parketta, vizes helyis\u00e9gekben ker\u00e1mia burkolat; k\u00f6zponti haszn\u00e1lati melegv\u00edz \u00e9s egyedi fogyaszt\u00e1sm\u00e9r\u00e9s; kaputelefon, RJ45 el\u0151k\u00e9sz\u00edt\u00e9s; l\u00e9pcs\u0151h\u00e1zank\u00e9nt 1 db g\u00e9ph\u00e1z n\u00e9lk\u00fcli, ellens\u00falyos, 630 kg teherb\u00edr\u00e1s\u00fa szem\u00e9lyfelvon\u00f3; teremgar\u00e1zs- \u00e9s t\u00e1rol\u00f3lehet\u0151s\u00e9g. A teljes m\u0171szaki le\u00edr\u00e1s PDF-ben: ') . $url . $this->u(' A dokumentum t\u00e1j\u00e9koztat\u00f3 jelleg\u0171; a kiv\u00e1lasztott lak\u00e1s v\u00e9gleges m\u0171szaki \u00e9s szerz\u0151d\u00e9ses felt\u00e9teleit az \u00e9rt\u00e9kes\u00edt\u00e9s \u00e9s a szerz\u0151d\u00e9s r\u00f6gz\u00edti.');
         $en = 'Main technical points for Harmat Lakopark: 1105 Budapest, Harmat utca 22.; planned energy class: A; modern VRF air-to-water heat-pump heating and cooling; ceiling surface heating/cooling in living rooms, bedrooms and dining areas; underfloor heating in bathrooms, corridors and kitchens; no gas connection inside the apartments; Rehau SYNEGO 80 windows with triple insulating glazing; DELTA SPECIAL70 security entrance door; laminate flooring in living rooms and ceramic tiles in wet rooms; central domestic hot water with individual metering; intercom and RJ45 preparation; one machine-room-less, counterweighted 630 kg passenger elevator per staircase; and garage/storage options. Full Hungarian technical PDF: ' . $url . ' The document is informative; final technical and contractual terms are confirmed by sales and the contract for the selected apartment.';
 
-        return $this->by_lang($lang, $hu, $hu, $en);
+        $zh = '项目规划采用热泵供暖和制冷，并配有地下车库及储藏室。完整的匈牙利语技术说明：' . $url
+            . '。具体房源的交付标准及配置，以销售团队确认和正式合同为准。';
+        return $this->by_lang($lang, $hu, $zh, $en);
     }
 
     private function technical_document_answer($lang) {
@@ -1757,6 +1809,19 @@ final class Harmat_Local_Assistant {
             '重要项目节点：2026年6月12日奠基仪式和正式开盘，同时开放销售办公室并展示项目模型/沙盘。第一期预计交付时间为 2028 年第二季度。',
             'Key project milestones: June 12, 2026 foundation-stone ceremony and official sales opening, sales office opening and project model presentation. Expected phase I handover is currently 2028 Q2.'
         );
+    }
+
+    private function construction_progress_answer($lang) {
+        $records = function_exists('harmat_cu_records') ? harmat_cu_records() : array();
+        $entry = $records[0] ?? array();
+        $id = $entry['id'] ?? '';
+        $title = $entry['title'][$lang] ?? ($entry['title']['hu'] ?? '');
+        $url = home_url('/epitesi-naplo/');
+        if (!is_string($id) || !preg_match('/\A\d{4}-\d{2}-\d{2}(?:-site-\d{2})?\z/D', $id) || !is_string($title) || $title === '') {
+            return $this->by_lang($lang, 'A nyilvános építési beszámolókat itt találja: ', '施工公开记录请查看：', 'See the public construction journal: ') . $url;
+        }
+        return $this->by_lang($lang, 'A napló legfrissebb helyszíni bejegyzése: ', '施工日志最近一条现场记录：', 'Latest published site update: ')
+            . $title . "\n" . $url . '#construction-' . $id;
     }
 
     private function handoff_payload($type, $lang, $filters = array(), $profile = array()) {
