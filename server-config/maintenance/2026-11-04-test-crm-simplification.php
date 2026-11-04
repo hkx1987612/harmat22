@@ -221,6 +221,12 @@ check(call_crm('sort_sales_deals_for_display', array()) === array(), 'empty sort
 $style_fixture = preg_replace('~^/\*.*?\*/\s*~s', '', file_get_contents(__DIR__ . '/previews/2026-11-04-crm-warm.css'));
 check(trim(call_crm('sales_portal_warm_css')) === trim($style_fixture), 'preview CSS exactly matches embedded private CRM CSS');
 check(strpos(call_crm('sales_portal_warm_css'), 'body.harmat-sales-portal-body[data-sales-lang]') !== false, 'theme scoped to private sales shell');
+$desktop_css = explode('@media(max-width:1180px)', explode('@media(min-width:1181px)', $style_fixture)[1])[0];
+check(strpos($desktop_css, 'width:100%!important;min-width:1320px!important') !== false, 'desktop inquiry table fills wrapper without squeezing controls');
+check(strpos($desktop_css, 'td:nth-child(n) {font-size:15px!important') !== false, 'desktop inquiry body is readable');
+preg_match_all('/nth-child\([1-9]\) \{width:(\d+)%!important\}/', $desktop_css, $column_widths);
+check(count($column_widths[1]) === 9 && array_sum($column_widths[1]) === 100, 'all nine inquiry columns share full width');
+check(strpos($desktop_css, '.harmat-sales-portal-shell:has(') !== false, 'wide shell restricted to read views, not quote or appointment editors');
 $options['harmat_broker_leads_v1'] = array(301 => array('id' => 301, 'client_name' => 'DEMO EDIT',
     'assigned_sales_id' => 11, 'created_at' => '2026-11-04 10:00:00'));
 foreach (array('manager', 'staff') as $mode) {
