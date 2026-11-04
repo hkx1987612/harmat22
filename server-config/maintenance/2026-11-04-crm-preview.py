@@ -16,12 +16,16 @@ class Handler(BaseHTTPRequestHandler):
         lang = query.get('sales_lang', ['zh'])[0]
         view = query.get('view', ['dashboard'])[0]
         theme = query.get('theme', ['current'])[0]
-        if role not in ('manager', 'staff') or lang not in ('zh', 'hu') or view not in ('dashboard', 'traffic', 'inquiries', 'clients', 'deals', 'properties') or theme not in ('current', 'warm'):
+        if role not in ('manager', 'staff') or lang not in ('zh', 'hu') or view not in ('dashboard', 'traffic', 'inquiries', 'clients', 'deals', 'properties', 'tasks') or theme not in ('current', 'warm'):
             self.send_error(404, 'This offline preview only includes reviewed views.')
             return
         path = ROOT / f'{role}-{lang}-{view}.html'
         if view == 'deals' and query.get('deal_order') == ['followup']:
             path = ROOT / f'{role}-{lang}-deals-followup.html'
+        if view == 'tasks' and query.get('task_scope') == ['automatic']:
+            path = ROOT / f'{role}-{lang}-tasks-automatic.html'
+        if view == 'clients' and query.get('client_q') == ['36301234567']:
+            path = ROOT / f'{role}-{lang}-clients-filtered.html'
         if not path.is_file():
             self.send_error(404)
             return
@@ -35,7 +39,13 @@ class Handler(BaseHTTPRequestHandler):
                 args['theme'] = theme
                 anchor.set('href', '/?' + urlencode(args) + ('#' + url.fragment if url.fragment else ''))
         for form in doc.xpath('//form'):
-            form.set('onsubmit', 'return false')
+            if form.get('method', '').lower() == 'get':
+                form.set('action', '/')
+                for key, value in (('demo_role', role), ('theme', theme), ('sales_lang', lang)):
+                    if not form.xpath(f'.//input[@name="{key}"]'):
+                        form.append(html.Element('input', type='hidden', name=key, value=value))
+            else:
+                form.set('onsubmit', 'return false')
         for style in doc.xpath('//style'):
             style.text = (style.text or '').replace('@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Source+Sans+3:wght@400;600;700;800;900&display=swap");', '')
         if theme == 'warm' and not any('--crm-bg:' in (s.text or '') for s in doc.xpath('//style')):

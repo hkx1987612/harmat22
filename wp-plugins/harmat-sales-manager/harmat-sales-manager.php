@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.124
+ * Version: 1.6.125
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.124';
+    const VERSION = '1.6.125';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -8626,6 +8626,73 @@ final class Harmat_Sales_Manager {
         return $texts[$lang] ?? $texts['zh'];
     }
 
+    private function sales_contact_review_text() {
+        return $this->active_sales_language() === 'hu' ? array(
+            'progress' => 'Ügyfélállapot', 'unrecorded' => 'Nincs rögzített kapcsolatfelvétel',
+            'converted' => 'Értékesítési ügy létrehozva', 'mail' => 'Értesítő e-mail',
+            'sent' => 'Elküldve', 'failed' => 'Sikertelen', 'pending' => 'Függőben', 'unknown' => 'Nincs visszaigazolás',
+            'all_status' => 'Minden állapot', 'owner' => 'Értékesítő', 'all_owners' => 'Minden értékesítő',
+            'unassigned' => 'Nincs kijelölve', 'search' => 'Név, telefon vagy e-mail', 'filter' => 'Szűrés', 'reset' => 'Törlés',
+            'more' => 'Továbbiak', 'note' => 'Teljes üzenet',
+            'duplicate' => 'Egyező telefonszám vagy e-mail. Ellenőrizze a meglévő ügyféladatokat.',
+            'deal' => 'Értékesítési ügy', 'lead' => 'Ügyféladatlap', 'inquiry' => 'Webes érdeklődés',
+            'scheduled' => 'Rögzített határidők', 'automatic' => 'Rendszerjavaslatok',
+            'suggested_date' => 'Számított dátum', 'suggested' => 'Javaslat, nem rögzített határidő',
+        ) : array(
+            'progress' => '客户进展', 'unrecorded' => '联系进度未记录', 'converted' => '已生成跟单', 'mail' => '通知邮件',
+            'sent' => '已发送', 'failed' => '发送失败', 'pending' => '待发送', 'unknown' => '暂无发送确认',
+            'all_status' => '全部进展', 'owner' => '跟进销售', 'all_owners' => '全部销售', 'unassigned' => '未指派',
+            'search' => '姓名、电话或邮箱', 'filter' => '筛选', 'reset' => '清除', 'more' => '更多', 'note' => '完整留言',
+            'duplicate' => '发现相同电话或邮箱，请核对已有客户记录。', 'deal' => '销售跟单', 'lead' => '客户档案', 'inquiry' => '网站询价',
+            'scheduled' => '已登记日期', 'automatic' => '系统建议', 'suggested_date' => '推算日期', 'suggested' => '系统建议，非约定期限',
+        );
+    }
+
+    private function sales_contact_filters($prefix, $statuses) {
+        $status = isset($_GET[$prefix . '_status']) ? sanitize_key(wp_unslash($_GET[$prefix . '_status'])) : '';
+        $owner = isset($_GET[$prefix . '_owner']) ? sanitize_text_field(wp_unslash($_GET[$prefix . '_owner'])) : '';
+        return array(
+            'q' => isset($_GET[$prefix . '_q']) ? sanitize_text_field(wp_unslash($_GET[$prefix . '_q'])) : '',
+            'status' => isset($statuses[$status]) ? $status : '',
+            'owner' => $owner !== '' && ctype_digit($owner) ? (string) absint($owner) : '',
+        );
+    }
+
+    private function filter_sales_contact_rows($rows, $filters) {
+        $query = $this->normalize_sales_filter_text($filters['q'] ?? '');
+        return array_filter($rows, function($row) use ($filters, $query) {
+            if (($filters['owner'] ?? '') !== '' && (int) ($row['assigned_sales_id'] ?? 0) !== (int) $filters['owner']) { return false; }
+            if (($filters['status'] ?? '') !== '' && ($row['progress'] ?? $row['status'] ?? '') !== $filters['status']) { return false; }
+            if ($query === '') { return true; }
+            $haystack = $this->normalize_sales_filter_text(implode(' ', array($row['client_name'] ?? $row['client'] ?? '', $row['phone'] ?? '', $row['email'] ?? '')));
+            if (strpos($haystack, $query) !== false) { return true; }
+            $digits = preg_replace('/\D+/', '', $query);
+            return strlen($digits) >= 7 && preg_match('/^[\d\s+().-]+$/', $query) && strpos(preg_replace('/\D+/', '', (string) ($row['phone'] ?? '')), $digits) !== false;
+        });
+    }
+
+    private function render_sales_contact_filter_selects($prefix, $filters, $statuses, $rows) {
+        $text = $this->sales_contact_review_text();
+        echo '<select name="' . esc_attr($prefix . '_status') . '" aria-label="' . esc_attr($text['progress']) . '"><option value="">' . esc_html($text['all_status']) . '</option>';
+        foreach ($statuses as $value => $label) { echo '<option value="' . esc_attr($value) . '"' . selected($filters['status'], $value, false) . '>' . esc_html($label) . '</option>'; }
+        echo '</select><select name="' . esc_attr($prefix . '_owner') . '" aria-label="' . esc_attr($text['owner']) . '"><option value="">' . esc_html($text['all_owners']) . '</option>';
+        $owners = array(0 => $text['unassigned']);
+        foreach ($rows as $row) {
+            $id = (int) ($row['assigned_sales_id'] ?? 0);
+            if ($id) { $owners[$id] = $this->assigned_sales_label($id); }
+        }
+        foreach ($owners as $value => $label) { echo '<option value="' . $value . '"' . selected($filters['owner'], (string) $value, false) . '>' . esc_html($label) . '</option>'; }
+        echo '</select>';
+    }
+
+    private function render_sales_compact_note($note) {
+        $note = trim((string) $note);
+        preg_match('/^(.{0,90})(.*)$/us', $note, $parts);
+        if (!$parts || ($parts[2] === '' && substr_count($note, "\n") < 2)) { echo esc_html($note ?: '-'); return; }
+        $text = $this->sales_contact_review_text();
+        echo '<details class="harmat-sales-note-details"><summary><span>' . esc_html($parts[1] . ($parts[2] !== '' ? '…' : '')) . '</span><small>' . esc_html($text['note']) . '</small></summary><div>' . esc_html($note) . '</div></details>';
+    }
+
     private function render_sales_portal_inquiries() {
         $lang = $this->active_sales_language();
         $text = $this->sales_inquiries_page_text($lang);
@@ -8635,7 +8702,11 @@ final class Harmat_Sales_Manager {
         if ($source_filter && !isset($source_options[$source_filter])) {
             $source_filter = '';
         }
-        $rows = $this->sales_inquiry_summary_rows($search, $source_filter, $lang);
+        $review_text = $this->sales_contact_review_text();
+        $progress_options = array('unrecorded' => $review_text['unrecorded'], 'converted' => $review_text['converted']) + $this->sales_clients_page_text($lang)['status'];
+        $filters = $this->sales_contact_filters('inquiry', $progress_options);
+        $text['headers'][5] = $review_text['progress'];
+        $rows = $this->sales_inquiry_summary_rows($search, $source_filter, $lang, $filters);
         $all_rows = $this->sales_inquiry_summary_rows('', '', $lang);
         $can_manage = $this->is_sales_manager_user();
         $counts = array_fill_keys(array_keys($source_options), 0);
@@ -8660,7 +8731,9 @@ final class Harmat_Sales_Manager {
         foreach ($source_options as $value => $label) {
             echo '<option value="' . esc_attr($value) . '"' . selected($source_filter, $value, false) . '>' . esc_html($label) . '</option>';
         }
-        echo '</select><button>' . esc_html($text['search']) . '</button></form></div>';
+        echo '</select>';
+        $this->render_sales_contact_filter_selects('inquiry', $filters, $progress_options, $all_rows);
+        echo '<button>' . esc_html($text['search']) . '</button><a href="' . esc_url($this->sales_portal_url(array('view' => 'inquiries'))) . '">' . esc_html($review_text['reset']) . '</a></form></div>';
         if (!$can_manage) {
             echo '<div class="harmat-sales-notice">' . esc_html($text['staff_notice']) . '</div>';
         }
@@ -8683,7 +8756,7 @@ final class Harmat_Sales_Manager {
         echo '</tbody></table></div></section>';
     }
 
-    private function sales_inquiry_summary_rows($search = '', $source_filter = '', $lang = null) {
+    private function sales_inquiry_summary_rows($search = '', $source_filter = '', $lang = null, $filters = array()) {
         $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
         $lang = $lang === 'hu' ? 'hu' : 'zh';
         $rows = array();
@@ -8714,6 +8787,9 @@ final class Harmat_Sales_Manager {
                 'property' => $data['apartment'],
                 'property_info' => trim($data['area'] . ' / ' . $data['rooms'] . ' / ' . $data['price'], ' /'),
                 'status' => trim(($data['mail_status'] ?: '-') . ' ' . ($data['checked_at'] ?: '')),
+                'progress' => $linked_deal ? 'converted' : 'unrecorded',
+                'mail_status' => $data['mail_status'],
+                'mail_date' => $data['checked_at'],
                 'assigned_sales_id' => $assigned_sales_id,
                 'message' => $data['message'],
                 'property_url' => $data['property_url'],
@@ -8756,6 +8832,7 @@ final class Harmat_Sales_Manager {
                 'property' => $property_title,
                 'property_info' => $property_title,
                 'status' => $status_options[$status_key] ?? ($lead['status'] ?? '-'),
+                'progress' => $linked_deal ? 'converted' : $status_key,
                 'broker_id' => $broker_id,
                 'broker_label' => $broker_label,
                 'assigned_sales_id' => (int) ($lead['assigned_sales_id'] ?? 0),
@@ -8770,6 +8847,7 @@ final class Harmat_Sales_Manager {
             }
         }
 
+        $rows = $this->filter_sales_contact_rows($rows, $filters);
         usort($rows, function($a, $b) {
             return ((int) ($b['sort'] ?? 0)) <=> ((int) ($a['sort'] ?? 0));
         });
@@ -8841,7 +8919,15 @@ final class Harmat_Sales_Manager {
         }
         echo '</td>';
         echo '<td><span>' . esc_html($row['phone'] ?: '-') . '</span><small>' . esc_html($row['email'] ?: '-') . '</small></td>';
-        echo '<td>' . esc_html($row['status'] ?: '-');
+        $review_text = $this->sales_contact_review_text();
+        $progress = $linked_deal ? $review_text['converted'] : ($kind === 'website' ? $review_text['unrecorded'] : ($row['status'] ?: '-'));
+        echo '<td><span class="harmat-sales-contact-progress">' . esc_html($progress) . '</span>';
+        if ($kind === 'website') {
+            $mail_key = (string) ($row['mail_status'] ?? '');
+            $mail_label = in_array($mail_key, array('sent', 'failed', 'pending'), true) ? $review_text[$mail_key] : $review_text['unknown'];
+            echo '<small class="harmat-sales-mail-state">' . esc_html($review_text['mail'] . ': ' . $mail_label) . '</small>';
+            if (!empty($row['mail_date'])) { echo '<small>' . esc_html($row['mail_date']) . '</small>'; }
+        }
         if ($linked_deal) {
             echo '<small>' . esc_html($row_text['linked_deal'] . ($linked_deal['crm_code'] ?? ('#' . (int) ($linked_deal['id'] ?? 0)))) . '</small>';
         }
@@ -8866,7 +8952,9 @@ final class Harmat_Sales_Manager {
         }
         echo '<small><span class="harmat-sales-assignment-state harmat-sales-assignment-' . esc_attr($assignment_class) . '">' . esc_html($assignment_label) . '</span></small>';
         echo '</td>';
-        echo '<td class="harmat-sales-note-cell">' . esc_html($row['message'] ?: '-') . '</td>';
+        echo '<td class="harmat-sales-note-cell">';
+        $this->render_sales_compact_note($row['message'] ?? '');
+        echo '</td>';
         echo '<td class="harmat-sales-actions"><a class="' . esc_attr($linked_deal ? 'harmat-sales-secondary-action' : 'harmat-sales-primary-action') . '" href="' . esc_url($row['deal_url']) . '">' . esc_html($linked_deal ? $row_text['view_deal'] : $row_text['create_deal']) . '</a>';
         if (!$linked_deal) {
             echo '<small>' . esc_html($row_text['create_hint']) . '</small>';
@@ -8878,6 +8966,7 @@ final class Harmat_Sales_Manager {
             ? $this->can_delete_inquiry_record($id)
             : (!empty($row['lead']) && $this->can_delete_lead_record($row['lead']) && (!$linked_deal || $this->can_delete_sales_records()));
         if ($can_delete_row) {
+            echo '<details class="harmat-sales-row-more"><summary>' . esc_html($review_text['more']) . '</summary>';
             if ($kind === 'website') {
                 echo '<form method="post">';
                 wp_nonce_field('harmat_sales_action_delete_inquiry');
@@ -8894,6 +8983,7 @@ final class Harmat_Sales_Manager {
                 echo '<button onclick="return confirm(\'' . esc_js($row_text['delete_lead_confirm']) . '\')">' . esc_html($row_text['delete']) . '</button>';
                 echo '</form>';
             }
+            echo '</details>';
         }
         echo '</td>';
         echo '</tr>';
@@ -9270,18 +9360,27 @@ final class Harmat_Sales_Manager {
 
     private function render_sales_portal_tasks() {
         $text = $this->sales_task_page_text();
-        $tasks = $this->sales_tasks();
+        $review_text = $this->sales_contact_review_text();
+        $automatic = isset($_GET['task_scope']) && $_GET['task_scope'] === 'automatic';
+        $tasks = $this->sales_tasks($automatic);
+        if ($automatic) { $tasks = array_values(array_filter($tasks, function($task) { return !empty($task['inferred']); })); }
         $filters = $this->sales_task_filters();
         $filtered_tasks = $this->filter_sales_tasks($tasks, $filters);
         $counts = $this->task_bucket_counts($tasks);
         $future = count(array_filter($tasks, function($task) { return $task['urgency_key'] === 'future'; }));
         $types = $this->sales_task_type_counts($tasks, $text);
-        $focus_tasks = array_values(array_filter($tasks, function($task) {
+        $focus_tasks = array_values(array_filter($filtered_tasks, function($task) {
             return in_array($task['urgency_key'], array('overdue', 'today', 'upcoming'), true);
         }));
         $focus_tasks = array_slice($focus_tasks, 0, 8);
 
-        echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact">';
+        echo '<nav class="harmat-sales-task-scopes" aria-label="' . esc_attr($text['title']) . '">';
+        foreach (array('scheduled', 'automatic') as $scope) {
+            echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'tasks', 'task_scope' => $scope))) . '"' . (($scope === 'automatic') === $automatic ? ' aria-current="page"' : '') . '>' . esc_html($review_text[$scope]) . '</a>';
+        }
+        echo '</nav>';
+        if ($automatic) { echo '<p class="harmat-sales-suggested-label">' . esc_html($review_text['suggested']) . '</p>'; }
+        echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact"' . ($automatic ? ' hidden' : '') . '>';
         echo '<article><small>' . esc_html($text['kpi_all']) . '</small><strong>' . count($tasks) . '</strong></article>';
         echo '<article><small>' . esc_html($text['kpi_overdue']) . '</small><strong>' . (int) $counts['overdue'] . '</strong></article>';
         echo '<article><small>' . esc_html($text['kpi_today']) . '</small><strong>' . (int) $counts['today'] . '</strong></article>';
@@ -9297,6 +9396,7 @@ final class Harmat_Sales_Manager {
 
         echo '<form class="harmat-sales-filter-grid harmat-sales-task-filter" method="get" action="' . esc_url(home_url('/sales/')) . '">';
         echo '<input type="hidden" name="view" value="tasks">';
+        echo '<input type="hidden" name="task_scope" value="' . ($automatic ? 'automatic' : 'scheduled') . '">';
         echo '<label>' . esc_html($text['search_label']) . '<input type="search" name="task_q" value="' . esc_attr($filters['q']) . '" placeholder="' . esc_attr($text['search_placeholder']) . '"></label>';
         echo '<label>' . esc_html($text['time_status']) . '<select name="task_status">';
         $status_options = $text['status_options'];
@@ -9315,13 +9415,13 @@ final class Harmat_Sales_Manager {
 
         echo '<div class="harmat-sales-task-type-grid">';
         foreach ($types as $type => $amount) {
-            $url = $this->sales_portal_url(array('view' => 'tasks', 'task_type' => $type));
+            $url = $this->sales_portal_url(array('view' => 'tasks', 'task_scope' => $automatic ? 'automatic' : 'scheduled', 'task_type' => $type, 'task_q' => $filters['q'], 'task_status' => $filters['status']));
             $active = $filters['type'] === (string) $type ? ' is-active' : '';
             echo '<a class="' . esc_attr($active) . '" href="' . esc_url($url) . '"><span>' . esc_html($type) . '</span><strong>' . (int) $amount . '</strong></a>';
         }
         echo '</div>';
 
-        echo '<div class="harmat-sales-task-board">';
+        echo '<div class="harmat-sales-task-board"' . ($automatic ? ' hidden' : '') . '>';
         echo '<h3>' . esc_html($text['priority']) . '</h3>';
         if (!$focus_tasks) {
             echo '<p>' . esc_html($text['no_focus']) . '</p>';
@@ -9340,18 +9440,19 @@ final class Harmat_Sales_Manager {
         }
 
         echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-task-table"><thead><tr>';
+        if ($automatic) { $text['headers'][0] = $review_text['suggested_date']; }
         foreach ($text['headers'] as $header) {
             echo '<th>' . esc_html($header) . '</th>';
         }
         echo '</tr></thead><tbody>';
         foreach ($filtered_tasks as $task) {
             echo '<tr>';
-            echo '<td><strong>' . esc_html($task['date']) . '</strong><small>' . esc_html($task['due_text']) . '</small></td>';
+            echo '<td><strong>' . esc_html($task['date']) . '</strong>' . ($automatic ? '' : '<small>' . esc_html($task['due_text']) . '</small>') . '</td>';
             echo '<td>' . esc_html($task['type']) . '</td>';
             echo '<td>' . esc_html($task['client'] ?: '-') . '</td>';
             echo '<td>' . esc_html($task['property'] ?: '-') . '</td>';
             echo '<td>' . esc_html($task['title']) . '</td>';
-            echo '<td><span class="harmat-sales-pill harmat-sales-task-' . esc_attr($task['urgency_key']) . '">' . esc_html($task['urgency']) . '</span></td>';
+            echo '<td><span class="harmat-sales-pill harmat-sales-task-' . esc_attr($automatic ? 'suggested' : $task['urgency_key']) . '">' . esc_html($automatic ? $review_text['automatic'] : $task['urgency']) . '</span></td>';
             echo '<td><a href="' . esc_url($task['url']) . '">' . esc_html($this->sales_task_text()['open']) . '</a></td>';
             echo '</tr>';
         }
@@ -11703,11 +11804,61 @@ final class Harmat_Sales_Manager {
         return $texts[$lang] ?? $texts['zh'];
     }
 
+    private function render_sales_client_duplicate_hint($lead_id) {
+        $text = $this->sales_contact_review_text();
+        $contacts = array();
+        foreach ($this->sales_duplicate_contact_dataset() as $item) {
+            if ($item['kind'] === 'lead' && (int) $item['id'] === $lead_id) { continue; }
+            $item['source'] = ($text[$item['kind']] ?? $text['lead']) . ' #' . (int) $item['id'];
+            $contacts[] = $item;
+        }
+        echo '<div class="harmat-sales-client-duplicates" data-client-duplicates="' . esc_attr(wp_json_encode($contacts)) . '"><div role="status" aria-live="polite" hidden><strong>' . esc_html($text['duplicate']) . '</strong><ul></ul></div></div>';
+        echo <<<'JS'
+<script>(function() {
+    var script = document.currentScript;
+    var host = script.previousElementSibling;
+    var form = host.previousElementSibling;
+    if (!form || form.tagName !== 'FORM') { return; }
+    var phone = form.querySelector('[name="client_phone"]');
+    var email = form.querySelector('[name="client_email"]');
+    var panel = host.querySelector('[role="status"]');
+    var list = panel.querySelector('ul');
+    var contacts;
+    try { contacts = JSON.parse(host.getAttribute('data-client-duplicates')); } catch (error) { return; }
+    function update() {
+        var phoneKey = phone.value.replace(/\D+/g, '');
+        var emailKey = email.value.trim().toLowerCase();
+        var matches = contacts.filter(function(item) {
+            return (phoneKey.length >= 7 && phoneKey === item.phone_digits) || (emailKey && emailKey === item.email);
+        });
+        list.textContent = '';
+        matches.slice(0, 6).forEach(function(item) {
+            var li = document.createElement('li');
+            var link = document.createElement('a');
+            link.href = item.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = item.client + ' · ' + item.source;
+            li.appendChild(link);
+            list.appendChild(li);
+        });
+        panel.hidden = matches.length === 0;
+    }
+    phone.addEventListener('input', update);
+    email.addEventListener('input', update);
+    update();
+})();</script>
+JS;
+    }
+
     private function render_sales_portal_clients() {
         $lang = $this->active_sales_language();
         $text = $this->sales_clients_page_text($lang);
         $all_leads = $this->get_leads();
         $leads = $this->visible_leads($all_leads);
+        $review_text = $this->sales_contact_review_text();
+        $filters = $this->sales_contact_filters('client', $text['status']);
+        $filtered_leads = $this->filter_sales_contact_rows($leads, $filters);
         $can_manage = $this->is_sales_manager_user();
         $all_status_options = $text['status'];
         $status_options = $can_manage ? $all_status_options : array_diff_key($all_status_options, array('closed' => true, 'lost' => true));
@@ -11776,18 +11927,23 @@ final class Harmat_Sales_Manager {
         echo '<label class="harmat-sales-form-wide">' . esc_html($text['form'][14]) . '<textarea name="client_note" rows="4" placeholder="' . esc_attr($text['form'][15]) . '">' . esc_textarea($form['note']) . '</textarea></label>';
         echo '<div class="harmat-sales-form-actions"><button>' . esc_html($form['id'] ? $text['form'][16] : $text['form'][17]) . '</button>';
         if ($form['id']) { echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'clients'))) . '">' . esc_html($text['form'][18]) . '</a>'; }
-        echo '</div></form></div>';
+        echo '</div></form>';
+        $this->render_sales_client_duplicate_hint((int) $form['id']);
+        echo '</div>';
 
         echo '<div class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['rules'][0]) . '</h2><p>' . esc_html($text['rules'][1]) . '</p></div></div>';
         echo '<div class="harmat-sales-rule-list"><span><strong>' . esc_html($text['rules'][2]) . '</strong><b>' . esc_html((string) self::LEAD_PROTECTION_DAYS . ' ' . $text['rules'][3]) . '</b></span><span><strong>' . esc_html($text['rules'][4]) . '</strong><b>' . esc_html($text['rules'][5]) . '</b></span><span><strong>' . esc_html($text['rules'][6]) . '</strong><b>' . esc_html($text['rules'][7]) . '</b></span><span><strong>' . esc_html($text['rules'][8]) . '</strong><b>' . esc_html($can_manage ? $text['rules'][9] : $text['rules'][10]) . '</b></span></div></div></section>';
 
         echo '</details>';
         echo '<section class="harmat-sales-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['list'][0]) . '</h2><p>' . esc_html($text['list'][1]) . '</p></div></div>';
-        if (!$leads) { echo '<div class="harmat-sales-empty">' . esc_html($text['list'][2]) . '</div></section>'; return; }
+        echo '<form method="get" class="harmat-sales-contact-filters"><input type="hidden" name="view" value="clients"><input type="hidden" name="sales_lang" value="' . esc_attr($lang) . '"><input type="search" name="client_q" value="' . esc_attr($filters['q']) . '" placeholder="' . esc_attr($review_text['search']) . '" aria-label="' . esc_attr($review_text['search']) . '">';
+        $this->render_sales_contact_filter_selects('client', $filters, $text['status'], $leads);
+        echo '<button>' . esc_html($review_text['filter']) . '</button><a href="' . esc_url($this->sales_portal_url(array('view' => 'clients'))) . '">' . esc_html($review_text['reset']) . '</a></form>';
+        if (!$filtered_leads) { echo '<div class="harmat-sales-empty">' . esc_html($text['list'][2]) . '</div></section>'; return; }
         echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-client-table"><thead><tr>';
         foreach ($text['list'][3] as $header) { echo '<th>' . esc_html($header) . '</th>'; }
         echo '</tr></thead><tbody>';
-        foreach ($leads as $lead) { $this->render_sales_portal_client_row($lead, $text); }
+        foreach ($filtered_leads as $lead) { $this->render_sales_portal_client_row($lead, $text); }
         echo '</tbody></table></div></section>';
     }
 
@@ -13949,15 +14105,19 @@ final class Harmat_Sales_Manager {
         } else {
             echo '<small>' . esc_html($text['row'][7] . $assigned_sales_label) . '</small>';
         }
-        echo '</td><td>' . esc_html($broker_label) . '</td><td class="harmat-sales-note-cell">' . esc_html($lead['note'] ?: '-') . '</td>';
+        echo '</td><td>' . esc_html($broker_label) . '</td><td class="harmat-sales-note-cell">';
+        $this->render_sales_compact_note($lead['note'] ?? '');
+        echo '</td>';
         $linked_deal = $this->find_deal_by_lead_id((int) ($lead['id'] ?? 0));
         $deal_url = $linked_deal ? $this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) ($linked_deal['id'] ?? 0))) : $this->sales_portal_url(array('view' => 'deals', 'lead_id' => (int) $lead['id']));
         echo '<td class="harmat-sales-actions"><a href="' . esc_url($this->sales_portal_url(array('view' => 'clients', 'edit_lead' => (int) $lead['id']))) . '">' . esc_html($text['row'][8]) . '</a><a class="' . esc_attr($linked_deal ? 'harmat-sales-secondary-action' : 'harmat-sales-primary-action') . '" href="' . esc_url($deal_url) . '">' . esc_html($linked_deal ? $text['row'][9] : $text['row'][10]) . '</a>';
         if (!$linked_deal) { echo '<small>' . esc_html($text['row'][11]) . '</small>'; }
         if ($this->can_delete_lead_record($lead) && (!$linked_deal || $this->can_delete_sales_records())) {
+            echo '<details class="harmat-sales-row-more"><summary>' . esc_html($this->sales_contact_review_text()['more']) . '</summary>';
             echo '<form method="post">';
             wp_nonce_field('harmat_sales_action_delete_lead');
             echo '<input type="hidden" name="harmat_sales_action" value="delete_lead"><input type="hidden" name="return_to" value="sales_clients"><input type="hidden" name="lead_id" value="' . esc_attr($lead['id']) . '"><button onclick="return confirm(\'' . esc_js($text['row'][13]) . '\')">' . esc_html($text['row'][12]) . '</button></form>';
+            echo '</details>';
         }
         echo '</td></tr>';
     }
@@ -15280,7 +15440,7 @@ final class Harmat_Sales_Manager {
         return array_values(array_filter($tasks));
     }
 
-    private function sales_tasks() {
+    private function sales_tasks($include_inferred = false) {
         $tasks = array();
         $task_text = $this->sales_task_text();
 
@@ -15382,7 +15542,12 @@ final class Harmat_Sales_Manager {
             }
         }
 
-        $tasks = array_merge($tasks, $this->sales_automatic_rule_tasks());
+        // Calculated sales prompts are optional; actual viewing dates remain scheduled tasks.
+        foreach ($this->sales_automatic_rule_tasks() as $task) {
+            if (!$task) { continue; }
+            $task['inferred'] = $task['type'] === $task_text['type_auto'];
+            if (!$task['inferred'] || $include_inferred) { $tasks[] = $task; }
+        }
 
         $tasks = array_values(array_filter($tasks));
         usort($tasks, function($a, $b) {
@@ -18147,6 +18312,35 @@ body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-traffic-strip small
 }
 @media(max-width:1180px) {
   body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-table tr {background:var(--crm-surface)!important;border-color:var(--crm-line)!important;box-shadow:none!important}
+}
+/* Contact review: contained, read-only controls with quiet secondary actions. */
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters {display:grid;grid-template-columns:minmax(240px,2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto;gap:12px;align-items:center;margin:0 0 20px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters :is(input,select) {width:100%;min-width:0;min-height:42px;border:1px solid var(--crm-line);border-radius:5px;background:var(--crm-field);color:var(--crm-ink);font-size:15px;padding:8px 12px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters button {min-height:42px;padding:8px 20px;background:var(--crm-green);color:#fff;border:0;border-radius:5px;font-size:15px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters a {color:var(--crm-green);font-size:14px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-search {display:grid!important;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(145px,1fr)) auto auto!important;width:100%!important;max-width:none!important;gap:10px!important}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-portal-shell:has(.harmat-sales-inquiry-table) .harmat-sales-panel-head {display:block!important}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-search :is(input,select) {width:100%!important;min-width:0!important}
+body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-row-more,.harmat-sales-note-details) {margin:0;border:0;background:transparent;box-shadow:none;max-width:100%}
+body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-row-more,.harmat-sales-note-details) summary {cursor:pointer;color:var(--crm-muted);font-size:13px;line-height:1.5;padding:4px 0}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-row-more {width:100%}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-row-more form {margin-top:8px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-note-details summary span {display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--crm-ink);font-size:15px;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-note-details[open] summary span {display:none}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-note-details div {white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-progress {font-weight:600}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-mail-state {border-top:1px solid var(--crm-line);padding-top:6px;margin-top:8px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-duplicates [role=status] {margin-top:16px;padding:12px 16px;background:#edf0e8;border-left:3px solid #728568}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-duplicates ul {padding-left:20px;margin:8px 0 0}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-task-scopes {display:flex;flex-wrap:wrap;gap:24px;border-bottom:1px solid var(--crm-line);margin:0 0 18px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-task-scopes a {padding:10px 0;color:var(--crm-muted);border-bottom:3px solid transparent}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-task-scopes a[aria-current=page] {color:var(--crm-ink);border-bottom-color:var(--crm-green);font-weight:600}
+body.harmat-sales-portal-body[data-sales-lang] [hidden] {display:none!important}
+@media(max-width:1180px) {
+  body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-inquiry-search,.harmat-sales-contact-filters) {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:540px) {
+  body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-inquiry-search,.harmat-sales-contact-filters) {grid-template-columns:minmax(0,1fr)!important}
 }
 CSS;
     }

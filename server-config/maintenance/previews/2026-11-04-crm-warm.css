@@ -131,3 +131,32 @@ body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-traffic-strip small
 @media(max-width:1180px) {
   body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-table tr {background:var(--crm-surface)!important;border-color:var(--crm-line)!important;box-shadow:none!important}
 }
+/* Contact review: contained, read-only controls with quiet secondary actions. */
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters {display:grid;grid-template-columns:minmax(240px,2fr) minmax(160px,1fr) minmax(160px,1fr) auto auto;gap:12px;align-items:center;margin:0 0 20px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters :is(input,select) {width:100%;min-width:0;min-height:42px;border:1px solid var(--crm-line);border-radius:5px;background:var(--crm-field);color:var(--crm-ink);font-size:15px;padding:8px 12px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters button {min-height:42px;padding:8px 20px;background:var(--crm-green);color:#fff;border:0;border-radius:5px;font-size:15px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-filters a {color:var(--crm-green);font-size:14px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-search {display:grid!important;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(145px,1fr)) auto auto!important;width:100%!important;max-width:none!important;gap:10px!important}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-portal-shell:has(.harmat-sales-inquiry-table) .harmat-sales-panel-head {display:block!important}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-inquiry-search :is(input,select) {width:100%!important;min-width:0!important}
+body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-row-more,.harmat-sales-note-details) {margin:0;border:0;background:transparent;box-shadow:none;max-width:100%}
+body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-row-more,.harmat-sales-note-details) summary {cursor:pointer;color:var(--crm-muted);font-size:13px;line-height:1.5;padding:4px 0}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-row-more {width:100%}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-row-more form {margin-top:8px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-note-details summary span {display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--crm-ink);font-size:15px;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-note-details[open] summary span {display:none}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-note-details div {white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-contact-progress {font-weight:600}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-mail-state {border-top:1px solid var(--crm-line);padding-top:6px;margin-top:8px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-duplicates [role=status] {margin-top:16px;padding:12px 16px;background:#edf0e8;border-left:3px solid #728568}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-client-duplicates ul {padding-left:20px;margin:8px 0 0}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-task-scopes {display:flex;flex-wrap:wrap;gap:24px;border-bottom:1px solid var(--crm-line);margin:0 0 18px}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-task-scopes a {padding:10px 0;color:var(--crm-muted);border-bottom:3px solid transparent}
+body.harmat-sales-portal-body[data-sales-lang] .harmat-sales-task-scopes a[aria-current=page] {color:var(--crm-ink);border-bottom-color:var(--crm-green);font-weight:600}
+body.harmat-sales-portal-body[data-sales-lang] [hidden] {display:none!important}
+@media(max-width:1180px) {
+  body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-inquiry-search,.harmat-sales-contact-filters) {grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:540px) {
+  body.harmat-sales-portal-body[data-sales-lang] :is(.harmat-sales-inquiry-search,.harmat-sales-contact-filters) {grid-template-columns:minmax(0,1fr)!important}
+}

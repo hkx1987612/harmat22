@@ -2,6 +2,32 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-04 - Contact Workflow Refinement And Reminder Classification
+
+- User approved all six proposed workflow/UI refinements and a separate
+  concurrent-save audit. Fresh79-table/source backup verified before changes.
+- CRM1.6.125 deployed: progress distinct from notification email; inquiry
+  status/owner and client contact/status/owner filters; long-note disclosures;
+  destructive actions under More; permission-scoped duplicate-contact hints.
+  Existing deal links retained; no automatic conversions/merges/customer edits.
+- Default reminders use recorded dates; calculated suggestions remain separately
+  accessible and no longer contribute to overdue summaries/daily reminder totals.
+  Native comparison proves all341 original tasks remain:146 scheduled plus195
+  suggestions, including all actual viewing and financial deadlines.
+- 148 existing+121 new synthetic cases pass;481 other methods unchanged;
+  appointment26, antispam727 and transport4 checks pass. Native POST forms
+ 195 clients/320 inquiries/237 deals identical in both languages. Eight public
+  form/SEO contracts and all protected data/unrelated sources unchanged.
+- Desktop1440/1920 and390 narrow preview checked. Live readonly filters show
+ 89 unrecorded inquiries and7 unassigned clients; reset and both languages retain
+ 97 clients. Table width/fonts and no page overflow verified. Zero submissions.
+- Live screenshot timed out; synthetic proof saved. Viewport reset succeeded;
+  final tab-retention/cleanup was rejected, no retries. Exact evidence is ignored.
+- Separate memory-only tests reproduce stale whole-array lost updates and new-ID
+  collisions. Shared persistence unchanged; legal-documents also writes deals.
+  Cross-writer conflict handling remains next safety batch, not claimed fixed.
+- Record and source-only recovery: maintenance/2026-11-04-crm-contact-review.md.
+
 ## 2026-11-04 - Desktop Width, Readability And Live Reconciliation
 
 - User requested larger text and natural full-width desktop layout after the

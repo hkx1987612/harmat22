@@ -40,6 +40,12 @@ if ($base === 'fec1e2a') {
     $allowed = array('render_sales_portal', 'sales_portal_warm_css', 'render_sales_traffic_seven_day_table', 'render_sales_traffic_strip', 'render_sales_traffic_summary',
         'sales_walkin_counts_by_date', 'render_sales_portal_deals', 'sort_sales_deals_for_display',
         'render_sales_deal_filters', 'sales_deal_filters_from_request', 'sales_deal_filter_query_args');
+} elseif ($base === '2ac5636') {
+    $allowed = array('sales_contact_review_text', 'sales_contact_filters', 'filter_sales_contact_rows',
+        'render_sales_contact_filter_selects', 'render_sales_compact_note', 'render_sales_portal_inquiries',
+        'sales_inquiry_summary_rows', 'render_sales_portal_inquiry_summary_row', 'render_sales_portal_clients',
+        'render_sales_portal_client_row', 'render_sales_client_duplicate_hint', 'render_sales_portal_tasks',
+        'sales_tasks', 'sales_portal_warm_css');
 } elseif (in_array($base, array('1efa6ff', '9de98b2'), true)) {
     $allowed = array('sales_portal_warm_css');
 } else {
@@ -53,4 +59,4 @@ foreach (array_unique(array_merge(array_keys($old), array_keys($new))) as $name)
     if (!in_array($name, $allowed, true)) { throw new RuntimeException('Unapproved method change: ' . $name); }
     $changed[] = $name;
 }
-echo json_encode(array('status' => 'PASS', 'unchanged_methods' => $unchanged, 'ui_only_changed' => $changed), JSON_PRETTY_PRINT) . "\n";
+echo json_encode(array('status' => 'PASS', 'unchanged_methods' => $unchanged, 'approved_changed_methods' => $changed), JSON_PRETTY_PRINT) . "\n";

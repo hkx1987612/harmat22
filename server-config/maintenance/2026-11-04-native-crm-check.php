@@ -38,8 +38,8 @@ try {
         foreach (array('clients', 'inquiries') as $view) {
             $_GET['view'] = $view;
             $method = 'render_sales_portal_' . $view;
-            $a = crm_review_forms(crm_review_render($old, $method));
-            $b = crm_review_forms(crm_review_render($new, $method));
+            $a = crm_review_forms(crm_review_render($old, $method), true);
+            $b = crm_review_forms(crm_review_render($new, $method), true);
             if ($a !== $b) { throw new RuntimeException('Native form contract changed: ' . $view); }
             $results[] = array('lang' => $lang, 'view' => $view, 'forms' => count($a), 'unchanged' => true);
         }
@@ -60,6 +60,32 @@ try {
             }
             if ($actual !== $expected) { throw new RuntimeException('Native daily walk-in aggregation mismatch'); }
             $results[] = array('lang' => $lang, 'walkin_dates_checked' => count($dates), 'aggregation_matches' => true);
+        }
+        if (method_exists($new, 'sales_contact_review_text')) {
+            $invoke = function($instance, $method, ...$arguments) { return (new ReflectionMethod($instance, $method))->invoke($instance, ...$arguments); };
+            $old_task_method = new ReflectionMethod($old, 'sales_tasks');
+            $old_tasks = $old_task_method->getNumberOfParameters() ? $invoke($old, 'sales_tasks', true) : $invoke($old, 'sales_tasks');
+            $all_tasks = $invoke($new, 'sales_tasks', true);
+            $scheduled = $invoke($new, 'sales_tasks');
+            $auto_type = $invoke($new, 'sales_task_text')['type_auto'];
+            $task_hashes = function($tasks) {
+                $hashes = array();
+                foreach ($tasks as $task) { unset($task['inferred']); $hashes[] = hash('sha256', wp_json_encode($task)); }
+                sort($hashes); return $hashes;
+            };
+            $expected = array_filter($old_tasks, function($task) use ($auto_type) { return $task['type'] !== $auto_type; });
+            if ($task_hashes($old_tasks) !== $task_hashes($all_tasks) || $task_hashes($expected) !== $task_hashes($scheduled)) {
+                throw new RuntimeException('Native reminder preservation failed');
+            }
+            $results[] = array('lang' => $lang, 'all_reminders' => count($all_tasks), 'scheduled_reminders' => count($scheduled), 'suggestions' => count($all_tasks) - count($scheduled), 'original_tasks_preserved' => true);
+            $visible = $invoke($new, 'visible_leads', $invoke($new, 'get_leads'));
+            $owners = array_unique(array_column($visible, 'assigned_sales_id'));
+            foreach ($owners as $owner) {
+                $expected = array_values(array_filter($visible, function($lead) use ($owner) { return (int) $lead['assigned_sales_id'] === (int) $owner; }));
+                $actual = array_values($invoke($new, 'filter_sales_contact_rows', $visible, array('owner' => (string) $owner)));
+                if ($expected !== $actual) { throw new RuntimeException('Native owner filter mismatch'); }
+            }
+            $results[] = array('lang' => $lang, 'visible_clients' => count($visible), 'owner_filters_checked' => count($owners), 'owner_filters_match' => true);
         }
         $dashboard = crm_review_render($new, 'render_sales_portal_dashboard');
         $traffic = crm_review_render($new, 'render_sales_portal_traffic');

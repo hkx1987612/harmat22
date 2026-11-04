@@ -4,6 +4,26 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 
 ## November04 CRM Desktop Simplification - Current
 
+- CRM1.6.125: customer progress separate from mail delivery; permission-scoped
+  inquiry status/owner filters and client name/phone/email/status/owner lookup.
+  Long notes expand; delete remains in More with identical native POST forms.
+  Client editor shows visible matching contact records without blocking or merging.
+- Tasks now default to recorded dates; calculated suggestions are separately
+  accessible and excluded from scheduled summaries/daily mail totals. Actual
+  viewings and financial deadlines preserved. No stored task/customer deletion.
+  Native read-only check:341 tasks retained,146 scheduled plus195 suggestions.
+- Fresh79-table backup;148+121 synthetic checks,26 appointment cases,727 antispam
+  checks and four transport cases passed.481 other methods unchanged. Release
+  verified eight public contracts and all protected data/unrelated sources.
+  Live bilingual clients97; unassigned filter7; no live submissions or data edits.
+  Desktop/narrow preview and live DOM audit passed; live screenshot timed out.
+  Viewport reset succeeded, final tab-retention/cleanup rejected without retry.
+  Details: maintenance/2026-11-04-crm-contact-review.md.
+- Important open risk: isolated tests reproduce concurrent whole-option lost
+  updates and new-ID collisions in save_leads/save_deals. Persistence was NOT
+  modified. Legal-documents shares the deal option; a separate cross-writer
+  conflict-safe storage batch is required. Avoid simultaneous operator saves.
+
 - CRM1.6.124: read-view desktop shells use available width; inquiry/client tables
   fill their wrappers, body15px/secondary13px, softer rows and larger controls.
   Inquiry search controls align horizontally. Only private warm-theme CSS changed;
@@ -42,8 +62,9 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
   cases,727 antispam checks,4 offline release scenarios. Native forms identical.
 - Desktop/narrow previews and live authenticated link/form/language checks pass;
   live screenshot capture unavailable, final screenshot uses synthetic fixtures.
-- Next work: client lookup/filtering and terminology, then task-rule review;
-  concurrency/auth/provisioning findings require a separate safety-tested batch.
+- Prior follow-up work on lookup, terminology and task classification is now
+  covered by1.6.125. Concurrency/auth/provisioning findings still require a
+  separate safety-tested batch.
   Details and source-only recovery: maintenance/2026-11-04-crm-review.md.
 
 ## October30 Search Result Count Hidden - Current
