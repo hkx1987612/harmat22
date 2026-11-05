@@ -2,6 +2,24 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November05 Reserved Inventory Count - Current
+
+- CRM1.6.126 uses inventory as authority for the reserved-apartment badge and
+  its drilldown:38 unique apartment IDs, dynamically calculated, not32 deal rows.
+  All59 historical deals retained; no customer/inventory/quote/appointment writes.
+- Read-only reconciliation marks8 missing deal links,3 reserved-row conflicts,
+  and2 available-inventory/locking-deal conflicts. No automatic buyer assignment.
+  Staff retain existing visibility restrictions for customer and deal details.
+- Fresh79-table backup and atomic source-only deployment verified.148+29 UI,
+ 494 unchanged-method scope,26 appointment,727 antispam and4+7 deployment checks
+  pass. Native HU/ZH forms and eight public form/SEO contracts unchanged.
+- Protected snapshots exclude only derived `_elementor_element_cache`; exact
+  drift identified, full raw hashes retained locally, all business data compared.
+- Live badge/click/38 unique inventory IDs/language switching verified; desktop
+  and narrow preview checked. Final browser reset/cleanup was rejected after a
+  saved live screenshot; local preview server stopped. Details and rollback:
+  maintenance/2026-11-05-reservation-inventory.md.
+
 ## November05 Android CRM Preview - Offline Only
 
 - User clarified the Android app is an internal sales CRM. Independent source

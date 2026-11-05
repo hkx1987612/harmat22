@@ -2,6 +2,27 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-05 - Inventory-Backed Reserved Apartment Count
+
+- User selected inventory38 as authority over32 reserved follow-up records.
+  CRM1.6.126 badge and read-only drilldown count unique property IDs dynamically.
+  All59 deals retained, no fabricated associations or changes to business data.
+- Reconciled38 inventory apartments;8 lack a deal,3 need duplicate/closed-stage
+  review and2 additional available apartments have locking-stage deals. Existing
+  staff visibility remains enforced. Historical issues are flagged, not rewritten.
+- Full79-table backup verified; atomic one-file deployment passed public8-route
+  form/SEO and protected-data/source parity. Three initial preflights halted on
+  derived Elementor element-cache drift; exact-key diagnostic and guarded cache
+  exclusion added, with full raw audit hashes preserved. No database restore.
+-148+29 synthetic UI checks,494 unchanged methods,26 appointment,727 antispam,
+ 4+7 offline deployment guard cases passed. Native197/320/237 POST forms per
+  language identical; native exact38 IDs and zero new mutation forms verified.
+- Desktop HU/ZH and narrow preview passed. Actual live click opens38 unique rows
+  matching original inventory, original59 deals retained and no page overflow.
+  Live screenshot saved; later capture timed out and final browser reset/cleanup
+  rejected. Local preview server stopped. No quotes/appointments submitted.
+- Maintenance and source-only rollback:2026-11-05-reservation-inventory.md.
+
 ## 2026-11-05 - Isolated Android CRM UX Preview
 
 - Built apps/crm-android as independent hu.harmat22.crm.preview v0.1.0;

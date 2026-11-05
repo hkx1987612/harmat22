@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.125
+ * Version: 1.6.126
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.125';
+    const VERSION = '1.6.126';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -9995,6 +9995,104 @@ final class Harmat_Sales_Manager {
         return $texts[$lang] ?? $texts['zh'];
     }
 
+    private function sales_reservation_inventory($properties, $deals) {
+        $inventory = array();
+        foreach ($properties as $property) {
+            $id = (int) $property->ID;
+            if ($id <= 0) {
+                continue;
+            }
+            $inventory[$id] = array('id' => $id, 'title' => get_the_title($id),
+                'status' => $this->sales_status($id), 'deals' => array());
+        }
+        foreach ($deals as $deal) {
+            $property_id = (int) ($deal['property_id'] ?? 0);
+            $deal_id = (int) ($deal['id'] ?? 0);
+            if ($deal_id > 0 && isset($inventory[$property_id])) {
+                $inventory[$property_id]['deals'][$deal_id] = $deal;
+            }
+        }
+        $reserved = array();
+        $conflicts = array();
+        foreach ($inventory as $id => $row) {
+            $locking = array_filter($row['deals'], function ($deal) {
+                return $this->deal_stage_locks_property($deal['stage'] ?? '');
+            });
+            if ($row['status'] === 'reserved') {
+                $closed = array_filter($locking, function ($deal) {
+                    return $this->normalize_deal_stage_key($deal['stage'] ?? '') === 'closed';
+                });
+                $row['review'] = !$row['deals'] ? 'missing' : ((!$locking || count($locking) > 1 || $closed) ? 'conflict' : 'linked');
+                $reserved[$id] = $row;
+            } elseif ($row['status'] === 'current' && $locking) {
+                $row['review'] = 'conflict';
+                $conflicts[$id] = $row;
+            }
+        }
+        return array('reserved' => $reserved, 'conflicts' => $conflicts);
+    }
+
+    private function render_sales_reserved_inventory($snapshot) {
+        if (!$this->can_access_sales_portal()) {
+            return;
+        }
+        $hu = $this->active_sales_language() === 'hu';
+        $t = $hu ? array(
+            'title' => 'Foglalt lakások', 'basis' => 'Lakáskészlet alapján, lakásonként egyszer számolva.',
+            'back' => 'Összes értékesítési ügy', 'stock' => 'Lakáskészlet', 'unit' => ' lakás',
+            'property' => 'Lakás', 'status' => 'Készletállapot', 'deals' => 'Kapcsolódó ügyek', 'review' => 'Egyeztetés',
+            'missing' => 'Nincs kapcsolódó ügy', 'conflict' => 'Ellenőrzendő', 'linked' => 'Egyezik',
+            'other' => 'További állapoteltérések', 'empty' => 'Nincs foglalt lakás.',
+        ) : array(
+            'title' => '已预订房源', 'basis' => '以房源库存为准，每套房源只计一次。',
+            'back' => '全部销售跟单', 'stock' => '房源库存', 'unit' => ' 套',
+            'property' => '房号', 'status' => '库存状态', 'deals' => '关联跟单', 'review' => '核对状态',
+            'missing' => '待关联跟单', 'conflict' => '需核对', 'linked' => '一致',
+            'other' => '其他状态差异', 'empty' => '暂无已预订房源。',
+        );
+        if (!$this->is_sales_manager_user()) {
+            $t['missing'] = $hu ? 'Nincs Ön számára elérhető ügy' : '无当前账号可见的跟单';
+        }
+        $stage_options = $this->deal_stage_options();
+        $status_options = $this->status_options($hu ? 'hu' : 'zh');
+        echo '<section class="harmat-sales-panel harmat-sales-reservation-inventory" data-reserved-count="' . (int) count($snapshot['reserved']) . '">';
+        echo '<div class="harmat-sales-panel-head"><div><h2>' . esc_html($t['title'] . ' · ' . count($snapshot['reserved']) . $t['unit']) . '</h2><p>' . esc_html($t['basis']) . '</p></div><div class="harmat-sales-head-actions">';
+        echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'deals'))) . '">' . esc_html($t['back']) . '</a>';
+        echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'properties', 'property_status' => 'reserved'))) . '">' . esc_html($t['stock']) . '</a></div></div>';
+        echo '<style>body.harmat-sales-portal-body .harmat-sales-reservation-inventory table.harmat-sales-reservation-table{width:100%!important;min-width:720px!important;table-layout:fixed!important}.harmat-sales-reservation-table th:nth-child(1){width:17%}.harmat-sales-reservation-table th:nth-child(2){width:17%}.harmat-sales-reservation-table th:nth-child(4){width:17%}body.harmat-sales-portal-body .harmat-sales-reservation-table td,body.harmat-sales-portal-body .harmat-sales-reservation-table td a,body.harmat-sales-portal-body .harmat-sales-reservation-table td strong{font-size:15px!important;line-height:1.5!important}body.harmat-sales-portal-body .harmat-sales-reservation-table th{font-size:13px!important}.harmat-sales-reservation-table td{overflow-wrap:anywhere;vertical-align:top}.harmat-sales-reservation-table td a{display:block;margin-bottom:6px}.harmat-sales-reservation-inventory h3{margin:24px 0 12px}</style>';
+        foreach (array('reserved', 'conflicts') as $kind) {
+            if ($kind === 'conflicts' && !$snapshot[$kind]) {
+                continue;
+            }
+            if ($kind === 'conflicts') {
+                echo '<h3>' . esc_html($t['other'] . ' · ' . count($snapshot[$kind]) . $t['unit']) . '</h3>';
+            }
+            echo '<div class="harmat-sales-table-wrap"><table class="harmat-sales-table harmat-sales-reservation-table" data-inventory-kind="' . esc_attr($kind) . '"><thead><tr>';
+            foreach (array('property', 'status', 'deals', 'review') as $column) {
+                echo '<th scope="col">' . esc_html($t[$column]) . '</th>';
+            }
+            echo '</tr></thead><tbody>';
+            foreach ($snapshot[$kind] as $row) {
+                echo '<tr data-property-id="' . (int) $row['id'] . '"><td><strong>' . esc_html($row['title']) . '</strong></td><td>' . esc_html($status_options[$row['status']] ?? $row['status']) . '</td><td>';
+                if (!$row['deals']) {
+                    echo '-';
+                }
+                foreach ($row['deals'] as $deal) {
+                    $stage = $this->normalize_deal_stage_key($deal['stage'] ?? '');
+                    $label = ($deal['crm_code'] ?? '') ?: ('#' . (int) $deal['id']);
+                    $label .= ' · ' . ($deal['client_name'] ?? '') . ' · ' . ($stage_options[$stage] ?? $stage);
+                    echo '<a href="' . esc_url($this->sales_portal_url(array('view' => 'deals', 'edit_deal' => (int) $deal['id']))) . '">' . esc_html($label) . '</a>';
+                }
+                echo '</td><td>' . esc_html($t[$row['review']]) . '</td></tr>';
+            }
+            echo '</tbody></table></div>';
+            if ($kind === 'reserved' && !$snapshot[$kind]) {
+                echo '<p>' . esc_html($t['empty']) . '</p>';
+            }
+        }
+        echo '</section>';
+    }
+
     private function render_sales_portal_deals() {
         $lang = $this->active_sales_language();
         $text = $this->sales_deals_page_text($lang);
@@ -10006,6 +10104,11 @@ final class Harmat_Sales_Manager {
         $lead_id = isset($_GET['lead_id']) ? absint($_GET['lead_id']) : 0;
         $inquiry_id = isset($_GET['inquiry_id']) ? absint($_GET['inquiry_id']) : 0;
         $can_manage = $this->is_sales_manager_user();
+        $reservation_inventory = $this->sales_reservation_inventory($this->get_properties(), $deals);
+        if (($_GET['inventory_status'] ?? '') === 'reserved' && !$edit_id && !$lead_id && !$inquiry_id) {
+            $this->render_sales_reserved_inventory($reservation_inventory);
+            return;
+        }
         if (!$can_manage && (!$inquiry_id || !$this->can_use_assigned_inquiry($inquiry_id))) {
             $inquiry_id = 0;
         }
@@ -10327,7 +10430,14 @@ final class Harmat_Sales_Manager {
         echo '<div class="harmat-sales-panel harmat-sales-deal-stage-panel"><div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['stage_panel'][0]) . '</h2><p>' . esc_html($text['stage_panel'][1]) . '</p></div></div>';
         echo '<div class="harmat-sales-stage-list">';
         foreach ($text['options']['stage'] as $value => $label) {
-            echo '<a class="harmat-sales-stage-' . esc_attr($value) . '" href="' . esc_url($this->sales_portal_url(array('view' => 'deals', 'deal_stage' => $value))) . '"><strong>' . esc_html($label) . '</strong><b>' . esc_html((string) ($stage_counts[$value] ?? 0)) . '</b></a>';
+            $count = (int) ($stage_counts[$value] ?? 0);
+            $link_args = array('view' => 'deals', 'deal_stage' => $value);
+            if ($value === 'reserved') {
+                $count = count($reservation_inventory['reserved']);
+                $label = $lang === 'hu' ? 'Foglalt lakások' : '已预订房源（套）';
+                $link_args = array('view' => 'deals', 'inventory_status' => 'reserved');
+            }
+            echo '<a class="harmat-sales-stage-' . esc_attr($value) . '" href="' . esc_url($this->sales_portal_url($link_args)) . '"><strong>' . esc_html($label) . '</strong><b>' . esc_html((string) $count) . '</b></a>';
         }
         echo '</div></div></section>';
 

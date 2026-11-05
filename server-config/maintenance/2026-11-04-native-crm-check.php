@@ -49,6 +49,27 @@ try {
             $b = crm_review_forms(crm_review_render($new, 'render_sales_portal_deals'), true);
             if ($a !== $b) { throw new RuntimeException('Native deal POST forms changed'); }
             $results[] = array('lang' => $lang, 'view' => 'deals', 'post_forms' => count($a), 'unchanged' => true);
+            if (method_exists($new, 'sales_reservation_inventory')) {
+                $invoke_reservation = function($instance, $method, ...$arguments) { return (new ReflectionMethod($instance, $method))->invoke($instance, ...$arguments); };
+                $properties = $invoke_reservation($old, 'get_properties');
+                $deals = $invoke_reservation($old, 'visible_deals', $invoke_reservation($old, 'get_deals'));
+                $expected_ids = array();
+                foreach ($properties as $property) {
+                    if ($invoke_reservation($old, 'sales_status', $property->ID) === 'reserved') { $expected_ids[] = (int) $property->ID; }
+                }
+                $snapshot = $invoke_reservation($new, 'sales_reservation_inventory', $properties, $deals);
+                if (array_keys($snapshot['reserved']) !== $expected_ids) { throw new RuntimeException('Native reserved inventory mismatch'); }
+                $_GET['inventory_status'] = 'reserved';
+                $inventory_html = crm_review_render($new, 'render_sales_portal_deals');
+                unset($_GET['inventory_status']);
+                $doc = new DOMDocument(); @$doc->loadHTML('<?xml encoding="UTF-8">' . $inventory_html);
+                $xp = new DOMXPath($doc);
+                if ($xp->query('//table[@data-inventory-kind="reserved"]/tbody/tr')->length !== count($expected_ids)
+                    || $xp->query('//form')->length !== 0) { throw new RuntimeException('Native inventory view must be exact and read only'); }
+                $results[] = array('lang' => $lang, 'reserved_apartments' => count($expected_ids), 'matches_inventory' => true,
+                    'missing_deal_links' => count(array_filter($snapshot['reserved'], fn($row) => $row['review'] === 'missing')),
+                    'outside_inventory_conflicts' => count($snapshot['conflicts']));
+            }
             $dates = array(current_time('Y-m-d'), date('Y-m-d', strtotime('-1 day', current_time('timestamp'))));
             $actual = (new ReflectionMethod($new, 'sales_walkin_counts_by_date'))->invoke($new, $dates);
             $expected = array_fill_keys($dates, 0);
