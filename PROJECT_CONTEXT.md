@@ -2,6 +2,20 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November05 Android CRM Preview - Offline Only
+
+- User clarified the Android app is an internal sales CRM. Independent source
+  in apps/crm-android; package hu.harmat22.crm.preview, version0.1.0.
+- Native HU/ZH overview, daily traffic, source-filtered client search, latest
+  follow-ups and synthetic apartment links. Explicit demo data, no INTERNET
+  permission, credentials, backend connection or writes. No website deployment.
+- Build/lint,32 fixture cases and Android35 emulator interaction checks passed;
+  standard/360dp displays and font1.0/1.3 reviewed. APK/screenshots local only.
+- This is NOT production CRM access. Next stage needs a backed-up authenticated
+  read-only adapter; existing permission model must be preserved. Resolve the
+  cross-writer concurrent-save risk below before any mobile editing. Offers and
+  appointments excluded. Details: maintenance/2026-11-05-crm-android-preview.md.
+
 ## November04 CRM Desktop Simplification - Current
 
 - CRM1.6.125: customer progress separate from mail delivery; permission-scoped

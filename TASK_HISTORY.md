@@ -2,6 +2,20 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-05 - Isolated Android CRM UX Preview
+
+- Built apps/crm-android as independent hu.harmat22.crm.preview v0.1.0;
+  existing ignored Android maintenance app left intact. Native HU/ZH screens
+  for overview/daily metrics, clients, newest-first follow-ups and demo inventory.
+- All data synthetic, no network permission, no real login/customer export,
+  no mobile write/quote/appointment integration or production deployment.
+- Offline APK build and lint passed;32 model checks and15 UI assertions plus
+  filter exclusions. Reviewed Android35 standard/360dp layouts and font1.0/1.3,
+  including keyboard-visible search. Emulator settings restored.
+- APK/QA stay under ignored outputs/2026-11-05-crm-android; source/notes only
+  synced. Real-data auth/permissions and cross-writer concurrent-save fix remain
+  future prerequisites, not completed work. See maintenance note for details.
+
 ## 2026-11-04 - Contact Workflow Refinement And Reminder Classification
 
 - User approved all six proposed workflow/UI refinements and a separate
