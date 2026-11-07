@@ -2,6 +2,28 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November07 Cross-Page Offer Attribution - Current
+
+- Unified offer modal1.0.9 changes attribution metadata only. Public entry capture
+  preserves campaign/first landing through untagged apartment details; actual
+  inquiry URL stays separate. New tagged entries replace, not blend, campaigns.
+- Owned tab-session storage requires current marketing-cookie consent, expires
+  after30min inactivity, clears on refusal/revocation and fails safely if denied.
+  No added requests or historical backfill. Legacy storage not refactored.
+- Private source backup, atomic PHP-linted replacement and cache purge verified.
+  Eight public form/SEO/content/shell contracts and protected data/sources retain
+  parity;35offer17spam native checks,39 attribution,10 recovery,26 appointment
+  and727 antispam tests pass. Only one production MU file changes.
+- Native1280desktop/390mobile HUZH empty modal checks pass; exact-block loopback
+  browser tests show6/6 source-preservation assertions. Its attempted narrow run
+  stayed1920CSS, not mobile metadata proof. Independent8-route verify passes. Production
+  hidden metadata is tool-masked, not claimed directly payload-verified. No sends.
+- Local test settings restored/server stopped. Final viewport/tab cleanup rejected,
+  so final browser reset is not certified; physical mobile/capture limits remain.
+- Ads/budgets, quote/PDF/booking and customer statuses unchanged. Separate proposed
+  YouTube subscriber spend remains unapproved/unactivated. Details and recovery:
+  maintenance/2026-11-07-offer-attribution.md.
+
 ## November05 Reserved Inventory Count - Current
 
 - CRM1.6.126 uses inventory as authority for the reserved-apartment badge and

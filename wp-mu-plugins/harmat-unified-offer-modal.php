@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Unified Offer Modal
  * Description: Single public offer modal and CRM submission flow for Harmat Lakopark.
- * Version: 1.0.8
+ * Version: 1.0.9
  */
 
 if (!defined('ABSPATH')) {
@@ -785,14 +785,80 @@ function harmat_unified_offer_modal_footer() {
   }
 
   function fillTracking() {
+    var tracking = captureOfferAttribution();
     var params = new URLSearchParams(window.location.search);
+    try { params = new URLSearchParams(new URL(tracking.landing_page).search); } catch (error) {}
     ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (name) {
       setField(name, params.get(name) || '');
     });
     setField('source_url', window.location.href);
-    setField('landing_page', window.location.href);
-    setField('referrer', document.referrer || '');
+    setField('landing_page', tracking.landing_page);
+    setField('referrer', tracking.referrer);
   }
+
+  var offerAttributionKey = 'harmatOfferAttributionV1';
+  var offerAttributionPolicy = <?php echo wp_json_encode(function_exists('hm_legal_policy_version_20260601') ? hm_legal_policy_version_20260601() : ''); ?>;
+  var offerAttributionParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'gbraid', 'wbraid'];
+
+  function offerAttributionAllowed() {
+    try {
+      var match = document.cookie.match(/(?:^|;\s*)harmat_cookie_consent_v1=([^;]*)/);
+      var consent = match ? JSON.parse(decodeURIComponent(match[1])) : null;
+      return !!(offerAttributionPolicy && consent && consent.policyVersion === offerAttributionPolicy && consent.marketing === true);
+    } catch (error) { return false; }
+  }
+
+  function offerAttributionUrl(value, landing) {
+    try {
+      if (!value || typeof value !== 'string') return '';
+      var url = new URL(value);
+      if (!/^https?:$/.test(url.protocol) || url.username || url.password) return '';
+      if (landing && url.origin !== window.location.origin) return '';
+      var clean = new URL(url.origin + url.pathname);
+      if (landing) {
+        offerAttributionParams.forEach(function (name) {
+          var item = (url.searchParams.get(name) || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 180);
+          if (item) clean.searchParams.set(name, item);
+        });
+      }
+      return clean.href.length <= 4096 ? clean.href : '';
+    } catch (error) { return ''; }
+  }
+
+  function captureOfferAttribution() {
+    var current = { landing_page: window.location.href, referrer: document.referrer || '' };
+    if (!offerAttributionAllowed()) {
+      try { window.sessionStorage.removeItem(offerAttributionKey); } catch (error) {}
+      return current;
+    }
+    var landing = offerAttributionUrl(current.landing_page, true);
+    if (!landing) return current;
+    current = { landing_page: landing, referrer: offerAttributionUrl(current.referrer, false) };
+    try {
+      var now = Date.now();
+      var stored = JSON.parse(window.sessionStorage.getItem(offerAttributionKey) || 'null');
+      var valid = stored && stored.version === 1 && typeof stored.last_seen === 'number' &&
+        stored.last_seen <= now && now - stored.last_seen <= 30 * 60 * 1000 &&
+        typeof stored.referrer === 'string' &&
+        offerAttributionUrl(stored.landing_page, true) === stored.landing_page &&
+        !!stored.landing_page && offerAttributionUrl(stored.referrer, false) === stored.referrer;
+      var selected = valid ? { landing_page: stored.landing_page, referrer: stored.referrer } : current;
+      // A new tagged entry replaces the entire previous campaign, never mixing fields.
+      var incoming = new URL(current.landing_page).search;
+      if (incoming && incoming !== new URL(selected.landing_page).search) selected = current;
+      window.sessionStorage.setItem(offerAttributionKey, JSON.stringify({
+        version: 1, last_seen: now, landing_page: selected.landing_page, referrer: selected.referrer
+      }));
+      return selected;
+    } catch (error) { return current; }
+  }
+
+  captureOfferAttribution();
+  window.addEventListener('pageshow', captureOfferAttribution);
+  document.addEventListener('click', function (event) {
+    var target = event.target && event.target.closest ? event.target.closest('[data-hm-cookie-accept], [data-hm-cookie-necessary], [data-hm-cookie-save]') : null;
+    if (target) window.setTimeout(captureOfferAttribution, 0);
+  });
 
   function open(trigger) {
     populateSelects();

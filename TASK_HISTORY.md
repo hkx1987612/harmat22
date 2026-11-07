@@ -2,6 +2,33 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-07 - Preserve Campaign Metadata Into Apartment Details
+
+- User approved backup/testing/deployment of the cross-page attribution repair,
+  excluding all ad settings, quote generation and appointment behavior.
+- Unified modal1.0.9 captures consented tab-session entry metadata before modal
+  open and preserves it at existing open/submit points. Fresh tagged entries
+  replace the campaign atomically; no inference from manual source choices.
+-30min inactivity expiry, current-policy marketing consent, bounded same-origin
+  stored URLs, revocation cleanup and storage/corruption fallbacks. No tracking
+  requests, backend/data changes, conversion uploads or historical backfill.
+- Verified private original source and public-contract backup precedes editing.
+  Atomic source-only release passes eight route/form/SEO/content/shell checks,
+  protected data/unrelated-source parity and native35offer17spam cases.
+-39 exact-block unit tests,10 deployment/recovery cases,26 appointment and727
+  antispam cases pass. All non-attribution UI/submission source is byte-identical.
+- Actual Chrome1280desktop/390mobile native empty HUZH form checks pass. Tool masks
+  production hidden metadata, so direct masked comparisons are not evidence;
+  exact-code loopback browser fixture verifies6/6 cross-page assertions. Its
+  attempted narrow repeat stayed1920CSS, not mobile metadata proof. Independent
+  post-browser8-route/source/native/protected-state verification also passes.
+- No live submissions/mail/customer edits. Local fixture settings restored and
+  server stopped; final viewport/tab cleanup rejected and not claimed complete.
+  Desktop screenshot saved; partial mobile/timeout captures are not certified.
+- Separate YouTube subscriber discussion remains at budget-preview confirmation,
+  with no activation or budget changes. Recovery/pins/limits recorded in
+  maintenance/2026-11-07-offer-attribution.md; all private proofs stay ignored.
+
 ## 2026-11-05 - Inventory-Backed Reserved Apartment Count
 
 - User selected inventory38 as authority over32 reserved follow-up records.
