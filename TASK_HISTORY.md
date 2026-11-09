@@ -2,6 +2,21 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-09 - Approved Subscriber Total Budget Increase
+
+- User explicitly approved35000HUF full-period subscriber cap, original end
+  November21, other budgets unchanged. Backed up the existing28000 settings.
+- Changed only the current subscriber campaign's budget amount; saved and
+  read back35000 total, original November08-21 dates and learning status.
+- Final native table/screenshot confirms V4inquiry70000/endNov15, Search2500/day,
+  old large subscriber210000 paused and PMax5000/day paused, unchanged. Existing
+  subscriber creatives/goal/bidding kept. No new campaign or new paid period.
+- Only7000 additional cap, not35000 additional spending. No website/CRM/form/
+  quote/booking edits or new automations; user will observe several days.
+- Private evidence stays in ignored outputs/2026-11-09-youtube-budget35k; none
+  of its account data/screenshots are committed. Initial release record below
+  retains its historically correct28000/unapproved-proposal boundary.
+
 ## 2026-11-09 - Existing-Video V4 Landing And Subscriber Comparison
 
 - Published isolated `/uj-otthonok/` after private rollback backup, native contract

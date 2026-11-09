@@ -2,6 +2,21 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November09 Subscriber Budget Follow-Up - Current
+
+- User explicitly approves raising the existing YouTube subscriber campaign's
+  full-period total from28000 to35000HUF, including already-spent money. Increment
+  7000 only; original November08-21 dates retained, no new campaign/period.
+- Saved and independently read back the35000 total/November21 end. Native
+  campaign table confirms V4inquiry70000/endNov15, Search2500/day, old large
+  subscriber210000 paused and PMax5000/day paused, all unchanged.
+- Subscription goal, Maximize Conversions, existing60/25/30s ads and other
+  settings left intact. Website/CRM/quote/appointment untouched. No automatic
+  scaling, strategy changes, reminders or new automations; user observes first.
+- Private before/pre-save/after settings and screenshot are ignored under
+  outputs/2026-11-09-youtube-budget35k. This supersedes the unapproved35000
+  proposal in the initial landing-release record below.
+
 ## November09 V4 Inquiry Landing - Current
 
 - User approves reviewed copy/landing and existing30s subscriber comparison,
