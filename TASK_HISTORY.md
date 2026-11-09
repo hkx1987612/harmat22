@@ -2,6 +2,21 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-09 - Android NAS Delivery And Regression Review
+
+- Original signed1.0.0-test APK copied to the mapped NAS's Harmat-CRM dated folder;
+  exact SHA256 parity verified. No private signing/customer/session files copied.
+- User explicitly requested highest-model review: independent Astra/ultra source
+  audit plus main-agent emulator edge cases. Open P2s: schema-drift can misread or
+  falsely empty a view, stale authenticated settings dialog after lock, clipped
+  bottom labels at320dp/font2.0. Callback-ownership risks remain unproven.
+- Offline anonymous login and private-detail background clearing passed; normal
+  signed-release login scroll/focus/cancel passed after network restoration.
+  Device/display/network settings restored. No real credentials or submissions.
+- Only test/notes added; original APK and app source unchanged, no website/CRM,
+  quote/appointment/ad changes. Findings, evidence and recommended next steps:
+  maintenance/2026-11-09-crm-android-audit.md. Physical acceptance still pending.
+
 ## 2026-11-09 - Connected Android CRM And Fingerprint Test Package
 
 - User requested convenient Android CRM viewing and fingerprint sign-in. Added

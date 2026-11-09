@@ -21,6 +21,11 @@ This file summarizes the long-term context for the Harmat Lakopark 22 website an
 - Android9/API28 minimum, API35 emulator evidence only. Recovery is uninstalling
   the app/local session, NOT restoring CRM data. Architecture, QA and limitations:
   maintenance/2026-11-09-crm-android-connected.md. Private outputs remain ignored.
+- Follow-up NAS delivery kept the original APK/hash unchanged. Astra/ultra review
+  and extra emulator tests found open P2 parser schema-drift, stale settings-dialog
+  and320dp/font2.0 navigation issues; two callback-ownership risks need targeted
+  tests. See maintenance/2026-11-09-crm-android-audit.md BEFORE further delivery.
+  These are recommendations, not fixes or evidence of currently wrong live data.
 
 ## November09 Google Monthly Budget - Current
 
