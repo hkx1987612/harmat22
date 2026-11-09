@@ -5,7 +5,7 @@ param(
     [Parameter(Mandatory=$true)][string]$OutputDirectory
 )
 $ErrorActionPreference='Stop'
-# The font screenshot and stale-menu observation are audit evidence, not passing UI assertions.
+# Font screenshots still require visual review; stale dialogs are now regression failures.
 if ($Serial -notmatch '^emulator-\d+$') {throw 'Emulator only'}
 $qa='hu.harmat22.crm.mobile.qa'; $release='hu.harmat22.crm.mobile'
 [void](New-Item -ItemType Directory -Force -Path $OutputDirectory)
@@ -59,7 +59,12 @@ try {
     [void](Run @('shell','input','keyevent','3')); [void](Dump 'home-menu'); StartQa
     $menu=Dump 'menu-after-background'
     $stale=$menu.OuterXml.Contains('Kilépés ezen az eszközön')
-    Write-Output "OBSERVATION stale authenticated menu after background: $stale"
+    if ($stale) {throw 'Authenticated settings menu survived background lock'}
+    if (-not $menu.OuterXml.Contains('Értékesítési központ')) {throw 'Locked gate missing after menu background'}
+    Tap 'Mintaadatok megnyitása'; Tap 'Beállítások'; Tap 'Kilépés ezen az eszközön'
+    [void](Run @('shell','input','keyevent','3')); [void](Dump 'home-confirm'); StartQa
+    $confirm=Dump 'confirm-after-background'
+    if ($confirm.OuterXml.Contains('Törli az eszköz belépését?')) {throw 'Old signout confirmation survived lock'}
     [void](Run @('shell','am','force-stop',$qa))
     [void](Run @('shell','svc','wifi','disable')); [void](Run @('shell','svc','data','disable'))
     [void](Run @('shell','am','start','-W','-n',"$release/hu.harmat22.crm.mobile.MainActivity"))
@@ -70,7 +75,7 @@ try {
         if ($tree.OuterXml.Contains('登录页暂时无法打开')) {$offline=$true; break}
     }
     if (-not $offline) {throw 'Offline login did not reach its bounded error state'}
-    Write-Output 'PASS offline login fails safely; detail clears on background; visual/font and menu evidence captured'
+    Write-Output 'PASS offline login, background detail/menu/confirmation clearing; large-font evidence captured'
 } finally {
     [void](Run @('shell','settings','put','system','font_scale',$font))
     [void](Run @('shell','wm','size',$oldSize)); [void](Run @('shell','wm','density',$oldDensity))

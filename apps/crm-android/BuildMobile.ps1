@@ -1,7 +1,7 @@
 #Requires -Version 7.0
 param(
     [string]$AndroidSdk='C:/Android/Sdk',
-    [string]$OutputDirectory=(Join-Path $PSScriptRoot '../../outputs/2026-11-09-crm-android'),
+    [string]$OutputDirectory=(Join-Path $PSScriptRoot '../../outputs/2026-11-09-crm-android-v1.0.1'),
     [switch]$SkipBuild
 )
 $ErrorActionPreference='Stop'
@@ -33,8 +33,11 @@ try {
             if ($LASTEXITCODE -ne 0) { throw 'Release build/lint failed' }
         }
         $tools=Join-Path $AndroidSdk 'build-tools/35.0.0'
+        $metadata=(& "$tools/aapt.exe" dump badging 'mobile/build/outputs/apk/release/mobile-release-unsigned.apk') -join "`n"
+        if ($LASTEXITCODE -ne 0 -or $metadata -notmatch "versionName='(\d+\.\d+\.\d+)(?:-test)?'") { throw 'Cannot determine release version' }
+        $version=$Matches[1]
         $aligned=Join-Path $OutputDirectory 'mobile-aligned-unsigned.apk'
-        $apk=Join-Path $OutputDirectory 'Harmat-CRM-Android-1.0.0.apk'
+        $apk=Join-Path $OutputDirectory "Harmat-CRM-Android-$version.apk"
         & "$tools/zipalign.exe" -f -p 4 'mobile/build/outputs/apk/release/mobile-release-unsigned.apk' $aligned
         if ($LASTEXITCODE -ne 0) { throw 'APK alignment failed' }
         & "$tools/apksigner.bat" sign --ks $keystore --ks-key-alias harmat-crm --ks-pass env:HARMAT_CRM_KEY_PASSWORD --key-pass env:HARMAT_CRM_KEY_PASSWORD --out $apk $aligned

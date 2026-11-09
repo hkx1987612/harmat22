@@ -2,6 +2,19 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-09 - Android1.0.1 Approved Hardening
+
+- Fixed semantic-column/empty-state detection, lock-time app-dialog cleanup and
+  large-font navigation. Added identity/epoch guards for WebView and biometric
+  callbacks plus generation-guarded dialog actions; no auth scheme/role changes.
+-835 parser and23 callback tests,23+23 native UI, edge cleanup/offline and24
+  biometric checks pass. Independent Astra/ultra integration review found no
+  actionable issue in its bounded scope. True company/physical-phone acceptance
+  remains pending. Test APK updated in place on emulator using the same signature.
+- Original1.0.0 APK preserved, new1.0.1-test uses versionCode2 and a separate output.
+  No website/CRM backend/data, quote/appointment, ads or automation changes.
+  Verification and limits: maintenance/2026-11-09-crm-android-hardening.md.
+
 ## 2026-11-09 - Android NAS Delivery And Regression Review
 
 - Original signed1.0.0-test APK copied to the mapped NAS's Harmat-CRM dated folder;

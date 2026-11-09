@@ -2,6 +2,20 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November09 Android1.0.1 - Current Test Version
+
+- User approved fixing the independent audit. Lists now validate semantic HU/ZH
+  columns and per-view empty states. All dialogs close on lock; screen generations
+  and callback-owner epochs isolate stale actions/login/biometric callbacks.
+- Content-driven navigation fixes320dp/font2.0 clipping. VersionCode2 uses the
+  original package/signing identity;1.0.0 NAS package is preserved. No new API,
+  website/CRM source/data, quote/booking, permissions, ads or automation edits.
+-835 parser,23 callback sequence,23+23 native UI, edge cleanup/offline and24
+  biometric checks pass; original audit P2s addressed. Real phone/company login
+  still pending; do not claim fixtures certify actual customer data or every OEM.
+- Source/QA/recovery: maintenance/2026-11-09-crm-android-hardening.md.
+  This supersedes the open app findings recorded in the older audit below.
+
 ## November09 Connected Android CRM - Test Delivery
 
 - New independent `apps/crm-android/:mobile`, package `hu.harmat22.crm.mobile`,

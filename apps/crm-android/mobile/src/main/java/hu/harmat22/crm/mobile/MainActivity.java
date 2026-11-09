@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
@@ -35,7 +36,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,7 +45,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.io.ByteArrayInputStream;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -70,7 +69,9 @@ public class MainActivity extends Activity {
     private boolean chinese = true, fixture, foreground, loginPending, biometricPending;
     private int generation, visibleLimit = 40;
     private CancellationSignal cancellation;
-    private AlertDialog detailDialog;
+    private final List<AlertDialog> dialogs = new ArrayList<>();
+    private final CallbackOwner<CancellationSignal> biometricOwner = new CallbackOwner<>();
+    private final CallbackOwner<WebView> loginOwner = new CallbackOwner<>();
     private Future<?> pendingRead;
     private final BroadcastReceiver screenLock = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) { lock(); }
@@ -163,18 +164,21 @@ public class MainActivity extends Activity {
             root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         } else root.addView(content, new LinearLayout.LayoutParams(-1, 0, 1));
         if (navigation) {
-            line(root); LinearLayout nav = row(); nav.setBackgroundColor(SURFACE);
+            line(root); LinearLayout nav = row(); nav.setBackgroundColor(SURFACE); nav.setBaselineAligned(false);
+            nav.setMinimumHeight(dp(66));
             String[] views = {"dashboard", "inquiries", "deals", "properties"};
             String[] labels = {t("概览", "Áttekintés"), t("客户", "Ügyfelek"), t("跟单", "Ügyek"), t("房源", "Lakások")};
             int[] icons = {android.R.drawable.ic_menu_today, android.R.drawable.ic_menu_myplaces, android.R.drawable.ic_menu_recent_history, android.R.drawable.ic_menu_mapmode};
             for (int i = 0; i < views.length; i++) {
                 final String target = views[i]; boolean selected = view.equals(target) || (target.equals("inquiries") && view.equals("clients"));
                 LinearLayout tab = column(); tab.setGravity(Gravity.CENTER); tab.setPadding(dp(2), dp(9), dp(2), dp(9));
+                tab.setMinimumHeight(dp(66));
                 tab.setBackgroundColor(selected ? SAGE : SURFACE); tab.setContentDescription(labels[i]); tab.setFocusable(true);
                 ImageView image = new ImageView(this); image.setImageResource(icons[i]); image.setColorFilter(selected ? GREEN : MUTED);
                 image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO); tab.addView(image, new LinearLayout.LayoutParams(dp(23), dp(23)));
-                TextView title = text(labels[i], 12, selected ? GREEN : MUTED, selected); title.setGravity(Gravity.CENTER); tab.addView(title);
-                tab.setOnClickListener(v -> navigate(target)); nav.addView(tab, new LinearLayout.LayoutParams(0, dp(66), 1));
+                TextView title = text(labels[i], 12, selected ? GREEN : MUTED, selected); title.setGravity(Gravity.CENTER);
+                title.setMaxLines(2); tab.addView(title);
+                tab.setOnClickListener(v -> navigate(target)); nav.addView(tab, new LinearLayout.LayoutParams(0, -1, 1));
             }
             root.addView(nav);
         }
@@ -346,34 +350,52 @@ public class MainActivity extends Activity {
         item.setOnClickListener(v -> details(record)); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.bottomMargin = dp(12); parent.addView(item, lp);
     }
     private void details(PortalPage.Record record) {
+        if (!foreground || cookie == null || page == null) return;
         LinearLayout body = column(); body.setPadding(dp(22), dp(14), dp(22), dp(22));
         for (PortalPage.Field field : record.fields) {
             body.addView(text(field.label, 13, MUTED, true)); space(body, 6);
             body.addView(text(field.value, 16, INK, false)); space(body, 20);
         }
         ScrollView scroll = new ScrollView(this); scroll.addView(body);
-        detailDialog = new AlertDialog.Builder(this).setTitle(record.title).setView(scroll)
-            .setPositiveButton(t("关闭", "Bezárás"), null).create();
-        if (!fixture) detailDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
-        detailDialog.show();
+        showDialog(new AlertDialog.Builder(this).setTitle(record.title).setView(scroll)
+            .setPositiveButton(t("关闭", "Bezárás"), null));
+    }
+
+    private void showDialog(AlertDialog.Builder builder) {
+        if (!foreground || isFinishing()) return;
+        AlertDialog dialog = builder.create();
+        if (!fixture) dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        dialogs.add(dialog);
+        dialog.setOnDismissListener(ignored -> dialogs.remove(dialog));
+        dialog.show();
+    }
+
+    private DialogInterface.OnClickListener guarded(DialogInterface.OnClickListener action) {
+        final int request = generation;
+        return (dialog, which) -> { if (foreground && request == generation) action.onClick(dialog, which); };
+    }
+
+    private void dismissDialogs() {
+        List<AlertDialog> previous = new ArrayList<>(dialogs); dialogs.clear();
+        for (AlertDialog dialog : previous) { dialog.setOnDismissListener(null); dialog.dismiss(); }
     }
 
     private void settings() {
         String[] actions = cookie == null
             ? new String[]{"中文 / Magyar", t("手机指纹设置", "Ujjlenyomat beállítása"), t("清除此设备登录", "Belépés törlése erről az eszközről")}
             : new String[]{"中文 / Magyar", t("启用指纹解锁", "Ujjlenyomatos feloldás"), t("退出此设备", "Kilépés ezen az eszközön")};
-        new AlertDialog.Builder(this).setTitle(t("设置", "Beállítások")).setItems(actions, (dialog, which) -> {
+        showDialog(new AlertDialog.Builder(this).setTitle(t("设置", "Beállítások")).setItems(actions, guarded((dialog, which) -> {
             if (which == 0) {
                 chinese = !chinese; getPreferences(MODE_PRIVATE).edit().putBoolean("chinese", chinese).apply();
                 if (cookie == null) { closeLogin(); gate(""); } else load();
             } else if (which == 1) {
                 if (cookie == null) startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS)); else biometric(true);
             } else {
-                new AlertDialog.Builder(this).setTitle(t("清除此设备登录？", "Törli az eszköz belépését?"))
+                showDialog(new AlertDialog.Builder(this).setTitle(t("清除此设备登录？", "Törli az eszköz belépését?"))
                     .setMessage(t("此设备保存的登录会话将被移除，其他设备不受影响。", "A helyi belépési adatok törlődnek. Más eszközök belépése változatlan."))
-                    .setNegativeButton(t("取消", "Mégse"), null).setPositiveButton(t("清除", "Törlés"), (d, w) -> { forget(); gate(""); }).show();
+                    .setNegativeButton(t("取消", "Mégse"), null).setPositiveButton(t("清除", "Törlés"), guarded((d, w) -> { forget(); gate(""); })));
             }
-        }).show();
+        })));
     }
     private boolean fingerprintAvailable() {
         if (Build.VERSION.SDK_INT >= 30) {
@@ -386,34 +408,36 @@ public class MainActivity extends Activity {
     }
     private void offerBiometric() {
         if (!fingerprintAvailable()) return;
-        new AlertDialog.Builder(this).setTitle(t("启用指纹解锁？", "Bekapcsolja az ujjlenyomatos feloldást?"))
+        showDialog(new AlertDialog.Builder(this).setTitle(t("启用指纹解锁？", "Bekapcsolja az ujjlenyomatos feloldást?"))
             .setMessage(t("登录会话仅加密保存在这台手机。服务器登录过期后仍需重新登录。", "A belépés titkosítva, csak ezen a telefonon marad. Lejárt szerveres munkamenetnél új belépés szükséges."))
-            .setNegativeButton(t("暂不", "Most nem"), null).setPositiveButton(t("启用", "Bekapcsolás"), (d, w) -> biometric(true)).show();
+            .setNegativeButton(t("暂不", "Most nem"), null).setPositiveButton(t("启用", "Bekapcsolás"), guarded((d, w) -> biometric(true))));
     }
     private void biometric(boolean save) {
         if (!foreground || biometricPending || (save && cookie == null)) return;
         if (save && vault.exists()) {
-            new AlertDialog.Builder(this).setMessage(t("此设备已启用指纹解锁。", "Az ujjlenyomatos feloldás már be van kapcsolva."))
-                .setPositiveButton(t("知道了", "Rendben"), null).show(); return;
+            showDialog(new AlertDialog.Builder(this).setMessage(t("此设备已启用指纹解锁。", "Az ujjlenyomatos feloldás már be van kapcsolva."))
+                .setPositiveButton(t("知道了", "Rendben"), null)); return;
         }
         if (!fingerprintAvailable()) {
-            new AlertDialog.Builder(this).setMessage(t("请先在手机安全设置中录入指纹，也可以使用CRM账号登录。", "Előbb állítson be ujjlenyomatot a telefonon, vagy lépjen be CRM-fiókjával."))
-                .setPositiveButton(t("知道了", "Rendben"), null).show(); return;
+            showDialog(new AlertDialog.Builder(this).setMessage(t("请先在手机安全设置中录入指纹，也可以使用CRM账号登录。", "Előbb állítson be ujjlenyomatot a telefonon, vagy lépjen be CRM-fiókjával."))
+                .setPositiveButton(t("知道了", "Rendben"), null)); return;
         }
+        final int request = generation;
+        final String sessionToSave = cookie;
+        final CancellationSignal signal = new CancellationSignal();
+        final long operation = biometricOwner.begin(signal);
+        cancellation = signal; biometricPending = true;
         try {
             Cipher cipher = save ? vault.encryptionCipher() : vault.decryptionCipher();
-            final String sessionToSave = cookie; final int request = generation;
-            cancellation = new CancellationSignal(); biometricPending = true;
             BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this)
                 .setTitle(t("Harmat CRM 指纹验证", "Harmat CRM ujjlenyomat"))
                 .setSubtitle(save ? t("加密保存此设备登录", "Belépés titkosított mentése") : t("解锁销售后台", "Értékesítési központ feloldása"))
-                .setNegativeButton(t("取消", "Mégse"), getMainExecutor(), (d, w) -> biometricPending = false);
+                .setNegativeButton(t("取消", "Mégse"), getMainExecutor(), (d, w) -> finishBiometric(operation, signal, request));
             if (Build.VERSION.SDK_INT >= 30) builder.setAllowedAuthenticators(android.hardware.biometrics.BiometricManager.Authenticators.BIOMETRIC_STRONG);
-            builder.build().authenticate(new BiometricPrompt.CryptoObject(cipher), cancellation, getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
-                @Override public void onAuthenticationError(int error, CharSequence description) { biometricPending = false; }
+            builder.build().authenticate(new BiometricPrompt.CryptoObject(cipher), signal, getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
+                @Override public void onAuthenticationError(int error, CharSequence description) { finishBiometric(operation, signal, request); }
                 @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
-                    biometricPending = false;
-                    if (!foreground || request != generation) return;
+                    if (!finishBiometric(operation, signal, request)) return;
                     try {
                         Cipher authenticated = result.getCryptoObject().getCipher();
                         if (save) {
@@ -424,15 +448,25 @@ public class MainActivity extends Activity {
                     } catch (Exception invalidKey) { forget(); gate(t("安全验证已变化，请重新登录。", "A biztonsági adatok megváltoztak. Lépjen be újra.")); }
                 }
             });
-        } catch (Exception invalidKey) { forget(); gate(t("指纹登录不可用，请用账号重新登录。", "Az ujjlenyomatos belépés nem használható. Lépjen be fiókjával.")); }
+        } catch (Exception invalidKey) {
+            if (finishBiometric(operation, signal, request)) {
+                forget(); gate(t("指纹登录不可用，请用账号重新登录。", "Az ujjlenyomatos belépés nem használható. Lépjen be fiókjával."));
+            }
+        }
+    }
+
+    private boolean finishBiometric(long operation, CancellationSignal signal, int request) {
+        if (!foreground || request != generation || !biometricOwner.finish(operation, signal)) return false;
+        biometricPending = false; cancellation = null;
+        return true;
     }
 
     private void login() {
         if (vault.exists()) {
-            new AlertDialog.Builder(this).setTitle(t("使用账号重新登录？", "Új belépés fiókkal?"))
+            showDialog(new AlertDialog.Builder(this).setTitle(t("使用账号重新登录？", "Új belépés fiókkal?"))
                 .setMessage(t("将清除此设备的旧指纹会话，登录后可重新启用。", "A korábbi helyi ujjlenyomatos belépés törlődik. Belépés után újra bekapcsolható."))
                 .setNegativeButton(t("取消", "Mégse"), null)
-                .setPositiveButton(t("继续", "Folytatás"), (d, w) -> { vault.clear(); startLogin(); }).show();
+                .setPositiveButton(t("继续", "Folytatás"), guarded((d, w) -> { vault.clear(); startLogin(); })));
         } else startLogin();
     }
     private void startLogin() {
@@ -441,6 +475,8 @@ public class MainActivity extends Activity {
         content.addView(text(t("登录Harmat销售后台", "Belépés a Harmat értékesítésbe"), 23, INK, true)); space(content, 12);
         content.addView(text("https://harmat22.hu/sales/", 13, MUTED, false)); space(content, 12);
         loginView = new WebView(this); WebView.setWebContentsDebuggingEnabled(false);
+        final WebView target = loginView;
+        final long operation = loginOwner.begin(target);
         WebSettings settings = loginView.getSettings(); settings.setJavaScriptEnabled(false);
         settings.setDomStorageEnabled(false); settings.setAllowFileAccess(false); settings.setAllowContentAccess(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW); settings.setSafeBrowsingEnabled(true);
@@ -448,45 +484,54 @@ public class MainActivity extends Activity {
         CookieManager cookies = CookieManager.getInstance(); cookies.setAcceptCookie(true); cookies.setAcceptThirdPartyCookies(loginView, false);
         loginView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
-                return !PortalPolicy.loginNavigation(request.getUrl().toString());
+                return !ownsLogin(v, operation) || !PortalPolicy.loginNavigation(request.getUrl().toString());
             }
             @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest request) {
                 if (!PortalPolicy.sameOrigin(request.getUrl().toString())) return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
                 return null;
             }
-            @Override public void onPageStarted(WebView v, String url, android.graphics.Bitmap favicon) { captureLogin(); }
-            @Override public void onPageFinished(WebView v, String url) { captureLogin(); }
-            @Override public void onReceivedSslError(WebView v, SslErrorHandler handler, SslError error) { handler.cancel(); closeLogin(); gate(t("安全连接失败，已停止连接。", "A biztonságos kapcsolat sikertelen. A kapcsolat leállt.")); }
+            @Override public void onPageStarted(WebView v, String url, android.graphics.Bitmap favicon) { captureLogin(v, operation); }
+            @Override public void onPageFinished(WebView v, String url) { captureLogin(v, operation); }
+            @Override public void onReceivedSslError(WebView v, SslErrorHandler handler, SslError error) {
+                handler.cancel();
+                if (ownsLogin(v, operation)) { closeLogin(); gate(t("安全连接失败，已停止连接。", "A biztonságos kapcsolat sikertelen. A kapcsolat leállt.")); }
+            }
             @Override public void onReceivedError(WebView v, WebResourceRequest r, android.webkit.WebResourceError e) {
-                if (r.isForMainFrame()) { closeLogin(); gate(t("登录页暂时无法打开，请稍后重试。", "A belépési oldal nem érhető el. Próbálja újra később.")); }
+                if (r.isForMainFrame() && ownsLogin(v, operation)) { closeLogin(); gate(t("登录页暂时无法打开，请稍后重试。", "A belépési oldal nem érhető el. Próbálja újra később.")); }
             }
         });
         // The WebView owns scrolling; a parent ScrollView steals its login-form gestures.
         content.addView(loginView, new LinearLayout.LayoutParams(-1, 0, 1));
         content.addView(command(t("取消登录", "Belépés megszakítása"), () -> { closeLogin(); gate(""); }, false));
-        final WebView target = loginView;
-        cookies.removeAllCookies(ignored -> { if (foreground && loginView == target) target.loadUrl(PortalPolicy.ORIGIN + "/sales/?wp_lang=" + (chinese ? "zh_CN" : "hu_HU")); });
+        cookies.removeAllCookies(ignored -> { if (ownsLogin(target, operation)) target.loadUrl(PortalPolicy.ORIGIN + "/sales/?wp_lang=" + (chinese ? "zh_CN" : "hu_HU")); });
     }
-    private void captureLogin() {
-        if (loginView == null || loginPending || !foreground) return;
+    private boolean ownsLogin(WebView target, long operation) {
+        return foreground && loginView == target && loginOwner.matches(operation, target);
+    }
+    private void captureLogin(WebView target, long operation) {
+        if (!ownsLogin(target, operation) || loginPending) return;
         String captured = PortalPolicy.authCookies(CookieManager.getInstance().getCookie(PortalPolicy.ORIGIN + "/sales/"));
         if (captured.isEmpty()) return;
         loginPending = true; closeLogin(); cookie = captured; view = "dashboard"; fetch(true);
     }
     private void closeLogin() {
-        if (loginView != null) {
-            loginView.stopLoading(); loginView.clearHistory(); loginView.clearCache(true);
-            if (loginView.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) loginView.getParent()).removeView(loginView);
-            loginView.destroy(); loginView = null;
+        loginOwner.invalidate();
+        WebView previous = loginView; loginView = null; loginPending = false;
+        if (previous != null) {
+            previous.stopLoading(); previous.clearHistory(); previous.clearCache(true);
+            if (previous.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) previous.getParent()).removeView(previous);
+            previous.destroy();
         }
         CookieManager.getInstance().removeAllCookies(null); WebStorage.getInstance().deleteAllData();
     }
     private void lock() {
         generation++; if (pendingRead != null) pendingRead.cancel(true); client.cancel();
-        if (cancellation != null) cancellation.cancel();
+        biometricOwner.invalidate();
+        CancellationSignal previous = cancellation; cancellation = null;
+        if (previous != null) previous.cancel();
         biometricPending = false; cookie = null; page = null; results = null;
         query = ""; status = ""; closeLogin();
-        if (detailDialog != null) { detailDialog.dismiss(); detailDialog = null; }
+        dismissDialogs();
         gate("");
     }
     private void forget() { lock(); vault.clear(); }

@@ -39,6 +39,11 @@ function Finger([int]$Id) { [void](Run @('emu','finger','touch',"$Id")); [void](
 function StartQa { [void](Run @('shell','am','start','-W','-n',"$package/hu.harmat22.crm.mobile.MainActivity",'--ez','demo','true')) }
 [void](Run @('shell','am','force-stop',$package)); [void](Run @('shell','pm','clear',$package)); StartQa
 Assert '公司销售后台'
+Tap '账号登录'; Assert '启用指纹解锁？'
+[void](Run @('shell','input','keyevent','3')); [void](Dump 'offer-home'); StartQa
+Assert '公司销售后台' 'offer-background-locked'
+if ((Dump 'offer-dismissed').OuterXml.Contains('启用指纹解锁？')) {throw 'Enrollment offer survived background lock'}
+$script:checks++
 Tap '账号登录'; Assert '启用指纹解锁？'; Tap '启用'; Assert 'Harmat CRM 指纹验证' 'save-prompt'
 Finger $WrongId; Assert 'Harmat CRM 指纹验证' 'wrong-save-finger'
 Finger $EnrolledId; Assert '销售概览' 'saved'

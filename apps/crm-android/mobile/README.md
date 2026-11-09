@@ -3,6 +3,9 @@
 Native Android9/API28+ application, package `hu.harmat22.crm.mobile`.
 Separate from the existing offline preview and older maintenance app.
 
+Current internal test version: `1.0.1-test` (versionCode2). Same package and
+private signing identity as1.0.0-test; no saved-session format migration.
+
 ## Connection
 
 The application reads the existing authenticated `/sales/` HTML using jsoup,
@@ -29,6 +32,9 @@ redirects, disk response caching or arbitrary query parameters. Existing
 An expired session or unauthorized role returns to sign-in. An unrecognized
 schema fails visibly rather than silently showing stale/demo/zero customer data.
 HTML changes can require an app update; this adapter is not a stable API contract.
+List parsing pins the known HU/ZH semantic column order (including optional
+deal commission) and the exact empty-state panel/text for each view. Unknown
+headers, misplaced empty widgets and empty placeholder tables fail closed.
 
 ## Fingerprint And Privacy
 
@@ -37,6 +43,9 @@ HTML changes can require an app update; this adapter is not a stable API contrac
   the system BiometricPrompt CryptoObject. No custom fingerprint collection.
 - App background/screen-off locks, clears decrypted native records/cookie and
   cancels pending reads; outstanding callbacks cannot reopen a locked page.
+- All application dialogs are tracked/dismissed on lock; actions carry their
+  screen generation. Login WebView and biometric callbacks also carry an owner
+  identity/epoch so an old cancellation or error cannot finish a newer operation.
 - New biometric enrollment, key invalidation, missing keys or decryption failure
   require account sign-in again. Biometrics never bypass server session expiry.
 - Switching accounts discards the previous local biometric session first.
@@ -66,6 +75,7 @@ php tests/MobileFixtures.php
 gradle :mobile:assembleDebug :mobile:assembleRelease :mobile:lintRelease --offline --console=plain
 ./tests/MobileSmoke.ps1 -OutputDirectory C:/path/to/ignored/qa
 ./tests/MobileSmoke.ps1 -Compact -OutputDirectory C:/path/to/ignored/qa-compact
+./tests/EdgeSmoke.ps1 -OutputDirectory C:/path/to/ignored/qa-edge
 ./tests/BiometricSmoke.ps1 -OutputDirectory C:/path/to/ignored/qa-biometric
 ./BuildMobile.ps1
 ./tests/ReleaseLoginSmoke.ps1 -OutputDirectory C:/path/to/ignored/qa-login
@@ -83,11 +93,18 @@ enrolled (ID1 by default). Restore its original PIN/enrollment after testing.
 ReleaseLoginSmoke requires a fresh installed release profile without saved real
 sessions; it checks the public login page/scroll/focus/cancel without entering
 credentials or submitting a form. The WebView alone owns login-page scrolling.
+EdgeSmoke checks background settings/confirmation cleanup and offline login;
+its320dp/200% screenshot still needs actual visual review. Navigation uses
+content-driven height with a66dp minimum and wrapping labels, not a fixed height.
+`CallbackOwnerTest.java` tests deterministic old-A/new-B callback ordering in
+plain Java; it is not a claim of complete OEM biometric race certification.
 
 BuildMobile creates/reuses a private RSA3072 signing identity under the current
 Windows user's LOCALAPPDATA/HarmatCRM/Signing. Its password is Windows-DPAPI
 protected; neither key nor password enters Git or the APK. Preserve that local
 identity for future updates. No Play Store account, fee or publication is used.
+APK filenames are derived from the unsigned manifest version; output defaults
+to the ignored1.0.1 delivery directory. Previous signed packages are preserved.
 
 Runtime validation on API35 does not certify every Android9+ physical device.
 First actual company login and fingerprint enrollment on the user's phone remain
