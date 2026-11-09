@@ -2,6 +2,30 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November09 V4 Inquiry Landing - Current
+
+- User approves reviewed copy/landing and existing30s subscriber comparison,
+  with all budgets/dates/other ads and quote/booking owners unchanged.
+- Add-only GET/HEAD `/uj-otthonok/` and scoped/hash-checked MU assets. Public
+  current inventory/prices, existing plans/renderings, original native modal,
+  consent and attribution. No new form/endpoint/database/rewrite migration.
+- Existing1080p V4 byte-exact/on-demand/uncropped; planned2027April structural
+  milestone distinct from2028Q2 handover. No hidden prices/discount promises.
+- Private backup and source-only recovery; release plus independent eight-route
+  native form/SEO/content/shell and protected business/source checks pass.
+  Normal visit counter may advance; its hashes remain in private evidence.
+-17 local tests,39 original attribution checks, native35offer17antispam and PHP/
+  JS lint pass. Actual1440/390/320 filtering, plan zoom, native blank appointment
+  modal and nooverflow checks; original video advances33s at1920x1080/no error.
+  Local send-blocked fixture stopped; viewport reset. No live form submissions.
+- V4 existing ad saved with only3 text fields/destination changed, pending review.
+  New30s inside existing subscriber group saved/pending review; original60/25
+  retained. These are not randomized equal-spend experiment or guaranteed lift.
+- Final native campaigns/CSV proof: inquiry70000HUF endsNov15; subscriber28000
+  endsNov21; Search2500/day; old large subscriber/PMax paused. No budget changes.
+  Suggested35000 subscriber cap remains unapproved. Private ad exports/media/
+  screenshots never enterGit. Limits/recovery: maintenance/2026-11-09-v4-landing.md.
+
 ## November07 Cross-Page Offer Attribution - Current
 
 - Unified offer modal1.0.9 changes attribution metadata only. Public entry capture

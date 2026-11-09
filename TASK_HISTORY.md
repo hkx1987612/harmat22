@@ -2,6 +2,31 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-09 - Existing-Video V4 Landing And Subscriber Comparison
+
+- Published isolated `/uj-otthonok/` after private rollback backup, native contract
+  preflight and actual1440/390/320 desktop/mobile-size browser checks. Current
+  public inventory, real approved media, original modal/consent/attribution.
+  New source only; existing website content/forms/quote/PDF/booking/CRM untouched.
+-17 scoped tests,39 attribution checks,35 native offer/17 antispam, PHP/JS lint,
+  release and independent eight-route/protected-source/business parity pass.
+  Selected2-room inquiry carries correct apartment/area/price; contact/date empty,
+  privacy unchecked, original slots/source controls. Zero live submissions/mail.
+- Fixed only own route's theme heading/header inheritance and duplicate canonical
+  found during live QA. V4 original104887982bytes/SHA retained; actual33s playback
+  at1920x1080 without media error. No lower-resolution/cropped replacement.
+- Saved original V4 ad with reviewed3 text changes/new URL; exported config proves
+  no duplicate inquiry ad/other configuration changes. New30s subscriber ad added
+  to existing group, existing60/25 retained. Both changes submitted for review.
+- Final campaign boundaries confirmed unchanged: V4total70000/endNov15,
+  subscriberstotal28000/endNov21, Search2500/day; old large subscriber/PMax paused.
+  No new spend approval from budget discussion;35000 subscriber proposal not applied.
+- Local send-blocked test server stopped, temporary viewport reset, live landing
+  and requested Ads pages retained. Final website and native budget screenshots
+  reviewed/private only; editor screenshot limitation recorded. Physical-phone/
+  Safari/FPS and future conversion lift not certified. No automation changes.
+- Source-only rollback and exact private proofs: maintenance/2026-11-09-v4-landing.md.
+
 ## 2026-11-07 - Preserve Campaign Metadata Into Apartment Details
 
 - User approved backup/testing/deployment of the cross-page attribution repair,
