@@ -2,6 +2,26 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November09 Connected Android CRM - Test Delivery
+
+- New independent `apps/crm-android/:mobile`, package `hu.harmat22.crm.mobile`,
+  reads authorized existing `/sales/` HTML natively: overview/daily visits,
+  enquiries, client files, deals and inventory. Old offline `:app` is retained.
+- Existing account sign-in only in an isolated HTTPS WebView, then native fixed
+  GETs; no business edit/delete/export/quote/booking operation or new backend API.
+  Server account/object permissions remain authoritative. Language selection
+  retains the portal's existing user-preference behavior; HTML is not a stable API.
+- Optional per-operation Android Keystore AES/GCM BiometricPrompt CryptoObject;
+  background/screen-off locks and clears native session/records, no customer disk
+  cache. Server expiry still requires login. Real company login and fingerprint
+  on the user's physical phone remain acceptance steps, not certified by fixtures.
+- Signed local test APK, non-debuggable/no fixture assets. Private signing identity
+  stays outside Git under LOCALAPPDATA; preserve it for future updates. No Play
+  Store publication, payment, website/CRM source/data, quote/booking or ad changes.
+- Android9/API28 minimum, API35 emulator evidence only. Recovery is uninstalling
+  the app/local session, NOT restoring CRM data. Architecture, QA and limitations:
+  maintenance/2026-11-09-crm-android-connected.md. Private outputs remain ignored.
+
 ## November09 Google Monthly Budget - Current
 
 - User approved November09-December08 inclusive: inquiry YouTube240000HUF,

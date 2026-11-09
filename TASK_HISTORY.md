@@ -2,6 +2,31 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-09 - Connected Android CRM And Fingerprint Test Package
+
+- User requested convenient Android CRM viewing and fingerprint sign-in. Added
+  an independent native `:mobile` client, preserving the offline `:app` and older
+  maintenance app. Reads only the current authorized portal rendering; no new
+  public/private API, backend deployment, credentials or CRM role changes.
+- Overview/daily traffic, enquiries, client files, sales deals and inventory;
+  native search/status filters, latest-enquiry ordering and Chinese/Hungarian UI.
+  Existing server role/object visibility remains the source of truth. No business
+  writes, exports, customer-file downloads, quote/PDF or appointment operations.
+- Optional AES/GCM session saving uses auth-per-operation system biometric crypto,
+  not a boolean fingerprint gate around a plaintext cookie. Background lock,
+  request cancellation, no native customer cache, secure windows and backup/transfer
+  exclusions. First real company login and physical-phone fingerprint still need
+  user acceptance; fixtures are never presented as verified live customer data.
+- Signed test APK stays local/ignored; signing key/password outside Git, no Play
+  Store purchase or publishing. Real anonymous login rendering/scroll/password
+  focus/cancel tested without credentials or submission in two emulator sizes.
+  Fixed nested login scrolling and small-screen keyboard search confirmation.
+- 20 current-renderer fixtures, 169 parser/policy checks, 23+23 native normal/
+  compact UI checks, 21 biometric-crypto checks and release build/lint pass.
+  Synthetic emulator security/display settings restored; no physical PIN changed.
+- No site, CRM PHP/data, quote, appointment, ads or automation changes. Detailed
+  QA, recovery and limitations: maintenance/2026-11-09-crm-android-connected.md.
+
 ## 2026-11-09 - Approved Thirty-Day Search And YouTube Budget
 
 - User confirmed November09-December08,600000HUF envelope: inquiry240000,

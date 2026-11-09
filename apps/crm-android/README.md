@@ -1,5 +1,9 @@
 # Harmat CRM Android Preview
 
+This document describes the original offline `:app` module. The connected,
+biometric-protected read client is the separate `:mobile` module; see
+[`mobile/README.md`](mobile/README.md). The offline package remains unchanged.
+
 Independent, offline Android UX prototype for internal sales staff.
 This is **not** a production CRM client and does not synchronize real records.
 

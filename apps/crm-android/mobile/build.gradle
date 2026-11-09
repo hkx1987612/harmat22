@@ -1,0 +1,26 @@
+plugins { id "com.android.application" }
+
+android {
+    namespace "hu.harmat22.crm.mobile"
+    compileSdk 35
+    defaultConfig {
+        applicationId "hu.harmat22.crm.mobile"
+        minSdk 28
+        targetSdk 35
+        versionCode 1
+        versionName "1.0.0-test"
+    }
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildTypes {
+        debug { applicationIdSuffix ".qa"; versionNameSuffix "-qa" }
+        release { minifyEnabled false; debuggable false }
+    }
+}
+
+dependencies {
+    implementation "org.jsoup:jsoup:1.18.3"
+}
