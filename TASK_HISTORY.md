@@ -2,6 +2,34 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-09 - Approved Thirty-Day Search And YouTube Budget
+
+- User confirmed November09-December08,600000HUF envelope: inquiry240000,
+  Search180000, subscribers90000, unallocated reserve90000. Explicit permission
+  for new total-budget Search replacement and old Search pause at switchover.
+- Native November02-08 cost export anchors YouTube lifetime caps274394.78 and
+  92041.87HUF, each historical spend plus the new-period allowance; ends saved
+  December08 and independently read back. No duplicate YouTube campaign.
+- New Search175000HUF total leaves5000 within Search allocation for old daily
+  campaign's November09 spend/reporting lag. All21 original keywords/types,
+  18 negatives (14 exact/four phrase), one RSA15 headlines/four descriptions,
+  destination/paths/no pins retained. Native saved assets/keywords compared.
+- Hungary/presence-only and AI Max/text/URL expansion off confirmed in live
+  settings despite stale wizard summaries. Account goals and networks retained.
+  Candidate staged paused with tomorrow start, verified, changed to today while
+  paused; old Search paused first, new then enabled. No concurrent spending pair.
+- Final CSV/screenshot: new Search enabled/effective-limited for insufficient
+  relevant keywords and learning; V4inquiry eligible/subscribers learning;
+  old Search/large subscriber/PMax paused, October subscriber ended. Reported
+  historical results do not establish new-period delivery or conversion lift.
+- User's one-minute-video question answered: inquiry already uses60s V4;
+  subscription60/25/30s comparison retained, Search remains text. No creative
+  replacement requested/applied in this batch. No website/CRM/quote/booking,
+  Facebook, conversion settings, payment or automation changes. No auto-renewal.
+- Private evidence outputs/2026-11-09-monthly-budget600k stays ignored. Native
+  campaign export independently confirms exact budgets/states; final screenshot
+  reviewed, Ads table retained. Recovery:2026-11-09-monthly-google-budget.md.
+
 ## 2026-11-09 - Approved Subscriber Total Budget Increase
 
 - User explicitly approved35000HUF full-period subscriber cap, original end

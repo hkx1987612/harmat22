@@ -2,6 +2,35 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November09 Google Monthly Budget - Current
+
+- User approved November09-December08 inclusive: inquiry YouTube240000HUF,
+  Search180000HUF, subscriber YouTube90000HUF, reserve90000HUF NOT allocated.
+  This supersedes the35000 subscriber cap and earlier November end dates below.
+- Existing inquiry/subscriber campaigns retained. Exact pre-November09 native
+  export costs34394.78/2041.87 added to new-period allowances, giving lifetime
+  caps274394.78/92041.87HUF; both ends saved/read back December08. No duplicated
+  YouTube campaign, creative/goal/bid/website changes or new30-day spend on top.
+- User allowed a Search replacement because daily-to-total conversion is not
+  supported. New total175000HUF/November09-December08, plus up to5000HUF held
+  within the180000 allocation for old Search's November09 spend/reporting lag.
+  This is NOT reserve spending and is not automatically topped up later.
+- Backed up original settings, native21-keyword/one-RSA exports and18 negatives.
+  New21 keywords/match types,15 headlines/four descriptions/no pins, same final
+  URL,18 campaign negatives (14 exact/four phrase), Hungary/presence-only, goals,
+  Maximize Conversions/networks inherited. Live AI Max/text adaptation/URL
+  expansion and auto-created assets off; transient wizard summaries were stale.
+- New candidate staged paused/future-started, verified, dated November09, then
+  old Search paused BEFORE new enabled. Native final CSV confirms new enabled,
+  effective-limited for insufficient relevant keywords and bid learning, not
+  proof of actual delivery or improved leads. Original preserved, not deleted.
+- Existing60s V4 remains inquiry creative; subscriber60/25/30s retained. Old
+  large subscriber/PMax remain paused, October subscriber ended. No Facebook,
+  CRM, quote, appointment, website, conversion config or automation edits.
+- Private before/after exports/screenshots and receipt are ignored under
+  outputs/2026-11-09-monthly-budget600k. Read final receipt before future edits.
+  Recovery and budget accounting: maintenance/2026-11-09-monthly-google-budget.md.
+
 ## November09 Subscriber Budget Follow-Up - Current
 
 - User explicitly approves raising the existing YouTube subscriber campaign's
