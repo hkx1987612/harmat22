@@ -2,6 +2,22 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-12 - Approved Inquiry Source Counts And Actual Total
+
+- Released Sales Manager1.6.127 after fresh private transactional data/materials
+  backup. Removed the120 website-read ceiling for this view using200-post batches;
+  separated full role-scoped totals from the160-row rendered list.
+- Explicit walk-in subtotal, three source categories, loaded-record label and total
+  at the end. Source subtotals reconcile with actual source records in both UI
+  languages. Records are not represented as unique customers or conversions.
+-317 targeted offline checks,148 CRM checks,6 synthetic desktop/mobile Chromium
+  layouts,835 Android parser checks,26 appointment/727 antispam checks and rollback
+  guards pass. Native original/new POST forms unchanged; full manager and two
+  staff scopes match. No real enquiry/appointment submission or customer export.
+- Source-only atomic release verified8 public form/SEO contracts and unchanged
+  protected business data/other sources. Exact aggregates/backup manifests remain
+  in ignored outputs. Notes: maintenance/2026-11-12-inquiry-counter-fix.md.
+
 ## 2026-11-12 - Read-Only Stuck160 Inquiry Counter Diagnosis
 
 - Confirmed production/repository parity and two row limits: website120 then

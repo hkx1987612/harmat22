@@ -2,16 +2,22 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
-## November12 Inquiry Counter - Open, Diagnosed Only
+## November12 Inquiry Counter - Fixed And Released
 
-- User's stuck160 is a real truncation/counting defect: combined row builder
-  caps160 after fetching only120 website posts; summary tiles count that slice.
-  Production source matches the repository; private live aggregates exceed160
-  and include recent records. Exact counts stay in ignored outputs, not Git.
-- No live fix, record/permission/quote/appointment change applied. Repair approval
-  still needed. Separate full authorized totals from bounded display; preserve
-  staff scope and Android HTML-reader compatibility, not another arbitrary cap.
-- Evidence and safe proposed scope: maintenance/2026-11-12-inquiry-counter-audit.md.
+- User approved correcting stuck160 and requested an explicit walk-in subtotal
+  and actual total. Sales Manager1.6.127 counts all authorized records; website
+  reads use200-post batches, while rendered rows remain capped160 after filters.
+- Summary order is website, walk-in, broker, loaded records, total. Counts use
+  record grain, NOT unique people/conversions/visits. Source subtotals reconcile;
+  website source includes client files explicitly classified as website leads.
+- Fresh private79-table transactional backup; native HU/ZH POST forms unchanged,
+  manager/two staff scopes checked,8 public offer/SEO contracts unchanged and
+  protected records/source hashes unchanged. No quote/booking/ads/role changes.
+-317 synthetic counter checks,148 CRM UI checks,6 synthetic Chromium layouts,
+ 835 Android parser checks and appointment/antispam regressions pass. This is not
+  a physical Android acceptance test. Exact aggregates/receipts remain ignored.
+- Release/recovery: maintenance/2026-11-12-inquiry-counter-fix.md. Supersedes the
+  pending-approval status in the earlier read-only diagnosis.
 
 ## November09 Android1.0.1 - Current Test Version
 

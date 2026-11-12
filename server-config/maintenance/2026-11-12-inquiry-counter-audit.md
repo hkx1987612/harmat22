@@ -1,5 +1,8 @@
 # 2026-11-12 - Inquiry Counter Stuck At160 (Read-Only Diagnosis)
 
+Historical investigation below. User subsequently approved the repair and walk-in
+subtotal; released1.6.127 is documented in2026-11-12-inquiry-counter-fix.md.
+
 User reported the top sales inquiry number never moves from160. No live repair
 has been authorized or applied in this investigation. Existing website, CRM
 records, role permissions, quote/PDF and appointment handlers are unchanged.

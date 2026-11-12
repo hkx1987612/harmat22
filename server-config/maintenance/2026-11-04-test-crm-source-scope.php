@@ -46,6 +46,8 @@ if ($base === 'fec1e2a') {
         'sales_inquiry_summary_rows', 'render_sales_portal_inquiry_summary_row', 'render_sales_portal_clients',
         'render_sales_portal_client_row', 'render_sales_client_duplicate_hint', 'render_sales_portal_tasks',
         'sales_tasks', 'sales_portal_warm_css');
+} elseif ($base === 'd8dd101') {
+    $allowed = array('render_sales_portal_inquiries', 'iterate_sales_offer_inquiry_posts', 'sales_inquiry_summary_rows');
 } elseif ($base === '403a03f') {
     $allowed = array('render_sales_portal_deals', 'sales_reservation_inventory', 'render_sales_reserved_inventory');
 } elseif (in_array($base, array('1efa6ff', '9de98b2'), true)) {

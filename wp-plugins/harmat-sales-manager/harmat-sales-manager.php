@@ -3,7 +3,7 @@
  * Plugin Name: Harmat Sales Manager
  * Plugin URI: https://harmat22.hu
  * Description: Private sales dashboard for Harmat22 property status, prices, and broker accounts.
- * Version: 1.6.126
+ * Version: 1.6.127
  * Author: Harmat22 Maintenance
  * License: GPL-2.0-or-later
  */
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Harmat_Sales_Manager {
-    const VERSION = '1.6.126';
+    const VERSION = '1.6.127';
     const PAGE_SLUG = 'harmat-sales-manager';
     const CAP_VIEW = 'harmat_view_sales';
     const CAP_MANAGE = 'harmat_manage_sales';
@@ -8706,8 +8706,14 @@ final class Harmat_Sales_Manager {
         $progress_options = array('unrecorded' => $review_text['unrecorded'], 'converted' => $review_text['converted']) + $this->sales_clients_page_text($lang)['status'];
         $filters = $this->sales_contact_filters('inquiry', $progress_options);
         $text['headers'][5] = $review_text['progress'];
-        $rows = $this->sales_inquiry_summary_rows($search, $source_filter, $lang, $filters);
-        $all_rows = $this->sales_inquiry_summary_rows('', '', $lang);
+        // Statistics use all authorized records; only the rendered list is capped.
+        $all_rows = $this->sales_inquiry_summary_rows('', '', $lang, array(), 0);
+        $rows = array_values(array_filter($all_rows, function($row) use ($search, $source_filter) {
+            return $this->sales_inquiry_summary_row_matches($row, $search, $source_filter);
+        }));
+        $rows = array_slice($this->filter_sales_contact_rows($rows, $filters), 0, 160);
+        $text['summary_total'] = $lang === 'hu' ? 'Összes rekord' : '总计';
+        $text['current'] = $lang === 'hu' ? 'Betöltött rekordok' : '本次载入';
         $can_manage = $this->is_sales_manager_user();
         $counts = array_fill_keys(array_keys($source_options), 0);
         foreach ($all_rows as $row) {
@@ -8718,11 +8724,12 @@ final class Harmat_Sales_Manager {
         }
 
         echo '<section class="harmat-sales-kpis harmat-sales-kpis-compact">';
-        echo '<article><small>' . esc_html($text['summary_total']) . '</small><strong>' . count($all_rows) . '</strong></article>';
-        foreach ($source_options as $value => $label) {
+        $summary_sources = array_merge(array_flip(array('website', 'walkin', 'broker')), $source_options);
+        foreach ($summary_sources as $value => $label) {
             echo '<article><small>' . esc_html($label) . '</small><strong>' . (int) ($counts[$value] ?? 0) . '</strong></article>';
         }
         echo '<article><small>' . esc_html($text['current']) . '</small><strong>' . count($rows) . '</strong></article>';
+        echo '<article><small>' . esc_html($text['summary_total']) . '</small><strong>' . count($all_rows) . '</strong></article>';
         echo '</section>';
 
         echo '<section class="harmat-sales-panel">';
@@ -8756,7 +8763,25 @@ final class Harmat_Sales_Manager {
         echo '</tbody></table></div></section>';
     }
 
-    private function sales_inquiry_summary_rows($search = '', $source_filter = '', $lang = null, $filters = array()) {
+    private function iterate_sales_offer_inquiry_posts() {
+        $batch_size = 200;
+        $offset = 0;
+        do {
+            $batch = get_posts(array(
+                'post_type' => 'harmat_offer_lead',
+                'post_status' => array('private', 'publish', 'draft'),
+                'posts_per_page' => $batch_size,
+                'offset' => $offset,
+                'orderby' => array('date' => 'DESC', 'ID' => 'DESC'),
+            ));
+            foreach ($batch as $post) {
+                yield $post;
+            }
+            $offset += $batch_size;
+        } while (count($batch) === $batch_size);
+    }
+
+    private function sales_inquiry_summary_rows($search = '', $source_filter = '', $lang = null, $filters = array(), $limit = 160) {
         $lang = $lang === null || $lang === '' ? $this->active_sales_language() : $lang;
         $lang = $lang === 'hu' ? 'hu' : 'zh';
         $rows = array();
@@ -8765,7 +8790,7 @@ final class Harmat_Sales_Manager {
         $source_options = $this->deal_source_options($lang);
         $visible_deals = $this->visible_deals($this->get_deals());
 
-        foreach ($this->get_offer_inquiry_posts(120) as $inquiry_post) {
+        foreach ($this->iterate_sales_offer_inquiry_posts() as $inquiry_post) {
             $post_id = (int) $inquiry_post->ID;
             $assigned_sales_id = $this->offer_inquiry_assigned_sales_id($post_id);
             if (!$can_manage && $assigned_sales_id !== $current_user_id) {
@@ -8852,7 +8877,7 @@ final class Harmat_Sales_Manager {
             return ((int) ($b['sort'] ?? 0)) <=> ((int) ($a['sort'] ?? 0));
         });
 
-        return array_slice($rows, 0, 160);
+        return $limit > 0 ? array_slice($rows, 0, $limit) : $rows;
     }
 
     private function sales_inquiry_summary_row_matches($row, $search, $source_filter) {

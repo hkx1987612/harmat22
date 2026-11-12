@@ -87,7 +87,9 @@ function remove_query_arg($keys, $url) {
 }
 function get_posts($args) {
     $rows = $args['post_type'] === 'harmat_offer_lead' ? $GLOBALS['posts'] : ($args['post_type'] === 'property' ? $GLOBALS['properties'] : array());
-    return ($args['posts_per_page'] ?? 20) < 0 ? $rows : array_slice($rows, 0, $args['posts_per_page'] ?? 20);
+    if (isset($GLOBALS['query_log'])) { $GLOBALS['query_log'][] = $args; }
+    $offset = $args['offset'] ?? 0;
+    return ($args['posts_per_page'] ?? 20) < 0 ? array_slice($rows, $offset) : array_slice($rows, $offset, $args['posts_per_page'] ?? 20);
 }
 function get_post_meta($id, $key, $single = false) { return $GLOBALS['post_meta'][$id][$key] ?? ''; }
 function get_post_field($field, $id) { foreach (array_merge($GLOBALS['posts'], $GLOBALS['properties']) as $p) { if ($p->ID === $id) return $p->$field ?? ''; } return ''; }
