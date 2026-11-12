@@ -2,6 +2,16 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-12 - Read-Only Stuck160 Inquiry Counter Diagnosis
+
+- Confirmed production/repository parity and two row limits: website120 then
+  combined160. Top total/source tiles count the truncated slice, not all records.
+- Private server-only count/date aggregates confirm more records and recent
+  additions; offline202-to203 reproduction stays160 and180 website rows load120.
+  No customer details exported, no real form submitted or live source/data changed.
+- Repair remains pending approval. Scope/permission/Android compatibility caveats:
+  maintenance/2026-11-12-inquiry-counter-audit.md.
+
 ## 2026-11-09 - Android1.0.1 Approved Hardening
 
 - Fixed semantic-column/empty-state detection, lock-time app-dialog cleanup and

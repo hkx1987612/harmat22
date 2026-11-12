@@ -2,6 +2,17 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November12 Inquiry Counter - Open, Diagnosed Only
+
+- User's stuck160 is a real truncation/counting defect: combined row builder
+  caps160 after fetching only120 website posts; summary tiles count that slice.
+  Production source matches the repository; private live aggregates exceed160
+  and include recent records. Exact counts stay in ignored outputs, not Git.
+- No live fix, record/permission/quote/appointment change applied. Repair approval
+  still needed. Separate full authorized totals from bounded display; preserve
+  staff scope and Android HTML-reader compatibility, not another arbitrary cap.
+- Evidence and safe proposed scope: maintenance/2026-11-12-inquiry-counter-audit.md.
+
 ## November09 Android1.0.1 - Current Test Version
 
 - User approved fixing the independent audit. Lists now validate semantic HU/ZH
