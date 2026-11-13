@@ -2,6 +2,20 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November14 Search Delivery - Approved Adjustment
+
+- Existing November09 replacement now uses Maximize Clicks with a200HUF max
+  CPC bid; fresh-load bidding readback confirms it. Total175000HUF and original
+  November09-December08 period remain unchanged, not a renewed allowance.
+- Paused five broad other-district apartment-intent keywords; no deletions or
+  additions.40 keyword identities/types/groups/URLs preserved,35 enabled/five
+  paused; all18 negatives unchanged. Existing brand/X-district terms retained.
+- All seven campaign budgets/types/currencies/enable states match before.
+  No YouTube/PMax/old Search/reserve, website/CRM/quote/booking/tracking changes.
+  Search remains learning; traffic/conversion improvement not yet measured.
+- Private exports/settings/receipt remain ignored. Recovery and verification:
+  maintenance/2026-11-14-search-clicks.md. No new automation or email follow-up.
+
 ## November12 Inquiry Counter - Fixed And Released
 
 - User approved correcting stuck160 and requested an explicit walk-in subtotal

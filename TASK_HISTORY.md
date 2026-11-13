@@ -2,6 +2,20 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-14 - Approved Search Click Bidding And Intent Cleanup
+
+- Backed up current native campaign/40-keyword/18-negative exports and settled
+  settings before modifying the existing November09 Search replacement.
+- Saved Maximize Clicks plus200HUF max CPC; independently reopened after reload.
+ 175000HUF total and original December08 end remain unchanged. No new campaign.
+- Exactly five other-district broad keyword statuses changed to paused; all
+  keyword identities/match types/ad groups/URLs preserved.18 negatives identical
+  after structured comparison; seven campaign budgets and enable states match.
+- Other ads,90000 reserve, website, CRM, quotes, appointments and tracking not
+  edited. Learning shown; no claim of measured traffic or conversion recovery.
+  Chrome minimization prevented browser screenshot capture. Private evidence
+  stays ignored. Details/recovery: maintenance/2026-11-14-search-clicks.md.
+
 ## 2026-11-12 - Approved Inquiry Source Counts And Actual Total
 
 - Released Sales Manager1.6.127 after fresh private transactional data/materials
