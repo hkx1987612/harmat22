@@ -2,6 +2,29 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November16 Conversion Label And Local CRM Preview
+
+- User approved only renaming existing conversion action7625313567 to the clear
+  saved-website-inquiry label. Independent Google Ads reload and full settings
+  comparison confirm name-only change. Category/primary status/value/counting,
+  windows/attribution/source/enhanced-conversion settings and ID retained.
+- The old appointment category remains intentional under this narrow approval;
+  it is NOT a confirmed actual visit or a sales-qualified buyer. The V4 warning
+  states that its selected action had no conversions in the past seven days;
+  this alone is not evidence of a broken tag. Existing website tag matches.
+- CRM is PREVIEW ONLY. Local aggregate review separates raw record counts from
+  unknown qualified buyers and confirmed visits; email matches are candidates,
+  never automatic merging or qualification. Source-detail fixtures are isolated
+  and explicitly fictional, not actual attribution or new Facebook results.
+- Local self-contained ZH/HU preview has no write forms, production navigation,
+  storage or network calls.10 offline tests and real Chromium desktop/narrow
+  viewport checks passed. Not physical-phone or production CRM acceptance.
+- Generator/model/styles/tests are under maintenance/previews and dated scripts.
+  Production CRM PHP/website/quote/appointment/customer data unchanged; existing
+  source backup and private audit/receipt/screenshots remain ignored under
+  outputs/2026-11-16-conversion-name-preview. CRM deployment needs preview approval.
+- Budgets/dates/other ads/goals/bids/reserve and cancelled automations untouched.
+
 ## November16 Facebook V4 - Published And Scheduled
 
 - Separately authorized Facebook V4: daily average3000HUF, campaign spend cap

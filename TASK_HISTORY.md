@@ -2,6 +2,28 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-16 - Approved Conversion Rename And Offline CRM Review Preview
+
+- Backed up native conversion details, renamed only action7625313567 to the
+  approved saved-website-inquiry label, then independently reloaded. Complete
+  details equality after normalizing the name confirms all other action settings
+  unchanged. Rollback is restoring only the previous name from private receipt,
+  never recreating the conversion or changing its category/goals/bidding.
+- Backed up current CRM source locally; production PHP was not edited/deployed.
+  Added a self-contained aggregate-only local preview, using existing audit counts
+  privately. Unknown qualified buyers/actual visits remain null, not zero.
+  Separate fictional source fixtures expose existing UTM/landing/referrer fields;
+  own-page URL alone is not a recorded ad source. No customer identifiers copied.
+-10 offline tests pass for counts/dates/missing states/bounds/source distinctions,
+  escaped text/filter/sort/no writes or network. Actual Chromium screenshot checks
+  at1440/1920 desktop and390 narrow viewports validate ZH/HU, source filters,
+  details, ascending order and keyboard tabs; temporary viewport reset afterwards.
+- This is an interface preview, not real per-customer attribution verification,
+  qualified-client reconciliation, production deployment or physical-phone QA.
+  Raw evidence stays ignored. No real forms submitted, client data merged/deleted,
+  quote/booking handlers, campaign budgets/dates/creatives/goals or automations
+  changed. User confirmation of the CRM preview is still required before release.
+
 ## 2026-11-16 - Approved Facebook V4 Published
 
 - User confirmed preview, Meta terms, company payer, daily3000HUF and separate
