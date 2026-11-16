@@ -2,6 +2,22 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-16 - Approved600k Existing-Period Budget Rebalance
+
+- Backed up native seven-campaign and12-ad records before editing. Saved
+  subscriber lifetime62041.87 and Search total237771; inquiry274394.78 unchanged.
+  User completed Google identity verification before Search save/reload.
+- Current-period allowances are Search240k including old2228.07 cost, inquiry
+  240k, subscribers60k, reserve60k unallocated;0.93 extra rounding headroom.
+  Existing cost included; no new period, duplicate campaign or renewed allowance.
+- Saved-form/native-export readback confirms only two budget changes, all seven
+  states/types/bid labels retained. December08 ends and Search max CPC200 intact.
+  Existing inquiry/subscriber V4 and original30s identities verified read-only.
+- Other ads, billing, website/CRM, quotes, appointments, tracking and automation
+  untouched. Extra spending discussion ended with600k retained. No legacy90s or
+  Facebook restart; user's main-video identity question remains to clarify.
+  Private evidence ignored; recovery: maintenance/2026-11-16-google-budget-rebalance.md.
+
 ## 2026-11-14 - Approved Search Click Bidding And Intent Cleanup
 
 - Backed up current native campaign/40-keyword/18-negative exports and settled

@@ -2,6 +2,21 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November16 Google Rebalance - Current
+
+- User retained600000HUF total for November09-December08, including spent cost:
+  Search240000, V4 inquiry240000, subscribers60000, reserve60000 NOT allocated.
+- Saved Search237771 total plus2228.07 old Search period cost=239999.07;0.93
+  rounding headroom remains unused. Subscriber lifetime62041.87 includes2041.87
+  pre-period cost; inquiry lifetime274394.78 unchanged, includes34394.78 prior.
+- Independent reload/native exports confirm only two budget changes. All seven
+  enable states/types/bid labels and other budgets retained. December08 end,
+  Search Maximize Clicks/200HUF max CPC and existing V4/30s/25s ads preserved.
+- No extra spending, legacy90s/Facebook restart, website/CRM/quote/appointment,
+  tracking or automation edits. Main-video follow-up awaiting identity clarity.
+- Exact private evidence stays ignored; accounting/recovery:
+  maintenance/2026-11-16-google-budget-rebalance.md. Supersedes older allocations.
+
 ## November14 Search Delivery - Approved Adjustment
 
 - Existing November09 replacement now uses Maximize Clicks with a200HUF max
