@@ -2,6 +2,19 @@
 
 This file summarizes completed work, fixed issues, and known open items. It is not a full chat log.
 
+## 2026-11-16 - Approved Facebook V4 Published
+
+- User confirmed preview, Meta terms, company payer, daily3000HUF and separate
+  campaign spend cap66000HUF. Published one new V4 campaign/adset/ad; no restart
+  of the old negative-comment post. Existing HU landscape/portrait V4 retained.
+- Native readback confirms November17 00:00-December08 23:59 Budapest, daily3000,
+  cap66000 and company beneficiary/payer. Fresh list shows Scheduled; In Review
+  in detail, not yet approved/delivering. No further publish after interruption.
+- Recruitment remains ON/lifetime70959, old main video OFF/daily3000. Google/YT,
+  reserve, website/CRM/quotes/appointments, billing methods/access untouched.
+  No recurring checks or cancelled email follow-up restarted. Private evidence
+  ignored; maintenance/2026-11-16-facebook-v4.md records scope and recovery.
+
 ## 2026-11-16 - Approved600k Existing-Period Budget Rebalance
 
 - Backed up native seven-campaign and12-ad records before editing. Saved

@@ -2,6 +2,20 @@
 
 This file summarizes the long-term context for the Harmat Lakopark 22 website and related sales tools.
 
+## November16 Facebook V4 - Published And Scheduled
+
+- Separately authorized Facebook V4: daily average3000HUF, campaign spend cap
+  66000HUF, November17 00:00-December08 23:59 Europe/Budapest. User confirmed
+  preview, Meta terms and company beneficiary/payer Cooperation Power Kft.
+- Published one new campaign/adset/ad with existing Hungarian60s landscape and
+  portrait V4. Facebook Feed/Page Feed/Reels only; source-tagged /uj-otthonok/.
+- Post-publication native readback and fresh campaign list show Scheduled;
+  detail panel shows In Review. Do not claim review passed or delivery started.
+- Old negative-comment video stays OFF; recruitment stays ON/lifetime70959.
+  Google+YouTube600000/reserve60000, website/CRM/quotes/appointments unchanged.
+- Exact private receipt/screenshots remain ignored. Recovery and evidence:
+  maintenance/2026-11-16-facebook-v4.md. No duplicate publish after interruption.
+
 ## November16 Google Rebalance - Current
 
 - User retained600000HUF total for November09-December08, including spent cost:
