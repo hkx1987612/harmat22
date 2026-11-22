@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Construction Updates
  * Description: Removable, read-only construction registry shared by the journal and homepage.
- * Version: 1.0.2
+ * Version: 1.0.3
  */
 defined('ABSPATH') || exit;
 
@@ -57,7 +57,7 @@ function harmat_cu_registry(): array {
     );
     $records[] = array(
         'id' => '2026-10-30', 'date' => '2026-10-30', 'uploaded' => '2026-11-03',
-        'status' => 'published', 'approved' => true, 'journal_only' => true,
+        'status' => 'published', 'approved' => true,
         'file' => '2026-10-30-harmat-site', 'duration' => 47.6,
         'title' => array('hu' => 'Helyszíni felvétel – 2026. október 30.', 'zh' => '施工现场实拍 · 2026年10月30日'),
         'summary' => array('hu' => 'Október 30-i körkép a Harmat Lakópark építkezéséről.', 'zh' => '雨露花园10月30日施工现场全景。'),

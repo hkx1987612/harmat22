@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 const ROOT = path.resolve(__dirname, '../..');
 const SRC = path.join(ROOT, 'server-config/previews/neighborhood-practical');
 const DEST = path.join(ROOT, 'wp-mu-plugins/harmat-neighborhood-practical');
+const REVISION = path.join(DEST, 'r2');
 const OUT = path.join(ROOT, 'outputs/2026-10-27-neighborhood-release');
 const { JSDOM } = require(path.join(ROOT, 'outputs/2026-10-17-chinese-switch/node_modules/jsdom'));
 const read = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
@@ -60,18 +61,28 @@ for (const group of data.categories) {
     const name = d.createElement('h4'); name.className = 'place-name'; name.textContent = place.name;
     const desc = d.createElement('p'); desc.className = 'place-description'; desc.textContent = place.descriptionHu;
     copy.append(name, desc);
+    if (place.address) {
+      const address = d.createElement('p'); address.className = 'place-address'; address.textContent = place.address;
+      copy.append(address);
+    }
+    if (place.timetable) {
+      const timetable = d.createElement('a'); timetable.className = 'place-timetable';
+      timetable.href = 'https://bkk.hu/menetrendek/'; timetable.textContent = 'BKK menetrend';
+      copy.append(timetable);
+    }
     const dist = d.createElement('span'); dist.className = 'place-distance'; dist.textContent = place.distance;
     const link = d.createElement('a'); link.className = 'map-link'; link.target = '_blank'; link.rel = 'noopener noreferrer';
     const query = ['1', '17'].includes(place.id) ? place.name + ', Harmat utca 22, Budapest'
       : place.name.includes('Budapest') ? place.name : place.name + ', Budapest';
-    const url = new URL('https://www.google.com/maps/search/'); url.searchParams.set('api', '1'); url.searchParams.set('query', query);
+    const url = new URL('https://www.google.com/maps/search/'); url.searchParams.set('api', '1');
+    url.searchParams.set('query', place.mapQuery || (place.address ? `${place.name}, ${place.address}` : query));
     link.href = url.href; link.setAttribute('aria-label', 'Térkép: ' + place.name);
     const icon = d.createElement('i'); icon.dataset.lucide = 'arrow-up-right'; icon.setAttribute('aria-hidden', 'true'); link.append(icon);
     row.append(copy, dist, link); section.append(row);
   }
   list.append(section);
 }
-root.querySelector('#hn-result-count').textContent = '17 hely és szolgáltatás';
+root.querySelector('#hn-result-count').textContent = `${data.places.length} hely és szolgáltatás`;
 root.querySelectorAll('[data-lucide]').forEach(n => { n.setAttribute('data-hn-lucide', n.getAttribute('data-lucide')); n.removeAttribute('data-lucide'); });
 root.querySelectorAll('a[href^="https://harmat22.hu/"]').forEach(n => { n.removeAttribute('target'); n.removeAttribute('rel'); });
 
@@ -149,14 +160,14 @@ js = once(js, "  changeLanguage('hu');\n  icons();", `  let appliedLanguage;
   });
   syncLanguage();
   icons();`);
-const lucide = once(read(path.join(previewOut, 'lucide.min.js')), 'n(a.lucide={})', 'n(a.HarmatNeighborhoodIcons={})');
-const files = {'body.html': root.outerHTML + '\n', 'neighborhood.css': css, 'neighborhood.js': js,
-  'lucide.js': lucide, 'LICENSE-lucide.txt': read(path.join(previewOut, 'lucide.LICENSE'))};
-fs.mkdirSync(DEST, {recursive:true}); fs.mkdirSync(OUT, {recursive:true});
-for (const [name, blob] of Object.entries(files)) fs.writeFileSync(path.join(DEST, name), blob);
+const files = {'body.html': root.outerHTML + '\n', 'neighborhood.css': css.replace(/[ \t]+$/gm, ''), 'neighborhood.js': js};
+fs.mkdirSync(REVISION, {recursive:true}); fs.mkdirSync(OUT, {recursive:true});
+for (const [name, blob] of Object.entries(files)) fs.writeFileSync(path.join(REVISION, name), blob);
 const manifest = JSON.stringify(Object.fromEntries(Object.entries(files).map(([n,b])=>[n,sha(b)])), null, 2) + '\n';
-fs.writeFileSync(path.join(DEST, 'manifest.json'), manifest);
+fs.writeFileSync(path.join(REVISION, 'manifest.json'), manifest);
 const template = read(path.join(__dirname, '2026-10-27-neighborhood-controller.php.in'));
-fs.writeFileSync(path.join(ROOT, 'wp-mu-plugins/zz-harmat-neighborhood-practical.php'), once(template, '__MANIFEST_SHA__', sha(manifest)));
+const vendorPin = sha(read(path.join(DEST, 'lucide.js')));
+const controller = once(once(once(template, '__MANIFEST_SHA__', sha(manifest)), '__PLACE_COUNT__', String(data.places.length)), '__LUCIDE_SHA__', vendorPin);
+fs.writeFileSync(path.join(ROOT, 'wp-mu-plugins/zz-harmat-neighborhood-practical.php'), controller);
 fs.writeFileSync(path.join(OUT, 'existing-media.json'), JSON.stringify(assets,null,2));
 console.log(JSON.stringify({status:'OFFLINE_DERIVED', manifest:sha(manifest), files:Object.keys(files)}));

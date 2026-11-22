@@ -2,9 +2,11 @@
 /**
  * Plugin Name: Harmat Neighborhood Practical
  * Description: Scoped, reversible neighborhood presentation; native sales shell retained.
- * Version: 1.0.0
+ * Version: 1.0.1
  */
 defined('ABSPATH') || exit;
+
+const HARMAT_NP_LUCIDE_SHA = 'b4bf5ebd8876f65362fc3e9af36659f8fde5df30bc3a92998a2b1a26ea90b34c';
 
 function harmat_np_context() {
     foreach (array('WP_CLI','DOING_CRON','DOING_AJAX','REST_REQUEST','XMLRPC_REQUEST') as $flag) {
@@ -28,12 +30,14 @@ function harmat_np_assets() {
     static $checked;
     if (isset($checked)) return $checked;
     $checked = false;
-    $dir = __DIR__.'/harmat-neighborhood-practical';
+    $dir = __DIR__.'/harmat-neighborhood-practical/r2';
     $manifest = $dir.'/manifest.json';
-    if (is_link($dir) || !is_file($manifest) || is_link($manifest)
-        || hash_file('sha256',$manifest) !== '0b6ad48e27156ebc2f2621d7d47ea8455e601a6736f9391f3c32e4d1c90827d5') return false;
+    $icons = dirname($dir).'/lucide.js';
+    if (is_link(dirname($dir)) || is_link($dir) || !is_file($icons) || is_link($icons)
+        || hash_file('sha256',$icons) !== HARMAT_NP_LUCIDE_SHA || !is_file($manifest) || is_link($manifest)
+        || hash_file('sha256',$manifest) !== 'b9d02e079a2f7b9800d90eb4d203fd9fc80865d22f58714f6fbf9673ea54be34') return false;
     $pins = json_decode(file_get_contents($manifest),true);
-    if (!is_array($pins) || array_keys($pins) !== array('body.html','neighborhood.css','neighborhood.js','lucide.js','LICENSE-lucide.txt')) return false;
+    if (!is_array($pins) || array_keys($pins) !== array('body.html','neighborhood.css','neighborhood.js')) return false;
     foreach ($pins as $name=>$pin) {
         if (!is_string($pin) || !preg_match('/\A[a-f0-9]{64}\z/D',$pin)
             || !is_file($dir.'/'.$name) || is_link($dir.'/'.$name)
@@ -45,9 +49,9 @@ function harmat_np_assets() {
 
 function harmat_np_content($content) {
     if (!harmat_np_context() || !in_the_loop() || !harmat_np_assets()) return $content;
-    $body = file_get_contents(__DIR__.'/harmat-neighborhood-practical/body.html');
+    $body = file_get_contents(__DIR__.'/harmat-neighborhood-practical/r2/body.html');
     if (!is_string($body) || substr_count($body,'id="harmat-neighborhood-practical"') !== 1
-        || substr_count($body,'class="place-row"') !== 17) return $content;
+        || substr_count($body,'class="place-row"') !== 19) return $content;
     return $body;
 }
 
@@ -59,10 +63,10 @@ function harmat_np_enqueue() {
         wp_dequeue_script($handle);
     }
     $base = content_url('/mu-plugins/harmat-neighborhood-practical/');
-    wp_enqueue_style('harmat-neighborhood-practical', $base.'neighborhood.css',array(),substr($pins['neighborhood.css'],0,16));
-    wp_enqueue_script('harmat-neighborhood-icons',$base.'lucide.js',array(),substr($pins['lucide.js'],0,16),true);
+    wp_enqueue_style('harmat-neighborhood-practical', $base.'r2/neighborhood.css',array(),substr($pins['neighborhood.css'],0,16));
+    wp_enqueue_script('harmat-neighborhood-icons',$base.'lucide.js',array(),substr(HARMAT_NP_LUCIDE_SHA,0,16),true);
     wp_enqueue_script('harmat-neighborhood-pannellum',content_url('/mu-plugins/harmat-home-family/pannellum.js'),array(),'a28b2f7b339fd0a6',true);
-    wp_enqueue_script('harmat-neighborhood-practical',$base.'neighborhood.js',array('harmat-neighborhood-icons','harmat-neighborhood-pannellum'),substr($pins['neighborhood.js'],0,16),true);
+    wp_enqueue_script('harmat-neighborhood-practical',$base.'r2/neighborhood.js',array('harmat-neighborhood-icons','harmat-neighborhood-pannellum'),substr($pins['neighborhood.js'],0,16),true);
 }
 
 function harmat_np_activate() {

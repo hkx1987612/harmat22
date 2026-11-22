@@ -55,7 +55,7 @@
   function renderPlaces() {
     const query = normalized(search.value.trim());
     const places = data.places.filter(place => (category === 'all' || place.category === category)
-      && normalized([place.name, place.zh, place.descriptionHu, place.descriptionZh].join(' ')).includes(query));
+      && normalized([place.name, place.zh, place.address, place.descriptionHu, place.descriptionZh].join(' ')).includes(query));
     list.replaceChildren();
     document.getElementById('result-count').textContent = text(`${places.length} hely és szolgáltatás`, `${places.length}项配套与服务`);
     document.getElementById('empty-state').hidden = places.length > 0;
@@ -74,13 +74,19 @@
         const copy = make('div');
         copy.append(make('h4', 'place-name', text(place.name, place.zh)),
           make('p', 'place-description', text(place.descriptionHu, place.descriptionZh)));
+        if (place.address) copy.append(make('p', 'place-address', place.address));
+        if (place.timetable) {
+          const timetable = make('a', 'place-timetable', text('BKK menetrend', 'BKK 官方时刻表'));
+          timetable.href = 'https://bkk.hu/menetrendek/';
+          copy.append(timetable);
+        }
         const distance = language === 'hu' ? place.distance : place.distance.replace(/^kb\. /, '约').replace(',', '.').replace('közelben', '附近');
         const link = make('a', 'map-link');
         const url = new URL('https://www.google.com/maps/search/');
         url.searchParams.set('api', '1');
         const queryPlace = place.id === '1' || place.id === '17' ? place.name + ', Harmat utca 22, Budapest'
           : place.name.includes('Budapest') ? place.name : place.name + ', Budapest';
-        url.searchParams.set('query', queryPlace);
+        url.searchParams.set('query', place.mapQuery || (place.address ? `${place.name}, ${place.address}` : queryPlace));
         link.href = url.href;
         link.target = '_blank';
         link.rel = 'noopener noreferrer';

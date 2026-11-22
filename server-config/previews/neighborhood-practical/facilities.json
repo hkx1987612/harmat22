@@ -77,8 +77,9 @@
     {
       "id": "5",
       "category": "education",
-      "distance": "kb. 700 m",
+      "distance": "",
       "name": "Kőbányai Szent László Gimnázium",
+      "address": "1102 Budapest, Kőrösi Csoma Sándor út 28–34.",
       "sourceNote": "középiskolai elérhetőség",
       "zh": "Kőbányai Szent László 中学",
       "descriptionHu": "Gimnázium",
@@ -87,8 +88,9 @@
     {
       "id": "6",
       "category": "education",
-      "distance": "kb. 1,2 km",
+      "distance": "",
       "name": "Kőbányai Harmat Általános Iskola",
+      "address": "1104 Budapest, Harmat utca 88.",
       "sourceNote": "általános iskola a kerületben",
       "zh": "Kőbányai Harmat 小学",
       "descriptionHu": "Általános iskola",
@@ -97,18 +99,20 @@
     {
       "id": "7",
       "category": "education",
-      "distance": "kb. 4,0 km",
-      "name": "Semmelweis Egyetem Nagyvárad tér",
+      "distance": "",
+      "name": "Semmelweis Egyetem – Nagyvárad téri Elméleti Tömb",
+      "address": "1089 Budapest, Nagyvárad tér 4.",
       "sourceNote": "felsőoktatási kampusz iránya",
-      "zh": "Semmelweis 大学 Nagyvárad tér 校区",
-      "descriptionHu": "Egyetemi helyszín",
-      "descriptionZh": "大学校区"
+      "zh": "Semmelweis 大学 Nagyvárad tér 理论教学楼",
+      "descriptionHu": "Egyetemi épület",
+      "descriptionZh": "大学教学楼"
     },
     {
       "id": "8",
       "category": "education",
-      "distance": "kb. 4,2 km",
+      "distance": "",
       "name": "NKE Ludovika Campus",
+      "address": "1083 Budapest, Ludovika tér 2.",
       "sourceNote": "felsőoktatási és városi kapcsolat",
       "zh": "NKE Ludovika 校区",
       "descriptionHu": "Egyetemi campus",
@@ -173,6 +177,28 @@
       "zh": "Kőbánya-Kispest",
       "descriptionHu": "M3 metró és vasút",
       "descriptionZh": "M3地铁与铁路"
+    },
+    {
+      "id": "18",
+      "category": "transport",
+      "distance": "",
+      "name": "Ihász utca (Harmat utca)",
+      "zh": "Ihász utca 站（Harmat utca 附近）",
+      "mapQuery": "47.485907,19.142079",
+      "timetable": true,
+      "descriptionHu": "85: Örs vezér tere M+H / Kőbánya-Kispest M · 185: Kőbánya alsó vasútállomás / Újhegy",
+      "descriptionZh": "85 路：Örs vezér tere M+H／Kőbánya-Kispest M；185 路：Kőbánya alsó 火车站／Újhegy"
+    },
+    {
+      "id": "19",
+      "category": "transport",
+      "distance": "",
+      "name": "Kápolna tér",
+      "zh": "Kápolna tér 公交站",
+      "mapQuery": "47.481424,19.135663",
+      "timetable": true,
+      "descriptionHu": "95: Puskás Ferenc Stadion M / Felsőcsatári köz · 195: Puskás Ferenc Stadion M / Rákoskeresztúr, városközpont",
+      "descriptionZh": "95 路：Puskás Ferenc Stadion M／Felsőcsatári köz；195 路：Puskás Ferenc Stadion M／Rákoskeresztúr 市中心"
     },
     {
       "id": "15",

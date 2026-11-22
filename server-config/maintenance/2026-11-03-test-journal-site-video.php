@@ -13,7 +13,7 @@ check(array_column(array_slice($records, 0, 2), 'id') === array('2026-10-30', '2
 check(count(harmat_cu_records($registry, '2026-11-02', $ready)) === 7, 'no pre-publication entries');
 $markup = harmat_cu_journal_markup($records);
 check(substr_count($markup, 'data-hcu-player data-hcu-video=') === 8, 'eight click-only players');
-check($records[0]['file'] === '2026-10-30-harmat-site' && $records[0]['journal_only'] === true, 'only site footage added');
+check($records[0]['file'] === '2026-10-30-harmat-site' && empty($records[0]['journal_only']), 'same site footage eligible for homepage');
 check(!preg_match('~<(?:video|source|iframe)\b~i', $markup), 'no eager video');
 $graph = harmat_cu_schema(array());
 check($graph[0]['duration'] === 'PT47.6S', 'media duration');
@@ -21,5 +21,8 @@ check($graph[0]['uploadDate'] === '2026-11-03' && $graph[0]['dateCreated'] === '
 check(harmat_cu_schema($graph) === $graph, 'schema idempotent');
 $harmat_home_family_units = array();
 $body = include dirname($candidate) . '/harmat-home-family/body.php';
-check(is_string($body) && strpos(harmat_cu_home_teaser($body), '#construction-2026-10-20') !== false, 'homepage keeps October 20');
+$home = harmat_cu_home_teaser($body);
+check(is_string($home) && strpos($home, '#construction-2026-10-30') !== false
+    && strpos($home, '2026-10-30-harmat-site.jpg') !== false && strpos($home, '2026-10-30-harmat-site.mp4') !== false,
+    'homepage uses matching October 30 record, poster and video');
 echo json_encode(array('status' => 'PASS', 'checks' => $checks)) . PHP_EOL;
