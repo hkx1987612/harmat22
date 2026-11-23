@@ -8695,6 +8695,13 @@ final class Harmat_Sales_Manager {
 
     private function render_sales_portal_inquiries() {
         $lang = $this->active_sales_language();
+        $attribution_file = __DIR__ . '/attribution-report.php';
+        $can_report_attribution = $this->is_sales_manager_user() && is_readable($attribution_file);
+        if ($can_report_attribution && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['report'] ?? '') === 'attribution') {
+            require_once $attribution_file;
+            Harmat_CRM_Attribution_Report::render($lang, wp_unslash($_GET), $this->sales_portal_url(), dirname(rtrim(ABSPATH, '/\\')) . '/logs');
+            return;
+        }
         $text = $this->sales_inquiries_page_text($lang);
         $search = isset($_GET['sales_search']) ? sanitize_text_field(wp_unslash($_GET['sales_search'])) : '';
         $source_filter = isset($_GET['inquiry_source']) ? sanitize_key(wp_unslash($_GET['inquiry_source'])) : '';
@@ -8734,6 +8741,9 @@ final class Harmat_Sales_Manager {
 
         echo '<section class="harmat-sales-panel">';
         echo '<div class="harmat-sales-panel-head"><div><h2>' . esc_html($text['title']) . '</h2><p>' . esc_html($text['intro']) . '</p></div>';
+        if ($can_report_attribution) {
+            echo '<a class="harmat-sales-secondary-action" href="' . esc_url($this->sales_portal_url(array('view'=>'inquiries','report'=>'attribution','sales_lang'=>$lang))) . '">' . esc_html($lang === 'hu' ? 'Hirdetési források' : '广告来源') . '</a>';
+        }
         echo '<form method="get" class="harmat-sales-search harmat-sales-inquiry-search"><input type="hidden" name="view" value="inquiries"><input name="sales_search" value="' . esc_attr($search) . '" placeholder="' . esc_attr($text['search_placeholder']) . '"><select name="inquiry_source"><option value="">' . esc_html($text['all_sources']) . '</option>';
         foreach ($source_options as $value => $label) {
             echo '<option value="' . esc_attr($value) . '"' . selected($source_filter, $value, false) . '>' . esc_html($label) . '</option>';
