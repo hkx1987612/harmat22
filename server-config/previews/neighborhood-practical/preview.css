@@ -5,11 +5,17 @@
 .place-name{margin:0}
 :lang(zh-Hans) .hero-copy h1{word-break:keep-all}
 @media(min-width:701px){.hero-photo{object-position:center 34%}}
-.park-hero{width:100%;max-width:80vh;height:auto;margin-inline:auto;background:#e6ece8}
+.park-hero{width:100%;height:auto;background:#e6ece8}
 .hero-photo{width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;object-position:center}
 .hero-copy{top:clamp(12px,3vh,29px)}
 .photo-label{right:12px}
 .place-address,.place-timetable{display:block;margin-top:5px;font-size:12px;color:#405d51;overflow-wrap:anywhere}
 .place-timetable{width:fit-content;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:700px){.hero-copy{top:14px}}
-@media(min-height:1100px){.park-hero{max-width:880px}}
+@media(min-width:701px){
+  .park-hero{height:min(70vh,58vw,820px)}
+  .hero-photo{height:100%;aspect-ratio:auto;object-fit:cover;object-position:center 67%}
+  .park-hero::before{content:"";position:absolute;inset:0 0 auto;height:min(185px,100%);background:linear-gradient(180deg,#142a28d9 0%,#142a2899 55%,transparent 100%);pointer-events:none}
+  .hero-copy,.hero-copy h1{color:#fff;text-shadow:0 2px 12px #11262099}
+  .photo-label{right:24px}
+}

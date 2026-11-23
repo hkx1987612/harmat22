@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Neighborhood Practical
  * Description: Scoped, reversible neighborhood presentation; native sales shell retained.
- * Version: 1.0.1
+ * Version: 1.0.2
  */
 defined('ABSPATH') || exit;
 
@@ -30,12 +30,12 @@ function harmat_np_assets() {
     static $checked;
     if (isset($checked)) return $checked;
     $checked = false;
-    $dir = __DIR__.'/harmat-neighborhood-practical/r2';
+    $dir = __DIR__.'/harmat-neighborhood-practical/r3';
     $manifest = $dir.'/manifest.json';
     $icons = dirname($dir).'/lucide.js';
     if (is_link(dirname($dir)) || is_link($dir) || !is_file($icons) || is_link($icons)
         || hash_file('sha256',$icons) !== HARMAT_NP_LUCIDE_SHA || !is_file($manifest) || is_link($manifest)
-        || hash_file('sha256',$manifest) !== 'b9d02e079a2f7b9800d90eb4d203fd9fc80865d22f58714f6fbf9673ea54be34') return false;
+        || hash_file('sha256',$manifest) !== 'ed293cb9c612f26bb2caaa566985809362ddcbc6755ed962dd389967a363fc23') return false;
     $pins = json_decode(file_get_contents($manifest),true);
     if (!is_array($pins) || array_keys($pins) !== array('body.html','neighborhood.css','neighborhood.js')) return false;
     foreach ($pins as $name=>$pin) {
@@ -49,7 +49,7 @@ function harmat_np_assets() {
 
 function harmat_np_content($content) {
     if (!harmat_np_context() || !in_the_loop() || !harmat_np_assets()) return $content;
-    $body = file_get_contents(__DIR__.'/harmat-neighborhood-practical/r2/body.html');
+    $body = file_get_contents(__DIR__.'/harmat-neighborhood-practical/r3/body.html');
     if (!is_string($body) || substr_count($body,'id="harmat-neighborhood-practical"') !== 1
         || substr_count($body,'class="place-row"') !== 19) return $content;
     return $body;
@@ -63,10 +63,10 @@ function harmat_np_enqueue() {
         wp_dequeue_script($handle);
     }
     $base = content_url('/mu-plugins/harmat-neighborhood-practical/');
-    wp_enqueue_style('harmat-neighborhood-practical', $base.'r2/neighborhood.css',array(),substr($pins['neighborhood.css'],0,16));
+    wp_enqueue_style('harmat-neighborhood-practical', $base.'r3/neighborhood.css',array(),substr($pins['neighborhood.css'],0,16));
     wp_enqueue_script('harmat-neighborhood-icons',$base.'lucide.js',array(),substr(HARMAT_NP_LUCIDE_SHA,0,16),true);
     wp_enqueue_script('harmat-neighborhood-pannellum',content_url('/mu-plugins/harmat-home-family/pannellum.js'),array(),'a28b2f7b339fd0a6',true);
-    wp_enqueue_script('harmat-neighborhood-practical',$base.'r2/neighborhood.js',array('harmat-neighborhood-icons','harmat-neighborhood-pannellum'),substr($pins['neighborhood.js'],0,16),true);
+    wp_enqueue_script('harmat-neighborhood-practical',$base.'r3/neighborhood.js',array('harmat-neighborhood-icons','harmat-neighborhood-pannellum'),substr($pins['neighborhood.js'],0,16),true);
 }
 
 function harmat_np_activate() {

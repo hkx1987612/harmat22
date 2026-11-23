@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const ROOT = path.resolve(__dirname, '../..');
 const SRC = path.join(ROOT, 'server-config/previews/neighborhood-practical');
 const DEST = path.join(ROOT, 'wp-mu-plugins/harmat-neighborhood-practical');
-const REVISION = path.join(DEST, 'r2');
+const REVISION = path.join(DEST, 'r3');
 const OUT = path.join(ROOT, 'outputs/2026-10-27-neighborhood-release');
 const { JSDOM } = require(path.join(ROOT, 'outputs/2026-10-17-chinese-switch/node_modules/jsdom'));
 const read = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
@@ -85,6 +85,7 @@ for (const group of data.categories) {
 root.querySelector('#hn-result-count').textContent = `${data.places.length} hely és szolgáltatás`;
 root.querySelectorAll('[data-lucide]').forEach(n => { n.setAttribute('data-hn-lucide', n.getAttribute('data-lucide')); n.removeAttribute('data-lucide'); });
 root.querySelectorAll('a[href^="https://harmat22.hu/"]').forEach(n => { n.removeAttribute('target'); n.removeAttribute('rel'); });
+root.querySelector('.photo-label').href = root.querySelector('.hero-photo').src;
 
 const OWNER = '#harmat-neighborhood-practical';
 function scopeCSS(source, vendor = false) {

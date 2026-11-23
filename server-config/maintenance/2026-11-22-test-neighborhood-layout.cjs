@@ -5,19 +5,18 @@ const path = require('node:path');
 const {chromium} = require(process.env.HARMAT_PLAYWRIGHT || path.join(process.env.USERPROFILE,
   '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'));
 const root = path.resolve(__dirname, '../..');
-const bundle = path.join(root, 'wp-mu-plugins/harmat-neighborhood-practical/r2');
+const bundle = path.join(root, 'wp-mu-plugins/harmat-neighborhood-practical/r3');
 const origin = 'https://harmat22.hu';
 const route = '/harmat-lakopark-kornyeke/';
-const asset = '/wp-content/mu-plugins/harmat-neighborhood-practical/';
 const local = process.argv.includes('--candidate');
-const output = path.join(root, 'outputs/2026-11-22-site-maintenance');
+const output = path.join(root, 'outputs/2026-11-23-expanded-neighborhood');
 fs.mkdirSync(output, {recursive: true});
 
 (async () => {
   const browser = await chromium.launch({channel: 'chrome'});
   const results = [];
   try {
-    for (const [width, height, zh] of [[1440, 900, false], [1920, 1080, false], [390, 844, true], [320, 640, false]]) {
+    for (const [width, height, zh] of [[1440, 900, false], [1920, 1080, false], [1366, 768, false], [768, 1024, false], [390, 844, true], [320, 640, false]]) {
       const page = await browser.newPage({viewport: {width, height}});
       await page.route('**/*', async request => {
         const url = new URL(request.request().url());
@@ -33,11 +32,13 @@ fs.mkdirSync(output, {recursive: true});
           assert(start >= 0 && end > bodyEnd && bodyEnd > start, 'existing neighborhood boundary');
           return request.fulfill({response, body: source.slice(0, start) + fs.readFileSync(path.join(bundle, 'body.html'), 'utf8') + source.slice(bodyEnd)});
         }
-        const match = url.pathname.match(/^\/wp-content\/mu-plugins\/harmat-neighborhood-practical\/(neighborhood\.(css|js))$/);
+        const match = url.pathname.match(/^\/wp-content\/mu-plugins\/harmat-neighborhood-practical\/r[23]\/(neighborhood\.(css|js))$/);
         if (match) return request.fulfill({path: path.join(bundle, match[1]), contentType: match[2] === 'css' ? 'text/css' : 'application/javascript'});
         return request.continue();
       });
       await page.goto(origin + route, {waitUntil: 'domcontentloaded'});
+      const essential = page.getByRole('button', {name: 'Csak szükséges sütik', exact: true});
+      if (await essential.isVisible()) await essential.click();
       if (zh) {
         await page.locator('#harmat-internal-language').getByRole('button', {name: '中文', exact: true}).click();
         await page.waitForFunction(() => document.querySelector('#harmat-neighborhood-practical').lang === 'zh-Hans');
@@ -48,18 +49,32 @@ fs.mkdirSync(output, {recursive: true});
         const rect = selector => section.querySelector(selector).getBoundingClientRect();
         const photo = rect('.hero-photo'), title = rect('.hero-copy'), caption = rect('.photo-label');
         return {width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth,
+          photoWidth: photo.width, photoHeight: photo.height, photoLeft: photo.left,
+          titleColor: getComputedStyle(section.querySelector('#hn-page-title')).color,
           ratio: photo.width / photo.height, fit: getComputedStyle(section.querySelector('.hero-photo')).objectFit,
           photoTop: photo.top, photoBottom: photo.bottom, headerBottom: document.querySelector('#masthead').getBoundingClientRect().bottom,
           titleTop: title.top, titleBottom: title.bottom, captionTop: caption.top, captionBottom: caption.bottom,
           nextSectionTop: document.querySelector('#hn-places').getBoundingClientRect().top};
       });
       assert.equal(metrics.documentWidth, width, 'no horizontal overflow');
-      assert.equal(metrics.fit, 'contain');
-      assert(Math.abs(metrics.ratio - 4/3) < .01, 'uncropped original ratio');
+      assert(Math.abs(metrics.photoWidth - width) < 1 && Math.abs(metrics.photoLeft) < 1, 'edge-to-edge photo');
+      if (width > 700) {
+        assert.equal(metrics.fit, 'cover');
+        assert.equal(metrics.titleColor, 'rgb(255, 255, 255)', 'white title on the desktop scrim');
+        const originalHeight = .75 * metrics.photoWidth;
+        const offset = .67 * (originalHeight - metrics.photoHeight);
+        assert(.53 * originalHeight - offset >= 0 && .75 * originalHeight - offset < metrics.photoHeight, 'park sign fits the desktop framing');
+      } else {
+        assert.equal(metrics.fit, 'contain');
+        assert(Math.abs(metrics.ratio - 4/3) < .01, 'uncropped mobile original ratio');
+      }
+      const label = hero.locator('.photo-label');
+      assert.equal(await label.getAttribute('href'), await hero.locator('.hero-photo').getAttribute('src'), 'direct original-photo link');
+      assert.match(await label.textContent(), zh ? /查看原图/u : /Teljes kép/u);
       assert(metrics.photoTop >= metrics.headerBottom - 1 && metrics.photoBottom < height, 'photo within first screen, below header: ' + JSON.stringify(metrics));
       assert(metrics.titleTop >= metrics.photoTop && metrics.titleBottom < metrics.captionTop && metrics.captionBottom <= metrics.photoBottom, 'title and caption clear');
       assert(metrics.nextSectionTop < height, 'next section begins within viewport');
-      await page.screenshot({path: path.join(output, `${local ? 'candidate' : 'live'}-${width}.png`)});
+      await page.screenshot({animations: 'disabled', path: path.join(output, `${local ? 'candidate' : 'live'}-${width}.png`)});
       await page.locator('[data-place="6"] .place-address').waitFor();
       assert.match(await page.locator('[data-place="6"]').textContent(), /1104 Budapest, Harmat utca 88/);
       const input = page.locator('#hn-place-search');

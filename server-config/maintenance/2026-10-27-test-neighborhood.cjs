@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const ROOT=path.resolve(__dirname,'../..');
 const {JSDOM}=require(path.join(ROOT,'outputs/2026-10-17-chinese-switch/node_modules/jsdom'));
 const DIR=path.join(ROOT,'wp-mu-plugins/harmat-neighborhood-practical');
-const read=n=>fs.readFileSync(path.join(DIR,n==='lucide.js'?'':'r2',n),'utf8');
+const read=n=>fs.readFileSync(path.join(DIR,n==='lucide.js'?'':'r3',n),'utf8');
 const dom=new JSDOM(read('body.html'),{runScripts:'outside-only',url:'https://harmat22.hu/harmat-lakopark-kornyeke/'});
 const w=dom.window,d=w.document;
 const data=JSON.parse(d.getElementById('hn-facility-data').textContent);
