@@ -64,6 +64,9 @@ function harmat_ppc_html(): string {
     return $html . '</dl>' . <<<'HTML'
 <style data-hppc-style>
 [data-harmat-public-payment-copy]{grid-column:1/-1;display:block;width:100%;min-width:0;max-width:100%;margin:28px 0;padding:0;border:0;border-radius:0;background:transparent;color:#35463c;font:16px/1.65 Arial,Helvetica,sans-serif;overflow-wrap:anywhere;letter-spacing:0}
+body.single-property [data-harmat-public-payment-copy]{box-sizing:border-box;max-width:1180px;margin-inline:auto;padding-inline:26px}
+@media(max-width:900px){body.single-property [data-harmat-public-payment-copy]{padding-inline:18px}}
+@media(max-width:520px){body.single-property [data-harmat-public-payment-copy]{padding-inline:14px}}
 [data-harmat-public-payment-copy] *{box-sizing:border-box;min-width:0;letter-spacing:0}
 [data-harmat-public-payment-copy] h2{margin:0 0 16px;padding:0;color:#244537;font:600 24px/1.3 Georgia,serif;text-transform:none;letter-spacing:0}
 [data-harmat-public-payment-copy] dl,[data-harmat-public-payment-copy] dd{margin:0;padding:0}
