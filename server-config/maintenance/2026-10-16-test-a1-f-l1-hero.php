@@ -219,6 +219,34 @@ try {
     check(authority_reads() === 0, 'Different heading must not use matching post title');
     check(render_hero('60.1', array('property_heading' => ''), 3841, 'A1-F-L2') === render_hero('', array('property_heading' => ''), 3841, 'A1-F-L2'), 'Different fallback title unchanged');
 
+    foreach (array(
+        array(5302, 'A3-F-L3', '43.74', '47.39', '86.91', '71037750', '1 499 003 Ft'),
+        array(5460, 'A4-F-L1', '57.05', '60.10', '83.20', '89969250', '1 496 993 Ft'),
+    ) as $case) {
+        list($id, $code, $indoor, $sale, $outdoor, $total, $unit) = $case;
+        $meta = array('property_building_area' => $indoor, 'property_land_area' => $outdoor,
+            'property_price' => $total, 'property_address_street' => substr($code, 0, 2));
+        $before = render_hero('', $meta, $id, $code);
+        $after = render_hero($sale, $meta, $id, $code);
+        check(authority_reads() === 1, $code . ' reads existing sales authority');
+        $a = dd_values($before); $b = dd_values($after);
+        check($b[2] === hm_migrated_format_square_meter($sale) && $b[3] === $unit . u(' / m&sup2;'), $code . ' area and unit price');
+        $seen = 0;
+        $restored = preg_replace_callback('~<dd>.*?</dd>~s', static function ($m) use ($a, &$seen) {
+            $i = $seen++;
+            return $i === 2 || $i === 3 ? '<dd>' . $a[$i] . '</dd>' : $m[0];
+        }, $after);
+        check($restored === $before, $code . ' all other HTML unchanged');
+        check(render_hero('0', $meta, $id, $code) === $before, $code . ' invalid authority fallback');
+        render_hero($sale, $meta, (string)$id, $code);
+        check(authority_reads() === 0, $code . ' strict ID guard');
+        render_hero($sale, array_replace($meta, array('property_heading' => 'Other property')), $id, $code);
+        check(authority_reads() === 0, $code . ' strict title guard');
+        $hidden = dd_values(render_hero($sale, array_replace($meta, array('_harmat_hide_front_price' => 'yes')), $id, $code));
+        check($hidden[1] === u('&Aacute;r egyeztet&eacute;s alapj&aacute;n')
+            && $hidden[3] === u('&Eacute;rt&eacute;kes&iacute;t&eacute;si egyeztet&eacute;s alapj&aacute;n'), $code . ' no price leak');
+    }
+
     foreach (array(array('_harmat_hide_front_price' => 'yes'), array('property_price_display' => 'no'), array('_harmat_hide_front_price' => 'yes', 'property_price_display' => 'no'), array('property_price' => '0'), array('property_price' => '-1')) as $policy) {
         $before = render_hero('', $policy);
         $after = render_hero('60.1', $policy);

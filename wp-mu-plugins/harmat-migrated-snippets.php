@@ -445,7 +445,8 @@ function hm_migrated_property_hero_html($floorplan_override = '') {
     $outdoor = (float) get_post_meta($post_id, 'property_land_area', true);
     $sale_area = $area + ($is_ground_floor ? 0 : ($outdoor * 0.5));
     $sale_area = $sale_area > 0 ? floor($sale_area * 100) / 100 : 0;
-    if ($post_id === 3841 && $title === 'A1-F-L1') {
+    $verified_ground_floor_areas = array(3841 => 'A1-F-L1', 5302 => 'A3-F-L3', 5460 => 'A4-F-L1');
+    if (is_int($post_id) && isset($verified_ground_floor_areas[$post_id]) && $verified_ground_floor_areas[$post_id] === $title) {
         $sales_area = get_post_meta($post_id, '_harmat_sales_area', true);
         if (is_scalar($sales_area) && !is_bool($sales_area) && is_numeric($sales_area) && is_finite((float) $sales_area) && (float) $sales_area > 0) {
             $sale_area = (float) $sales_area;
