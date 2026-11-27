@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Harmat Construction Updates
  * Description: Removable, read-only construction registry shared by the journal and homepage.
- * Version: 1.0.3
+ * Version: 1.0.4
  */
 defined('ABSPATH') || exit;
 
@@ -62,6 +62,20 @@ function harmat_cu_registry(): array {
         'title' => array('hu' => 'Helyszíni felvétel – 2026. október 30.', 'zh' => '施工现场实拍 · 2026年10月30日'),
         'summary' => array('hu' => 'Október 30-i körkép a Harmat Lakópark építkezéséről.', 'zh' => '雨露花园10月30日施工现场全景。'),
         'note' => array('hu' => 'A videó a felvétel napján látható állapotot mutatja, hang nélkül.', 'zh' => '视频记录拍摄当天的施工状态，已去除原声。'),
+    );
+    $records[] = array(
+        'id' => '2026-11-27', 'date' => '2026-11-27', 'uploaded' => '2026-11-27',
+        'status' => 'published', 'approved' => true, 'journal_only' => true, 'sound' => true, 'date_is_publication' => true,
+        'file' => '2026-11-27-harmat-epitkezes-hu', 'duration' => 168.9,
+        'title' => array('hu' => 'Az építkezéstől a bemutatóteremig', 'zh' => '从施工现场到售楼部展厅'),
+        'summary' => array(
+            'hu' => 'Helyszíni felvételek a falak, pillérek és födémek építéséről, majd egy rövid körkép a bemutatóterem burkolatmintáiról és fürdőszobai kiállítási darabjairól.',
+            'zh' => '先看墙柱和楼板的施工实拍，再到售楼部展厅看饰面材料和卫浴样品。',
+        ),
+        'note' => array(
+            'hu' => 'Magyar narrációval és felirattal. A bemutatóteremben látható anyagok és szerelvények minták; a pontos műszaki tartalmat az adott lakás dokumentációja rögzíti.',
+            'zh' => '配有匈牙利语旁白和字幕。展厅材料和卫浴为样品，具体配置以对应房源文件为准。',
+        ),
     );
     return $records;
 }
@@ -146,7 +160,8 @@ function harmat_cu_date_label(string $date): array {
 function harmat_cu_player(array $record): string {
     $play = array('hu' => 'Videó lejátszása', 'zh' => '播放视频');
     return '<div class="hcu-player" data-hcu-player data-hcu-video="' . esc_url($record['video']) . '" data-hcu-poster="' . esc_url($record['poster'])
-        . '" data-hcu-title-hu="' . esc_attr($record['title']['hu']) . '" data-hcu-title-zh="' . esc_attr($record['title']['zh']) . '">'
+        . '" data-hcu-title-hu="' . esc_attr($record['title']['hu']) . '" data-hcu-title-zh="' . esc_attr($record['title']['zh']) . '"'
+        . (!empty($record['sound']) ? ' data-hcu-sound="1"' : '') . '>'
         . '<button class="hcu-trigger" type="button" data-hcu-play data-hcu-label-hu="' . esc_attr($play['hu']) . '" data-hcu-label-zh="' . esc_attr($play['zh']) . '" aria-label="' . esc_attr($play['hu']) . '">'
         . '<img src="' . esc_url($record['poster']) . '" width="1280" height="720" alt="' . esc_attr($record['title']['hu']) . '" data-hcu-alt-hu="' . esc_attr($record['title']['hu']) . '" data-hcu-alt-zh="' . esc_attr($record['title']['zh']) . '" loading="lazy" decoding="async">'
         . '<span class="hcu-play-icon" aria-hidden="true">&#9654;</span></button></div>'
@@ -160,8 +175,12 @@ function harmat_cu_journal_markup(array $records): string {
     $html = '<section id="harmat-construction-updates" class="hcu-updates" data-hcu-root data-hcu-journal="1" data-language-protect="" lang="hu" aria-labelledby="hcu-latest-title">'
         . harmat_cu_text('h2', array('hu' => 'Friss helyszíni videók', 'zh' => '最新施工影像'), ' id="hcu-latest-title"');
     foreach ($records as $index => $record) {
+        $label = harmat_cu_date_label($record['date']);
+        if (!empty($record['date_is_publication'])) {
+            $label = array('hu' => 'Közzétéve: ' . $label['hu'], 'zh' => '发布于：' . $label['zh']);
+        }
         $html .= '<article class="hcu-entry" id="construction-' . esc_attr($record['id']) . '" data-hcu-date="' . esc_attr($record['date']) . '">'
-            . harmat_cu_text('time', harmat_cu_date_label($record['date']), ' datetime="' . esc_attr($record['date']) . '"')
+            . harmat_cu_text('time', $label, ' datetime="' . esc_attr($record['date']) . '"')
             . harmat_cu_text('h3', $record['title']) . harmat_cu_text('p', $record['summary'])
             . harmat_cu_player($record) . harmat_cu_text('p', $record['note'], ' class="hcu-note"') . '</article>';
     }
@@ -223,8 +242,8 @@ body.home.page-id-164 #harmat-home-family [data-hcu-home] h2{font-size:30px;marg
 CSS;
 }
 
-function harmat_cu_runtime(): string {
-    return <<<'JS'
+function harmat_cu_runtime(bool $journal = false): string {
+    $script = <<<'JS'
 <script id="harmat-construction-updates-runtime">
 (function(){
   'use strict';
@@ -276,6 +295,8 @@ function harmat_cu_runtime(): string {
 })();
 </script>
 JS;
+    return $journal ? str_replace('video.muted=true;video.defaultMuted=true;',
+        "video.muted=player.getAttribute('data-hcu-sound')!=='1';video.defaultMuted=video.muted;", $script) : $script;
 }
 
 function harmat_cu_resources(): string { return harmat_cu_styles() . harmat_cu_runtime(); }
@@ -305,7 +326,7 @@ function harmat_cu_journal_output($html) {
     // Preserve every legacy byte; the buffer is outer to the legacy -100 injector.
     $result = substr_replace($html, harmat_cu_journal_markup($records), $start, 0);
     $result = str_replace('</head>', harmat_cu_styles() . '</head>', $result);
-    return str_replace('</body>', harmat_cu_runtime() . '</body>', $result);
+    return str_replace('</body>', harmat_cu_runtime(true) . '</body>', $result);
 }
 
 function harmat_cu_buffer(): void {
@@ -319,14 +340,18 @@ function harmat_cu_buffer(): void {
 add_action('template_redirect', 'harmat_cu_buffer', -101);
 
 function harmat_cu_description($original) {
-    if (!harmat_cu_context() || !($records = harmat_cu_records())) return $original;
+    if (!harmat_cu_context() || !($records = harmat_cu_share_records())) return $original;
     return 'A Harmat Lakópark építési naplója. ' . $records[0]['title']['hu'] . ' ' . $records[0]['summary']['hu'] . ' Korábbi videók és fotók időrendben.';
 }
 foreach (array('wpseo_metadesc', 'wpseo_opengraph_desc', 'wpseo_twitter_description') as $filter) add_filter($filter, 'harmat_cu_description', 120);
 function harmat_cu_share_image($original) {
-    return harmat_cu_context() && ($records = harmat_cu_records()) ? $records[0]['poster'] : $original;
+    return harmat_cu_context() && ($records = harmat_cu_share_records()) ? $records[0]['poster'] : $original;
 }
 foreach (array('wpseo_opengraph_image', 'wpseo_twitter_image') as $filter) add_filter($filter, 'harmat_cu_share_image', 120);
+
+function harmat_cu_share_records(): array {
+    return array_values(array_filter(harmat_cu_records(), static function ($record) { return empty($record['journal_only']); }));
+}
 
 function harmat_cu_schema($graph) {
     if (!is_array($graph) || !harmat_cu_context()) return $graph;
@@ -334,12 +359,14 @@ function harmat_cu_schema($graph) {
     foreach (harmat_cu_records() as $record) {
         $id = 'https://harmat22.hu/epitesi-naplo/#construction-' . $record['id'];
         if (in_array($id, $ids, true)) continue;
-        $graph[] = array('@type' => 'VideoObject', '@id' => $id, 'name' => $record['title']['hu'],
+        $video = array('@type' => 'VideoObject', '@id' => $id, 'name' => $record['title']['hu'],
             'description' => $record['summary']['hu'] . ' ' . $record['note']['hu'], 'thumbnailUrl' => $record['poster'],
             'contentUrl' => $record['video'], 'uploadDate' => $record['uploaded'], 'dateCreated' => $record['date'],
             'duration' => 'PT' . rtrim(rtrim(number_format((float)$record['duration'], 2, '.', ''), '0'), '.') . 'S',
             'inLanguage' => 'hu-HU', 'isPartOf' => array('@id' => 'https://harmat22.hu/epitesi-naplo/'),
             'publisher' => array('@id' => 'https://harmat22.hu/#organization'));
+        if (!empty($record['date_is_publication'])) unset($video['dateCreated']);
+        $graph[] = $video;
     }
     return $graph;
 }
