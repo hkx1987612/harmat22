@@ -104,6 +104,7 @@ $state['headers'] = array('Content-Type: application/json'); check(!harmat_ppc_s
 $state['headers'] = array('Content-Type: text/html; charset=UTF-8'); check(harmat_ppc_scope(), 'HTML response allowed'); $state['headers'] = array();
 
 $html = harmat_ppc_html();
+$propertyHtml = harmat_ppc_html(true);
 $dom = new DOMDocument(); $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
 $xpath = new DOMXPath($dom);
 check($xpath->query('//*[@id="harmat-public-payment-copy" and @data-language-protect and @data-harmat-public-payment-copy="1"]')->length === 1,
@@ -124,6 +125,28 @@ foreach (array('hu', 'zh') as $language) {
     preg_match_all('~(\d+)%~', $copy[8], $milestones);
     check($milestones[1] === array('25', '25', '25', '20', '5') && array_sum($milestones[1]) === 100, $language . ' milestone total 100');
     check(!preg_match('~202[67]|31|30|május|May|5月31~u', $copy[8] . $copy[9]), $language . ' milestones have no fixed dates');
+}
+if (function_exists('harmat_ppc_milestones')) {
+    $propertyDom = new DOMDocument();
+    $propertyDom->loadHTML('<?xml encoding="UTF-8">' . $propertyHtml, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+    $propertyXPath = new DOMXPath($propertyDom);
+    $list = $propertyXPath->query('//ol[@class="hppc-stages"]');
+    check($list->length === 1 && $xpath->query('//ol[@class="hppc-stages"]')->length === 0, 'new layout only applied on property');
+    foreach (array('hu', 'zh') as $language) {
+        $attr = 'data-hppc-' . $language;
+        $original = $xpath->query('(//div[@class="hppc-row"])[3]/dd/p[1]')->item(0)->getAttribute($attr);
+        $items = array();
+        foreach ($propertyXPath->query('./li', $list->item(0)) as $row) {
+            $items[] = $propertyXPath->query('./strong', $row)->item(0)->textContent
+                . ' ' . $propertyXPath->query('./span', $row)->item(0)->getAttribute($attr);
+        }
+        $normalized = array_map(static function ($s) { return preg_replace('~^(\d+%)\h*~u', '$1 ', trim($s)); }, preg_split('~[;\x{ff1b}]~u', $original));
+        check(count($items) === 5 && $items === $normalized, 'exact percentages and milestone wording: ' . $language);
+        check($propertyXPath->query('(//div[@class="hppc-row"])[3]/dd/p')->item(0)->getAttribute($attr)
+            === $xpath->query('(//div[@class="hppc-row"])[3]/dd/p[2]')->item(0)->getAttribute($attr), 'original payment conditions retained: ' . $language);
+    }
+    check(harmat_ppc_milestones('25% a; 25% b; 25% c; 20% d; 5% e', '25% a; 25% b; 25% c; 19% d; 5% e')
+        === harmat_ppc_text('p', '25% a; 25% b; 25% c; 20% d; 5% e', '25% a; 25% b; 25% c; 19% d; 5% e'), 'mismatched terms stay in the original layout');
 }
 foreach (array('2026. december 31-ig', '2027. június 30-ig', '2026年12月31日前', '2027年6月30日前',
     'foglaló és előleg összesen', '定金与预付款合计', 'kulcsátvételi értesítéskor', '收到领取钥匙通知时',
@@ -153,8 +176,8 @@ class Widget {
     public function get_settings($key) { return $key === 'template_id' ? $this->id : null; }
 }
 check(harmat_ppc_known_template($old), 'complete known template text recognized');
-check(harmat_ppc_widget($old, new Widget()) === $html, 'template widget 4214 replaced');
-check(harmat_ppc_widget($old, new Widget('template', '4214')) === $html, 'normal string template id accepted');
+check(harmat_ppc_widget($old, new Widget()) === $propertyHtml, 'template widget 4214 replaced');
+check(harmat_ppc_widget($old, new Widget('template', '4214')) === $propertyHtml, 'normal string template id accepted');
 check(harmat_ppc_known_template('<style>.elementor-4214{color:red}</style>' . $old), 'Elementor style text ignored in validation only');
 check(harmat_ppc_known_template(str_replace('Foglaló:', "\n Foglaló: ", $old)), 'render whitespace does not cause drift');
 foreach (array(new Widget('heading'), new Widget('template', 4215), new Widget('template', true), new Widget('template', '4214.0'), new \stdClass(), null) as $widget) {
@@ -173,13 +196,13 @@ foreach (array(str_replace('20%', '21%', $old), str_replace('elkészültéről',
 unset($GLOBALS['harmat_ppc_unknown_template']);
 $native = '<div class="entry-content"><p>Native property</p>' . $form . '</div>';
 $appended = harmat_ppc_content($native);
-check($appended === $native . $html && substr_count($appended, 'id="harmat-public-payment-copy"') === 1, 'missing section appended exactly once after unchanged native bytes');
+check($appended === $native . $propertyHtml && substr_count($appended, 'id="harmat-public-payment-copy"') === 1, 'missing section appended exactly once after unchanged native bytes');
 check(strpos($appended, $form) !== false, 'all unrelated native form/default bytes retained');
 check(harmat_ppc_content($appended) === $appended, 'content repeated pass idempotent');
 check(harmat_ppc_content('<section id="harmat-public-payment-copy"></section>') === '<section id="harmat-public-payment-copy"></section>', 'stable id alone blocks duplicate');
 foreach (array('a1-4-l5', 'a2-4-l5', 'a3-4-l5', 'a4-2-l7', 'a4-4-l5') as $slug) {
     $post->post_name = $slug; $_SERVER['REQUEST_URI'] = '/property/' . $slug . '/';
-    check(harmat_ppc_content($native) === $native . $html, 'missing-section canonical property covered in stub: ' . $slug);
+    check(harmat_ppc_content($native) === $native . $propertyHtml, 'missing-section canonical property covered in stub: ' . $slug);
 }
 $post->post_name = 'a1-1-l2'; $_SERVER['REQUEST_URI'] = '/property/a1-1-l2/';
 foreach (array($old, '<div data-elementor-id = \'4214\'>cached drift</div>', '<div class="elementor-4214">unknown cache</div>',
@@ -206,7 +229,7 @@ $outsideStyle = '<style id="cached-4214-css">.elementor-4214{color:red}</style>'
 $property = page_shell('<div class="elementor elementor-4292">' . $outsideStyle . $cachedOld . '<div>Native after template</div></div>', $note);
 check(strpos($property, '<main') === false && harmat_ppc_document($property) !== false, 'genuine no-main property owner accepted');
 $replaced = harmat_ppc_output($property);
-check($replaced === str_replace($cachedOld, $html, $property), 'cached 4214 replaced by its exact raw balanced-div range only');
+check($replaced === str_replace($cachedOld, $propertyHtml, $property), 'cached 4214 replaced by its exact raw balanced-div range only');
 check(strpos($replaced, $outsideStyle) !== false && strpos($replaced, $form) !== false && strpos($replaced, $note) !== false,
     'cached external style, native form/defaults, notice and all other bytes preserved');
 check(harmat_ppc_output($replaced) === $replaced, 'already-one-owned-root final pass does nothing');
@@ -224,16 +247,16 @@ foreach (array(str_replace('20%', '21%', $old), $old . '<h2>Fizetési ütemezés
     check(harmat_ppc_output($bad) === $bad, 'unknown/control/frame/unsafe-ancestor cached template unchanged');
 }
 $spoofed = str_replace('<head>', '<head><!-- ' . $old . ' -->', $property);
-check(harmat_ppc_output($spoofed) === str_replace($cachedOld, $html, $spoofed), 'comment fake roots and div closings do not affect lexical range');
+check(harmat_ppc_output($spoofed) === str_replace($cachedOld, $propertyHtml, $spoofed), 'comment fake roots and div closings do not affect lexical range');
 $outside = page_shell('<p>Native owner</p>', $old . $note);
 check(harmat_ppc_output($outside) === $outside, 'old template outside property content owner unchanged');
 $missing = page_shell('<p>Native owner</p>', $note);
-check(harmat_ppc_output($missing) === str_replace($note, $html . $note, $missing), 'no-template section inserted immediately before unique native notice outside content');
+check(harmat_ppc_output($missing) === str_replace($note, $propertyHtml . $note, $missing), 'no-template section inserted immediately before unique native notice outside content');
 $noNote = page_shell('<p>Native owner</p>');
-check(harmat_ppc_output($noNote) === str_replace($footer, $html . $footer, $noNote), 'no notice uses exact validated colophon footer outside content');
+check(harmat_ppc_output($noNote) === str_replace($footer, $propertyHtml . $footer, $noNote), 'no notice uses exact validated colophon footer outside content');
 foreach (array('a1-4-l5', 'a2-4-l5', 'a3-4-l5', 'a4-2-l7', 'a4-4-l5') as $slug) {
     $post->post_name = $slug; $_SERVER['REQUEST_URI'] = '/property/' . $slug . '/';
-    check(harmat_ppc_output($missing) === str_replace($note, $html . $note, $missing), 'five missing-section routes covered in no-main fixture: ' . $slug);
+    check(harmat_ppc_output($missing) === str_replace($note, $propertyHtml . $note, $missing), 'five missing-section routes covered in no-main fixture: ' . $slug);
 }
 $post->post_name = 'a1-1-l2'; $_SERVER['REQUEST_URI'] = '/property/a1-1-l2/';
 foreach (array(page_shell('<h2>Fizetési ütemezés</h2>', $note), page_shell('<div class="elementor-4214">unknown cache</div>', $note),

@@ -165,6 +165,11 @@ function hm_legal_wrap_20260514($title, $lead, $body) {
             .hm-legal-page ul{padding-left:22px}
             .hm-legal-page .hm-note{background:#fff7e8;border-left:4px solid #987033;padding:14px 16px;margin:18px 0;color:#42494d}
             @media(max-width:700px){.hm-legal-page{margin:42px auto;padding:0 18px}.hm-legal-page table{display:block;overflow-x:auto}.hm-legal-page th,.hm-legal-page td{min-width:190px}}
+            @media(max-width:700px){
+                .hm-legal-page .hm-legal-contact-table{display:table;table-layout:fixed;overflow:visible}
+                .hm-legal-page .hm-legal-contact-table th,.hm-legal-page .hm-legal-contact-table td{min-width:0;padding:9px 10px;overflow-wrap:anywhere}
+                .hm-legal-page .hm-legal-contact-table th{width:35%}
+            }
         </style>
         <h1><?php echo esc_html($title); ?></h1>
         <p class="lead"><?php echo esc_html($lead); ?></p>
@@ -179,7 +184,7 @@ function hm_legal_company_table_20260514() {
     $c = hm_legal_company_20260514();
     ob_start();
     ?>
-    <table>
+    <table class="hm-legal-contact-table">
         <tbody>
             <tr><th>Adatkezelő / szolgáltató</th><td><?php echo esc_html($c['name']); ?></td></tr>
             <tr><th>Székhely</th><td><?php echo esc_html($c['seat']); ?></td></tr>
@@ -374,7 +379,7 @@ function hm_legal_complaint_20260603() {
     ?>
     <h2>1. Panasz benyújtása</h2>
     <p>A Harmat Lakóparkkal, a weboldalon megjelenő tájékoztatással, az értékesítési kommunikációval vagy az ügyintézéssel kapcsolatos fogyasztói panasz az alábbi elérhetőségeken nyújtható be:</p>
-    <table>
+    <table class="hm-legal-contact-table">
         <tbody>
             <tr><th>E-mail</th><td><a href="mailto:<?php echo esc_attr($c['email']); ?>"><?php echo esc_html($c['email']); ?></a></td></tr>
             <tr><th>Postai / személyes cím</th><td><?php echo esc_html($c['project']); ?></td></tr>
@@ -389,7 +394,7 @@ function hm_legal_complaint_20260603() {
 
     <h2>3. Békéltető testület</h2>
     <p>Amennyiben a fogyasztói jogvita közvetlenül nem rendezhető, a fogyasztó a lakóhelye vagy tartózkodási helye szerint illetékes békéltető testülethez fordulhat. Budapesti székhelyű ügyekben elérhető:</p>
-    <table>
+    <table class="hm-legal-contact-table">
         <tbody>
             <tr><th>Név</th><td>Budapesti Békéltető Testület</td></tr>
             <tr><th>Cím</th><td>1016 Budapest, Krisztina krt. 99. I. em. 111.</td></tr>

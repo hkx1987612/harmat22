@@ -64,6 +64,11 @@ function harmat_np_enqueue() {
     }
     $base = content_url('/mu-plugins/harmat-neighborhood-practical/');
     wp_enqueue_style('harmat-neighborhood-practical', $base.'r3/neighborhood.css',array(),substr($pins['neighborhood.css'],0,16));
+    wp_add_inline_style('harmat-neighborhood-practical',
+        '#harmat-neighborhood-practical .place-row{--hn-place-leading:23.2px;--hn-map-size:40px;align-items:start}'
+        . '#harmat-neighborhood-practical .place-distance{line-height:var(--hn-place-leading)}'
+        . '#harmat-neighborhood-practical .map-link{margin-block-start:calc((var(--hn-place-leading) - var(--hn-map-size))/2)}'
+        . '@media(max-width:700px){#harmat-neighborhood-practical .place-row{--hn-place-leading:21px;--hn-map-size:38px}}');
     wp_enqueue_script('harmat-neighborhood-icons',$base.'lucide.js',array(),substr(HARMAT_NP_LUCIDE_SHA,0,16),true);
     wp_enqueue_script('harmat-neighborhood-pannellum',content_url('/mu-plugins/harmat-home-family/pannellum.js'),array(),'a28b2f7b339fd0a6',true);
     wp_enqueue_script('harmat-neighborhood-practical',$base.'r3/neighborhood.js',array('harmat-neighborhood-icons','harmat-neighborhood-pannellum'),substr($pins['neighborhood.js'],0,16),true);

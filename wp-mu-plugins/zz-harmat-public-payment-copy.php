@@ -40,7 +40,28 @@ function harmat_ppc_text(string $tag, string $hu, string $zh): string {
         . esc_html($hu) . '</' . $tag . '>';
 }
 
-function harmat_ppc_html(): string {
+function harmat_ppc_milestones(string $hu, string $zh): string {
+    $steps = static function ($copy) {
+        $clauses = preg_split('~[;\x{ff1b}]~u', $copy);
+        if (!is_array($clauses) || count($clauses) !== 5) return array();
+        $parts = array();
+        foreach ($clauses as $clause) {
+            if (!preg_match('~\A(\d+%)\h*(\S.*)\z~u', trim($clause), $match)) return array();
+            $parts[] = $match;
+        }
+        return $parts;
+    };
+    $left = $steps($hu); $right = $steps($zh);
+    if (!$left || !$right || array_column($left, 1) !== array_column($right, 1)) return harmat_ppc_text('p', $hu, $zh);
+    $html = '<ol class="hppc-stages" role="list">';
+    foreach ($left as $i => $step) {
+        $html .= '<li><strong>' . esc_html($step[1]) . '</strong>'
+            . harmat_ppc_text('span', trim($step[2]), trim($right[$i][2])) . '</li>';
+    }
+    return $html . '</ol>';
+}
+
+function harmat_ppc_html(bool $property = false): string {
     $plans = array(
         array('Teljes lakásvételár', '全额付款',
             'A lakás teljes vételárának kifizetése 2026. december 31-ig.', '于2026年12月31日前支付全部公寓房款。',
@@ -57,9 +78,10 @@ function harmat_ppc_html(): string {
     );
     $html = '<section id="harmat-public-payment-copy" class="hppc-plans" data-harmat-public-payment-copy="1" data-language-protect="" lang="hu">'
         . harmat_ppc_text('h2', 'Fizetési ütemezés', '付款安排') . '<dl>';
-    foreach ($plans as $plan) {
+    foreach ($plans as $i => $plan) {
+        $description = $property && $i === 2 ? harmat_ppc_milestones($plan[2], $plan[3]) : harmat_ppc_text('p', $plan[2], $plan[3]);
         $html .= '<div class="hppc-row">' . harmat_ppc_text('dt', $plan[0], $plan[1]) . '<dd>'
-            . harmat_ppc_text('p', $plan[2], $plan[3]) . harmat_ppc_text('p', $plan[4], $plan[5]) . '</dd></div>';
+            . $description . harmat_ppc_text('p', $plan[4], $plan[5]) . '</dd></div>';
     }
     return $html . '</dl>' . <<<'HTML'
 <style data-hppc-style>
@@ -74,6 +96,11 @@ body.single-property [data-harmat-public-payment-copy]{box-sizing:border-box;max
 [data-harmat-public-payment-copy] dt{margin:0;padding:0;font:600 16px/1.65 Arial,Helvetica,sans-serif;text-transform:none}
 [data-harmat-public-payment-copy] p{margin:0;padding:0;font:400 16px/1.65 Arial,Helvetica,sans-serif}
 [data-harmat-public-payment-copy] p+p{margin-top:4px;font-weight:600}
+[data-harmat-public-payment-copy] .hppc-stages{display:grid;margin:0 0 10px;padding:0;list-style:none}
+[data-harmat-public-payment-copy] .hppc-stages li{display:grid;grid-template-columns:3.25rem minmax(0,1fr);align-items:baseline;gap:8px;margin:0;padding:7px 0;border-bottom:1px solid #dce4dd}
+[data-harmat-public-payment-copy] .hppc-stages li:first-child{padding-top:0}
+[data-harmat-public-payment-copy] .hppc-stages strong{color:#244537;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
+[data-harmat-public-payment-copy] .hppc-stages+p{font-size:14px;line-height:1.55}
 @media(max-width:620px){[data-harmat-public-payment-copy] .hppc-row{grid-template-columns:minmax(0,1fr);gap:6px}}
 </style>
 <script data-hppc-runtime>
@@ -128,7 +155,7 @@ function harmat_ppc_widget($content, $widget) {
         $GLOBALS['harmat_ppc_unknown_template'] = true;
         return $content;
     }
-    return harmat_ppc_html();
+    return harmat_ppc_html(true);
 }
 
 function harmat_ppc_content($content) {
@@ -139,7 +166,7 @@ function harmat_ppc_content($content) {
     // Cached template HTML bypasses widget filters; the outer final-document buffer owns that fallback.
     if (preg_match('~elementor-4214\b|data-elementor-id\s*=\s*[\'"]?4214\b|(?:template_id|elementor-template)[\s\S]{0,100}?4214\b~i', $content)
         || strpos($content, 'Fizetési Ütemezés') !== false || strpos($content, 'Fizetési ütemezés') !== false) return $content;
-    return $content . harmat_ppc_html();
+    return $content . harmat_ppc_html(true);
 }
 
 function harmat_ppc_financing_articles(): array {
@@ -315,7 +342,7 @@ function harmat_ppc_output($html) {
             }
         }
     }
-    $result = substr_replace($html, harmat_ppc_html(), $start, $length);
+    $result = substr_replace($html, harmat_ppc_html(is_singular('property')), $start, $length);
     $verified = harmat_ppc_document($result);
     if (!$verified) return $html;
     $roots = $verified[1]->query('//*[@id="harmat-public-payment-copy" and @data-harmat-public-payment-copy="1"]');

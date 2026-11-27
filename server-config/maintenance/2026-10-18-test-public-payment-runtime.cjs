@@ -8,8 +8,9 @@ const ROOT = path.resolve(__dirname, '../..');
 const { JSDOM } = require(path.join(ROOT, 'outputs/2026-10-17-chinese-switch/node_modules/jsdom'));
 const php = process.platform === 'win32' ? 'C:/tools/php-8.5.6/php.exe' : 'php';
 const source = path.join(ROOT, 'wp-mu-plugins/zz-harmat-public-payment-copy.php');
-const code = 'define("ABSPATH", __DIR__); function add_filter(...$a){} function add_action(...$a){} function esc_attr($s){return htmlspecialchars($s, ENT_QUOTES, "UTF-8");} function esc_html($s){return htmlspecialchars($s, ENT_QUOTES, "UTF-8");} require $argv[1]; echo harmat_ppc_html();';
-const html = execFileSync(php, ['-r', code, '--', source], { encoding: 'utf8' });
+const code = 'define("ABSPATH", __DIR__); function add_filter(...$a){} function add_action(...$a){} function esc_attr($s){return htmlspecialchars($s, ENT_QUOTES, "UTF-8");} function esc_html($s){return htmlspecialchars($s, ENT_QUOTES, "UTF-8");} require $argv[1]; echo harmat_ppc_html(isset($argv[2]));';
+const render = (...args) => execFileSync(php, ['-r', code, '--', source, ...args], { encoding: 'utf8' });
+const html = render();
 const script = /<script data-hppc-runtime>([\s\S]*?)<\/script>/.exec(html)[1];
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
@@ -61,4 +62,19 @@ test('Unknown locale falls back to Hungarian and an absent owned root is harmles
   assert.equal(f.root.lang, 'hu');
   assert.match(f.root.textContent, /Fizetési ütemezés/);
   fixture(t, 'hu', '<p>Unrelated content</p>');
+});
+
+test('Property milestone labels switch languages without touching percentage cells or form', async t => {
+  const f = fixture(t, 'hu', render('property'));
+  const amounts = [...f.root.querySelectorAll('.hppc-stages strong')];
+  const values = () => amounts.map(node => node.textContent);
+  assert.deepEqual(values(), ['25%', '25%', '25%', '20%', '5%']);
+  const labels = [...f.root.querySelectorAll('.hppc-stages [data-hppc-hu]')];
+  for (const language of ['zh-Hans', 'hu']) {
+    f.d.documentElement.setAttribute('data-harmat-language', language);
+    await tick();
+    for (const node of labels) assert.equal(node.textContent, node.getAttribute(language === 'hu' ? 'data-hppc-hu' : 'data-hppc-zh'));
+    assert.deepEqual(values(), ['25%', '25%', '25%', '20%', '5%']);
+    assert.equal(f.form.outerHTML, f.before);
+  }
 });
